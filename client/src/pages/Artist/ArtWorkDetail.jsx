@@ -1,6 +1,6 @@
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { useArt } from '../context/ArtContext';
-import ImageZoomLens from '../components/artworks/ImageZoomLense'; 
+import { useArt } from '../../context/ArtContext';
+import ImageZoomLens from '../../components/artworks/ImageZoomLense';
 
 const ArtworkDetail = () => {
   const { state } = useLocation();

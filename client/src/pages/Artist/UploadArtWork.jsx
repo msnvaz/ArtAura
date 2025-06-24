@@ -1,6 +1,6 @@
-import { useArt } from '../context/ArtContext';
-import UploadArtwork from '../components/artworks/UploadArtWorks';
-import ArtGallery from '../components/artworks/ArtGallery';
+import { useArt } from '../../context/ArtContext';
+import UploadArtwork from '../../components/artworks/UploadArtWorks';
+import ArtGallery from '../../components/artworks/ArtGallery';
 
 const ArtistDashboard = () => {
   const { artworks, uploadArtwork } = useArt();
