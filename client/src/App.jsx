@@ -6,6 +6,9 @@ import './styles/main.css';
 import Home from './pages/Home';
 import Marketplace from './pages/Marketplace';
 import Competitions from './pages/Competitions';
+import ArtShopDashboard from './pages/shop/Dashboard';
+import Orders from './pages/shop/Orders';
+
 
 function App() {
   return (
@@ -15,6 +18,9 @@ function App() {
           <Route path="/home" element={<Home />} />
           <Route path="/marketplace" element={<Marketplace />} />
           <Route path="/competitions" element={<Competitions />} />
+          <Route path="/shop/dashboard" element={<ArtShopDashboard />} />
+          <Route path="/shop/orders" element={<Orders/>}/>
+
         </Routes>
       </div>
     </Router>
