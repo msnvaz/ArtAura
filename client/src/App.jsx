@@ -20,6 +20,9 @@ import Footer from './components/Footer';
 import Home from './pages/Home';
 import Marketplace from './pages/Marketplace';
 import Competitions from './pages/Competitions';
+import Login from './pages/login';
+import ArtistDashboard from './pages/Artist/ArtistDashboard';
+import ArtistPortfolio from './pages/Artist/ArtistPortfolio';
 
 
 
