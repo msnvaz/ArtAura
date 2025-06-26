@@ -16,15 +16,6 @@ import ArtistPortfolio from './pages/Artist/ArtistPortfolio';
 import Header from './components/Header';
 import Footer from './components/Footer';
 
-// Pages
-import Home from './pages/Home';
-import Marketplace from './pages/Marketplace';
-import Competitions from './pages/Competitions';
-import Login from './pages/login';
-import ArtistDashboard from './pages/Artist/ArtistDashboard';
-import ArtistPortfolio from './pages/Artist/ArtistPortfolio';
-
-
 
 function App() {
   return (
@@ -39,7 +30,7 @@ function App() {
           <Route path="/competitions" element={<Competitions />} />
           <Route path="/uploadartwork" element={<UploadArtWork />} />
           <Route path="/artworks/:id" element={<ArtworkDetail />} />
-          <Route path="/artistdashboard" element={<ArtistDashboard />} /> 
+          <Route path="/artist/artistdashboard" element={<ArtistDashboard />} /> 
           <Route path="/artist/artistportfolio" element={<ArtistPortfolio />} />
 
         </Routes>
