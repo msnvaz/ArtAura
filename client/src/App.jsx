@@ -27,7 +27,7 @@ function App() {
   return (
     <Router>
 
-      <<div className="App d-flex flex-column min-vh-100 w-100">
+      <div className="App d-flex flex-column min-vh-100 w-100">
         <Header />
     <main className="flex-grow-1 w-100">
         <Routes>
