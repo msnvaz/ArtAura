@@ -8,6 +8,7 @@ import Marketplace from './pages/Marketplace';
 import Competitions from './pages/Competitions';
 import ArtShopDashboard from './pages/shop/Dashboard';
 import Orders from './pages/shop/Orders';
+import RewardSystem from './pages/shop/RewardSystem';
 
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
           <Route path="/competitions" element={<Competitions />} />
           <Route path="/shop/dashboard" element={<ArtShopDashboard />} />
           <Route path="/shop/orders" element={<Orders/>}/>
+
 
         </Routes>
       </div>
