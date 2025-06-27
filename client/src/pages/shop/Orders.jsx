@@ -1,20 +1,18 @@
 import { useState } from 'react';
-import "/src/styles/shop/orders.css"; // Assuming you have a CSS file for styles
-
 import { 
-  ShoppingCart, 
-  Download, 
-  Search, 
-  Filter, 
-  Mail, 
-  Phone, 
-  Eye,
+  ShoppingCart,
+  Download,
+  Search,
+  Filter,
+  Mail,
+  Phone,
   CheckCircle,
   Truck,
   Clock,
   Calendar,
-  XCircle
-} from 'react-feather';
+  XCircle,
+  Eye
+} from 'lucide-react';
 
 const Orders = () => {
   const [filter, setFilter] = useState('all');
@@ -95,124 +93,124 @@ const Orders = () => {
   };
 
   const getStatusIcon = (status) => {
+    const baseClass = "w-4 h-4 transform transition-transform duration-300 group-hover:scale-125";
     switch (status) {
-      case 'delivered': return <CheckCircle className="w-4 h-4" />;
-      case 'shipped': return <Truck className="w-4 h-4" />;
-      case 'processing': return <Clock className="w-4 h-4" />;
-      case 'pending': return <Calendar className="w-4 h-4" />;
-      case 'cancelled': return <XCircle className="w-4 h-4" />;
-      default: return <Clock className="w-4 h-4" />;
+      case 'delivered': return <CheckCircle className={baseClass} />;
+      case 'shipped': return <Truck className={baseClass} />;
+      case 'processing': return <Clock className={baseClass} />;
+      case 'pending': return <Calendar className={baseClass} />;
+      case 'cancelled': return <XCircle className={baseClass} />;
+      default: return <Clock className={baseClass} />;
     }
   };
 
   const filteredOrders = orders.filter(order => {
     const matchesFilter = filter === 'all' || order.status === filter;
     const matchesSearch = order.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         order.id.toLowerCase().includes(searchTerm.toLowerCase());
+      order.id.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesFilter && matchesSearch;
   });
 
   return (
-    <div className="orders-container">
+    <div className="space-y-6 bg-[white] min-h-screen p-6">
       {/* Header */}
-      <div className="orders-header">
-        <div className="header-content">
+      <div className="bg-gradient-to-r from-[#FFF5E1] via-[#FFD95A]/30 to-[#FFE4D6] rounded-2xl shadow-xl p-6 border border-[#FFE4D6] animate-fade-in">
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="header-title">
-              <ShoppingCart className="header-icon" />
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-[#5D3A00] to-[#D87C5A] bg-clip-text text-transparent flex items-center gap-2">
+              <ShoppingCart className="w-6 h-6 text-[#D87C5A] animate-bounce-slow" />
               Order Management
             </h1>
-            <p className="header-subtitle">Track and manage all customer orders</p>
+            <p className="text-[#5D3A00] mt-2">Track and manage all customer orders efficiently</p>
           </div>
-          <button className="export-button">
-            <Download className="button-icon" />
+          <button className="bg-gradient-to-r from-[#D87C5A] to-[#5D3A00] text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300">
+            <Download className="w-4 h-4 inline mr-2" />
             Export Orders
           </button>
         </div>
       </div>
 
       {/* Filters and Search */}
-      <div className="filters-section">
-        <div className="filters-container">
-          <div className="search-filter-group">
-            <div className="search-container">
-              <Search className="search-icon" />
-              <input
-                type="text"
-                placeholder="Search orders..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="search-input"
-              />
-            </div>
-            <div className="filter-group">
-              <Filter className="filter-icon" />
-              <select
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-                className="filter-select"
-              >
-                <option value="all">All Orders</option>
-                <option value="pending">Pending</option>
-                <option value="processing">Processing</option>
-                <option value="shipped">Shipped</option>
-                <option value="delivered">Delivered</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
-            </div>
-          </div>
+      <div className="bg-white rounded-xl shadow p-4 border border-[#FFE4D6] flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="relative w-full max-w-sm">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#D87C5A] w-4 h-4" />
+          <input
+            type="text"
+            placeholder="Search..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-[#FFD95A] rounded-lg text-sm"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <Filter className="w-4 h-4 text-[#5D3A00]" />
+          <select
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            className="border border-[#FFD95A] rounded-lg px-3 py-2 text-sm"
+          >
+            <option value="all">All</option>
+            <option value="pending">Pending</option>
+            <option value="processing">Processing</option>
+            <option value="shipped">Shipped</option>
+            <option value="delivered">Delivered</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
         </div>
       </div>
 
       {/* Orders List */}
-      <div className="orders-table-container">
-        <div className="table-wrapper">
-          <table className="orders-table">
-            <thead className="table-header">
+      <div className="bg-white rounded-2xl shadow-xl border border-[#FFE4D6] overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gradient-to-r from-[#FFF5E1] to-[#FFE4D6]">
               <tr>
-                <th>Order</th>
-                <th>Customer</th>
-                <th>Items</th>
-                <th>Total</th>
-                <th>Status</th>
-                <th>Date</th>
-                <th>Actions</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-[#5D3A00] uppercase tracking-wider">Order</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-[#5D3A00] uppercase tracking-wider">Customer</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-[#5D3A00] uppercase tracking-wider">Items</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-[#5D3A00] uppercase tracking-wider">Total</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-[#5D3A00] uppercase tracking-wider">Status</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-[#5D3A00] uppercase tracking-wider">Date</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-[#5D3A00] uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="table-body">
+            <tbody className="divide-y divide-[#FFF5E1]">
               {filteredOrders.map((order) => (
-                <tr key={order.id} className="table-row">
-                  <td className="order-id">{order.id}</td>
-                  <td className="customer-info">
-                    <div className="customer-name">{order.customer}</div>
-                    <div className="customer-email">
-                      <Mail className="info-icon" />
-                      {order.email}
+                <tr key={order.id} className="hover:bg-[#FFF5E1]/60 transition-all duration-200">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-[#5D3A00]">{order.id}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-bold text-[#5D3A00]">{order.customer}</div>
+                    <div className="text-sm text-[#5D3A00]/70 flex items-center gap-1">
+                      <Mail className="w-3 h-3 animate-fade-in" /> {order.email}
                     </div>
-                    <div className="customer-phone">
-                      <Phone className="info-icon" />
-                      {order.phone}
+                    <div className="text-sm text-[#5D3A00]/70 flex items-center gap-1">
+                      <Phone className="w-3 h-3 animate-fade-in" /> {order.phone}
                     </div>
                   </td>
-                  <td className="order-items">
-                    {order.items.map((item, idx) => (
-                      <div key={idx} className="item">{item}</div>
-                    ))}
+                  <td className="px-6 py-4">
+                    <div className="text-sm text-[#5D3A00] space-y-1">
+                      {order.items.map((item, idx) => (
+                        <div key={idx}>{item}</div>
+                      ))}
+                    </div>
                   </td>
-                  <td className="order-total">{order.total}</td>
-                  <td className="order-status">
-                    <span className={`status-badge ${getStatusColor(order.status)}`}>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-bold text-[#5D3A00]">{order.total}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium group ${getStatusColor(order.status)}`}>
                       {getStatusIcon(order.status)}
                       {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                     </span>
                   </td>
-                  <td className="order-date">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#5D3A00]">
                     {new Date(order.date).toLocaleDateString()}
                   </td>
-                  <td className="order-actions">
-                    <button className="view-button">
-                      <Eye className="action-icon" />
-                      View
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button className="text-[#D87C5A] hover:text-[#5D3A00] bg-[#FFE4D6] hover:bg-[#FFD95A]/70 px-3 py-1 rounded-lg transition-all duration-300">
+                      <Eye className="w-4 h-4 inline mr-1 animate-fade-in" /> View
                     </button>
                   </td>
                 </tr>

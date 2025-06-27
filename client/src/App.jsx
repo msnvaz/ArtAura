@@ -6,9 +6,9 @@ import './styles/main.css';
 import Home from './pages/Home';
 import Marketplace from './pages/Marketplace';
 import Competitions from './pages/Competitions';
-import ArtShopDashboard from './pages/shop/Dashboard';
-import Orders from './pages/shop/Orders';
-import RewardSystem from './pages/shop/RewardSystem';
+import Dashboard from './pages/shop/dashboard';
+import ShopOrders from './pages/shop/Orders';
+import RewardSystem from './pages/shop/Rewards';
 
 
 function App() {
@@ -19,8 +19,9 @@ function App() {
           <Route path="/home" element={<Home />} />
           <Route path="/marketplace" element={<Marketplace />} />
           <Route path="/competitions" element={<Competitions />} />
-          <Route path="/shop/dashboard" element={<ArtShopDashboard />} />
-          <Route path="/shop/orders" element={<Orders/>}/>
+          <Route path="/shop/dashboard" element={<Dashboard />} />
+          <Route path="/shop/orders" element={<ShopOrders/>}/>
+          <Route path="/shop/rewards" element={<RewardSystem />} />
 
 
         </Routes>
