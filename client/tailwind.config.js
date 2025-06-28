@@ -21,6 +21,15 @@ export default {
         '0%, 100%': { transform: 'scale(1)', opacity: 1 },
         '50%': { transform: 'scale(1.03)', opacity: 0.95 },
     },
+
+    colors: {
+        'custom-yellow-light': '#FFF5E1',
+        'custom-yellow': '#FFD95A',
+        'custom-orange-light': '#FFE4D6',
+        'custom-orange': '#D87C5A',
+        'custom-brown-dark': '#5D3A00'
+      },
+    
     },
   },
   plugins: [],

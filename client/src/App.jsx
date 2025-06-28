@@ -10,6 +10,7 @@ import Competitions from './pages/Competitions';
 import Dashboard from './pages/shop/dashboard';
 import ShopOrders from './pages/shop/Orders';
 import RewardSystem from './pages/shop/Rewards';
+import SalesAnalytics from './pages/shop/Analytics';
 
 import Login from './components/auth/login';
 import UploadArtWork from './pages/Artist/UploadArtWork';
@@ -38,6 +39,7 @@ function App() {
           <Route path="/shop/dashboard" element={<Dashboard />} />
           <Route path="/shop/orders" element={<ShopOrders/>}/>
           <Route path="/shop/rewards" element={<RewardSystem />} />
+          <Route path="/shop/analytics" element={<SalesAnalytics />} />
 
 
           <Route path="/uploadartwork" element={<UploadArtWork />} />
@@ -56,4 +58,3 @@ function App() {
 }
 
 export default App;
-
