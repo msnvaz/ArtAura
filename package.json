@@ -23,6 +23,7 @@
   "author": "Your Name",
   "license": "MIT",
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.11",
     "concurrently": "^8.2.2",
     "vite": "^6.3.5"
   },

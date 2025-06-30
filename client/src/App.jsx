@@ -17,6 +17,10 @@ import ArtworkDetail from './pages/Artist/ArtWorkDetail';
 import ArtistDashboard from './pages/Artist/ArtistDashBoard';
 import ArtistPortfolio from './pages/Artist/ArtistPortfolio';
 
+// Moderator Pages
+import ModeratorDashboard from "./pages/Moderator/ModeratorDashboard";
+
+
 // Components
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -44,6 +48,8 @@ function App() {
           <Route path="/artworks/:id" element={<ArtworkDetail />} />
           <Route path="/artistdashboard" element={<ArtistDashboard />} /> 
           <Route path="/artist/artistportfolio" element={<ArtistPortfolio />} />
+
+          <Route path="/moderator-dashboard" element={<ModeratorDashboard />} />
 
 
         </Routes>
