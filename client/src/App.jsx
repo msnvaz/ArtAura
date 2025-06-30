@@ -34,6 +34,11 @@ function App() {
     {/* <main className="flex-grow-1 w-100"> */}
         <Routes>
           <Route path="/" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/register/shop" element={<ShopRegisterPage />} />
+          <Route path="/community" element={<CommunityPage />} />
+          
+          
           <Route path="/marketplace" element={<Marketplace />} />
           <Route path="/competitions" element={<Competitions />} />
 
@@ -46,6 +51,11 @@ function App() {
           <Route path="/artworks/:id" element={<ArtworkDetail />} />
           <Route path="/artist/artistdashboard" element={<ArtistDashboard />} /> 
           <Route path="/artist/artistportfolio" element={<ArtistPortfolio />} />
+
+          {/* <Route path="/artist/dashboard" element={<ArtistDashboard />} /> */}
+          {/* <Route path="/admin/dashboard" element={<AdminDashboard />} /> */}
+          {/* <Route path="/moderator/dashboard" element={<ModeratorDashboard />} /> */}
+          {/* <Route path="/buyer/dashboard" element={<BuyerDashboard />} /> */}
 
 
         </Routes>

@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import App from './App.jsx';
 import { ArtProvider } from './context/ArtContext'; // ✅ Import the provider
 import { UserProvider } from './context/UserContext';
-// import './index.css'; 
+import './index.css'; 
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
