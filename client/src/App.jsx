@@ -6,6 +6,11 @@ import './styles/main.css';
 // Pages
 import Marketplace from './pages/Marketplace';
 import Competitions from './pages/Competitions';
+
+import Dashboard from './pages/shop/dashboard';
+import ShopOrders from './pages/shop/Orders';
+import RewardSystem from './pages/shop/Rewards';
+
 import Login from './components/auth/login';
 import UploadArtWork from './pages/Artist/UploadArtWork';
 import ArtworkDetail from './pages/Artist/ArtWorkDetail';
@@ -16,10 +21,9 @@ import ShopRegisterPage from './components/auth/shopSignup';
 import CommunityPage from './pages/CommunityPage';
 
 // Components
-//import Header from './components/Header';
-import Footer from './components/common/Footer';
+import Header from './components/Header';
+import Footer from './components/Footer';
 
-// Contexts
 
 
 function App() {
@@ -32,13 +36,17 @@ function App() {
           <Route path="/" element={<Login />} />
           <Route path="/marketplace" element={<Marketplace />} />
           <Route path="/competitions" element={<Competitions />} />
+
+          <Route path="/shop/dashboard" element={<Dashboard />} />
+          <Route path="/shop/orders" element={<ShopOrders/>}/>
+          <Route path="/shop/rewards" element={<RewardSystem />} />
+
+
           <Route path="/uploadartwork" element={<UploadArtWork />} />
           <Route path="/artworks/:id" element={<ArtworkDetail />} />
           <Route path="/artist/artistdashboard" element={<ArtistDashboard />} /> 
           <Route path="/artist/artistportfolio" element={<ArtistPortfolio />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/register/shop" element={<ShopRegisterPage />} />
-          <Route path="/community" element={<CommunityPage />} />
+
 
         </Routes>
         {/* </main> */}

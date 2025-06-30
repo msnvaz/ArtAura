@@ -13,11 +13,18 @@
     "clean": "rm -rf node_modules client/node_modules server/node_modules",
     "reset": "npm run clean && npm run install:all"
   },
-  "keywords": ["art", "marketplace", "competition", "react", "node"],
+  "keywords": [
+    "art",
+    "marketplace",
+    "competition",
+    "react",
+    "node"
+  ],
   "author": "Your Name",
   "license": "MIT",
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "vite": "^6.3.5"
   },
   "engines": {
     "node": ">=16.0.0",
