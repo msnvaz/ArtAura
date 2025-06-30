@@ -1,8 +1,9 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 function Home() {
   return (
-    <div className="container-fluid">
+    <>
       <div className="hero-section">
         <div className="container">
           <div className="row justify-content-center">
@@ -11,9 +12,9 @@ function Home() {
               <p className="lead mb-4">
                 Discover, buy, sell, and compete with amazing artworks from talented artists around the world.
               </p>
-              <div className="d-flex gap-3 justify-content-center">
-                <a href="/competitions" ><button className="btn btn-light btn-lg">Browse Art</button></a>
-                <a href="/marketplace"><button className="btn btn-outline-light btn-lg">Join Competition</button></a>
+              <div className="d-flex gap-3 justify-content-center flex-wrap">
+                <Link to="/marketplace" className="btn btn-light btn-lg">Browse Art</Link>
+                <Link to="/competitions" className="btn btn-outline-light btn-lg">Join Competition</Link>
               </div>
             </div>
           </div>
@@ -48,7 +49,7 @@ function Home() {
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
