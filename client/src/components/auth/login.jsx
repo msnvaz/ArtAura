@@ -1,7 +1,7 @@
 // src/pages/Login.jsx
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios'; // <-- Import Axios
+import axios from 'axios';
 import { Eye, EyeOff, ArrowRight } from 'lucide-react';
 
 const roleDashboardMap = {
@@ -14,14 +14,14 @@ const roleDashboardMap = {
 
 const Login = () => {
   const [formData, setFormData] = useState({
-    emailOrUsername: '',
+    email: '',
     password: ''
   });
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false); // For loading state
-  const [error, setError] = useState(''); // For error messages
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const navigate = useNavigate(); // for redirecting to signup page
+  const navigate = useNavigate();
 
   const handleInputChange = (e) => {
     setFormData((prev) => ({
@@ -36,22 +36,16 @@ const Login = () => {
     setError('');
 
     try {
-      // Make the API call
       const response = await axios.post('http://localhost:8080/api/auth/login', formData);
-
-      // Example: Save token to localStorage (customize as needed)
       localStorage.setItem('token', response.data.token);
 
-      // Extract user role (adjust according to your backend response structure)
-      const userRole = response.data.user?.role;
-
-      // Find the dashboard path for the role
+      const userRole = response.data.userInfo?.role?.toLowerCase();
       const dashboardPath = roleDashboardMap[userRole];
 
-      console.log('User Role:', userRole); // <-- Added logging for user role
+      console.log('User Role:', userRole);
 
       if (dashboardPath) {
-        navigate(dashboardPath); // Redirect to the correct dashboard
+        navigate(dashboardPath);
       } else {
         setError('Unknown user role. Contact support.');
       }
@@ -106,15 +100,14 @@ const Login = () => {
             </div>
 
             <form className="space-y-6" onSubmit={handleLogin}>
-            <div>
               <div>
                 <label className="text-sm font-medium text-[#362625] block mb-2">Email or Username</label>
                 <input
                   type="text"
-                  name="emailOrUsername"
-                  value={formData.emailOrUsername}
+                  name="email"
+                  value={formData.email}
                   onChange={handleInputChange}
-                  placeholder="Enter your email or username"
+                  placeholder="Enter your email"
                   className="w-full px-4 py-3 border border-gray-300 bg-white rounded-xl text-gray-800 focus:ring-2 focus:ring-[#362625] outline-none"
                   required
                 />
@@ -156,7 +149,7 @@ const Login = () => {
               </button>
 
               <div className="text-center text-sm text-gray-600">
-                Don’t have an account?{' '}
+                Don't have an account?{' '}
                 <button
                   type="button"
                   onClick={() => navigate('/signup')}
@@ -172,9 +165,8 @@ const Login = () => {
                 <button className="underline text-[#362625] font-medium bg-transparent">Privacy Policy</button> and{' '}
                 <button className="underline text-[#362625] font-medium bg-transparent">Cookie Policy</button>.
               </p>
-            </div>
             </form>
-            </div>
+          </div>
         </div>
       </div>
     </div>
