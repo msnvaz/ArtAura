@@ -1,55 +1,67 @@
+// src/pages/Login.jsx
 import { useState } from 'react';
-import { Eye, EyeOff, Palette, Heart, Store, ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios'; // <-- Import Axios
+import { Eye, EyeOff, ArrowRight } from 'lucide-react';
 
-const ArtAuraAuth = () => {
-  const [isLogin, setIsLogin] = useState(true);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [selectedUserType, setSelectedUserType] = useState('');
+const roleDashboardMap = {
+  admin: '/admin/dashboard',
+  moderator: '/moderator/dashboard',
+  artist: '/artist/dashboard',
+  shop: '/shop/dashboard',
+  buyer: '/buyer/dashboard'
+};
+
+const Login = () => {
   const [formData, setFormData] = useState({
-    email: '',
-    username: '',
-    password: '',
-    confirmPassword: '',
-    fullName: ''
+    emailOrUsername: '',
+    password: ''
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false); // For loading state
+  const [error, setError] = useState(''); // For error messages
 
-  const userTypes = [
-    {
-      id: 'art-lover',
-      name: 'Art Lover',
-      icon: Heart,
-      description: 'Discover and collect amazing artworks',
-      color: '#ff6b6b'
-    },
-    {
-      id: 'artist',
-      name: 'Artist',
-      icon: Palette,
-      description: 'Showcase and sell your creative works',
-      color: '#4ecdc4'
-    },
-    {
-      id: 'shop',
-      name: 'Art Shop',
-      icon: Store,
-      description: 'Manage your art business and inventory',
-      color: '#45b7d1'
-    }
-  ];
+  const navigate = useNavigate(); // for redirecting to signup page
 
   const handleInputChange = (e) => {
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [e.target.name]: e.target.value
-    });
+    }));
   };
 
-  const handleSubmit = () => {
-    if (isLogin) {
-      console.log('Login attempt:', { email: formData.email, password: formData.password });
-    } else {
-      console.log('Signup attempt:', { ...formData, userType: selectedUserType });
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      // Make the API call
+      const response = await axios.post('http://localhost:8080/api/auth/login', formData);
+
+      // Example: Save token to localStorage (customize as needed)
+      localStorage.setItem('token', response.data.token);
+
+      // Extract user role (adjust according to your backend response structure)
+      const userRole = response.data.user?.role;
+
+      // Find the dashboard path for the role
+      const dashboardPath = roleDashboardMap[userRole];
+
+      console.log('User Role:', userRole); // <-- Added logging for user role
+
+      if (dashboardPath) {
+        navigate(dashboardPath); // Redirect to the correct dashboard
+      } else {
+        setError('Unknown user role. Contact support.');
+      }
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+        'Login failed. Please check your credentials and try again.'
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -57,159 +69,116 @@ const ArtAuraAuth = () => {
     <div className="min-h-screen bg-[#faf3e0] flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-6xl bg-white rounded-3xl shadow-lg overflow-hidden flex flex-col lg:flex-row my-auto">
 
-        {/* Left Section with Images */}
+        {/* Left Section with stacked images */}
         <div className="hidden lg:flex flex-col justify-center items-center bg-[#362625] w-1/2 p-8 relative rounded-l-3xl">
-          {/* Stacked images */}
           <div className="relative w-full h-[400px] flex items-center justify-center">
-  {/* Left image - rotated counterclockwise */}
-  <img
-    src="/src/assets/bg5.jpg"
-    alt="art1"
-    className="absolute top-24 left-6 w-48 rounded-2xl shadow-xl z-10 transform -rotate-6"
-  />
-
-  {/* Middle image - zoomed */}
-  <img
-    src="/src/assets/bg4.jpg"
-    alt="art2"
-    className="absolute top-8 left-1/2 transform -translate-x-1/2 scale-110 w-52 rounded-2xl shadow-2xl z-20"
-  />
-
-  {/* Right image - rotated clockwise */}
-  <img
-    src="/src/assets/bg3.jpg"
-    alt="art3"
-    className="absolute top-24 right-6 w-48 rounded-2xl shadow-xl z-10 transform rotate-6"
-  />
-</div>
-
+            <img
+              src="/src/assets/bg5.jpg"
+              alt="art1"
+              className="absolute top-24 left-6 w-48 rounded-2xl shadow-xl z-10 transform -rotate-6"
+            />
+            <img
+              src="/src/assets/bg4.jpg"
+              alt="art2"
+              className="absolute top-8 left-1/2 transform -translate-x-1/2 scale-110 w-52 rounded-2xl shadow-2xl z-20"
+            />
+            <img
+              src="/src/assets/bg3.jpg"
+              alt="art3"
+              className="absolute top-24 right-6 w-48 rounded-2xl shadow-xl z-10 transform rotate-6"
+            />
+          </div>
           <div className="text-white text-center mt-10 px-4">
             <h1 className="text-4xl font-bold mb-4">ArtAura</h1>
             <p className="text-lg leading-relaxed">
-              Every masterpiece starts with a spark — light yours up on ArtAura. Discover diverse artworks, elevate your creativity, and turn your passion into purpose.
+              Every masterpiece starts with a spark — light yours up on ArtAura.
+              Discover diverse artworks, elevate your creativity, and turn your passion into purpose.
             </p>
           </div>
         </div>
 
-        {/* Right Auth Form Section */}
+        {/* Right Login Form Section */}
         <div className="w-full lg:w-1/2 p-8 lg:p-12 bg-white">
           <div className="max-w-md mx-auto">
             <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-[#362625] mb-2">{isLogin ? 'Welcome Back' : 'Join ArtAura'}</h2>
-              <p className="text-gray-600">{isLogin ? 'Sign in to your account' : 'Create your creative journey'}</p>
+              <h2 className="text-3xl font-bold text-[#362625] mb-2">Welcome Back</h2>
+              <p className="text-gray-600">Sign in to your account</p>
             </div>
 
-            <div className="space-y-6">
-              {!isLogin && (
-                <>
-                  <div>
-                    <label className="text-sm font-medium text-[#362625] block mb-2">Full Name</label>
-                    <input type="text" name="fullName" value={formData.fullName} onChange={handleInputChange} placeholder="Enter your full name" className="w-full px-4 py-3 border border-gray-300 bg-white rounded-xl text-gray-800 focus:ring-2 focus:ring-[#362625] outline-none" />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-[#362625] block mb-2">Username</label>
-                    <input type="text" name="username" value={formData.username} onChange={handleInputChange} placeholder="Choose a username" className="w-full px-4 py-3 border border-gray-300 bg-white rounded-xl text-gray-800 focus:ring-2 focus:ring-[#362625] outline-none" />
-                  </div>
-                </>
-              )}
-
+            <form className="space-y-6" onSubmit={handleLogin}>
+            <div>
               <div>
-                <label className="text-sm font-medium text-[#362625] block mb-2">{isLogin ? 'Email or Username' : 'Email'}</label>
-                <input type={isLogin ? 'text' : 'email'} name="email" value={formData.email} onChange={handleInputChange} placeholder={isLogin ? 'Enter your email or username' : 'Enter your email'} className="w-full px-4 py-3 border border-gray-300 bg-white rounded-xl text-gray-800 focus:ring-2 focus:ring-[#362625] outline-none" />
+                <label className="text-sm font-medium text-[#362625] block mb-2">Email or Username</label>
+                <input
+                  type="text"
+                  name="emailOrUsername"
+                  value={formData.emailOrUsername}
+                  onChange={handleInputChange}
+                  placeholder="Enter your email or username"
+                  className="w-full px-4 py-3 border border-gray-300 bg-white rounded-xl text-gray-800 focus:ring-2 focus:ring-[#362625] outline-none"
+                  required
+                />
               </div>
 
               <div className="relative">
                 <label className="text-sm font-medium text-[#362625] block mb-2">Password</label>
-                <input type={showPassword ? 'text' : 'password'} name="password" value={formData.password} onChange={handleInputChange} placeholder="Enter your password" className="w-full px-4 py-3 border border-gray-300 bg-white rounded-xl text-gray-800 focus:ring-2 focus:ring-[#362625] outline-none pr-10" />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute top-9 right-3 text-gray-500 bg-transparent">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  placeholder="Enter your password"
+                  className="w-full px-4 py-3 border border-gray-300 bg-white rounded-xl text-gray-800 focus:ring-2 focus:ring-[#362625] outline-none pr-10"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute top-9 right-3 text-gray-500 bg-transparent"
+                  tabIndex={-1}
+                >
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
 
-              {!isLogin && (
-                <>
-                  <div className="relative">
-                    <label className="text-sm font-medium text-[#362625] block mb-2">Confirm Password</label>
-                    <input type={showConfirmPassword ? 'text' : 'password'} name="confirmPassword" value={formData.confirmPassword} onChange={handleInputChange} placeholder="Confirm your password" className="w-full px-4 py-3 border border-gray-300 bg-white rounded-xl text-gray-800 focus:ring-2 focus:ring-[#362625] outline-none pr-10" />
-                    <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute top-9 right-3 text-gray-500 bg-transparent">
-                      {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                    </button>
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium text-[#362625] block mb-3">I am a...</label>
-                    <div className="grid grid-cols-1 gap-3">
-                      {userTypes.map((type) => {
-                        const Icon = type.icon;
-                        return (
-                          <div
-                            key={type.id}
-                            onClick={() => setSelectedUserType(type.id)}
-                            className={`flex items-center p-4 rounded-xl border cursor-pointer transition-all ${selectedUserType === type.id
-                                ? 'border-2 border-[#362625] bg-[#362625]10'
-                                : 'border border-gray-200 hover:border-gray-300'
-                              }`}
-                          >
-                            <div
-                              className="w-10 h-10 flex items-center justify-center mr-4 rounded-full"
-                              style={{ backgroundColor: `${type.color}20` }}
-                            >
-                              <Icon className="w-5 h-5" style={{ color: type.color }} />
-                            </div>
-                            <div className="flex-1">
-                              <h3 className="font-medium text-[#362625]">{type.name}</h3>
-                              <p className="text-sm text-gray-500">{type.description}</p>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </>
+              {/* Error Message */}
+              {error && (
+                <div className="text-red-600 text-sm text-center">{error}</div>
               )}
 
               <button
-                onClick={handleSubmit}
-                disabled={!isLogin && !selectedUserType}
-                className="w-full py-3 bg-[#362625] text-white rounded-xl font-semibold flex justify-center items-center space-x-2 hover:bg-[#2c1f1f] transition"
+                type="submit"
+                disabled={loading}
+                className={`w-full py-3 bg-[#362625] text-white rounded-xl font-semibold flex justify-center items-center space-x-2 hover:bg-[#2c1f1f] transition ${loading ? 'opacity-60 cursor-not-allowed' : ''}`}
               >
-                <span>{isLogin ? 'Sign In' : 'Create Account'}</span>
+                <span>{loading ? 'Signing In...' : 'Sign In'}</span>
                 <ArrowRight size={20} />
               </button>
 
               <div className="text-center text-sm text-gray-600">
-                {isLogin ? "Don't have an account?" : 'Already have an account?'}{' '}
+                Don’t have an account?{' '}
                 <button
-                  onClick={() => {
-                    setIsLogin(!isLogin);
-                    setSelectedUserType('');
-                    setFormData({ email: '', username: '', password: '', confirmPassword: '', fullName: '' });
-                  }}
+                  type="button"
+                  onClick={() => navigate('/signup')}
                   className="text-[#362625] font-medium underline bg-transparent"
                 >
-                  {isLogin ? 'Sign Up' : 'Sign In'}
+                  Sign Up
                 </button>
               </div>
 
               <p className="text-xs text-center text-gray-500 mt-6">
-                By {isLogin ? 'signing in' : 'signing up'}, you agree to our{' '}
+                By signing in, you agree to our{' '}
                 <button className="underline text-[#362625] font-medium bg-transparent">Terms of Service</button>,{' '}
-                <button className="underline text-[#362625] font-medium bg-transparent">Privacy Policy</button>{' '}
-                and{' '}
+                <button className="underline text-[#362625] font-medium bg-transparent">Privacy Policy</button> and{' '}
                 <button className="underline text-[#362625] font-medium bg-transparent">Cookie Policy</button>.
               </p>
             </div>
-          </div>
+            </form>
+            </div>
         </div>
       </div>
     </div>
   );
 };
 
-export default ArtAuraAuth;
-
-
-
-
-
-
+export default Login;
