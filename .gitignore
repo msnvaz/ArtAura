@@ -1,4 +1,5 @@
 node_modules
+server/
 client/package-lock.json
 client/package.json
 client/postcss.config.js
