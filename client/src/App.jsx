@@ -10,11 +10,13 @@ import Competitions from './pages/Competitions';
 import Dashboard from './pages/shop/dashboard';
 import ShopOrders from './pages/shop/Orders';
 import RewardSystem from './pages/shop/Rewards';
+import SalesAnalytics from './pages/shop/Analytics';
+import Catalog from './pages/shop/Catalog';
 
 import Login from './components/auth/login';
 import UploadArtWork from './pages/Artist/UploadArtWork';
 import ArtworkDetail from './pages/Artist/ArtWorkDetail';
-import ArtistDashboard from './pages/Artist/ArtistDashBoard';
+//import ArtistDashboard from './pages/Artist/ArtistDashBoard';
 import ArtistPortfolio from './pages/Artist/ArtistPortfolio';
 import Signup from './components/auth/signup2';
 import ShopRegisterPage from './components/auth/shopSignup';
@@ -66,6 +68,8 @@ function App() {
           <Route path="/shop/dashboard" element={<Dashboard />} />
           <Route path="/shop/orders" element={<ShopOrders/>}/>
           <Route path="/shop/rewards" element={<RewardSystem />} />
+          <Route path="/shop/analytics" element={<SalesAnalytics />} />
+          <Route path="/shop/catalog" element={<Catalog/>}/>
 
 
           <Route path="/uploadartwork" element={<UploadArtWork />} />
@@ -89,4 +93,3 @@ function App() {
 }
 
 export default App;
-

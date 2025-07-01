@@ -102,11 +102,11 @@ const Dashboard = () => {
         <div className="relative">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-[#5D3A00] flex items-center gap-2">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-[#5D3A00] to-[#D87C5A] bg-clip-text text-transparent flex items-center gap-2">
                 <Sparkles className="w-6 h-6 text-[#D87C5A]" />
                 Welcome back, John!
               </h1>
-              <p className="text-[#5D3A00] mt-2 text-sm">Here's what's happening with your art supply shop today.</p>
+              <p className="text-[#5D3A00] mt-2 ">Here's what's happening with your art supply shop today.</p>
             </div>
             <div className="bg-[#FFE4D6] rounded-xl p-4 border border-[#FFD95A] shadow">
               <p className="text-xs text-[#5D3A00] mb-1">Today</p>
