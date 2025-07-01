@@ -25,29 +25,29 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 
 
+// function App() {
+//   // const location = useLocation();
+//   // const isAdminRoute = location.pathname === '/admin';
+
+//   return (
+//     <div className="App d-flex flex-column min-vh-100 w-100">
+//       {/* {!isAdminRoute && <Header />} */}
+//       <main className="flex-grow-1 w-100">
+//         <Routes>
+//           {/* <Route path="/" element={<Home />} />
+//           <Route path="/home" element={<Home />} /> */}
+//           <Route path="/marketplace" element={<Marketplace />} />
+//           <Route path="/competitions" element={<Competitions />} />
+//           <Route path="/login" element={<Login />} />
+//           {/* <Route path="/admin" element={<AdminDashboard />} /> */}
+//         </Routes>
+//       </main>
+//       {/* {!isAdminRoute && <Footer />} */}
+//     </div>
+//   );
+// }
+
 function App() {
-  const location = useLocation();
-  const isAdminRoute = location.pathname === '/admin';
-
-  return (
-    <div className="App d-flex flex-column min-vh-100 w-100">
-      {!isAdminRoute && <Header />}
-      <main className="flex-grow-1 w-100">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/home" element={<Home />} />
-          <Route path="/marketplace" element={<Marketplace />} />
-          <Route path="/competitions" element={<Competitions />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-        </Routes>
-      </main>
-      {!isAdminRoute && <Footer />}
-    </div>
-  );
-}
-
-function AppWrapper() {
   return (
     <Router>
       {/* <div className="App d-flex flex-column min-vh-100 w-100"> */}
