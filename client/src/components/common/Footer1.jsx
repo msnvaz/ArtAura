@@ -1,6 +1,6 @@
 import React from 'react';
 import { Facebook, X, Instagram, Palette } from 'lucide-react';
-import Logo from '../assets/footer-logo.jpg'; // Adjust path as needed
+import Logo from '../../assets/footer-logo.jpg'; // Adjust path as needed
 
 const Footer = () => {
   return (
@@ -18,7 +18,7 @@ const Footer = () => {
                 </span>
               </span>
 
-              {//footer-logo.jpg
+              {
                 <img
                   src={Logo}
                   alt="ArtAura Logo"
