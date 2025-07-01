@@ -16,7 +16,7 @@ import Catalog from './pages/shop/Catalog';
 import Login from './components/auth/login';
 import UploadArtWork from './pages/Artist/UploadArtWork';
 import ArtworkDetail from './pages/Artist/ArtWorkDetail';
-//import ArtistDashboard from './pages/Artist/ArtistDashBoard';
+import ArtistDashboard from './pages/Artist/ArtistDashBoard';
 import ArtistPortfolio from './pages/Artist/ArtistPortfolio';
 import Signup from './components/auth/signup2';
 import ShopRegisterPage from './components/auth/shopSignup';
@@ -74,7 +74,7 @@ function App() {
 
           <Route path="/uploadartwork" element={<UploadArtWork />} />
           <Route path="/artworks/:id" element={<ArtworkDetail />} />
-          <Route path="/artist/artistdashboard" element={<ArtistDashboard />} /> 
+          <Route path="/artist/artistdashboard" element={<ArtistDashboard />} />
           <Route path="/artist/artistportfolio" element={<ArtistPortfolio />} />
 
           {/* <Route path="/artist/dashboard" element={<ArtistDashboard />} /> */}
