@@ -134,16 +134,16 @@ const SalesAnalytics = () => {
   return (
     <div className="space-y-6 bg-[#FFF5E1] min-h-screen p-6 animate-fade-in">
       {/* Header Section */}
-      <div className="rounded-2xl shadow-xl p-6 border border-[#FFE4D6] bg-gradient-to-r from-[#FFF5E1] to-[#FFE4D6] relative overflow-hidden">
+      <div className="rounded-2xl shadow-xl p-6 border border-[#FFE4D6] bg-gradient-to-r from-[#FFF5E1] via-[#FFD95A]/30 to-[#FFE4D6] relative overflow-hidden animate-fade-in">
         <div className="absolute top-0 right-0 w-32 h-32 bg-[#FFD95A]/20 rounded-full -translate-y-16 translate-x-16 animate-pulse"></div>
         <div className="relative">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-[#5D3A00] flex items-center gap-2">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-[#5D3A00] to-[#D87C5A] bg-clip-text text-transparent flex items-center gap-2">
                 <BarChart3 className="w-6 h-6 text-[#D87C5A]" />
                 Sales Analytics
               </h1>
-              <p className="text-[#5D3A00] mt-2 text-sm">Track your performance and insights.</p>
+              <p className="text-[#5D3A00] mt-2 ">Track your performance and insights.</p>
             </div>
             <div className="mt-6 lg:mt-0 flex items-center space-x-4">
               <div className="relative">
@@ -157,11 +157,11 @@ const SalesAnalytics = () => {
                   <option value="90days">Last 90 days</option>
                   <option value="12months">Last 12 months</option>
                 </select>
-                <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none   px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300">
                   <Calendar className="w-4 h-4 text-[#5D3A00]" />
                 </div>
               </div>
-              <button className="bg-gradient-to-r from-[#D87C5A] to-[#5D3A00] text-white px-8 py-2 rounded-xl font-semibold shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300">
+              <button className="bg-gradient-to-r from-[#D87C5A] to-[#5D3A00] text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300">
                 <Download className="w-4 h-4 inline mr-2" />
                 Export Data
               </button>
@@ -216,7 +216,7 @@ const SalesAnalytics = () => {
             style={{ animationDelay: `${index * 0.1}s`, animationFillMode: 'both' }}
           >
             <div className="flex items-center justify-between mb-4">
-              <div className={`p-3 rounded-xl ${metric.color} shadow-lg transform transition-transform duration-500 hover:rotate-3`}>
+              <div className={`p-3 rounded-xl ${metric.color} shadow-lg group-hover:rotate-12 transition-transform duration-300`}>
                 <metric.icon className="w-6 h-6 text-white" />
               </div>
               <div className={`flex items-center text-sm font-semibold px-3 py-1 rounded-full ${
