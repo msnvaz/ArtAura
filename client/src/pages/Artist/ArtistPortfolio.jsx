@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Eye, 
-  Heart, 
-  Star, 
-  Trophy, 
-  Medal, 
+import {
+  Plus,
+  Edit,
+  Trash2,
+  Eye,
+  Heart,
+  Star,
+  Trophy,
+  Medal,
   Award,
   Upload,
   Save,
@@ -181,7 +181,7 @@ const ArtistPortfolio = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-cream/20 py-8">
+    <div className="min-h-screen bg-[#fdf9f4] py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Cover Image */}
         <div className="relative h-64 md:h-80 rounded-lg overflow-hidden mb-8">
@@ -190,7 +190,7 @@ const ArtistPortfolio = () => {
             alt="Cover"
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-black bg-opacity-40"></div>
+          <div className="absolute inset-0 bg-black/40"></div>
           <div className="absolute bottom-6 left-6 text-white">
             <h1 className="text-3xl md:text-4xl font-bold mb-2">{artistProfile.name}</h1>
             <div className="flex items-center space-x-4 text-white/90">
@@ -220,7 +220,7 @@ const ArtistPortfolio = () => {
                 alt={artistProfile.name}
                 className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
               />
-              <button className="absolute bottom-0 right-0 bg-brown text-cream p-2 rounded-full hover:bg-brown/90 transition-colors">
+              <button className="absolute bottom-0 right-0 bg-[#7f5539] text-[#fdf9f4] p-2 rounded-full hover:bg-[#6e4c34] transition-colors">
                 <Edit className="h-3 w-3" />
               </button>
             </div>
@@ -229,29 +229,29 @@ const ArtistPortfolio = () => {
             <div className="flex-1">
               <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
                 <div>
-                  <h2 className="text-2xl font-bold text-brown mb-2">{artistProfile.name}</h2>
+                  <h2 className="text-2xl font-bold text-[#7f5539] mb-2">{artistProfile.name}</h2>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                     <div>
-                      <div className="text-2xl font-bold text-brown">{artistProfile.stats.artworks}</div>
-                      <div className="text-sm text-brown/60">Artworks</div>
+                      <div className="text-2xl font-bold text-[#7f5539]">{artistProfile.stats.artworks}</div>
+                      <div className="text-sm text-[#7f5539]/60">Artworks</div>
                     </div>
                     <div>
-                      <div className="text-2xl font-bold text-brown">{artistProfile.stats.sales}</div>
-                      <div className="text-sm text-brown/60">Sales</div>
+                      <div className="text-2xl font-bold text-[#7f5539]">{artistProfile.stats.sales}</div>
+                      <div className="text-sm text-[#7f5539]/60">Sales</div>
                     </div>
                     <div>
-                      <div className="text-2xl font-bold text-brown">{artistProfile.stats.followers}</div>
-                      <div className="text-sm text-brown/60">Followers</div>
+                      <div className="text-2xl font-bold text-[#7f5539]">{artistProfile.stats.followers}</div>
+                      <div className="text-sm text-[#7f5539]/60">Followers</div>
                     </div>
                     <div>
-                      <div className="text-2xl font-bold text-brown">{artistProfile.stats.views}</div>
-                      <div className="text-sm text-brown/60">Views</div>
+                      <div className="text-2xl font-bold text-[#7f5539]">{artistProfile.stats.views}</div>
+                      <div className="text-sm text-[#7f5539]/60">Views</div>
                     </div>
                   </div>
                 </div>
                 <button
                   onClick={() => setIsEditingProfile(!isEditingProfile)}
-                  className="mt-4 md:mt-0 bg-brown text-cream px-6 py-2 rounded-lg hover:bg-brown/90 transition-colors font-medium flex items-center space-x-2"
+                  className="mt-4 md:mt-0 bg-[#7f5539] text-[#fdf9f4] px-6 py-2 rounded-lg hover:bg-[#6e4c34] transition-colors font-medium flex items-center space-x-2"
                 >
                   <Edit className="h-4 w-4" />
                   <span>Edit Profile</span>
@@ -260,12 +260,12 @@ const ArtistPortfolio = () => {
 
               {/* Bio */}
               <div className="mb-4">
-                <p className="text-brown/70 leading-relaxed">{artistProfile.bio}</p>
+                <p className="text-[#7f5539]/70 leading-relaxed">{artistProfile.bio}</p>
               </div>
 
               {/* Winner Badges */}
               <div className="mb-4">
-                <h3 className="text-lg font-semibold text-brown mb-3 flex items-center space-x-2">
+                <h3 className="text-lg font-semibold text-[#7f5539] mb-3 flex items-center space-x-2">
                   <Trophy className="h-5 w-5" />
                   <span>Achievements & Awards</span>
                 </h3>
@@ -293,7 +293,7 @@ const ArtistPortfolio = () => {
 
         {/* Navigation Tabs */}
         <div className="bg-white rounded-lg shadow-sm mb-8">
-          <div className="border-b border-cream/50">
+          <div className="border-b border-[#fdf9f4]/50">
             <nav className="flex space-x-8 px-6">
               {[
                 { id: 'portfolio', label: 'Portfolio', count: artworks.length },
@@ -304,15 +304,14 @@ const ArtistPortfolio = () => {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors ${
-                    activeTab === tab.id
-                      ? 'border-brown text-brown'
-                      : 'border-transparent text-brown/60 hover:text-brown hover:border-brown/30'
-                  }`}
+                  className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors ${activeTab === tab.id
+                      ? 'border-[#7f5539] text-[#7f5539]'
+                      : 'border-transparent text-[#7f5539]/60 hover:text-[#7f5539] hover:border-[#7f5539]/30'
+                    }`}
                 >
                   {tab.label}
                   {tab.count && (
-                    <span className="ml-2 bg-brown/10 text-brown px-2 py-1 rounded-full text-xs">
+                    <span className="ml-2 bg-[#7f5539]/10 text-[#7f5539] px-2 py-1 rounded-full text-xs">
                       {tab.count}
                     </span>
                   )}
@@ -329,10 +328,10 @@ const ArtistPortfolio = () => {
             <div className="bg-white rounded-lg shadow-sm p-6">
               <div className="flex flex-col md:flex-row md:items-center md:justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-brown mb-2">My Artworks</h3>
-                  <p className="text-brown/70">Manage your portfolio and showcase your best work</p>
+                  <h3 className="text-lg font-semibold text-[#7f5539] mb-2">My Artworks</h3>
+                  <p className="text-[#7f5539]/70">Manage your portfolio and showcase your best work</p>
                 </div>
-                <button className="mt-4 md:mt-0 bg-brown text-cream px-6 py-2 rounded-lg hover:bg-brown/90 transition-colors font-medium flex items-center space-x-2">
+                <button className="mt-4 md:mt-0 bg-[#7f5539] text-[#fdf9f4] px-6 py-2 rounded-lg hover:bg-[#6e4c34] transition-colors font-medium flex items-center space-x-2">
                   <Plus className="h-4 w-4" />
                   <span>Add New Artwork</span>
                 </button>
@@ -359,34 +358,33 @@ const ArtistPortfolio = () => {
                       </div>
                     )}
                     <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex space-x-2">
-                      <button className="bg-white/90 text-brown p-2 rounded-full hover:bg-white transition-colors">
+                      <button className="bg-white/90 text-[#7f5539] p-2 rounded-full hover:bg-white transition-colors">
                         <Eye className="h-4 w-4" />
                       </button>
-                      <button className="bg-white/90 text-brown p-2 rounded-full hover:bg-white transition-colors">
+                      <button className="bg-white/90 text-[#7f5539] p-2 rounded-full hover:bg-white transition-colors">
                         <Edit className="h-4 w-4" />
                       </button>
                       <button className="bg-white/90 text-red-500 p-2 rounded-full hover:bg-white transition-colors">
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
-                    <div className={`absolute bottom-3 right-3 px-2 py-1 rounded-full text-xs font-medium ${
-                      artwork.status === 'Available' ? 'bg-green-100 text-green-800' :
-                      artwork.status === 'Sold' ? 'bg-red-100 text-red-800' :
-                      'bg-yellow-100 text-yellow-800'
-                    }`}>
+                    <div className={`absolute bottom-3 right-3 px-2 py-1 rounded-full text-xs font-medium ${artwork.status === 'Available' ? 'bg-green-100 text-green-800' :
+                        artwork.status === 'Sold' ? 'bg-red-100 text-red-800' :
+                          'bg-yellow-100 text-yellow-800'
+                      }`}>
                       {artwork.status}
                     </div>
                   </div>
 
                   <div className="p-4">
-                    <h4 className="font-semibold text-brown mb-1">{artwork.title}</h4>
-                    <p className="text-sm text-brown/70 mb-2">{artwork.medium} • {artwork.size}</p>
+                    <h4 className="font-semibold text-[#7f5539] mb-1">{artwork.title}</h4>
+                    <p className="text-sm text-[#7f5539]/70 mb-2">{artwork.medium} • {artwork.size}</p>
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-lg font-bold text-brown">{artwork.price}</span>
-                      <span className="text-sm text-brown/60">{artwork.year}</span>
+                      <span className="text-lg font-bold text-[#7f5539]">{artwork.price}</span>
+                      <span className="text-sm text-[#7f5539]/60">{artwork.year}</span>
                     </div>
-                    
-                    <div className="flex items-center justify-between text-sm text-brown/60">
+
+                    <div className="flex items-center justify-between text-sm text-[#7f5539]/60">
                       <div className="flex items-center space-x-3">
                         <div className="flex items-center space-x-1">
                           <Heart className="h-4 w-4" />
@@ -397,7 +395,7 @@ const ArtistPortfolio = () => {
                           <span>{artwork.views}</span>
                         </div>
                       </div>
-                      <button className="text-brown hover:text-brown/80 transition-colors font-medium">
+                      <button className="text-[#7f5539] hover:text-[#6e4c34] transition-colors font-medium">
                         View Details
                       </button>
                     </div>
@@ -412,24 +410,23 @@ const ArtistPortfolio = () => {
         {activeTab === 'exhibitions' && (
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-brown">My Exhibitions</h3>
-              <button className="bg-brown text-cream px-4 py-2 rounded-lg hover:bg-brown/90 transition-colors font-medium">
+              <h3 className="text-lg font-semibold text-[#7f5539]">My Exhibitions</h3>
+              <button className="bg-[#7f5539] text-[#fdf9f4] px-4 py-2 rounded-lg hover:bg-[#6e4c34] transition-colors font-medium">
                 Apply for Exhibition
               </button>
             </div>
-            
+
             <div className="space-y-4">
               {exhibitions.map((exhibition) => (
-                <div key={exhibition.id} className="p-4 bg-cream/30 rounded-lg">
+                <div key={exhibition.id} className="p-4 bg-[#fdf9f4]/30 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-medium text-brown">{exhibition.title}</h4>
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                      exhibition.status === 'Upcoming' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
-                    }`}>
+                    <h4 className="font-medium text-[#7f5539]">{exhibition.title}</h4>
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${exhibition.status === 'Upcoming' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                      }`}>
                       {exhibition.status}
                     </span>
                   </div>
-                  <div className="text-sm text-brown/70 space-y-1">
+                  <div className="text-sm text-[#7f5539]/70 space-y-1">
                     <p>Location: {exhibition.location}</p>
                     <p>Date: {exhibition.date}</p>
                     <p>Artworks: {exhibition.artworks} pieces</p>
@@ -443,8 +440,8 @@ const ArtistPortfolio = () => {
         {/* Achievements Tab */}
         {activeTab === 'achievements' && (
           <div className="bg-white rounded-lg shadow-sm p-6">
-            <h3 className="text-lg font-semibold text-brown mb-6">Awards & Recognition</h3>
-            
+            <h3 className="text-lg font-semibold text-[#7f5539] mb-6">Awards & Recognition</h3>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {badges.map((badge) => (
                 <div
@@ -476,23 +473,23 @@ const ArtistPortfolio = () => {
         {/* Analytics Tab */}
         {activeTab === 'analytics' && (
           <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-            <Palette className="h-16 w-16 text-brown/30 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-brown mb-2">Portfolio Analytics</h3>
-            <p className="text-brown/70 mb-6">
+            <Palette className="h-16 w-16 text-[#7f5539]/30 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-[#7f5539] mb-2">Portfolio Analytics</h3>
+            <p className="text-[#7f5539]/70 mb-6">
               Detailed insights about your portfolio performance, views, and engagement
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
-              <div className="p-4 bg-cream/30 rounded-lg">
-                <h4 className="font-semibold text-brown mb-2">View Analytics</h4>
-                <p className="text-sm text-brown/70">Track how many people view your artworks</p>
+              <div className="p-4 bg-[#fdf9f4]/30 rounded-lg">
+                <h4 className="font-semibold text-[#7f5539] mb-2">View Analytics</h4>
+                <p className="text-sm text-[#7f5539]/70">Track how many people view your artworks</p>
               </div>
-              <div className="p-4 bg-cream/30 rounded-lg">
-                <h4 className="font-semibold text-brown mb-2">Engagement Metrics</h4>
-                <p className="text-sm text-brown/70">Monitor likes, shares, and interactions</p>
+              <div className="p-4 bg-[#fdf9f4]/30 rounded-lg">
+                <h4 className="font-semibold text-[#7f5539] mb-2">Engagement Metrics</h4>
+                <p className="text-sm text-[#7f5539]/70">Monitor likes, shares, and interactions</p>
               </div>
-              <div className="p-4 bg-cream/30 rounded-lg">
-                <h4 className="font-semibold text-brown mb-2">Sales Performance</h4>
-                <p className="text-sm text-brown/70">Analyze your artwork sales and revenue</p>
+              <div className="p-4 bg-[#fdf9f4]/30 rounded-lg">
+                <h4 className="font-semibold text-[#7f5539] mb-2">Sales Performance</h4>
+                <p className="text-sm text-[#7f5539]/70">Analyze your artwork sales and revenue</p>
               </div>
             </div>
           </div>
