@@ -90,7 +90,7 @@ function App() {
           {/* <Route path="/buyer/dashboard" element={<BuyerDashboard />} /> */}
 
           <Route path="/ModeratorDashboard" element={<ModeratorDashboard />} />
-          <Route path="/ModeratorDashboard/createChallenge" element={<CreateChallenge />} />
+          <Route path="/createChallenge" element={<CreateChallenge />} />
 
 
         </Routes>
