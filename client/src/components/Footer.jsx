@@ -1,173 +1,118 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Facebook, X, Instagram, Palette } from 'lucide-react';
+import Logo from '../assets/footer-logo.jpg'; // Adjust path as needed
 
-function Footer() {
+const Footer = () => {
   return (
-    <footer className="bg-dark text-light py-5 mt-auto">
-      <div className="container">
-        <div className="row">
-          {/* Company Info */}
-          <div className="col-lg-4 col-md-6 mb-4">
-            <div className="d-flex align-items-center mb-3">
-              <img 
-                src="./src/assets/images/logo-white.jpg" 
-                alt="ArtAura Logo" 
-                height="35" 
-                className="me-2"
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                  e.target.nextSibling.style.display = 'inline';
-                }}
-              />
-              <h5 className="mb-0 text-gradient">ArtAura</h5>
-            </div>
-            <p className="text-muted">
-              Connecting artists and art lovers worldwide. Discover, buy, sell, and compete 
-              with amazing artworks from talented artists around the globe.
-            </p>
-            {/* Social Media Links */}
-            <div className="social-links">
-              <a href="#" className="text-light me-3" aria-label="Facebook">
-                <i className="fab fa-facebook-f fs-5"></i>
-              </a>
-              <a href="#" className="text-light me-3" aria-label="Twitter">
-                <i className="fab fa-twitter fs-5"></i>
-              </a>
-              <a href="#" className="text-light me-3" aria-label="Instagram">
-                <i className="fab fa-instagram fs-5"></i>
-              </a>
-              <a href="#" className="text-light me-3" aria-label="LinkedIn">
-                <i className="fab fa-linkedin-in fs-5"></i>
-              </a>
-              <a href="#" className="text-light" aria-label="YouTube">
-                <i className="fab fa-youtube fs-5"></i>
-              </a>
-            </div>
-          </div>
+    <footer className="bg-[#1C0E09] text-white">
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        {/* Main Footer Content */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12">
+          {/* Logo and Social Media */}
+          <div className="lg:col-span-1">
+            <div className="flex items-center mb-6">
+              <span className="ml-3 text-xl font-bold">
+                <span className="text-white">ART</span>
+                <span className="block text-sm font-normal text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-yellow-400 to-yellow-300">
+                  AURA
+                </span>
+              </span>
 
-          {/* Quick Links */}
-          <div className="col-lg-2 col-md-6 mb-4">
-            <h6 className="text-uppercase fw-bold mb-3">Quick Links</h6>
-            <ul className="list-unstyled">
-              <li className="mb-2">
-                <Link to="/home" className="text-muted text-decoration-none">
-                  <i className="fas fa-home me-2"></i>Home
-                </Link>
-              </li>
-              <li className="mb-2">
-                <Link to="/marketplace" className="text-muted text-decoration-none">
-                  <i className="fas fa-shopping-bag me-2"></i>Marketplace
-                </Link>
-              </li>
-              <li className="mb-2">
-                <Link to="/competitions" className="text-muted text-decoration-none">
-                  <i className="fas fa-trophy me-2"></i>Competitions
-                </Link>
-              </li>
-              <li className="mb-2">
-                <Link to="/gallery" className="text-muted text-decoration-none">
-                  <i className="fas fa-images me-2"></i>Gallery
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* For Artists */}
-          <div className="col-lg-2 col-md-6 mb-4">
-            <h6 className="text-uppercase fw-bold mb-3">For Artists</h6>
-            <ul className="list-unstyled">
-              <li className="mb-2">
-                <a href="#" className="text-muted text-decoration-none">
-                  <i className="fas fa-upload me-2"></i>Upload Art
-                </a>
-              </li>
-              <li className="mb-2">
-                <a href="#" className="text-muted text-decoration-none">
-                  <i className="fas fa-chart-line me-2"></i>Artist Dashboard
-                </a>
-              </li>
-              <li className="mb-2">
-                <a href="#" className="text-muted text-decoration-none">
-                  <i className="fas fa-graduation-cap me-2"></i>Resources
-                </a>
-              </li>
-              <li className="mb-2">
-                <a href="#" className="text-muted text-decoration-none">
-                  <i className="fas fa-handshake me-2"></i>Commission
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          {/* Support */}
-          <div className="col-lg-2 col-md-6 mb-4">
-            <h6 className="text-uppercase fw-bold mb-3">Support</h6>
-            <ul className="list-unstyled">
-              <li className="mb-2">
-                <a href="#" className="text-muted text-decoration-none">
-                  <i className="fas fa-question-circle me-2"></i>Help Center
-                </a>
-              </li>
-              <li className="mb-2">
-                <a href="#" className="text-muted text-decoration-none">
-                  <i className="fas fa-envelope me-2"></i>Contact Us
-                </a>
-              </li>
-              <li className="mb-2">
-                <a href="#" className="text-muted text-decoration-none">
-                  <i className="fas fa-shield-alt me-2"></i>Privacy Policy
-                </a>
-              </li>
-              <li className="mb-2">
-                <a href="#" className="text-muted text-decoration-none">
-                  <i className="fas fa-file-contract me-2"></i>Terms of Service
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          {/* Newsletter */}
-          <div className="col-lg-2 col-md-12 mb-4">
-            <h6 className="text-uppercase fw-bold mb-3">Newsletter</h6>
-            <p className="text-muted small">
-              Stay updated with the latest competitions and featured artworks.
-            </p>
-            <form className="newsletter-form">
-              <div className="input-group mb-3">
-                <input 
-                  type="email" 
-                  className="form-control" 
-                  placeholder="Your email"
-                  aria-label="Email for newsletter"
+              {//footer-logo.jpg
+                <img
+                  src={Logo}
+                  alt="ArtAura Logo"
+                  className="ml-3 h-10 w-auto object-contain"
                 />
-                <button className="btn btn-primary" type="submit">
-                  <i className="fas fa-paper-plane"></i>
-                </button>
-              </div>
-            </form>
+              }
+            </div>
+
+            <div className="flex space-x-4">
+              <a
+                href="#"
+                className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-orange-500 transition-colors duration-200"
+                aria-label="Facebook"
+              >
+                <Facebook className="w-5 h-5" />
+              </a>
+              <a
+                href="#"
+                className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-gray-600 transition-colors duration-200"
+                aria-label="X"
+              >
+                <X className="w-5 h-5" />
+              </a>
+              <a
+                href="#"
+                className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-pink-500 transition-colors duration-200"
+                aria-label="Instagram"
+              >
+                <Instagram className="w-5 h-5" />
+              </a>
+            </div>
+          </div>
+
+          {/* Links Columns */}
+          <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Column 1 */}
+            <div>
+              <ul className="space-y-3">
+                <li><a href="#" className="text-gray-300 hover:text-white">About</a></li>
+                <li><a href="#" className="text-gray-300 hover:text-white">Contact</a></li>
+                <li><a href="#" className="text-gray-300 hover:text-white">Premium Gallery</a></li>
+                <li><a href="#" className="text-gray-300 hover:text-white">Art Protection</a></li>
+              </ul>
+            </div>
+
+            {/* Column 2 */}
+            <div>
+              <ul className="space-y-3">
+                <li><a href="#" className="text-gray-300 hover:text-white">Commissions</a></li>
+                <li><a href="#" className="text-gray-300 hover:text-white">Prints & Merch</a></li>
+                <li><a href="#" className="text-gray-300 hover:text-white">Terms of Service</a></li>
+                <li><a href="#" className="text-gray-300 hover:text-white">Guidelines</a></li>
+              </ul>
+            </div>
+
+            {/* Column 3 */}
+            <div>
+              <ul className="space-y-3">
+                <li><a href="#" className="text-gray-300 hover:text-white">Tutorials</a></li>
+                <li><a href="#" className="text-gray-300 hover:text-white">Privacy Policy</a></li>
+                <li><a href="#" className="text-gray-300 hover:text-white">Copyright Policy</a></li>
+                <li><a href="#" className="text-gray-300 hover:text-white">Help Center</a></li>
+              </ul>
+            </div>
+          </div>
+
+          {/* CTA Section */}
+          <div className="lg:col-span-1">
+            <div className="text-sm text-gray-400 mb-4">
+              Become part of <span className="text-yellow-300 font-medium">ArtAura</span> — where artists showcase portfolios, join exhibitions, and explore creative careers.
+            </div>
+            <div className="space-y-3">
+              <button className="w-full bg-gradient-to-r from-orange-400 via-yellow-400 to-yellow-300 text-gray-900 font-medium py-2.5 px-4 rounded-lg hover:from-orange-500 hover:to-yellow-400 transition-colors duration-200">
+                Become an Artist
+              </button>
+              <button className="w-full bg-gray-700 hover:bg-gray-600 text-white font-medium py-2.5 px-4 rounded-lg transition-colors duration-200">
+                View Upcoming Exhibitions
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Bottom Bar */}
-        <hr className="my-4" />
-        <div className="row align-items-center">
-          <div className="col-md-6">
-            <p className="text-muted small mb-0">
-              © 2024 ArtAura. All rights reserved.
-            </p>
-          </div>
-          <div className="col-md-6 text-md-end">
-            <div className="payment-icons">
-              <i className="fab fa-cc-visa text-muted me-2 fs-5"></i>
-              <i className="fab fa-cc-mastercard text-muted me-2 fs-5"></i>
-              <i className="fab fa-cc-paypal text-muted me-2 fs-5"></i>
-              <i className="fab fa-cc-stripe text-muted fs-5"></i>
+        {/* Bottom Copyright */}
+        <div className="border-t border-gray-800 mt-12 pt-8">
+          <div className="flex flex-col md:flex-row justify-between items-center text-sm text-gray-400">
+            <div>©2025 ArtAura. All rights reserved.</div>
+            <div className="mt-4 md:mt-0 text-center">
+              Empowering <span className="text-yellow-400 font-medium">creativity</span>, connecting <span className="text-orange-400 font-medium">visionaries</span>.
             </div>
           </div>
         </div>
       </div>
     </footer>
   );
-}
+};
 
 export default Footer;
