@@ -4,6 +4,7 @@ import ArtworkDetailModal from '../../components/artworks/ArtworkDetailModal';
 import EditProfileModal from '../../components/artist/EditProfileModal';
 import UploadPostModal from '../../components/artworks/UploadPostModal';
 import PostUploadModal from '../../components/social/PostUploadModal';
+import ChangeCoverModal from '../../components/profile/ChangeCoverModal';
 import {
   Plus,
   Edit,
@@ -43,6 +44,7 @@ const ArtistPortfolio = () => {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isAddingArtwork, setIsAddingArtwork] = useState(false);
   const [isCreatingPost, setIsCreatingPost] = useState(false);
+  const [isChangingCover, setIsChangingCover] = useState(false);
   const [isViewingArtwork, setIsViewingArtwork] = useState(false);
   const [selectedArtwork, setSelectedArtwork] = useState(null);
   const [editedProfile, setEditedProfile] = useState({
@@ -273,6 +275,26 @@ const ArtistPortfolio = () => {
     });
   };
 
+  // Cover Change Handlers
+  const handleSaveCover = (newCoverFile) => {
+    // Here you would typically upload to backend and update the profile
+    console.log('Saving new cover image:', newCoverFile);
+
+    // For now, create a local URL to show the new image
+    const newCoverUrl = URL.createObjectURL(newCoverFile);
+
+    // Update the artist profile (in a real app, this would come from backend)
+    // You might need to update a global state or refetch the profile
+
+    setIsChangingCover(false);
+    // Show success notification
+    alert('Cover photo updated successfully!');
+  };
+
+  const handleCancelCoverChange = () => {
+    setIsChangingCover(false);
+  };
+
   const handleViewArtworkDetail = (artwork) => {
     setSelectedArtwork(artwork);
     setIsViewingArtwork(true);
@@ -488,7 +510,10 @@ const ArtistPortfolio = () => {
               </div>
             </div>
           </div>
-          <button className="absolute top-6 right-6 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-colors">
+          <button
+            onClick={() => setIsChangingCover(true)}
+            className="absolute top-6 right-6 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-colors"
+          >
             <Camera className="h-4 w-4 inline mr-2" />
             Change Cover
           </button>
@@ -504,7 +529,10 @@ const ArtistPortfolio = () => {
                 alt={artistProfile.name}
                 className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
               />
-              <button className="absolute bottom-0 right-0 bg-[#7f5539] text-[#fdf9f4] p-2 rounded-full hover:bg-[#6e4c34] transition-colors">
+              <button
+                onClick={() => setIsEditingProfile(true)}
+                className="absolute bottom-0 right-0 bg-[#7f5539] text-[#fdf9f4] p-2 rounded-full hover:bg-[#6e4c34] transition-colors"
+              >
                 <Edit className="h-3 w-3" />
               </button>
             </div>
@@ -1507,6 +1535,16 @@ const ArtistPortfolio = () => {
         onImageUpload={handlePostImageUpload}
         onSave={handleSavePost}
         onCancel={handleCancelPost}
+        artistProfile={artistProfile}
+      />
+
+      {/* Change Cover Modal */}
+      <ChangeCoverModal
+        isOpen={isChangingCover}
+        onClose={handleCancelCoverChange}
+        currentCoverImage={artistProfile.coverImage}
+        onSave={handleSaveCover}
+        onCancel={handleCancelCoverChange}
         artistProfile={artistProfile}
       />
     </div>
