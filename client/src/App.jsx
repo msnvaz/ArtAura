@@ -18,6 +18,7 @@ import UploadArtWork from './pages/Artist/UploadArtWork';
 import ArtworkDetail from './pages/Artist/ArtWorkDetail';
 import ArtistDashboard from './pages/Artist/ArtistDashboard';
 import ArtistPortfolio from './pages/Artist/ArtistPortfolio';
+import AdminDashboard from './pages/admin/AdminDashboard';
 import Signup from './components/auth/signup2';
 import ShopRegisterPage from './components/auth/shopSignup';
 import CommunityPage from './pages/CommunityPage';
@@ -77,8 +78,9 @@ function App() {
           <Route path="/artist/artistdashboard" element={<ArtistDashboard />} /> 
           <Route path="/artist/artistportfolio" element={<ArtistPortfolio />} />
 
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+
           {/* <Route path="/artist/dashboard" element={<ArtistDashboard />} /> */}
-          {/* <Route path="/admin/dashboard" element={<AdminDashboard />} /> */}
           {/* <Route path="/moderator/dashboard" element={<ModeratorDashboard />} /> */}
           {/* <Route path="/buyer/dashboard" element={<BuyerDashboard />} /> */}
 
