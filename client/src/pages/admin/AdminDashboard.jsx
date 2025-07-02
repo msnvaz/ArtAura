@@ -36,10 +36,10 @@ const AdminDashboard = () => {
   };
 
   const stats = [
-    { label: 'Total Users', value: '2,847', icon: Users, color: 'bg-primary' },
-    { label: 'Active Artists', value: '1,234', icon: Palette, color: 'bg-success' },
-    { label: 'Total Revenue', value: '$45,230', icon: DollarSign, color: 'bg-info' },
-    { label: 'Pending Reports', value: '12', icon: AlertTriangle, color: 'bg-danger' }
+    { label: 'Total Users', value: '2,847', icon: Users, color: 'bg-blue-500' },
+    { label: 'Active Artists', value: '1,234', icon: Palette, color: 'bg-green-500' },
+    { label: 'Total Revenue', value: '$45,230', icon: DollarSign, color: 'bg-cyan-500' },
+    { label: 'Pending Reports', value: '12', icon: AlertTriangle, color: 'bg-red-500' }
   ];
 
   const quickActions = [
@@ -57,43 +57,37 @@ const AdminDashboard = () => {
   ];
 
   const renderDashboard = () => (
-    <div className="container-fluid">
+    <div className="w-full">
       {/* Header */}
-      <div className="row mb-4">
-        <div className="col-12">
-          <div className="card bg-dark text-white" style={{background: 'linear-gradient(135deg, #334155 0%, #1e293b 100%)'}}>
-            <div className="card-body p-4">
-              <h1 className="display-5 fw-bold mb-2">Admin Dashboard</h1>
-              <p className="text-light mb-3">Manage and oversee the entire ArtAura platform</p>
-              <div className="d-flex gap-3">
-                <button className="btn btn-light fw-semibold d-flex align-items-center gap-2">
-                  <AlertTriangle size={16} />
-                  Review Reports
-                </button>
-                <button className="btn btn-secondary fw-semibold d-flex align-items-center gap-2">
-                  <FileText size={16} />
-                  Generate Report
-                </button>
-              </div>
-            </div>
+      <div className="mb-6">
+        <div className="bg-gradient-to-br from-slate-700 to-slate-800 rounded-lg text-white p-6">
+          <h1 className="text-4xl font-bold mb-2">Admin Dashboard</h1>
+          <p className="text-slate-200 mb-4">Manage and oversee the entire ArtAura platform</p>
+          <div className="flex gap-3">
+            <button className="bg-white text-slate-800 px-4 py-2 rounded-lg font-semibold flex items-center gap-2 hover:bg-slate-100 transition-colors">
+              <AlertTriangle size={16} />
+              Review Reports
+            </button>
+            <button className="bg-slate-600 text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2 hover:bg-slate-500 transition-colors">
+              <FileText size={16} />
+              Generate Report
+            </button>
           </div>
         </div>
       </div>
 
       {/* Stats Grid */}
-      <div className="row mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {stats.map((stat, index) => (
-          <div key={index} className="col-12 col-md-6 col-lg-3 mb-3">
-            <div className="card h-100 border-0 shadow-sm">
-              <div className="card-body">
-                <div className="d-flex justify-content-between align-items-center">
-                  <div>
-                    <p className="card-text small text-muted fw-semibold mb-1">{stat.label}</p>
-                    <h2 className="card-title fw-bold mb-0">{stat.value}</h2>
-                  </div>
-                  <div className={`${stat.color} p-3 rounded-3`}>
-                    <stat.icon size={24} className="text-white" />
-                  </div>
+          <div key={index} className="bg-white rounded-lg shadow-sm border h-full">
+            <div className="p-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-sm text-gray-600 font-semibold mb-1">{stat.label}</p>
+                  <h2 className="text-2xl font-bold">{stat.value}</h2>
+                </div>
+                <div className={`${stat.color} p-3 rounded-lg`}>
+                  <stat.icon size={24} className="text-white" />
                 </div>
               </div>
             </div>
@@ -102,47 +96,41 @@ const AdminDashboard = () => {
       </div>
 
       {/* Quick Actions & Recent Activity */}
-      <div className="row">
-        <div className="col-12 col-lg-6 mb-4">
-          <div className="card border-0 shadow-sm h-100">
-            <div className="card-body">
-              <h2 className="card-title h4 fw-bold mb-4">Quick Actions</h2>
-              <div className="row">
-                {quickActions.map((action) => (
-                  <div key={action.id} className="col-12 col-sm-6 mb-3">
-                    <button
-                      onClick={() => setActiveSection(action.id)}
-                      className="btn btn-outline-secondary w-100 p-3 text-start h-100"
-                      style={{transition: 'all 0.2s'}}
-                    >
-                      <action.icon size={20} className="text-muted mb-2" />
-                      <h6 className="fw-semibold mb-1">{action.label}</h6>
-                      <small className="text-muted">{action.desc}</small>
-                    </button>
-                  </div>
-                ))}
-              </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white rounded-lg shadow-sm border h-full">
+          <div className="p-6">
+            <h2 className="text-xl font-bold mb-4">Quick Actions</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {quickActions.map((action) => (
+                <button
+                  key={action.id}
+                  onClick={() => setActiveSection(action.id)}
+                  className="border border-gray-300 rounded-lg p-4 text-left h-full hover:bg-gray-50 transition-all duration-200 hover:border-gray-400"
+                >
+                  <action.icon size={20} className="text-gray-600 mb-2" />
+                  <h6 className="font-semibold mb-1">{action.label}</h6>
+                  <small className="text-gray-600">{action.desc}</small>
+                </button>
+              ))}
             </div>
           </div>
         </div>
 
-        <div className="col-12 col-lg-6 mb-4">
-          <div className="card border-0 shadow-sm h-100">
-            <div className="card-body">
-              <h2 className="card-title h4 fw-bold mb-4">Recent Activity</h2>
-              <div className="d-flex flex-column gap-3">
-                {recentActivity.map((activity, index) => (
-                  <div key={index} className="d-flex align-items-start gap-3">
-                    <div className="bg-light p-2 rounded">
-                      <activity.icon size={16} className="text-muted" />
-                    </div>
-                    <div className="flex-grow-1">
-                      <p className="mb-1 small">{activity.message}</p>
-                      <small className="text-muted">{activity.time}</small>
-                    </div>
+        <div className="bg-white rounded-lg shadow-sm border h-full">
+          <div className="p-6">
+            <h2 className="text-xl font-bold mb-4">Recent Activity</h2>
+            <div className="flex flex-col gap-3">
+              {recentActivity.map((activity, index) => (
+                <div key={index} className="flex items-start gap-3">
+                  <div className="bg-gray-100 p-2 rounded">
+                    <activity.icon size={16} className="text-gray-600" />
                   </div>
-                ))}
-              </div>
+                  <div className="flex-1">
+                    <p className="mb-1 text-sm">{activity.message}</p>
+                    <small className="text-gray-600">{activity.time}</small>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -151,75 +139,73 @@ const AdminDashboard = () => {
   );
 
   const renderUserForm = () => (
-    <div className="container-fluid">
-      <div className="row">
-        <div className="col-12">
-          <div className="card border-0 shadow-sm">
-            <div className="card-body">
-              <h2 className="card-title h3 fw-bold mb-4 d-flex align-items-center gap-2">
-                <Users size={24} />
-                Add New User
-              </h2>
-              <div>
-                <div className="row mb-4">
-                  <div className="col-12 col-md-6 mb-3">
-                    <label className="form-label fw-semibold">Full Name</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      placeholder="Enter full name"
-                      onChange={(e) => handleInputChange('fullName', e.target.value)}
-                    />
-                  </div>
-                  <div className="col-12 col-md-6 mb-3">
-                    <label className="form-label fw-semibold">Email</label>
-                    <input
-                      type="email"
-                      className="form-control"
-                      placeholder="Enter email address"
-                      onChange={(e) => handleInputChange('email', e.target.value)}
-                    />
-                  </div>
-                  <div className="col-12 col-md-6 mb-3">
-                    <label className="form-label fw-semibold">User Type</label>
-                    <select
-                      className="form-select"
-                      onChange={(e) => handleInputChange('userType', e.target.value)}
-                    >
-                      <option value="">Select user type</option>
-                      <option value="artist">Artist</option>
-                      <option value="collector">Collector</option>
-                      <option value="admin">Admin</option>
-                    </select>
-                  </div>
-                  <div className="col-12 col-md-6 mb-3">
-                    <label className="form-label fw-semibold">Status</label>
-                    <select
-                      className="form-select"
-                      onChange={(e) => handleInputChange('status', e.target.value)}
-                    >
-                      <option value="">Select status</option>
-                      <option value="active">Active</option>
-                      <option value="pending">Pending</option>
-                      <option value="suspended">Suspended</option>
-                    </select>
-                  </div>
+    <div className="w-full">
+      <div className="max-w-full">
+        <div className="bg-white rounded-lg shadow-sm border">
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+              <Users size={24} />
+              Add New User
+            </h2>
+            <form>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Full Name</label>
+                  <input
+                    type="text"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter full name"
+                    onChange={(e) => handleInputChange('fullName', e.target.value)}
+                  />
                 </div>
-                <div className="mb-4">
-                  <label className="form-label fw-semibold">Profile Picture</label>
-                  <div className="border border-2 border-dashed rounded p-4 text-center" style={{borderColor: '#dee2e6'}}>
-                    <Upload size={32} className="mx-auto text-muted mb-2" />
-                    <p className="text-muted small mb-0">Click to upload or drag and drop</p>
-                  </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
+                  <input
+                    type="email"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter email address"
+                    onChange={(e) => handleInputChange('email', e.target.value)}
+                  />
                 </div>
-                <button
-                  type="submit"
-                  className="btn btn-primary w-100 fw-semibold"
-                >
-                  Add User
-                </button>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">User Type</label>
+                  <select
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    onChange={(e) => handleInputChange('userType', e.target.value)}
+                  >
+                    <option value="">Select user type</option>
+                    <option value="artist">Artist</option>
+                    <option value="collector">Collector</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Status</label>
+                  <select
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    onChange={(e) => handleInputChange('status', e.target.value)}
+                  >
+                    <option value="">Select status</option>
+                    <option value="active">Active</option>
+                    <option value="pending">Pending</option>
+                    <option value="suspended">Suspended</option>
+                  </select>
+                </div>
               </div>
-            </div>
+              <div className="mb-6">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Profile Picture</label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                  <Upload size={32} className="mx-auto text-gray-400 mb-2" />
+                  <p className="text-gray-600 text-sm">Click to upload or drag and drop</p>
+                </div>
+              </div>
+              <button
+                type="submit"
+                className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+              >
+                Add User
+              </button>
+            </form>
           </div>
         </div>
       </div>
