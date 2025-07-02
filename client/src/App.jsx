@@ -23,8 +23,6 @@ import Signup from './components/auth/signup2';
 import ShopRegisterPage from './components/auth/shopSignup';
 import CommunityPage from './pages/CommunityPage';
 
-import AdminDashboard from './pages/AdminDashboard';
-
 // Components
 import Header from './components/Header';
 import Footer from './components/Footer';
