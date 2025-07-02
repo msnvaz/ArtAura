@@ -251,7 +251,7 @@ const RewardSystem = () => {
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-[#5D3A00]/70 mb-1">{stat.title}</h3>
-                  <p className={`text-2xl font-bold ${stat.textColor} mb-2`}>{stat.value}</p>
+                  <p className="text-2xl font-bold text-[#5D3A00]/70 mb-2">{stat.value}</p>
                   <p className="text-xs text-[#5D3A00]/60">{stat.change}</p>
                 </div>
               </div>
