@@ -20,6 +20,8 @@ import Signup from './components/auth/signup2';
 import ShopRegisterPage from './components/auth/shopSignup';
 import CommunityPage from './pages/CommunityPage';
 
+import AdminDashboard from './pages/AdminDashboard';
+
 // Components
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -72,6 +74,8 @@ function App() {
           <Route path="/artworks/:id" element={<ArtworkDetail />} />
           <Route path="/artist/artistdashboard" element={<ArtistDashboard />} /> 
           <Route path="/artist/artistportfolio" element={<ArtistPortfolio />} />
+
+          <Route path="/admin" element={<AdminDashboard />} />
 
           {/* <Route path="/artist/dashboard" element={<ArtistDashboard />} /> */}
           {/* <Route path="/admin/dashboard" element={<AdminDashboard />} /> */}
