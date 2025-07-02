@@ -19,6 +19,7 @@ import ArtistPortfolio from './pages/Artist/ArtistPortfolio';
 
 // Moderator Pages
 import ModeratorDashboard from "./pages/Moderator/ModeratorDashboard";
+import CreateChallenge from './pages/Moderator/CreateChallenge';
 
 
 // Components
@@ -49,7 +50,8 @@ function App() {
           <Route path="/artistdashboard" element={<ArtistDashboard />} /> 
           <Route path="/artist/artistportfolio" element={<ArtistPortfolio />} />
 
-          <Route path="/moderator-dashboard" element={<ModeratorDashboard />} />
+          <Route path="/ModeratorDashboard" element={<ModeratorDashboard />} />
+          <Route path="/ModeratorDashboard/createChallenge" element={<CreateChallenge />} />
 
 
         </Routes>
