@@ -21,6 +21,32 @@ body {
   background-color: #f8f9fa;
 }
 
+/* Ensure main content doesn't overlap with sticky navbar */
+main {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+/* Fix hero section positioning */
+.hero-section {
+  margin-top: 0% !important;
+  padding-top: 0 !important;
+  position: relative;
+  z-index: 1;
+}
+
+/* Ensure App container doesn't have conflicting margins */
+.App {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Remove any default margins from container-fluid */
+.container-fluid {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
 #root {
   width: 100%;
   min-height: 100vh;
@@ -64,6 +90,9 @@ body {
   width: 100% !important;
   margin: 0 !important;
   padding: 0 !important;
+  z-index: 1030;
+  position: sticky !important;
+  top: 0;
 }
 
 .navbar .container {
@@ -104,6 +133,7 @@ body {
   width: 100% !important;
   margin: 0 !important;
   padding: 0 !important;
+  margin-top: 10%;
 }
 
 .hero-section::before {
