@@ -1,7 +1,10 @@
 node_modules
-server/
 client/package-lock.json
 client/package.json
 client/postcss.config.js
 client/src/App.jsx
 client/tailwind.config.js
+
+# Ignored package files
+package-lock.json
+package.json
