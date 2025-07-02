@@ -1,13 +1,5 @@
 /* Import Font Awesome */
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css');
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
 /* Global Styles */
 * {
