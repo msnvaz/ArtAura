@@ -88,7 +88,10 @@ const ModeratorDashboard = () => {
                 <CheckCircle className="h-4 w-4" />
                 <span>Select Winners</span>
               </button>
-              <button className="border border-amber-800 text-amber-800 px-4 py-2 rounded-lg hover:bg-amber-800 hover:text-white transition-colors font-medium flex items-center space-x-2">
+              <button
+                className="border border-amber-800 text-amber-800 px-4 py-2 rounded-lg hover:bg-amber-800 hover:text-white transition-colors font-medium flex items-center space-x-2"
+                onClick={() => navigate('/verifyExhibitions')}
+              >
                 <Calendar className="h-4 w-4" />
                 <span>Verify Exhibitions</span>
               </button>
@@ -127,18 +130,56 @@ const ModeratorDashboard = () => {
           <div className="space-y-8">
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {stats.map((stat, index) => (
-                <div key={index} className="bg-white rounded-lg shadow-sm p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-amber-700">{stat.label}</p>
-                      <p className="text-2xl font-bold text-amber-900">{stat.value}</p>
+              {stats.map((stat, index) => {
+                // Assign a color for each box and text
+                const boxColors = [
+                  'bg-amber-100',
+                  'bg-blue-100',
+                  'bg-green-100',
+                  'bg-pink-100'
+                ];
+                const iconColors = [
+                  'text-amber-700',
+                  'text-blue-700',
+                  'text-green-700',
+                  'text-pink-700'
+                ];
+                const valueColors = [
+                  'text-amber-700',
+                  'text-blue-700',
+                  'text-green-700',
+                  'text-pink-700'
+                ];
+                const labelColors = [
+                  'text-amber-700',
+                  'text-blue-700',
+                  'text-green-700',
+                  'text-pink-700'
+                ];
+                const changeColors = [
+                  'text-amber-600',
+                  'text-blue-600',
+                  'text-green-600',
+                  'text-pink-600'
+                ];
+                return (
+                  <div
+                    key={index}
+                    className={`${boxColors[index % boxColors.length]} rounded-lg shadow-sm p-6`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className={`text-sm font-medium ${labelColors[index % labelColors.length]}`}>{stat.label}</p>
+                        <p className={`text-2xl font-bold ${valueColors[index % valueColors.length]}`}>{stat.value}</p>
+                      </div>
+                      <div className={iconColors[index % iconColors.length]}>
+                        {stat.icon}
+                      </div>
                     </div>
-                    <div className="text-amber-600">{stat.icon}</div>
+                    <p className={`mt-4 text-sm ${changeColors[index % changeColors.length]}`}>{stat.change}</p>
                   </div>
-                  <p className="mt-4 text-sm text-amber-600">{stat.change}</p>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Main Content Grid */}

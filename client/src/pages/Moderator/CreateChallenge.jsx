@@ -163,8 +163,8 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
           )}
         </div>
 
-        {/* Publish Date and Time (same column) */}
-        <div className="flex flex-col gap-4">
+        {/* Publish Date and Time (same row) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label htmlFor="publishDate" className="flex items-center gap-2 text-sm font-medium text-amber-800 mb-2">
               <Calendar size={16} />
@@ -206,7 +206,7 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
           </div>
         </div>
 
-        {/* Deadline Date and Time */}
+        {/* Deadline Date and Time (same row) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label htmlFor="deadlineDate" className="flex items-center gap-2 text-sm font-medium text-amber-800 mb-2">
@@ -227,8 +227,11 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
             {errors.deadlineDate && (
               <p className="mt-1 text-sm text-red-600">{errors.deadlineDate}</p>
             )}
+            {/* Show warning if deadline date is not after publish date */}
+            {formData.publishDate && formData.deadlineDate && formData.deadlineDate <= formData.publishDate && (
+              <p className="mt-1 text-sm text-red-600">Deadline date must be after publish date.</p>
+            )}
           </div>
-          
           <div>
             <label htmlFor="deadlineTime" className="flex items-center gap-2 text-sm font-medium text-amber-800 mb-2">
               <Clock size={16} />
