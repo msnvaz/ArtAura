@@ -26,6 +26,7 @@ import CommunityPage from './pages/CommunityPage';
 // Moderator Pages
 import ModeratorDashboard from "./pages/Moderator/ModeratorDashboard";
 import CreateChallenge from './pages/Moderator/CreateChallenge';
+import VerifyExhibitions from './pages/Moderator/VerifyExhibitions';
 
 
 // Components
@@ -90,7 +91,10 @@ function App() {
           {/* <Route path="/buyer/dashboard" element={<BuyerDashboard />} /> */}
 
           <Route path="/ModeratorDashboard" element={<ModeratorDashboard />} />
-          <Route path="/ModeratorDashboard/createChallenge" element={<CreateChallenge />} />
+          <Route path="/createChallenge" element={<CreateChallenge />} />
+          <Route path="/verifyExhibitions" element={<VerifyExhibitions />} />
+          
+          {/* Add more routes as needed */}
 
 
         </Routes>
