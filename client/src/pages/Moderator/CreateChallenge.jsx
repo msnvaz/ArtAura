@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
 import { ArrowLeft, Calendar, Clock, FileText, Send } from 'lucide-react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const CreateChallenge = ({ onBack, onSubmit }) => {
@@ -11,7 +11,7 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
     deadlineTime: '',
     description: ''
   });
-  
+
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
@@ -22,8 +22,7 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
       ...prev,
       [name]: value
     }));
-    
-    // Clear error when user starts typing
+
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
@@ -34,70 +33,44 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
 
   const validateForm = () => {
     const newErrors = {};
-    
-    if (!formData.title.trim()) {
-      newErrors.title = 'Title is required';
-    }
-    
-    if (!formData.publishDate) {
-      newErrors.publishDate = 'Publish date is required';
-    }
-    
-    if (!formData.publishTime) {
-      newErrors.publishTime = 'Publish time is required';
-    }
-    
-    if (!formData.deadlineDate) {
-      newErrors.deadlineDate = 'Deadline date is required';
-    }
-    
-    if (!formData.deadlineTime) {
-      newErrors.deadlineTime = 'Deadline time is required';
-    }
-    
-    if (!formData.description.trim()) {
-      newErrors.description = 'Description is required';
-    }
-    
-    // Check if deadline is after publish date
+
+    if (!formData.title.trim()) newErrors.title = 'Title is required';
+    if (!formData.publishDate) newErrors.publishDate = 'Publish date is required';
+    if (!formData.publishTime) newErrors.publishTime = 'Publish time is required';
+    if (!formData.deadlineDate) newErrors.deadlineDate = 'Deadline date is required';
+    if (!formData.deadlineTime) newErrors.deadlineTime = 'Deadline time is required';
+    if (!formData.description.trim()) newErrors.description = 'Description is required';
+
     if (formData.publishDate && formData.publishTime && formData.deadlineDate && formData.deadlineTime) {
       const publishDateTime = new Date(`${formData.publishDate}T${formData.publishTime}`);
       const deadlineDateTime = new Date(`${formData.deadlineDate}T${formData.deadlineTime}`);
-      
       if (deadlineDateTime <= publishDateTime) {
         newErrors.deadlineDate = 'Deadline must be after publish date';
         newErrors.deadlineTime = 'Deadline must be after publish time';
       }
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
-    
+
+    if (!validateForm()) return;
+
     setIsSubmitting(true);
-    
+
     try {
-      // Combine date and time for API submission
       const challengeData = {
         title: formData.title.trim(),
         publishDateTime: `${formData.publishDate}T${formData.publishTime}`,
         deadlineDateTime: `${formData.deadlineDate}T${formData.deadlineTime}`,
         description: formData.description.trim()
       };
-      
-      // Call the onSubmit prop with the challenge data
-      if (onSubmit) {
-        await onSubmit(challengeData);
-      }
-      
-      // Reset form after successful submission
+
+      if (onSubmit) await onSubmit(challengeData);
+
       setFormData({
         title: '',
         publishDate: '',
@@ -106,10 +79,9 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
         deadlineTime: '',
         description: ''
       });
-      
+
     } catch (error) {
-      console.error('Error creating challenge:', error);
-      // Handle error (you might want to show an error message to the user)
+      // handle error
     } finally {
       setIsSubmitting(false);
     }
@@ -122,10 +94,10 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
     return { date, time };
   };
 
-  const { date: currentDate, time: currentTime } = getCurrentDateTime();
+  const { date: currentDate } = getCurrentDateTime();
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-amber-50 rounded-lg shadow-lg">
+    <div className="max-w-4xl mx-auto p-6 bg-[#fdf9f4] rounded-lg shadow-lg">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-4">
@@ -143,13 +115,12 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Title */}
         <div>
-          <label htmlFor="title" className="flex items-center gap-2 text-sm font-medium text-amber-800 mb-2">
+          <label className="flex items-center gap-2 text-sm font-medium text-amber-800 mb-2">
             <FileText size={16} />
             Challenge Title
           </label>
           <input
             type="text"
-            id="title"
             name="title"
             value={formData.title}
             onChange={handleInputChange}
@@ -162,17 +133,15 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
             <p className="mt-1 text-sm text-red-600">{errors.title}</p>
           )}
         </div>
-
-        {/* Publish Date and Time (same row) */}
+        {/* Publish Date and Time */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label htmlFor="publishDate" className="flex items-center gap-2 text-sm font-medium text-amber-800 mb-2">
+            <label className="flex items-center gap-2 text-sm font-medium text-amber-800 mb-2">
               <Calendar size={16} />
               Publish Date
             </label>
             <input
               type="date"
-              id="publishDate"
               name="publishDate"
               value={formData.publishDate}
               onChange={handleInputChange}
@@ -186,13 +155,12 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
             )}
           </div>
           <div>
-            <label htmlFor="publishTime" className="flex items-center gap-2 text-sm font-medium text-amber-800 mb-2">
+            <label className="flex items-center gap-2 text-sm font-medium text-amber-800 mb-2">
               <Clock size={16} />
               Publish Time
             </label>
             <input
               type="time"
-              id="publishTime"
               name="publishTime"
               value={formData.publishTime}
               onChange={handleInputChange}
@@ -205,17 +173,15 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
             )}
           </div>
         </div>
-
-        {/* Deadline Date and Time (same row) */}
+        {/* Deadline Date and Time */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label htmlFor="deadlineDate" className="flex items-center gap-2 text-sm font-medium text-amber-800 mb-2">
+            <label className="flex items-center gap-2 text-sm font-medium text-amber-800 mb-2">
               <Calendar size={16} />
               Deadline Date
             </label>
             <input
               type="date"
-              id="deadlineDate"
               name="deadlineDate"
               value={formData.deadlineDate}
               onChange={handleInputChange}
@@ -227,19 +193,14 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
             {errors.deadlineDate && (
               <p className="mt-1 text-sm text-red-600">{errors.deadlineDate}</p>
             )}
-            {/* Show warning if deadline date is not after publish date */}
-            {formData.publishDate && formData.deadlineDate && formData.deadlineDate <= formData.publishDate && (
-              <p className="mt-1 text-sm text-red-600">Deadline date must be after publish date.</p>
-            )}
           </div>
           <div>
-            <label htmlFor="deadlineTime" className="flex items-center gap-2 text-sm font-medium text-amber-800 mb-2">
+            <label className="flex items-center gap-2 text-sm font-medium text-amber-800 mb-2">
               <Clock size={16} />
               Deadline Time
             </label>
             <input
               type="time"
-              id="deadlineTime"
               name="deadlineTime"
               value={formData.deadlineTime}
               onChange={handleInputChange}
@@ -252,15 +213,13 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
             )}
           </div>
         </div>
-
         {/* Description */}
         <div>
-          <label htmlFor="description" className="flex items-center gap-2 text-sm font-medium text-amber-800 mb-2">
+          <label className="flex items-center gap-2 text-sm font-medium text-amber-800 mb-2">
             <FileText size={16} />
             Description
           </label>
           <textarea
-            id="description"
             name="description"
             value={formData.description}
             onChange={handleInputChange}
@@ -277,7 +236,6 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
             {formData.description.length}/500 characters
           </p>
         </div>
-
         {/* Submit Button */}
         <div className="flex justify-end pt-6">
           <button

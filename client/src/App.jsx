@@ -27,6 +27,7 @@ import CommunityPage from './pages/CommunityPage';
 import ModeratorDashboard from "./pages/Moderator/ModeratorDashboard";
 import CreateChallenge from './pages/Moderator/CreateChallenge';
 import VerifyExhibitions from './pages/Moderator/VerifyExhibitions';
+//import WinnerSelection from './pages/Moderator/WinnerSelection';
 
 
 // Components
@@ -93,6 +94,7 @@ function App() {
           <Route path="/ModeratorDashboard" element={<ModeratorDashboard />} />
           <Route path="/createChallenge" element={<CreateChallenge />} />
           <Route path="/verifyExhibitions" element={<VerifyExhibitions />} />
+          {/* <Route path="/winnerSelection" element={<WinnerSelection />} /> */}
           
           {/* Add more routes as needed */}
 

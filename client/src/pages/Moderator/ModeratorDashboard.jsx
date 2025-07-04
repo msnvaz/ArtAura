@@ -61,7 +61,7 @@ const ModeratorDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-amber-50 py-8">
+    <div className="min-h-screen bg-[#fdf9f4] py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Header */}
@@ -84,7 +84,9 @@ const ModeratorDashboard = () => {
                 <Plus className="h-4 w-4" />
                 <span>Create Challenge</span>
               </button>
-              <button className="border border-amber-800 text-amber-800 px-4 py-2 rounded-lg hover:bg-amber-800 hover:text-white transition-colors font-medium flex items-center space-x-2">
+              <button className="border border-amber-800 text-amber-800 px-4 py-2 rounded-lg hover:bg-amber-800 hover:text-white transition-colors font-medium flex items-center space-x-2"
+                onClick={() => navigate('/winnerSelection')}
+              >
                 <CheckCircle className="h-4 w-4" />
                 <span>Select Winners</span>
               </button>
@@ -288,7 +290,7 @@ const ModeratorDashboard = () => {
 
         {/* Challenges Tab */}
         {activeTab === 'challenges' && (
-          <dZiv className="bg-white rounded-lg shadow-sm">
+          <div className="bg-white rounded-lg shadow-sm">
             <div className="p-6 border-b border-amber-200">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-amber-900">Challenge Management</h3>
@@ -323,7 +325,7 @@ const ModeratorDashboard = () => {
                 ))}
               </div>
             </div>
-          </dZiv>
+          </div>
         )}
 
         {/* Exhibitions Tab */}
