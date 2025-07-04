@@ -23,6 +23,13 @@ import Signup from './components/auth/signup2';
 import ShopRegisterPage from './components/auth/shopSignup';
 import CommunityPage from './pages/CommunityPage';
 
+// Moderator Pages
+import ModeratorDashboard from "./pages/Moderator/ModeratorDashboard";
+import CreateChallenge from './pages/Moderator/CreateChallenge';
+import VerifyExhibitions from './pages/Moderator/VerifyExhibitions';
+//import WinnerSelection from './pages/Moderator/WinnerSelection';
+
+
 // Components
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -83,6 +90,13 @@ function App() {
           {/* <Route path="/artist/dashboard" element={<ArtistDashboard />} /> */}
           {/* <Route path="/moderator/dashboard" element={<ModeratorDashboard />} /> */}
           {/* <Route path="/buyer/dashboard" element={<BuyerDashboard />} /> */}
+
+          <Route path="/ModeratorDashboard" element={<ModeratorDashboard />} />
+          <Route path="/createChallenge" element={<CreateChallenge />} />
+          <Route path="/verifyExhibitions" element={<VerifyExhibitions />} />
+          {/* <Route path="/winnerSelection" element={<WinnerSelection />} /> */}
+          
+          {/* Add more routes as needed */}
 
 
         </Routes>
