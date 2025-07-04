@@ -16,11 +16,19 @@ import Catalog from './pages/shop/Catalog';
 import Login from './components/auth/login';
 import UploadArtWork from './pages/Artist/UploadArtWork';
 import ArtworkDetail from './pages/Artist/ArtWorkDetail';
-import ArtistDashboard from './pages/Artist/ArtistDashBoard';
+import ArtistDashboard from './pages/Artist/ArtistDashboard';
 import ArtistPortfolio from './pages/Artist/ArtistPortfolio';
+import AdminDashboard from './pages/admin/AdminDashboard';
 import Signup from './components/auth/signup2';
 import ShopRegisterPage from './components/auth/shopSignup';
 import CommunityPage from './pages/CommunityPage';
+
+// Moderator Pages
+import ModeratorDashboard from "./pages/Moderator/ModeratorDashboard";
+import CreateChallenge from './pages/Moderator/CreateChallenge';
+import VerifyExhibitions from './pages/Moderator/VerifyExhibitions';
+//import WinnerSelection from './pages/Moderator/WinnerSelection';
+
 
 // Components
 import Header from './components/Header';
@@ -77,10 +85,18 @@ function App() {
           <Route path="/artist/artistdashboard" element={<ArtistDashboard />} />
           <Route path="/artist/artistportfolio" element={<ArtistPortfolio />} />
 
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+
           {/* <Route path="/artist/dashboard" element={<ArtistDashboard />} /> */}
-          {/* <Route path="/admin/dashboard" element={<AdminDashboard />} /> */}
           {/* <Route path="/moderator/dashboard" element={<ModeratorDashboard />} /> */}
           {/* <Route path="/buyer/dashboard" element={<BuyerDashboard />} /> */}
+
+          <Route path="/ModeratorDashboard" element={<ModeratorDashboard />} />
+          <Route path="/createChallenge" element={<CreateChallenge />} />
+          <Route path="/verifyExhibitions" element={<VerifyExhibitions />} />
+          {/* <Route path="/winnerSelection" element={<WinnerSelection />} /> */}
+          
+          {/* Add more routes as needed */}
 
 
         </Routes>
