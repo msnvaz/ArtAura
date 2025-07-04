@@ -1,26 +1,42 @@
 {
-  "name": "art-platform",
-  "version": "1.0.0",
-  "description": "Art buying, selling and competition platform",
-  "main": "index.js",
+  "name": "client",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
   "scripts": {
-    "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
-    "server:dev": "cd server && npm run dev",
-    "client:dev": "cd client && npm run dev",
-    "server:start": "cd server && npm start",
-    "client:build": "cd client && npm run build",
-    "install:all": "npm install && cd client && npm install && cd ../server && npm install",
-    "clean": "rm -rf node_modules client/node_modules server/node_modules",
-    "reset": "npm run clean && npm run install:all"
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
   },
-  "keywords": ["art", "marketplace", "competition", "react", "node"],
-  "author": "Your Name",
-  "license": "MIT",
+  "dependencies": {
+    "@hookform/resolvers": "^5.1.1",
+    "axios": "^1.10.0",
+    "bootstrap": "^5.3.7",
+    "lucide-react": "^0.522.0",
+    "react": "^19.1.0",
+    "react-bootstrap": "^2.10.10",
+    "react-dom": "^19.1.0",
+    "react-feather": "^2.0.10",
+    "react-hook-form": "^7.58.1",
+    "react-router-dom": "^7.6.2",
+    "react-toastify": "^11.0.5",
+    "yup": "^1.6.1"
+  },
   "devDependencies": {
-    "concurrently": "^8.2.2"
-  },
-  "engines": {
-    "node": ">=16.0.0",
-    "npm": ">=8.0.0"
+    "@eslint/js": "^9.25.0",
+    "@tailwindcss/forms": "^0.5.10",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "@vitejs/plugin-react": "^4.4.1",
+    "autoprefixer": "^10.4.21",
+    "eslint": "^9.25.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.19",
+    "globals": "^16.0.0",
+    "postcss": "^8.5.6",
+    "postcss-load-config": "^6.0.1",
+    "tailwindcss": "^3.0.24",
+    "vite": "^6.3.5"
   }
 }
