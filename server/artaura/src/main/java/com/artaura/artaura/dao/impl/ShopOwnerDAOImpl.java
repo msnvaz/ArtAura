@@ -2,6 +2,7 @@ package com.artaura.artaura.dao.impl;
 
 import com.artaura.artaura.dao.impl.ShopOwnerDAO;
 import com.artaura.artaura.dto.ShopOwnerSignupRequest;
+import com.artaura.artaura.dto.auth.LoginUserDataDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -12,6 +13,7 @@ import java.sql.PreparedStatement;
 import java.sql.Statement;
 
 import java.sql.ResultSet;
+import java.util.Optional;
 
 @Repository
 public class ShopOwnerDAOImpl implements ShopOwnerDAO {
@@ -71,31 +73,19 @@ public class ShopOwnerDAOImpl implements ShopOwnerDAO {
 
 
     @Override
-    public ShopOwnerSignupRequest findByEmail(String email) {
+    public Optional<LoginUserDataDTO> findByEmail(String email) {
         try {
-            return jdbc.queryForObject(
-                    "SELECT * FROM shops WHERE email = ?",
-                    (ResultSet rs, int rowNum) -> {
-                        ShopOwnerSignupRequest a = new ShopOwnerSignupRequest();
-                        a.setShopName(rs.getString("shop_name"));
-                        a.setOwnerName(rs.getString("owner_name"));
-                        a.setEmail(rs.getString("email"));
-                        a.setPassword(rs.getString("password"));
-                        a.setContactNo(rs.getString("contact_no"));
-                        a.setBusinessType(rs.getString("business_type"));
-                        a.setDescription(rs.getString("description"));
-                        a.setBusinessLicense(rs.getString("business_license"));
-                        a.setTaxId(rs.getString("tax_id"));
-                        a.setAgreedTerms(rs.getBoolean("agreed_terms"));
-                        a.setStreetAddress(rs.getString("street_address"));
-                        a.setCity(rs.getString("city"));
-                        a.setState(rs.getString("state"));
-                        a.setZipCode(rs.getString("zip_code"));
-                        a.setCountry(rs.getString("country"));
-                        return a;
-                    }, email);
+            String sql = "SELECT shop_id, email, password FROM shops WHERE email = ?";
+            LoginUserDataDTO data = jdbc.queryForObject(sql, (rs, rowNum) ->
+                    new LoginUserDataDTO(
+                            rs.getLong("shop_id"),
+                            rs.getString("email"),
+                            rs.getString("password")
+                    ), email
+            );
+            return Optional.ofNullable(data);
         } catch (Exception e) {
-            return null;
+            return Optional.empty();
         }
     }
 }

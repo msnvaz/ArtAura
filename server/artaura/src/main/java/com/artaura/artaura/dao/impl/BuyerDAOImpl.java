@@ -3,11 +3,13 @@ package com.artaura.artaura.dao.impl;
 import com.artaura.artaura.dao.impl.BuyerDAO;
 import com.artaura.artaura.dto.ArtistSignupRequest;
 import com.artaura.artaura.dto.BuyerSignupRequest;
+import com.artaura.artaura.dto.auth.LoginUserDataDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
+import java.util.Optional;
 
 @Repository
 public class BuyerDAOImpl implements BuyerDAO {
@@ -38,27 +40,19 @@ public class BuyerDAOImpl implements BuyerDAO {
     }
 
     @Override
-    public BuyerSignupRequest findByEmail(String email) {
+    public Optional<LoginUserDataDTO> findByEmail(String email) {
         try {
-            return jdbc.queryForObject(
-                    "SELECT * FROM buyers WHERE email = ?",
-                    (ResultSet rs, int rowNum) -> {
-                        BuyerSignupRequest a = new BuyerSignupRequest();
-                        a.setEmail(rs.getString("email"));
-                        a.setFirstName(rs.getString("first_name"));
-                        a.setLastName(rs.getString("last_name"));
-                        a.setPassword(rs.getString("password"));
-                        a.setContactNo(rs.getString("contactNo"));
-                        a.setAgreedTerms(rs.getBoolean("agreed_terms"));
-                        a.setStreetAddress(rs.getString("street_address"));
-                        a.setCity(rs.getString("city"));
-                        a.setState(rs.getString("state"));
-                        a.setZipCode(rs.getString("zip_code"));
-                        a.setCountry(rs.getString("country"));
-                        return a;
-                    }, email);
+            String sql = "SELECT buyer_id, email, password FROM buyers WHERE email = ?";
+            LoginUserDataDTO data = jdbc.queryForObject(sql, (rs, rowNum) ->
+                    new LoginUserDataDTO(
+                            rs.getLong("buyer_id"),
+                            rs.getString("email"),
+                            rs.getString("password")
+                    ), email
+            );
+            return Optional.ofNullable(data);
         } catch (Exception e) {
-            return null;
+            return Optional.empty();
         }
     }
 }

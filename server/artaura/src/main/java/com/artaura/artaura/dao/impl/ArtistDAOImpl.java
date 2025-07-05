@@ -2,11 +2,13 @@ package com.artaura.artaura.dao.impl;
 
 import com.artaura.artaura.dao.impl.ArtistDAO;
 import com.artaura.artaura.dto.ArtistSignupRequest;
+import com.artaura.artaura.dto.auth.LoginUserDataDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
+import java.util.Optional;
 
 @Repository
 public class ArtistDAOImpl implements ArtistDAO {
@@ -40,32 +42,19 @@ public class ArtistDAOImpl implements ArtistDAO {
 
 
     @Override
-    public ArtistSignupRequest findByEmail(String email) {
+    public Optional<LoginUserDataDTO> findByEmail(String email) {
         try {
-            return jdbc.queryForObject(
-                    "SELECT * FROM artists WHERE email = ?",
-                    (ResultSet rs, int rowNum) -> {
-                        ArtistSignupRequest a = new ArtistSignupRequest();
-                        a.setEmail(rs.getString("email"));
-                        a.setFirstName(rs.getString("first_name"));
-                        a.setLastName(rs.getString("last_name"));
-                        a.setPassword(rs.getString("password"));
-                        a.setContactNo(rs.getString("contactNo"));
-                        a.setNic(rs.getString("nic"));
-                        a.setSpecialization(rs.getString("specialization"));
-                        a.setBio(rs.getString("bio"));
-                        a.setRate(rs.getFloat("rate"));
-                        a.setBadge(rs.getString("badge"));
-                        a.setAgreedTerms(rs.getBoolean("agreed_terms"));
-                        a.setStreetAddress(rs.getString("street_address"));
-                        a.setCity(rs.getString("city"));
-                        a.setState(rs.getString("state"));
-                        a.setZipCode(rs.getString("zip_code"));
-                        a.setCountry(rs.getString("country"));
-                        return a;
-                    }, email);
+            String sql = "SELECT artist_id, email, password FROM artists WHERE email = ?";
+            LoginUserDataDTO loginUser = jdbc.queryForObject(sql, (rs, rowNum) -> {
+                LoginUserDataDTO dto = new LoginUserDataDTO();
+                dto.setUserId(rs.getLong("artist_id"));
+                dto.setEmail(rs.getString("email"));
+                dto.setPassword(rs.getString("password"));
+                return dto;
+            }, email);
+            return Optional.ofNullable(loginUser);
         } catch (Exception e) {
-            return null;
+            return Optional.empty();
         }
     }
 }

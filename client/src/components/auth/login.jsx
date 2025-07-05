@@ -6,10 +6,10 @@ import { Eye, EyeOff, ArrowRight } from 'lucide-react';
 
 const roleDashboardMap = {
   admin: '/admin/dashboard',
-  moderator: '/moderator/dashboard',
-  artist: '/artist/dashboard',
+  moderator: '/ModeratorDashboard',
+  artist: '/artist/artistdashboard',
   shop: '/shop/dashboard',
-  buyer: '/buyer/dashboard'
+  buyer: '/community'
 };
 
 const Login = () => {
@@ -39,10 +39,11 @@ const Login = () => {
       const response = await axios.post('http://localhost:8080/api/auth/login', formData);
       localStorage.setItem('token', response.data.token);
 
-      const userRole = response.data.userInfo?.role?.toLowerCase();
+      const userRole = response.data.role?.toLowerCase();
       const dashboardPath = roleDashboardMap[userRole];
 
-      console.log('User Role:', userRole);
+      console.log('Login Response:', response.data);
+      console.log('Extracted Role:', userRole);
 
       if (dashboardPath) {
         navigate(dashboardPath);
