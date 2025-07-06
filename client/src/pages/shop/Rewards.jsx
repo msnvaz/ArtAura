@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Sidebar from '../../components/Sidebar';
 import { 
   Award,
   Gift,
@@ -207,7 +208,9 @@ const RewardSystem = () => {
   };
 
   return (
-    <div className="space-y-6 bg-[white] min-h-screen p-6">
+     <div className="flex">
+      <Sidebar />
+    <div className="ml-20 md:ml-64 flex-1 space-y-6 bg-[#FFF5E1] min-h-screen p-6 animate-fade-in">
       {/* Enhanced Header */}
       <div className="bg-gradient-to-r from-[#FFF5E1] via-[#FFD95A]/30 to-[#FFE4D6] rounded-2xl shadow-xl p-6 border border-[#FFE4D6]">
         <div className="flex items-center justify-between">
@@ -564,6 +567,7 @@ const RewardSystem = () => {
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 };

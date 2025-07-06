@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Sidebar from '../../components/Sidebar';
 import { 
   ShoppingCart,
   Download,
@@ -104,16 +105,45 @@ const Orders = () => {
       rating: null,
       trackingNumber: null,
       notes: 'Customer requested cancellation'
+    },
+    {
+      id: '#ORD-006',
+      customer: 'Nina Patel',
+      email: 'nina.patel@email.com',
+      phone: '+1 (555) 112-3344',
+      items: ['Charcoal Drawing Kit', 'Easel Medium'],
+      total: '$182.40',
+      status: 'delivered',
+      date: '2024-06-18',
+      address: '142 Inspire Rd, Art Town, OR 97035',
+      rating: 4,
+      trackingNumber: 'TRK-006-CD',
+      notes: 'Delivered on time'
+    },
+    {
+      id: '#ORD-007',
+      customer: 'Liam Martinez',
+      email: 'liam.m@email.com',
+      phone: '+1 (555) 222-1111',
+      items: ['Watercolor Notebook', 'Paint Brushes Deluxe'],
+      total: '$132.80',
+      status: 'cancelled',
+      date: '2024-06-17',
+      address: '89 Brush Blvd, Colorland, IL 60616',
+      rating: null,
+      trackingNumber: null,
+      notes: 'Payment failed'
     }
+
   ];
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'delivered': return 'bg-emerald-100 text-emerald-800';
-      case 'shipped': return 'bg-blue-100 text-blue-800';
-      case 'processing': return 'bg-amber-100 text-amber-800';
-      case 'pending': return 'bg-gray-100 text-gray-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
+      case 'delivered': return 'bg-emerald-200 text-emerald-800';
+      case 'shipped': return 'bg-blue-200 text-blue-800';
+      case 'processing': return 'bg-amber-200 text-amber-800';
+      case 'pending': return 'bg-gray-200 text-gray-800';
+      case 'cancelled': return 'bg-red-200 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -188,51 +218,47 @@ const Orders = () => {
   };
 
   return (
-    <div className="space-y-6 bg-[white] min-h-screen p-6">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-[#FFF5E1] via-[#FFD95A]/30 to-[#FFE4D6] rounded-2xl shadow-xl p-6 border border-[#FFE4D6] animate-fade-in">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-[#5D3A00] to-[#D87C5A] bg-clip-text text-transparent flex items-center gap-2">
-              <ShoppingCart className="w-6 h-6 text-[#D87C5A] animate-bounce-slow" />
-              Order Management
-            </h1>
-            <p className="text-[#5D3A00] mt-2">Track and manage all customer orders efficiently</p>
+    <div className="flex">
+    <Sidebar />
+    <div className="ml-20 md:ml-64 flex-1 space-y-6 bg-white min-h-screen p-6 animate-fade-in">
+      {/* Inline Search Bar and Export Button */}
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-4">
+        {/* Inline Search Bar and Filter Section */}
+        <div className="flex items-center gap-3 w-full max-w-md">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#D87C5A] w-4 h-4" />
+            <input
+              type="text"
+              placeholder="Search..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-[#FFE4D6] hover:border-[#D87C5A] focus:border-[#D87C5A]  focus:ring-0 outline-none   rounded-lg text-sm"
+            />
           </div>
-          <button  onClick={() => setShowExportModal(true)} className="bg-gradient-to-r from-[#D87C5A] to-[#5D3A00] text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300">
-            <Download className="w-4 h-4 inline mr-2" />
-            Export Orders
-          </button>
+          <div className="relative w-36">
+            <Filter className="absolute left-2 top-1/2 -translate-y-1/2 text-[#D87C5A] w-4 h-4 pointer-events-none" />
+            <select
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              className="w-full pl-8 pr-2 py-2 border border-[#FFE4D6]  hover:border-[#D87C5A] focus:border-[#D87C5A] focus:ring-0 outline-none   rounded-lg text-sm appearance-none"
+            >
+              <option value="all">All</option>
+              <option value="pending">Pending</option>
+              <option value="processing">Processing</option>
+              <option value="shipped">Shipped</option>
+              <option value="delivered">Delivered</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
         </div>
-      </div>
-
-      {/* Filters and Search */}
-      <div className="bg-white rounded-xl shadow p-4 border border-[#FFE4D6] flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="relative w-full max-w-sm">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#D87C5A] w-4 h-4" />
-          <input
-            type="text"
-            placeholder="Search..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-[#FFD95A] rounded-lg text-sm"
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-[#5D3A00]" />
-          <select
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            className="border border-[#FFD95A] rounded-lg px-3 py-2 text-sm"
-          >
-            <option value="all">All</option>
-            <option value="pending">Pending</option>
-            <option value="processing">Processing</option>
-            <option value="shipped">Shipped</option>
-            <option value="delivered">Delivered</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
-        </div>
+        
+        <button
+          onClick={() => setShowExportModal(true)}
+          className="bg-gradient-to-r from-[#D87C5A] to-[#5D3A00] text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
+        >
+          <Download className="w-4 h-4 inline mr-2" />
+          Export Orders
+        </button>
       </div>
 
       {/* Orders List */}
@@ -285,8 +311,8 @@ const Orders = () => {
                     {new Date(order.date).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button className="text-[#D87C5A] hover:text-[#5D3A00] bg-[#FFE4D6] hover:bg-[#FFD95A]/70 px-3 py-1 rounded-lg transition-all duration-300">
-                      <Eye onClick={() => setSelectedOrder(order)} className="w-4 h-4 inline mr-1 animate-fade-in" /> View
+                    <button onClick={() => setSelectedOrder(order)} className="text-white hover:text-[#5D3A00] bg-[#D87C5A] hover:bg-[#FFD95A]/70 px-3 py-1 rounded-lg transition-all duration-300">
+                      <Eye  className="w-4 h-4 inline mr-1 animate-fade-in" /> View
                     </button>
                   </td>
                 </tr>
@@ -300,7 +326,7 @@ const Orders = () => {
       {selectedOrder && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="bg-gradient-to-r from-[#FFF5E1] to-[#FFE4D6] p-6 rounded-t-2xl border-b border-[#FFD95A]">
+            <div className="bg-gradient-to-r  p-6 rounded-t-2xl border-b border-[#FFE4D6]">
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold text-[#5D3A00] flex items-center gap-2">
                   <Package className="w-6 h-6 text-[#D87C5A]" />
@@ -408,7 +434,7 @@ const Orders = () => {
       {showExportModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
-            <div className="bg-gradient-to-r from-[#FFF5E1] to-[#FFE4D6] p-6 rounded-t-2xl border-b border-[#FFD95A]">
+            <div className="bg-gradient-to-r  p-6 rounded-t-2xl border-b border-[#FFE4D6]">
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold text-[#5D3A00] flex items-center gap-2">
                   <Download className="w-6 h-6 text-[#D87C5A]" />
@@ -429,7 +455,7 @@ const Orders = () => {
                 <select
                   value={exportOptions.format}
                   onChange={(e) => setExportOptions({...exportOptions, format: e.target.value})}
-                  className="w-full border border-[#FFD95A] rounded-lg px-3 py-2 text-sm"
+                  className="w-full border border-[#FFE4D6] focus:ring-0 outline-none rounded-lg px-3 py-2 text-sm"
                 >
                   <option value="csv">CSV</option>
                   <option value="json">JSON</option>
@@ -441,7 +467,7 @@ const Orders = () => {
                 <select
                   value={exportOptions.dateRange}
                   onChange={(e) => setExportOptions({...exportOptions, dateRange: e.target.value})}
-                  className="w-full border border-[#FFD95A] rounded-lg px-3 py-2 text-sm"
+                  className="w-full border border-[#FFE4D6] focus:ring-0 outline-none rounded-lg px-3 py-2 text-sm"
                 >
                   <option value="all">All Time</option>
                   <option value="today">Today</option>
@@ -455,7 +481,7 @@ const Orders = () => {
                 <select
                   value={exportOptions.status}
                   onChange={(e) => setExportOptions({...exportOptions, status: e.target.value})}
-                  className="w-full border border-[#FFD95A] rounded-lg px-3 py-2 text-sm"
+                  className="w-full border border-[#FFE4D6] focus:ring-0 outline-none rounded-lg px-3 py-2 text-sm"
                 >
                   <option value="all">All Statuses</option>
                   <option value="pending">Pending</option>
@@ -474,7 +500,7 @@ const Orders = () => {
                       type="checkbox"
                       checked={exportOptions.includeCustomerInfo}
                       onChange={(e) => setExportOptions({...exportOptions, includeCustomerInfo: e.target.checked})}
-                      className="rounded border-[#FFD95A]"
+                      className="rounded border-[#FFE4D6] focus:ring-0 outline-none"
                     />
                     <span className="text-sm text-[#5D3A00]">Customer Information</span>
                   </label>
@@ -483,7 +509,7 @@ const Orders = () => {
                       type="checkbox"
                       checked={exportOptions.includeItems}
                       onChange={(e) => setExportOptions({...exportOptions, includeItems: e.target.checked})}
-                      className="rounded border-[#FFD95A]"
+                      className="rounded border-[#FFE4D6] focus:ring-0 outline-none"
                     />
                     <span className="text-sm text-[#5D3A00]">Order Items</span>
                   </label>
@@ -493,7 +519,7 @@ const Orders = () => {
               <div className="flex gap-3 pt-4">
                 <button
                   onClick={() => setShowExportModal(false)}
-                  className="flex-1 px-4 py-2 text-[#5D3A00] border border-[#FFD95A] rounded-lg hover:bg-[#FFF5E1] transition-colors"
+                  className="flex-1 px-4 py-2 text-[#5D3A00] border border-[#FFE4D6] focus:ring-0 outline-none rounded-lg hover:bg-[#FFF5E1] transition-colors"
                 >
                   Cancel
                 </button>
@@ -510,6 +536,7 @@ const Orders = () => {
     
       )}
     
+    </div>
     </div>
   ); 
 };

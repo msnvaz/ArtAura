@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Sidebar from '../../components/Sidebar';
 import { 
   BarChart3, 
   TrendingUp, 
@@ -132,7 +133,9 @@ const SalesAnalytics = () => {
   const avgOrderValue = totalRevenue / totalOrders;
 
   return (
-    <div className="space-y-6 bg-[#FFF5E1] min-h-screen p-6 animate-fade-in">
+     <div className="flex">
+      <Sidebar />
+    <div className="ml-20 md:ml-64 flex-1 space-y-6 bg-[#FFF5E1] min-h-screen p-6 animate-fade-in">
       {/* Header Section */}
       <div className="rounded-2xl shadow-xl p-6 border border-[#FFE4D6] bg-gradient-to-r from-[#FFF5E1] via-[#FFD95A]/30 to-[#FFE4D6] relative overflow-hidden animate-fade-in">
         <div className="absolute top-0 right-0 w-32 h-32 bg-[#FFD95A]/20 rounded-full -translate-y-16 translate-x-16 animate-pulse"></div>
@@ -390,6 +393,7 @@ const SalesAnalytics = () => {
           </table>
         </div>
       </div>
+    </div>
     </div>
   );
 };
