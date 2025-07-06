@@ -7,7 +7,6 @@ import {
   BarChart3,
   Shield,
   Image,
-  Store,
   User,
   Settings
 } from 'lucide-react';
@@ -16,7 +15,10 @@ import {
 import Overview from './Overview';
 import UsersManagement from './Users';
 import ArtworkManagement from './Artwork';
-import MarketplaceManagement from './Marketplace';
+import Financial from './Financial';
+import ComplaintsReports from './ComplaintsReports';
+import UserVerification from './UserVerification';
+import { CurrencyProvider } from '../../context/CurrencyContext';
 
 const AdminDashboard = () => {
   const [activeSection, setActiveSection] = useState('overview');
@@ -25,7 +27,9 @@ const AdminDashboard = () => {
     { id: 'overview', label: 'Overview', icon: BarChart3 },
     { id: 'users', label: 'Users', icon: Users },
     { id: 'artwork', label: 'Artworks', icon: Image },
-    { id: 'marketplace', label: 'Marketplace', icon: Store }
+    { id: 'financial', label: 'Financial', icon: DollarSign },
+    { id: 'complaints', label: 'Complaints & Reports', icon: AlertTriangle },
+    { id: 'verification', label: 'User Verification', icon: Shield }
   ];
 
   const renderContent = () => {
@@ -36,15 +40,19 @@ const AdminDashboard = () => {
         return <UsersManagement />;
       case 'artwork':
         return <ArtworkManagement />;
-      case 'marketplace':
-        return <MarketplaceManagement />;
+      case 'financial':
+        return <Financial />;
+      case 'complaints':
+        return <ComplaintsReports />;
+      case 'verification':
+        return <UserVerification />;
       default:
         return <Overview />;
     }
   };
 
   return (
-    <>
+    <CurrencyProvider>
       {/* Bootstrap CSS */}
       <link 
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" 
@@ -165,7 +173,7 @@ const AdminDashboard = () => {
         
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
           {/* Navigation Tabs */}
-          <div className="bg-white rounded-lg shadow-sm mb-8">
+          <div className="bg-white rounded-lg shadow-sm mb-4">
             <div style={{borderBottom: '1px solid #FFE4D6'}}>
               <nav className="flex space-x-8 px-6">
                 {menuItems.map((item) => (
@@ -204,7 +212,7 @@ const AdminDashboard = () => {
           </div>
         </div>
       </div>
-    </>
+    </CurrencyProvider>
   );
 };
 

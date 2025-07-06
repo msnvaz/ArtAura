@@ -12,22 +12,25 @@ import {
   X,
   Plus
 } from 'lucide-react';
+import { useCurrency } from '../../context/CurrencyContext';
+import CurrencySelector from '../../components/common/CurrencySelector';
 
 const UsersManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [selectedUser, setSelectedUser] = useState(null);
   const [showUserModal, setShowUserModal] = useState(false);
+  const { formatPrice } = useCurrency();
 
   // Mock data for users
   const [users, setUsers] = useState([
-    { id: 1, name: 'Alex Johnson', email: 'alex@example.com', type: 'Artist', status: 'Active', joinDate: '2024-01-15', artworks: 12, blocked: false },
-    { id: 2, name: 'Elena Rodriguez', email: 'elena@example.com', type: 'Collector', status: 'Active', joinDate: '2024-02-20', artworks: 0, blocked: false },
-    { id: 3, name: 'David Chen', email: 'david@example.com', type: 'Artist', status: 'Pending', joinDate: '2024-03-10', artworks: 5, blocked: false },
-    { id: 4, name: 'Sarah Wilson', email: 'sarah@example.com', type: 'Artist', status: 'Suspended', joinDate: '2024-01-30', artworks: 8, blocked: true },
-    { id: 5, name: 'Michael Brown', email: 'michael@example.com', type: 'Collector', status: 'Active', joinDate: '2024-02-05', artworks: 0, blocked: false },
-    { id: 6, name: 'Lisa Thompson', email: 'lisa@example.com', type: 'Artist', status: 'Active', joinDate: '2024-01-10', artworks: 15, blocked: false },
-    { id: 7, name: 'James Davis', email: 'james@example.com', type: 'Admin', status: 'Active', joinDate: '2023-12-01', artworks: 0, blocked: false }
+    { id: 1, name: 'Kavinda Perera', email: 'kavinda.perera@gmail.com', type: 'Artist', status: 'Active', joinDate: '2024-01-15', artworks: 12, blocked: false, revenue: 1250.50, totalSales: 8 },
+    { id: 2, name: 'Nimali Fernando', email: 'nimali.fernando@yahoo.com', type: 'Collector', status: 'Active', joinDate: '2024-02-20', artworks: 0, blocked: false, revenue: 0, totalPurchases: 15, totalSpent: 3200.75 },
+    { id: 3, name: 'Ashen Jayawardena', email: 'ashen.jayawardena@outlook.com', type: 'Artist', status: 'Pending', joinDate: '2024-03-10', artworks: 5, blocked: false, revenue: 675.25, totalSales: 3 },
+    { id: 4, name: 'Sachini Rathnayake', email: 'sachini.rathnayake@gmail.com', type: 'Artist', status: 'Suspended', joinDate: '2024-01-30', artworks: 8, blocked: true, revenue: 920.00, totalSales: 5 },
+    { id: 5, name: 'Dinesh Wickramasinghe', email: 'dinesh.wickrama@gmail.com', type: 'Collector', status: 'Active', joinDate: '2024-02-05', artworks: 0, blocked: false, revenue: 0, totalPurchases: 8, totalSpent: 1850.30 },
+    { id: 6, name: 'Malini Gunawardana', email: 'malini.gunawardana@hotmail.com', type: 'Artist', status: 'Active', joinDate: '2024-01-10', artworks: 15, blocked: false, revenue: 2150.80, totalSales: 12 },
+    { id: 7, name: 'Rajeev Bandara', email: 'rajeev.bandara@artaura.lk', type: 'Admin', status: 'Active', joinDate: '2023-12-01', artworks: 0, blocked: false, revenue: 0 }
   ]);
 
   const handleBlockUser = (userId) => {
@@ -90,7 +93,7 @@ const UsersManagement = () => {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-90vh overflow-y-auto">
-          <div className="p-6">
+          <div className="p-4">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-2xl font-bold" style={{color: '#5D3A00'}}>User Details</h3>
               <button
@@ -103,7 +106,7 @@ const UsersManagement = () => {
                 <X size={20} />
               </button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <h4 className="font-semibold mb-3" style={{color: '#5D3A00'}}>Personal Information</h4>
                 <div className="space-y-3">
@@ -147,6 +150,38 @@ const UsersManagement = () => {
                     <span className="font-medium">Artworks:</span> 
                     <span className="font-bold" style={{color: '#D87C5A'}}>{selectedUser.artworks}</span>
                   </div>
+                  {selectedUser.type === 'Artist' && selectedUser.revenue !== undefined && (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="font-medium">Total Revenue:</span> 
+                        <span className="font-bold" style={{color: '#D87C5A'}}>
+                          {formatPrice(selectedUser.revenue)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-medium">Total Sales:</span> 
+                        <span className="font-bold" style={{color: '#D87C5A'}}>
+                          {selectedUser.totalSales || 0}
+                        </span>
+                      </div>
+                    </>
+                  )}
+                  {selectedUser.type === 'Collector' && selectedUser.totalSpent !== undefined && (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="font-medium">Total Spent:</span> 
+                        <span className="font-bold" style={{color: '#D87C5A'}}>
+                          {formatPrice(selectedUser.totalSpent)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-medium">Total Purchases:</span> 
+                        <span className="font-bold" style={{color: '#D87C5A'}}>
+                          {selectedUser.totalPurchases || 0}
+                        </span>
+                      </div>
+                    </>
+                  )}
                   <div className="flex justify-between">
                     <span className="font-medium">Account Status:</span> 
                     <span className={selectedUser.blocked ? 'text-red-600 font-medium' : 'text-green-600 font-medium'}>
@@ -201,7 +236,7 @@ const UsersManagement = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* User Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {userStats.map((stat, index) => (
@@ -222,11 +257,11 @@ const UsersManagement = () => {
                 backgroundRepeat: 'no-repeat'
               }}
             ></div>
-            <div className="p-6 relative z-10">
+            <div className="p-3 relative z-10">
               <div className="flex justify-between items-start">
                 <div className="flex-1">
                   <p className="text-sm font-semibold mb-1" style={{color: '#5D3A00'}}>{stat.label}</p>
-                  <h2 className="text-2xl font-bold mb-2" style={{color: '#5D3A00'}}>{stat.value}</h2>
+                  <h2 className="text-xl font-bold mb-2" style={{color: '#5D3A00'}}>{stat.value}</h2>
                   <div className="flex items-center gap-1">
                     <span 
                       className="text-xs font-medium px-2 py-1 rounded-full"
@@ -240,8 +275,8 @@ const UsersManagement = () => {
                     <span className="text-xs opacity-75" style={{color: '#5D3A00'}}>vs last month</span>
                   </div>
                 </div>
-                <div className="p-3 rounded-lg shadow-lg" style={{backgroundColor: stat.color}}>
-                  <stat.icon size={24} className="text-white" />
+                <div className="p-2 rounded-lg shadow-lg" style={{backgroundColor: stat.color}}>
+                  <stat.icon size={20} className="text-white" />
                 </div>
               </div>
             </div>
@@ -249,39 +284,42 @@ const UsersManagement = () => {
         ))}
       </div>
 
-      {/* Header with Search and Filters */}
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <h2 className="text-2xl font-bold flex items-center gap-2" style={{color: '#5D3A00'}}>
-            <Users size={24} />
-            User Management ({filteredUsers.length} users)
-          </h2>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative">
-              <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2" style={{color: '#5D3A00'}} />
-              <input
-                type="text"
-                placeholder="Search users by name or email..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent w-full sm:w-64"
-                style={{borderColor: '#FFE4D6', backgroundColor: 'white'}}
-              />
-            </div>
-            <div className="relative">
-              <Filter size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2" style={{color: '#5D3A00'}} />
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="pl-10 pr-8 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent appearance-none w-full sm:w-auto"
-                style={{borderColor: '#FFE4D6', backgroundColor: 'white'}}
-              >
-                <option value="all">All Status</option>
-                <option value="active">Active</option>
-                <option value="pending">Pending</option>
-                <option value="suspended">Suspended</option>
-              </select>
-            </div>
+      {/* User Management Heading */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-2">
+        <h2 className="text-2xl font-bold flex items-center gap-2" style={{color: '#5D3A00'}}>
+          <Users size={24} />
+          User Management ({filteredUsers.length} users)
+        </h2>
+        <CurrencySelector className="flex-shrink-0" />
+      </div>
+
+      {/* Search and Filters */}
+      <div className="bg-transparent rounded-lg py-1 px-4">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative">
+            <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2" style={{color: '#5D3A00'}} />
+            <input
+              type="text"
+              placeholder="Search users by name or email..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent w-full sm:w-64"
+              style={{borderColor: '#FFE4D6', backgroundColor: 'rgba(255, 255, 255, 0.8)'}}
+            />
+          </div>
+          <div className="relative">
+            <Filter size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2" style={{color: '#5D3A00'}} />
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="pl-10 pr-8 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent appearance-none w-full sm:w-auto"
+              style={{borderColor: '#FFE4D6', backgroundColor: 'rgba(255, 255, 255, 0.8)'}}
+            >
+              <option value="all">All Status</option>
+              <option value="active">Active</option>
+              <option value="pending">Pending</option>
+              <option value="suspended">Suspended</option>
+            </select>
           </div>
         </div>
       </div>
@@ -297,6 +335,7 @@ const UsersManagement = () => {
                 <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Status</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Join Date</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Artworks</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Revenue/Spent</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Actions</th>
               </tr>
             </thead>
@@ -329,6 +368,29 @@ const UsersManagement = () => {
                   <td className="px-6 py-4 text-sm" style={{color: '#5D3A00'}}>{user.joinDate}</td>
                   <td className="px-6 py-4 text-sm" style={{color: '#5D3A00'}}>
                     <span className="font-medium">{user.artworks}</span>
+                  </td>
+                  <td className="px-6 py-4 text-sm" style={{color: '#5D3A00'}}>
+                    {user.type === 'Artist' && user.revenue !== undefined ? (
+                      <div>
+                        <div className="font-medium" style={{color: '#D87C5A'}}>
+                          {formatPrice(user.revenue)}
+                        </div>
+                        <div className="text-xs opacity-75">
+                          {user.totalSales || 0} sales
+                        </div>
+                      </div>
+                    ) : user.type === 'Collector' && user.totalSpent !== undefined ? (
+                      <div>
+                        <div className="font-medium" style={{color: '#D87C5A'}}>
+                          {formatPrice(user.totalSpent)}
+                        </div>
+                        <div className="text-xs opacity-75">
+                          {user.totalPurchases || 0} purchases
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-gray-400">-</span>
+                    )}
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">

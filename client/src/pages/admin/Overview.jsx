@@ -10,12 +10,15 @@ import {
   User,
   Trophy
 } from 'lucide-react';
+import { useCurrency } from '../../context/CurrencyContext';
 
 const Overview = () => {
+  const { formatPrice } = useCurrency();
+  
   const stats = [
     { label: 'Total Users', value: '2,847', icon: Users, color: '#D87C5A' },
     { label: 'Active Artists', value: '1,234', icon: Palette, color: '#FFD95A' },
-    { label: 'Total Revenue', value: '$45,230', icon: DollarSign, color: '#5D3A00' },
+    { label: 'Total Revenue', value: formatPrice(45230), icon: DollarSign, color: '#5D3A00' },
     { label: 'Pending Reports', value: '12', icon: AlertTriangle, color: '#D87C5A' }
   ];
 
@@ -36,7 +39,7 @@ const Overview = () => {
   return (
     <div className="w-full">
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
         {stats.map((stat, index) => (
           <div key={index} className="rounded-lg shadow-sm border h-full relative overflow-hidden" style={{backgroundColor: '#FFF5E1'}}>
             {/* Background Image */}
@@ -55,7 +58,7 @@ const Overview = () => {
                 backgroundRepeat: 'no-repeat'
               }}
             ></div>
-            <div className="p-6 relative z-10">
+            <div className="p-4 relative z-10">
               <div className="flex justify-between items-center">
                 <div>
                   <p className="text-sm font-semibold mb-1" style={{color: '#5D3A00'}}>{stat.label}</p>
@@ -71,7 +74,7 @@ const Overview = () => {
       </div>
 
       {/* Quick Actions & Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="rounded-lg shadow-sm border h-full relative overflow-hidden" style={{backgroundColor: '#FFF5E1'}}>
           <div 
             className="absolute inset-0 opacity-5"
@@ -81,7 +84,7 @@ const Overview = () => {
               backgroundPosition: 'center'
             }}
           ></div>
-          <div className="p-6 relative z-10">
+          <div className="p-5 relative z-10">
             <h2 className="text-xl font-bold mb-4" style={{color: '#5D3A00'}}>Quick Actions</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {quickActions.map((action) => (

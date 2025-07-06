@@ -12,19 +12,22 @@ import {
   X,
   Plus
 } from 'lucide-react';
+import { useCurrency } from '../../context/CurrencyContext';
+import CurrencySelector from '../../components/common/CurrencySelector';
 
 const ArtworkManagement = () => {
   const [artworkSearchTerm, setArtworkSearchTerm] = useState('');
   const [artworkFilterStatus, setArtworkFilterStatus] = useState('all');
   const [selectedArtwork, setSelectedArtwork] = useState(null);
   const [showArtworkModal, setShowArtworkModal] = useState(false);
+  const { formatPrice } = useCurrency();
 
   // Mock data for artworks
   const [artworks, setArtworks] = useState([
     { 
       id: 1, 
       title: 'Digital Sunset', 
-      artist: 'Alex Johnson', 
+      artist: 'Kavinda Perera', 
       category: 'Digital Art', 
       price: 1250, 
       status: 'Approved', 
@@ -36,8 +39,8 @@ const ArtworkManagement = () => {
     },
     { 
       id: 2, 
-      title: 'Abstract Harmony', 
-      artist: 'Elena Rodriguez', 
+      title: 'Sigiriya Dreams', 
+      artist: 'Nimali Fernando', 
       category: 'Painting', 
       price: 2100, 
       status: 'Pending', 
@@ -49,8 +52,8 @@ const ArtworkManagement = () => {
     },
     { 
       id: 3, 
-      title: 'Urban Photography', 
-      artist: 'David Chen', 
+      title: 'Galle Fort Street', 
+      artist: 'Ashen Jayawardena', 
       category: 'Photography', 
       price: 850, 
       status: 'Approved', 
@@ -62,8 +65,8 @@ const ArtworkManagement = () => {
     },
     { 
       id: 4, 
-      title: 'Controversial Art', 
-      artist: 'Sarah Wilson', 
+      title: 'Modern Sri Lankan', 
+      artist: 'Sachini Rathnayake', 
       category: 'Mixed Media', 
       price: 3200, 
       status: 'Flagged', 
@@ -75,8 +78,8 @@ const ArtworkManagement = () => {
     },
     { 
       id: 5, 
-      title: 'Nature\'s Beauty', 
-      artist: 'Lisa Thompson', 
+      title: 'Tea Plantation Vista', 
+      artist: 'Malini Gunawardana', 
       category: 'Landscape', 
       price: 1750, 
       status: 'Approved', 
@@ -149,7 +152,7 @@ const ArtworkManagement = () => {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div className="bg-white rounded-lg shadow-lg max-w-4xl w-full mx-4 max-h-90vh overflow-y-auto">
-          <div className="p-6">
+          <div className="p-4">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-2xl font-bold" style={{color: '#5D3A00'}}>Artwork Details</h3>
               <button
@@ -163,7 +166,7 @@ const ArtworkManagement = () => {
               </button>
             </div>
             
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {/* Artwork Image */}
               <div>
                 <img 
@@ -200,7 +203,7 @@ const ArtworkManagement = () => {
                     </div>
                     <div>
                       <span className="font-medium" style={{color: '#5D3A00'}}>Price:</span>
-                      <p className="text-lg font-bold" style={{color: '#5D3A00'}}>${selectedArtwork.price.toLocaleString()}</p>
+                      <p className="text-lg font-bold" style={{color: '#5D3A00'}}>{formatPrice(selectedArtwork.price)}</p>
                     </div>
                     <div>
                       <span className="font-medium" style={{color: '#5D3A00'}}>Upload Date:</span>
@@ -272,7 +275,7 @@ const ArtworkManagement = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Artwork Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {artworkStats.map((stat, index) => (
@@ -293,11 +296,11 @@ const ArtworkManagement = () => {
                 backgroundRepeat: 'no-repeat'
               }}
             ></div>
-            <div className="p-6 relative z-10">
+            <div className="p-3 relative z-10">
               <div className="flex justify-between items-start">
                 <div className="flex-1">
                   <p className="text-sm font-semibold mb-1" style={{color: '#5D3A00'}}>{stat.label}</p>
-                  <h2 className="text-2xl font-bold mb-2" style={{color: '#5D3A00'}}>{stat.value}</h2>
+                  <h2 className="text-xl font-bold mb-2" style={{color: '#5D3A00'}}>{stat.value}</h2>
                   <div className="flex items-center gap-1">
                     <span 
                       className="text-xs font-medium px-2 py-1 rounded-full"
@@ -311,8 +314,8 @@ const ArtworkManagement = () => {
                     <span className="text-xs opacity-75" style={{color: '#5D3A00'}}>vs last month</span>
                   </div>
                 </div>
-                <div className="p-3 rounded-lg shadow-lg" style={{backgroundColor: stat.color}}>
-                  <stat.icon size={24} className="text-white" />
+                <div className="p-2 rounded-lg shadow-lg" style={{backgroundColor: stat.color}}>
+                  <stat.icon size={20} className="text-white" />
                 </div>
               </div>
             </div>
@@ -320,45 +323,48 @@ const ArtworkManagement = () => {
         ))}
       </div>
 
-      {/* Header with Search and Filters */}
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <h2 className="text-2xl font-bold flex items-center gap-2" style={{color: '#5D3A00'}}>
-            <Image size={24} />
-            Artwork Management ({filteredArtworks.length} artworks)
-          </h2>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative">
-              <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2" style={{color: '#5D3A00'}} />
-              <input
-                type="text"
-                placeholder="Search artworks by title, artist, or category..."
-                value={artworkSearchTerm}
-                onChange={(e) => setArtworkSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent w-full sm:w-64"
-                style={{borderColor: '#FFE4D6', backgroundColor: 'white'}}
-              />
-            </div>
-            <div className="relative">
-              <Filter size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2" style={{color: '#5D3A00'}} />
-              <select
-                value={artworkFilterStatus}
-                onChange={(e) => setArtworkFilterStatus(e.target.value)}
-                className="pl-10 pr-8 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent appearance-none w-full sm:w-auto"
-                style={{borderColor: '#FFE4D6', backgroundColor: 'white'}}
-              >
-                <option value="all">All Status</option>
-                <option value="approved">Approved</option>
-                <option value="pending">Pending</option>
-                <option value="flagged">Flagged</option>
-              </select>
-            </div>
+      {/* Artwork Management Heading */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-2">
+        <h2 className="text-2xl font-bold flex items-center gap-2" style={{color: '#5D3A00'}}>
+          <Image size={24} />
+          Artwork Management ({filteredArtworks.length} artworks)
+        </h2>
+        <CurrencySelector className="flex-shrink-0" />
+      </div>
+
+      {/* Search and Filters */}
+      <div className="bg-transparent rounded-lg py-1 px-4">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative">
+            <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2" style={{color: '#5D3A00'}} />
+            <input
+              type="text"
+              placeholder="Search artworks by title, artist, or category..."
+              value={artworkSearchTerm}
+              onChange={(e) => setArtworkSearchTerm(e.target.value)}
+              className="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent w-full sm:w-64"
+              style={{borderColor: '#FFE4D6', backgroundColor: 'rgba(255, 255, 255, 0.8)'}}
+            />
+          </div>
+          <div className="relative">
+            <Filter size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2" style={{color: '#5D3A00'}} />
+            <select
+              value={artworkFilterStatus}
+              onChange={(e) => setArtworkFilterStatus(e.target.value)}
+              className="pl-10 pr-8 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent appearance-none w-full sm:w-auto"
+              style={{borderColor: '#FFE4D6', backgroundColor: 'rgba(255, 255, 255, 0.8)'}}
+            >
+              <option value="all">All Status</option>
+              <option value="approved">Approved</option>
+              <option value="pending">Pending</option>
+              <option value="flagged">Flagged</option>
+            </select>
           </div>
         </div>
       </div>
 
       {/* Artworks Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredArtworks.map((artwork) => (
           <div key={artwork.id} className="bg-white rounded-lg shadow-sm overflow-hidden">
             <div className="relative">
@@ -384,7 +390,7 @@ const ArtworkManagement = () => {
                 <p className="text-xs mt-1" style={{color: '#5D3A00'}}>{artwork.category}</p>
               </div>
               <div className="flex justify-between items-center mb-3">
-                <span className="font-bold text-lg" style={{color: '#5D3A00'}}>${artwork.price.toLocaleString()}</span>
+                <span className="font-bold text-lg" style={{color: '#5D3A00'}}>{formatPrice(artwork.price)}</span>
                 <div className="flex items-center gap-3 text-sm" style={{color: '#D87C5A'}}>
                   <span>{artwork.views} views</span>
                   <span>{artwork.likes} likes</span>
