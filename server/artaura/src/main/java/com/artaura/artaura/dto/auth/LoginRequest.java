@@ -1,10 +1,9 @@
-package com.artaura.artaura.dto;
+package com.artaura.artaura.dto.auth;
 
 import lombok.Data;
 
 @Data
-public class AdminLogin {
-    private Long adminId;
+public class LoginRequest {
     private String email;
     private String password;
 }
