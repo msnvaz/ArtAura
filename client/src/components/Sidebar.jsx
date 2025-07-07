@@ -21,7 +21,7 @@ const mainLinks = [
   { name: "Orders", path: "/shop/orders", icon: ShoppingCart },
   { name: "Catalog", path: "/shop/catalog", icon: Package },
   { name: "Analytics", path: "/shop/analytics", icon: BarChart3 },
-  { name: "Sponsorships", path: "/shop/rewards", icon: Handshake },
+  { name: "Sponsorships", path: "/shop/sponsorships", icon: Handshake },
 
   {
     name: "Notifications",

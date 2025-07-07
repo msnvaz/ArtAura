@@ -9,7 +9,7 @@ import Competitions from './pages/Competitions';
 
 import Dashboard from './pages/shop/dashboard';
 import ShopOrders from './pages/shop/Orders';
-import RewardSystem from './pages/shop/Rewards';
+import Sponsorships from './pages/shop/Sponsorships';
 import SalesAnalytics from './pages/shop/Analytics';
 import Catalog from './pages/shop/Catalog';
 
@@ -75,7 +75,7 @@ function App() {
 
           <Route path="/shop/dashboard" element={<Dashboard />} />
           <Route path="/shop/orders" element={<ShopOrders/>}/>
-          <Route path="/shop/rewards" element={<RewardSystem />} />
+          <Route path="/shop/sponsorships" element={<Sponsorships />} />
           <Route path="/shop/analytics" element={<SalesAnalytics />} />
           <Route path="/shop/catalog" element={<Catalog/>}/>
 
