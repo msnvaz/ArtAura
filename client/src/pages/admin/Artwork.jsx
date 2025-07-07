@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Image, 
   Search,
@@ -21,6 +21,11 @@ const ArtworkManagement = () => {
   const [selectedArtwork, setSelectedArtwork] = useState(null);
   const [showArtworkModal, setShowArtworkModal] = useState(false);
   const { formatPrice } = useCurrency();
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    setIsLoaded(true);
+  }, []);
 
   // Mock data for artworks
   const [artworks, setArtworks] = useState([
@@ -275,196 +280,261 @@ const ArtworkManagement = () => {
   };
 
   return (
-    <div className="space-y-4">
-      {/* Artwork Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {artworkStats.map((stat, index) => (
-          <div key={index} className="rounded-lg shadow-sm border h-full relative overflow-hidden" style={{backgroundColor: '#FFF5E1'}}>
-            {/* Background Image */}
-            <div 
-              className="absolute inset-0 opacity-20"
-              style={{
-                backgroundImage: index === 0 
-                  ? 'url("https://images.unsplash.com/photo-1541961017774-22349e4a1262?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80")' // Total artworks - art gallery
-                  : index === 1 
-                  ? 'url("https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80")' // Approved - checkmark/approval
-                  : index === 2 
-                  ? 'url("https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80")' // Pending - hourglass/clock
-                  : 'url("https://images.unsplash.com/photo-1563986768609-322da13575f3?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80")', // Flagged - warning/shield
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                backgroundRepeat: 'no-repeat'
-              }}
-            ></div>
-            <div className="p-3 relative z-10">
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <p className="text-sm font-semibold mb-1" style={{color: '#5D3A00'}}>{stat.label}</p>
-                  <h2 className="text-xl font-bold mb-2" style={{color: '#5D3A00'}}>{stat.value}</h2>
-                  <div className="flex items-center gap-1">
-                    <span 
-                      className="text-xs font-medium px-2 py-1 rounded-full"
-                      style={{
-                        backgroundColor: stat.changeType === 'positive' ? '#d4edda' : stat.changeType === 'negative' ? '#f8d7da' : '#fff3cd',
-                        color: stat.changeType === 'positive' ? '#155724' : stat.changeType === 'negative' ? '#721c24' : '#856404'
-                      }}
-                    >
-                      {stat.change}
-                    </span>
-                    <span className="text-xs opacity-75" style={{color: '#5D3A00'}}>vs last month</span>
+    <>
+      {/* Add smooth animations */}
+      <style jsx>{`
+        @keyframes smoothFadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(15px) scale(0.98);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+
+        @keyframes slideInUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .artwork-container {
+          animation: smoothFadeIn 0.4s ease-out;
+        }
+
+        .artwork-stats {
+          animation: slideInUp 0.5s ease-out 0.1s both;
+        }
+
+        .artwork-header {
+          animation: slideInUp 0.5s ease-out 0.2s both;
+        }
+
+        .artwork-filters {
+          animation: slideInUp 0.5s ease-out 0.3s both;
+        }
+
+        .artwork-grid {
+          animation: slideInUp 0.5s ease-out 0.4s both;
+        }
+
+        .artwork-stat-card {
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .artwork-stat-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .artwork-card {
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .artwork-card:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+      `}</style>
+
+      <div className="space-y-4 artwork-container">
+        {/* Artwork Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 artwork-stats">
+          {artworkStats.map((stat, index) => (
+            <div key={index} className="rounded-lg shadow-sm border h-full relative overflow-hidden artwork-stat-card" style={{backgroundColor: '#FFF5E1'}}>
+              {/* Background Image */}
+              <div 
+                className="absolute inset-0 opacity-20"
+                style={{
+                  backgroundImage: index === 0 
+                    ? 'url("https://images.unsplash.com/photo-1541961017774-22349e4a1262?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80")' // Total artworks - art gallery
+                    : index === 1 
+                    ? 'url("https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80")' // Approved - checkmark/approval
+                    : index === 2 
+                    ? 'url("https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80")' // Pending - hourglass/clock
+                    : 'url("https://images.unsplash.com/photo-1563986768609-322da13575f3?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80")', // Flagged - warning/shield
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  backgroundRepeat: 'no-repeat'
+                }}
+              ></div>
+              <div className="p-3 relative z-10">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold mb-1" style={{color: '#5D3A00'}}>{stat.label}</p>
+                    <h2 className="text-xl font-bold mb-2" style={{color: '#5D3A00'}}>{stat.value}</h2>
+                    <div className="flex items-center gap-1">
+                      <span 
+                        className="text-xs font-medium px-2 py-1 rounded-full"
+                        style={{
+                          backgroundColor: stat.changeType === 'positive' ? '#d4edda' : stat.changeType === 'negative' ? '#f8d7da' : '#fff3cd',
+                          color: stat.changeType === 'positive' ? '#155724' : stat.changeType === 'negative' ? '#721c24' : '#856404'
+                        }}
+                      >
+                        {stat.change}
+                      </span>
+                      <span className="text-xs opacity-75" style={{color: '#5D3A00'}}>vs last month</span>
+                    </div>
+                  </div>
+                  <div className="p-2 rounded-lg shadow-lg" style={{backgroundColor: stat.color}}>
+                    <stat.icon size={20} className="text-white" />
                   </div>
                 </div>
-                <div className="p-2 rounded-lg shadow-lg" style={{backgroundColor: stat.color}}>
-                  <stat.icon size={20} className="text-white" />
-                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Artwork Management Heading */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-2">
-        <h2 className="text-2xl font-bold flex items-center gap-2" style={{color: '#5D3A00'}}>
-          <Image size={24} />
-          Artwork Management ({filteredArtworks.length} artworks)
-        </h2>
-        <CurrencySelector className="flex-shrink-0" />
-      </div>
-
-      {/* Search and Filters */}
-      <div className="bg-transparent rounded-lg py-1 px-4">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative">
-            <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2" style={{color: '#5D3A00'}} />
-            <input
-              type="text"
-              placeholder="Search artworks by title, artist, or category..."
-              value={artworkSearchTerm}
-              onChange={(e) => setArtworkSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent w-full sm:w-64"
-              style={{borderColor: '#FFE4D6', backgroundColor: 'rgba(255, 255, 255, 0.8)'}}
-            />
-          </div>
-          <div className="relative">
-            <Filter size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2" style={{color: '#5D3A00'}} />
-            <select
-              value={artworkFilterStatus}
-              onChange={(e) => setArtworkFilterStatus(e.target.value)}
-              className="pl-10 pr-8 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent appearance-none w-full sm:w-auto"
-              style={{borderColor: '#FFE4D6', backgroundColor: 'rgba(255, 255, 255, 0.8)'}}
-            >
-              <option value="all">All Status</option>
-              <option value="approved">Approved</option>
-              <option value="pending">Pending</option>
-              <option value="flagged">Flagged</option>
-            </select>
-          </div>
+          ))}
         </div>
-      </div>
 
-      {/* Artworks Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredArtworks.map((artwork) => (
-          <div key={artwork.id} className="bg-white rounded-lg shadow-sm overflow-hidden">
+        {/* Artwork Management Heading */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-2 artwork-header">
+          <h2 className="text-2xl font-bold flex items-center gap-2" style={{color: '#5D3A00'}}>
+            <Image size={24} />
+            Artwork Management ({filteredArtworks.length} artworks)
+          </h2>
+          <CurrencySelector className="flex-shrink-0" />
+        </div>
+
+        {/* Search and Filters */}
+        <div className="bg-transparent rounded-lg py-1 px-4 artwork-filters">
+          <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative">
-              <img 
-                src={artwork.imageUrl} 
-                alt={artwork.title}
-                className="w-full h-48 object-cover"
+              <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2" style={{color: '#5D3A00'}} />
+              <input
+                type="text"
+                placeholder="Search artworks by title, artist, or category..."
+                value={artworkSearchTerm}
+                onChange={(e) => setArtworkSearchTerm(e.target.value)}
+                className="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent w-full sm:w-64"
+                style={{borderColor: '#FFE4D6', backgroundColor: 'rgba(255, 255, 255, 0.8)'}}
               />
-              <div className="absolute top-3 right-3">
-                <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                  artwork.status === 'Approved' ? 'text-green-800 bg-green-100' :
-                  artwork.status === 'Pending' ? 'text-yellow-800 bg-yellow-100' :
-                  'text-red-800 bg-red-100'
-                }`}>
-                  {artwork.status}
-                </span>
-              </div>
             </div>
-            <div className="p-4">
-              <div className="mb-3">
-                <h3 className="font-bold text-lg mb-1" style={{color: '#5D3A00'}}>{artwork.title}</h3>
-                <p className="text-sm" style={{color: '#D87C5A'}}>by {artwork.artist}</p>
-                <p className="text-xs mt-1" style={{color: '#5D3A00'}}>{artwork.category}</p>
-              </div>
-              <div className="flex justify-between items-center mb-3">
-                <span className="font-bold text-lg" style={{color: '#5D3A00'}}>{formatPrice(artwork.price)}</span>
-                <div className="flex items-center gap-3 text-sm" style={{color: '#D87C5A'}}>
-                  <span>{artwork.views} views</span>
-                  <span>{artwork.likes} likes</span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs" style={{color: '#5D3A00'}}>Uploaded: {artwork.uploadDate}</span>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => {setSelectedArtwork(artwork); setShowArtworkModal(true);}}
-                    className="p-2 rounded-lg transition-colors"
-                    style={{backgroundColor: '#FFE4D6', color: '#5D3A00'}}
-                    onMouseOver={(e) => {
-                      e.target.style.backgroundColor = '#FFD95A';
-                      e.target.style.transform = 'scale(1.05)';
-                    }}
-                    onMouseOut={(e) => {
-                      e.target.style.backgroundColor = '#FFE4D6';
-                      e.target.style.transform = 'scale(1)';
-                    }}
-                    title="View Details"
-                  >
-                    <Eye size={16} />
-                  </button>
-                  <button
-                    onClick={() => handleBlockArtwork(artwork.id)}
-                    className={`p-2 rounded-lg transition-all ${
-                      artwork.blocked 
-                        ? 'bg-green-100 text-green-800 hover:bg-green-200' 
-                        : 'bg-red-100 text-red-800 hover:bg-red-200'
-                    }`}
-                    onMouseOver={(e) => {
-                      e.target.style.transform = 'scale(1.05)';
-                    }}
-                    onMouseOut={(e) => {
-                      e.target.style.transform = 'scale(1)';
-                    }}
-                    title={artwork.blocked ? 'Approve Artwork' : 'Flag Artwork'}
-                  >
-                    {artwork.blocked ? <UserCheck size={16} /> : <Ban size={16} />}
-                  </button>
-                  <button
-                    className="p-2 rounded-lg transition-colors"
-                    style={{backgroundColor: '#FFE4D6', color: '#5D3A00'}}
-                    onMouseOver={(e) => {
-                      e.target.style.backgroundColor = '#FFD95A';
-                      e.target.style.transform = 'scale(1.05)';
-                    }}
-                    onMouseOut={(e) => {
-                      e.target.style.backgroundColor = '#FFE4D6';
-                      e.target.style.transform = 'scale(1)';
-                    }}
-                    title="More Options"
-                  >
-                    <MoreVertical size={16} />
-                  </button>
-                </div>
-              </div>
+            <div className="relative">
+              <Filter size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2" style={{color: '#5D3A00'}} />
+              <select
+                value={artworkFilterStatus}
+                onChange={(e) => setArtworkFilterStatus(e.target.value)}
+                className="pl-10 pr-8 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent appearance-none w-full sm:w-auto"
+                style={{borderColor: '#FFE4D6', backgroundColor: 'rgba(255, 255, 255, 0.8)'}}
+              >
+                <option value="all">All Status</option>
+                <option value="approved">Approved</option>
+                <option value="pending">Pending</option>
+                <option value="flagged">Flagged</option>
+              </select>
             </div>
           </div>
-        ))}
-      </div>
-
-      {filteredArtworks.length === 0 && (
-        <div className="bg-white rounded-lg shadow-sm p-8 text-center" style={{color: '#D87C5A'}}>
-          <Image size={48} className="mx-auto mb-4 opacity-50" />
-          <p className="text-lg font-medium mb-2">No artworks found</p>
-          <p className="text-sm">Try adjusting your search terms or filters</p>
         </div>
-      )}
 
-      {/* Artwork Details Modal */}
-      <ArtworkModal />
-    </div>
+        {/* Artworks Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 artwork-grid">
+          {filteredArtworks.map((artwork) => (
+            <div key={artwork.id} className="bg-white rounded-lg shadow-sm overflow-hidden artwork-card">
+              <div className="relative">
+                <img 
+                  src={artwork.imageUrl} 
+                  alt={artwork.title}
+                  className="w-full h-48 object-cover"
+                />
+                <div className="absolute top-3 right-3">
+                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                    artwork.status === 'Approved' ? 'text-green-800 bg-green-100' :
+                    artwork.status === 'Pending' ? 'text-yellow-800 bg-yellow-100' :
+                    'text-red-800 bg-red-100'
+                  }`}>
+                    {artwork.status}
+                  </span>
+                </div>
+              </div>
+              <div className="p-4">
+                <div className="mb-3">
+                  <h3 className="font-bold text-lg mb-1" style={{color: '#5D3A00'}}>{artwork.title}</h3>
+                  <p className="text-sm" style={{color: '#D87C5A'}}>by {artwork.artist}</p>
+                  <p className="text-xs mt-1" style={{color: '#5D3A00'}}>{artwork.category}</p>
+                </div>
+                <div className="flex justify-between items-center mb-3">
+                  <span className="font-bold text-lg" style={{color: '#5D3A00'}}>{formatPrice(artwork.price)}</span>
+                  <div className="flex items-center gap-3 text-sm" style={{color: '#D87C5A'}}>
+                    <span>{artwork.views} views</span>
+                    <span>{artwork.likes} likes</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs" style={{color: '#5D3A00'}}>Uploaded: {artwork.uploadDate}</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {setSelectedArtwork(artwork); setShowArtworkModal(true);}}
+                      className="p-2 rounded-lg transition-colors"
+                      style={{backgroundColor: '#FFE4D6', color: '#5D3A00'}}
+                      onMouseOver={(e) => {
+                        e.target.style.backgroundColor = '#FFD95A';
+                        e.target.style.transform = 'scale(1.05)';
+                      }}
+                      onMouseOut={(e) => {
+                        e.target.style.backgroundColor = '#FFE4D6';
+                        e.target.style.transform = 'scale(1)';
+                      }}
+                      title="View Details"
+                    >
+                      <Eye size={16} />
+                    </button>
+                    <button
+                      onClick={() => handleBlockArtwork(artwork.id)}
+                      className={`p-2 rounded-lg transition-all ${
+                        artwork.blocked 
+                          ? 'bg-green-100 text-green-800 hover:bg-green-200' 
+                          : 'bg-red-100 text-red-800 hover:bg-red-200'
+                      }`}
+                      onMouseOver={(e) => {
+                        e.target.style.transform = 'scale(1.05)';
+                      }}
+                      onMouseOut={(e) => {
+                        e.target.style.transform = 'scale(1)';
+                      }}
+                      title={artwork.blocked ? 'Approve Artwork' : 'Flag Artwork'}
+                    >
+                      {artwork.blocked ? <UserCheck size={16} /> : <Ban size={16} />}
+                    </button>
+                    <button
+                      className="p-2 rounded-lg transition-colors"
+                      style={{backgroundColor: '#FFE4D6', color: '#5D3A00'}}
+                      onMouseOver={(e) => {
+                        e.target.style.backgroundColor = '#FFD95A';
+                        e.target.style.transform = 'scale(1.05)';
+                      }}
+                      onMouseOut={(e) => {
+                        e.target.style.backgroundColor = '#FFE4D6';
+                        e.target.style.transform = 'scale(1)';
+                      }}
+                      title="More Options"
+                    >
+                      <MoreVertical size={16} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {filteredArtworks.length === 0 && (
+          <div className="bg-white rounded-lg shadow-sm p-8 text-center" style={{color: '#D87C5A'}}>
+            <Image size={48} className="mx-auto mb-4 opacity-50" />
+            <p className="text-lg font-medium mb-2">No artworks found</p>
+            <p className="text-sm">Try adjusting your search terms or filters</p>
+          </div>
+        )}
+
+        {/* Artwork Details Modal */}
+        <ArtworkModal />
+      </div>
+    </>
   );
 };
 
