@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   AlertTriangle, 
   Eye, 
@@ -20,8 +20,13 @@ const ComplaintsReports = () => {
   const [selectedPriority, setSelectedPriority] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [isLoaded, setIsLoaded] = useState(false);
 
-  // Sample complaints and reports data
+  useEffect(() => {
+    setIsLoaded(true);
+  }, []);
+
+  // Sample complaints and reports data - restore original content
   const complaints = [
     {
       id: 'RPT-001',
@@ -182,274 +187,350 @@ const ComplaintsReports = () => {
   };
 
   return (
-    <div className="w-full space-y-4">
-      {/* Header Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="rounded-lg shadow-sm border h-full relative overflow-hidden" style={{backgroundColor: '#FFF5E1', borderColor: '#FFE4D6'}}>
-          {/* Background Image */}
-          <div 
-            className="absolute inset-0 opacity-25"
-            style={{
-              backgroundImage: 'url("https://images.unsplash.com/photo-1450101499163-c8848c66ca85?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80")', // Reports - documents/files
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat'
-            }}
-          />
-          <div className="relative p-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium" style={{color: '#8B4513'}}>Total Reports</p>
-                <p className="text-2xl font-bold" style={{color: '#5D3A00'}}>{complaints.length}</p>
-              </div>
-              <AlertTriangle size={24} style={{color: '#D87C5A'}} />
-            </div>
-          </div>
-        </div>
-        <div className="rounded-lg shadow-sm border h-full relative overflow-hidden" style={{backgroundColor: '#FFF5E1', borderColor: '#FFE4D6'}}>
-          {/* Background Image */}
-          <div 
-            className="absolute inset-0 opacity-25"
-            style={{
-              backgroundImage: 'url("https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80")', // Pending - clock/waiting
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat'
-            }}
-          />
-          <div className="relative p-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium" style={{color: '#8B4513'}}>Pending</p>
-                <p className="text-2xl font-bold text-yellow-600">{complaints.filter(c => c.status === 'pending').length}</p>
-              </div>
-              <Clock size={24} className="text-yellow-600" />
-            </div>
-          </div>
-        </div>
-        <div className="rounded-lg shadow-sm border h-full relative overflow-hidden" style={{backgroundColor: '#FFF5E1', borderColor: '#FFE4D6'}}>
-          {/* Background Image */}
-          <div 
-            className="absolute inset-0 opacity-25"
-            style={{
-              backgroundImage: 'url("https://images.unsplash.com/photo-1621905252507-b35492cc74b4?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80")', // Critical - warning/alert
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat'
-            }}
-          />
-          <div className="relative p-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium" style={{color: '#8B4513'}}>Critical</p>
-                <p className="text-2xl font-bold text-red-600">{complaints.filter(c => c.priority === 'critical').length}</p>
-              </div>
-              <Flag size={24} className="text-red-600" />
-            </div>
-          </div>
-        </div>
-        <div className="rounded-lg shadow-sm border h-full relative overflow-hidden" style={{backgroundColor: '#FFF5E1', borderColor: '#FFE4D6'}}>
-          {/* Background Image */}
-          <div 
-            className="absolute inset-0 opacity-25"
-            style={{
-              backgroundImage: 'url("https://images.unsplash.com/photo-1521791136064-7986c2920216?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80")', // Resolved - checkmark/success symbol
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat'
-            }}
-          />
-          <div className="relative p-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium" style={{color: '#8B4513'}}>Resolved Today</p>
-                <p className="text-2xl font-bold text-green-600">3</p>
-              </div>
-              <CheckCircle size={24} className="text-green-600" />
-            </div>
-          </div>
-        </div>
-      </div>
+    <>
+      {/* Add smooth animations */}
+      <style jsx>{`
+        @keyframes smoothFadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(15px) scale(0.98);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
 
-      {/* Complaints & Reports Management Heading */}
-      <h2 className="text-2xl font-bold flex items-center gap-2 mb-2" style={{color: '#5D3A00'}}>
-        <AlertTriangle size={24} />
-        Complaints & Reports Management ({complaints.filter(complaint => complaint.status === activeTab).length} {activeTab} reports)
-      </h2>
+        @keyframes slideInUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
 
-      {/* Tabs */}
-      <div className="bg-white rounded-lg shadow-sm">
-        <div style={{borderBottom: '1px solid #FFE4D6'}}>
-          <nav className="flex space-x-8 px-6">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors flex items-center gap-2`}
-                style={{
-                  borderBottomColor: activeTab === tab.id ? '#5D3A00' : 'transparent',
-                  color: activeTab === tab.id ? '#5D3A00' : '#D87C5A'
-                }}
-              >
-                {tab.label}
-                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                  activeTab === tab.id ? 'bg-brown-100 text-brown-800' : 'bg-gray-100 text-gray-600'
-                }`}>
-                  {tab.count}
-                </span>
-              </button>
-            ))}
-          </nav>
-        </div>
-      </div>
+        .complaints-container {
+          animation: smoothFadeIn 0.4s ease-out;
+        }
 
-      {/* Filters */}
-      <div className="bg-transparent rounded-lg py-1 px-4">
-        <div className="flex flex-col lg:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2" style={{color: '#8B4513'}} />
-            <input
-              type="text"
-              placeholder="Search reports..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border rounded-md"
-              style={{borderColor: '#FFE4D6', backgroundColor: 'rgba(255, 255, 255, 0.8)'}}
+        .complaints-stats {
+          animation: slideInUp 0.5s ease-out 0.1s both;
+        }
+
+        .complaints-header {
+          animation: slideInUp 0.5s ease-out 0.2s both;
+        }
+
+        .complaints-tabs {
+          animation: slideInUp 0.5s ease-out 0.3s both;
+        }
+
+        .complaints-filters {
+          animation: slideInUp 0.5s ease-out 0.4s both;
+        }
+
+        .complaints-table {
+          animation: slideInUp 0.5s ease-out 0.5s both;
+        }
+
+        .complaint-stat-card {
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .complaint-stat-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .complaint-row {
+          transition: all 0.2s ease;
+        }
+
+        .complaint-row:hover {
+          background-color: rgba(255, 228, 214, 0.3) !important;
+        }
+
+        .tab-button {
+          transition: all 0.2s ease;
+        }
+
+        .tab-button:hover {
+          transform: translateY(-1px);
+        }
+      `}</style>
+
+      <div className="w-full space-y-4 complaints-container">
+        {/* Header Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 complaints-stats">
+          <div className="rounded-lg shadow-sm border h-full relative overflow-hidden complaint-stat-card" style={{backgroundColor: '#FFF5E1', borderColor: '#FFE4D6'}}>
+            {/* Background Image */}
+            <div 
+              className="absolute inset-0 opacity-25"
+              style={{
+                backgroundImage: 'url("https://images.unsplash.com/photo-1450101499163-c8848c66ca85?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80")', // Reports - documents/files
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat'
+              }}
             />
+            <div className="relative p-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium" style={{color: '#8B4513'}}>Total Reports</p>
+                  <p className="text-2xl font-bold" style={{color: '#5D3A00'}}>{complaints.length}</p>
+                </div>
+                <AlertTriangle size={24} style={{color: '#D87C5A'}} />
+              </div>
+            </div>
           </div>
-          <select
-            value={selectedPriority}
-            onChange={(e) => setSelectedPriority(e.target.value)}
-            className="px-3 py-2 border rounded-md"
-            style={{borderColor: '#FFE4D6', backgroundColor: 'rgba(255, 255, 255, 0.8)'}}
-          >
-            <option value="all">All Priorities</option>
-            <option value="critical">Critical</option>
-            <option value="high">High</option>
-            <option value="medium">Medium</option>
-            <option value="low">Low</option>
-          </select>
-          <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="px-3 py-2 border rounded-md"
-            style={{borderColor: '#FFE4D6', backgroundColor: 'rgba(255, 255, 255, 0.8)'}}
-          >
-            <option value="all">All Categories</option>
-            <option value="inappropriate_content">Inappropriate Content</option>
-            <option value="harassment">Harassment</option>
-            <option value="payment_issue">Payment Issue</option>
-            <option value="fraud">Fraud</option>
-            <option value="spam">Spam</option>
-          </select>
+          <div className="rounded-lg shadow-sm border h-full relative overflow-hidden complaint-stat-card" style={{backgroundColor: '#FFF5E1', borderColor: '#FFE4D6'}}>
+            {/* Background Image */}
+            <div 
+              className="absolute inset-0 opacity-25"
+              style={{
+                backgroundImage: 'url("https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80")', // Pending - clock/waiting
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat'
+              }}
+            />
+            <div className="relative p-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium" style={{color: '#8B4513'}}>Pending</p>
+                  <p className="text-2xl font-bold text-yellow-600">{complaints.filter(c => c.status === 'pending').length}</p>
+                </div>
+                <Clock size={24} className="text-yellow-600" />
+              </div>
+            </div>
+          </div>
+          <div className="rounded-lg shadow-sm border h-full relative overflow-hidden complaint-stat-card" style={{backgroundColor: '#FFF5E1', borderColor: '#FFE4D6'}}>
+            {/* Background Image */}
+            <div 
+              className="absolute inset-0 opacity-25"
+              style={{
+                backgroundImage: 'url("https://images.unsplash.com/photo-1621905252507-b35492cc74b4?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80")', // Critical - warning/alert
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat'
+              }}
+            />
+            <div className="relative p-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium" style={{color: '#8B4513'}}>Critical</p>
+                  <p className="text-2xl font-bold text-red-600">{complaints.filter(c => c.priority === 'critical').length}</p>
+                </div>
+                <Flag size={24} className="text-red-600" />
+              </div>
+            </div>
+          </div>
+          <div className="rounded-lg shadow-sm border h-full relative overflow-hidden complaint-stat-card" style={{backgroundColor: '#FFF5E1', borderColor: '#FFE4D6'}}>
+            {/* Background Image */}
+            <div 
+              className="absolute inset-0 opacity-25"
+              style={{
+                backgroundImage: 'url("https://images.unsplash.com/photo-1521791136064-7986c2920216?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80")', // Resolved - checkmark/success symbol
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat'
+              }}
+            />
+            <div className="relative p-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium" style={{color: '#8B4513'}}>Resolved Today</p>
+                  <p className="text-2xl font-bold text-green-600">3</p>
+                </div>
+                <CheckCircle size={24} className="text-green-600" />
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
 
-      {/* Reports Table */}
-      <div className="bg-white rounded-lg shadow-sm border" style={{borderColor: '#FFE4D6'}}>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead style={{backgroundColor: '#FFF5E1'}}>
-              <tr>
-                <th className="px-4 py-3 text-left text-sm font-medium" style={{color: '#5D3A00'}}>
-                  <div className="flex items-center gap-2">
-                    Report ID
-                    <ArrowUpDown size={14} />
-                  </div>
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-medium" style={{color: '#5D3A00'}}>Type</th>
-                <th className="px-4 py-3 text-left text-sm font-medium" style={{color: '#5D3A00'}}>Title</th>
-                <th className="px-4 py-3 text-left text-sm font-medium" style={{color: '#5D3A00'}}>Reported By</th>
-                <th className="px-4 py-3 text-left text-sm font-medium" style={{color: '#5D3A00'}}>Priority</th>
-                <th className="px-4 py-3 text-left text-sm font-medium" style={{color: '#5D3A00'}}>Status</th>
-                <th className="px-4 py-3 text-left text-sm font-medium" style={{color: '#5D3A00'}}>Date</th>
-                <th className="px-4 py-3 text-left text-sm font-medium" style={{color: '#5D3A00'}}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {getFilteredComplaints().map((complaint) => (
-                <tr key={complaint.id} className="border-b hover:bg-gray-50" style={{borderColor: '#FFE4D6'}}>
-                  <td className="px-4 py-3 text-sm font-medium" style={{color: '#5D3A00'}}>
-                    {complaint.id}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      {getTypeIcon(complaint.type)}
-                      <span className="text-sm capitalize" style={{color: '#8B4513'}}>
-                        {complaint.type}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="max-w-xs">
-                      <p className="text-sm font-medium truncate" style={{color: '#5D3A00'}}>
-                        {complaint.title}
-                      </p>
-                      <p className="text-xs truncate" style={{color: '#8B4513'}}>
-                        {complaint.description}
-                      </p>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div>
-                      <p className="text-sm font-medium" style={{color: '#5D3A00'}}>
-                        {complaint.reportedBy.name}
-                      </p>
-                      <p className="text-xs" style={{color: '#8B4513'}}>
-                        {complaint.reportedBy.id}
-                      </p>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${priorityColors[complaint.priority]}`}>
-                      {complaint.priority.charAt(0).toUpperCase() + complaint.priority.slice(1)}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[complaint.status]}`}>
-                      {complaint.status.charAt(0).toUpperCase() + complaint.status.slice(1)}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-sm" style={{color: '#8B4513'}}>
-                    {complaint.dateReported}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-1">
-                      <button 
-                        className="p-1 rounded-md text-white" 
-                        style={{backgroundColor: '#5D3A00'}}
-                        title="View Details"
-                        onClick={() => handleAction(complaint.id, 'view')}
-                      >
-                        <Eye size={14} />
-                      </button>
-                      {complaint.status === 'pending' && (
-                        <>
-                          <button 
-                            className="p-1 rounded-md text-white bg-green-600"
-                            title="Approve"
-                            onClick={() => handleAction(complaint.id, 'approve')}
-                          >
-                            <CheckCircle size={14} />
-                          </button>
-                          <button 
-                            className="p-1 rounded-md text-white bg-red-600"
-                            title="Reject"
-                            onClick={() => handleAction(complaint.id, 'reject')}
-                          >
-                            <XCircle size={14} />
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </td>
-                </tr>
+        {/* Complaints & Reports Management Heading */}
+        <h2 className="text-2xl font-bold flex items-center gap-2 mb-2 complaints-header" style={{color: '#5D3A00'}}>
+          <AlertTriangle size={24} />
+          Complaints & Reports Management ({complaints.filter(complaint => complaint.status === activeTab).length} {activeTab} reports)
+        </h2>
+
+        {/* Tabs */}
+        <div className="bg-white rounded-lg shadow-sm complaints-tabs">
+          <div style={{borderBottom: '1px solid #FFE4D6'}}>
+            <nav className="flex space-x-8 px-6">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors flex items-center gap-2 tab-button`}
+                  style={{
+                    borderBottomColor: activeTab === tab.id ? '#5D3A00' : 'transparent',
+                    color: activeTab === tab.id ? '#5D3A00' : '#D87C5A'
+                  }}
+                >
+                  {tab.label}
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                    activeTab === tab.id ? 'bg-brown-100 text-brown-800' : 'bg-gray-100 text-gray-600'
+                  }`}>
+                    {tab.count}
+                  </span>
+                </button>
               ))}
-            </tbody>
-          </table>
+            </nav>
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="bg-transparent rounded-lg py-1 px-4 complaints-filters">
+          <div className="flex flex-col lg:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2" style={{color: '#8B4513'}} />
+              <input
+                type="text"
+                placeholder="Search reports..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border rounded-md"
+                style={{borderColor: '#FFE4D6', backgroundColor: 'rgba(255, 255, 255, 0.8)'}}
+              />
+            </div>
+            <select
+              value={selectedPriority}
+              onChange={(e) => setSelectedPriority(e.target.value)}
+              className="px-3 py-2 border rounded-md"
+              style={{borderColor: '#FFE4D6', backgroundColor: 'rgba(255, 255, 255, 0.8)'}}
+            >
+              <option value="all">All Priorities</option>
+              <option value="critical">Critical</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="px-3 py-2 border rounded-md"
+              style={{borderColor: '#FFE4D6', backgroundColor: 'rgba(255, 255, 255, 0.8)'}}
+            >
+              <option value="all">All Categories</option>
+              <option value="inappropriate_content">Inappropriate Content</option>
+              <option value="harassment">Harassment</option>
+              <option value="payment_issue">Payment Issue</option>
+              <option value="fraud">Fraud</option>
+              <option value="spam">Spam</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Reports Table */}
+        <div className="bg-white rounded-lg shadow-sm border complaints-table" style={{borderColor: '#FFE4D6'}}>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead style={{backgroundColor: '#FFF5E1'}}>
+                <tr>
+                  <th className="px-4 py-3 text-left text-sm font-medium" style={{color: '#5D3A00'}}>
+                    <div className="flex items-center gap-2">
+                      Report ID
+                      <ArrowUpDown size={14} />
+                    </div>
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium" style={{color: '#5D3A00'}}>Type</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium" style={{color: '#5D3A00'}}>Title</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium" style={{color: '#5D3A00'}}>Reported By</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium" style={{color: '#5D3A00'}}>Priority</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium" style={{color: '#5D3A00'}}>Status</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium" style={{color: '#5D3A00'}}>Date</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium" style={{color: '#5D3A00'}}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {getFilteredComplaints().map((complaint) => (
+                  <tr key={complaint.id} className="border-b hover:bg-gray-50 complaint-row" style={{borderColor: '#FFE4D6'}}>
+                    <td className="px-4 py-3 text-sm font-medium" style={{color: '#5D3A00'}}>
+                      {complaint.id}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        {getTypeIcon(complaint.type)}
+                        <span className="text-sm capitalize" style={{color: '#8B4513'}}>
+                          {complaint.type}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="max-w-xs">
+                        <p className="text-sm font-medium truncate" style={{color: '#5D3A00'}}>
+                          {complaint.title}
+                        </p>
+                        <p className="text-xs truncate" style={{color: '#8B4513'}}>
+                          {complaint.description}
+                        </p>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div>
+                        <p className="text-sm font-medium" style={{color: '#5D3A00'}}>
+                          {complaint.reportedBy.name}
+                        </p>
+                        <p className="text-xs" style={{color: '#8B4513'}}>
+                          {complaint.reportedBy.id}
+                        </p>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${priorityColors[complaint.priority]}`}>
+                        {complaint.priority.charAt(0).toUpperCase() + complaint.priority.slice(1)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[complaint.status]}`}>
+                        {complaint.status.charAt(0).toUpperCase() + complaint.status.slice(1)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm" style={{color: '#8B4513'}}>
+                      {complaint.dateReported}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-1">
+                        <button 
+                          className="p-1 rounded-md text-white" 
+                          style={{backgroundColor: '#5D3A00'}}
+                          title="View Details"
+                          onClick={() => handleAction(complaint.id, 'view')}
+                        >
+                          <Eye size={14} />
+                        </button>
+                        {complaint.status === 'pending' && (
+                          <>
+                            <button 
+                              className="p-1 rounded-md text-white bg-green-600"
+                              title="Approve"
+                              onClick={() => handleAction(complaint.id, 'approve')}
+                            >
+                              <CheckCircle size={14} />
+                            </button>
+                            <button 
+                              className="p-1 rounded-md text-white bg-red-600"
+                              title="Reject"
+                              onClick={() => handleAction(complaint.id, 'reject')}
+                            >
+                              <XCircle size={14} />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

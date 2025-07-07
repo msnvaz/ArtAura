@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Shield, 
   Eye, 
@@ -17,11 +17,16 @@ import {
 } from 'lucide-react';
 
 const UserVerification = () => {
+  const [isLoaded, setIsLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState('pending');
   const [selectedUserType, setSelectedUserType] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Sample verification requests data
+  useEffect(() => {
+    setIsLoaded(true);
+  }, []);
+
+  // Sample verification requests data - restore original content
   const verificationRequests = [
     {
       id: 'VER-001',
@@ -219,289 +224,358 @@ const UserVerification = () => {
   };
 
   return (
-    <div className="w-full space-y-4">
-      {/* Header Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="rounded-lg shadow-sm border h-full relative overflow-hidden" style={{backgroundColor: '#FFF5E1', borderColor: '#FFE4D6'}}>
-          {/* Background Image */}
-          <div 
-            className="absolute inset-0 opacity-25"
-            style={{
-              backgroundImage: 'url("https://images.unsplash.com/photo-1450101499163-c8848c66ca85?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80")', // Verification requests - documents
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat'
-            }}
-          />
-          <div className="relative p-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium" style={{color: '#8B4513'}}>Total Requests</p>
-                <p className="text-2xl font-bold" style={{color: '#5D3A00'}}>{verificationRequests.length}</p>
-              </div>
-              <Shield size={24} style={{color: '#D87C5A'}} />
-            </div>
-          </div>
-        </div>
-        <div className="rounded-lg shadow-sm border h-full relative overflow-hidden" style={{backgroundColor: '#FFF5E1', borderColor: '#FFE4D6'}}>
-          {/* Background Image */}
-          <div 
-            className="absolute inset-0 opacity-25"
-            style={{
-              backgroundImage: 'url("https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80")', // Pending - clock/waiting
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat'
-            }}
-          />
-          <div className="relative p-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium" style={{color: '#8B4513'}}>Pending</p>
-                <p className="text-2xl font-bold text-yellow-600">{verificationRequests.filter(r => r.status === 'pending').length}</p>
-              </div>
-              <Clock size={24} className="text-yellow-600" />
-            </div>
-          </div>
-        </div>
-        <div className="rounded-lg shadow-sm border h-full relative overflow-hidden" style={{backgroundColor: '#FFF5E1', borderColor: '#FFE4D6'}}>
-          {/* Background Image */}
-          <div 
-            className="absolute inset-0 opacity-25"
-            style={{
-              backgroundImage: 'url("https://images.unsplash.com/photo-1521791136064-7986c2920216?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80")', // Verified - checkmark/verification badge
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat'
-            }}
-          />
-          <div className="relative p-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium" style={{color: '#8B4513'}}>Verified Today</p>
-                <p className="text-2xl font-bold text-green-600">2</p>
-              </div>
-              <CheckCircle size={24} className="text-green-600" />
-            </div>
-          </div>
-        </div>
-        <div className="rounded-lg shadow-sm border h-full relative overflow-hidden" style={{backgroundColor: '#FFF5E1', borderColor: '#FFE4D6'}}>
-          {/* Background Image */}
-          <div 
-            className="absolute inset-0 opacity-25"
-            style={{
-              backgroundImage: 'url("https://images.unsplash.com/photo-1586953208448-b95a79798f07?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80")', // Rejection rate - statistics/charts
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat'
-            }}
-          />
-          <div className="relative p-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium" style={{color: '#8B4513'}}>Rejection Rate</p>
-                <p className="text-2xl font-bold text-red-600">12%</p>
-              </div>
-              <XCircle size={24} className="text-red-600" />
-            </div>
-          </div>
-        </div>
-      </div>
+    <>
+      {/* Add smooth animations */}
+      <style jsx>{`
+        @keyframes smoothFadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(15px) scale(0.98);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
 
-      {/* User Verification Management Heading */}
-      <h2 className="text-2xl font-bold flex items-center gap-2 mb-2" style={{color: '#5D3A00'}}>
-        <Shield size={24} />
-        User Verification Management ({verificationRequests.filter(req => req.status === activeTab).length} {activeTab} requests)
-      </h2>
+        @keyframes slideInUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
 
-      {/* Tabs */}
-      <div className="bg-white rounded-lg shadow-sm">
-        <div style={{borderBottom: '1px solid #FFE4D6'}}>
-          <nav className="flex space-x-8 px-6">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors flex items-center gap-2`}
-                style={{
-                  borderBottomColor: activeTab === tab.id ? '#5D3A00' : 'transparent',
-                  color: activeTab === tab.id ? '#5D3A00' : '#D87C5A'
-                }}
-              >
-                {tab.label}
-                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                  activeTab === tab.id ? 'bg-brown-100 text-brown-800' : 'bg-gray-100 text-gray-600'
-                }`}>
-                  {tab.count}
-                </span>
-              </button>
-            ))}
-          </nav>
-        </div>
-      </div>
+        .verification-container {
+          animation: smoothFadeIn 0.4s ease-out;
+        }
 
-      {/* Filters */}
-      <div className="bg-transparent rounded-lg py-1 px-4">
-        <div className="flex flex-col lg:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2" style={{color: '#8B4513'}} />
-            <input
-              type="text"
-              placeholder="Search verification requests..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border rounded-md"
-              style={{borderColor: '#FFE4D6', backgroundColor: 'rgba(255, 255, 255, 0.8)'}}
+        .verification-stats {
+          animation: slideInUp 0.5s ease-out 0.1s both;
+        }
+
+        .verification-header {
+          animation: slideInUp 0.5s ease-out 0.2s both;
+        }
+
+        .verification-tabs {
+          animation: slideInUp 0.5s ease-out 0.3s both;
+        }
+
+        .verification-filters {
+          animation: slideInUp 0.5s ease-out 0.4s both;
+        }
+
+        .verification-content {
+          animation: slideInUp 0.5s ease-out 0.5s both;
+        }
+
+        .verification-stat-card {
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .verification-stat-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .verification-request-card {
+          transition: all 0.2s ease;
+        }
+
+        .verification-request-card:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        }
+      `}</style>
+
+      <div className="w-full space-y-4 verification-container">
+        {/* Header Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 verification-stats">
+          <div className="rounded-lg shadow-sm border h-full relative overflow-hidden verification-stat-card" style={{backgroundColor: '#FFF5E1', borderColor: '#FFE4D6'}}>
+            {/* Background Image */}
+            <div 
+              className="absolute inset-0 opacity-25"
+              style={{
+                backgroundImage: 'url("https://images.unsplash.com/photo-1450101499163-c8848c66ca85?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80")', // Verification requests - documents
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat'
+              }}
             />
-          </div>
-          <select
-            value={selectedUserType}
-            onChange={(e) => setSelectedUserType(e.target.value)}
-            className="px-3 py-2 border rounded-md"
-            style={{borderColor: '#FFE4D6', backgroundColor: 'rgba(255, 255, 255, 0.8)'}}
-          >
-            <option value="all">All User Types</option>
-            <option value="artist">Artists</option>
-            <option value="shop">Shop Owners</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Verification Requests */}
-      <div className="space-y-4">
-        {getFilteredRequests().map((request) => (
-          <div key={request.id} className="bg-white rounded-lg p-6 shadow-sm border" style={{borderColor: '#FFE4D6'}}>
-            <div className="flex flex-col lg:flex-row gap-6">
-              {/* User Info */}
-              <div className="flex-1">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full overflow-hidden" style={{backgroundColor: '#FFF5E1'}}>
-                      {request.user.profileImage ? (
-                        <img src={request.user.profileImage} alt={request.user.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          {request.userType === 'artist' ? <User size={24} style={{color: '#D87C5A'}} /> : <Store size={24} style={{color: '#D87C5A'}} />}
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-lg font-semibold" style={{color: '#5D3A00'}}>{request.user.name}</h3>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          request.userType === 'artist' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
-                        }`}>
-                          {request.userType === 'artist' ? 'Artist' : 'Shop Owner'}
-                        </span>
-                      </div>
-                      <p className="text-sm" style={{color: '#8B4513'}}>{request.user.email}</p>
-                      <p className="text-xs" style={{color: '#8B4513'}}>ID: {request.user.userId}</p>
-                      {request.user.ownerName && (
-                        <p className="text-xs" style={{color: '#8B4513'}}>Owner: {request.user.ownerName}</p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${priorityColors[request.priority]}`}>
-                      {request.priority.charAt(0).toUpperCase() + request.priority.slice(1)} Priority
-                    </span>
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${statusColors[request.status]}`}>
-                      {request.status.replace('_', ' ').charAt(0).toUpperCase() + request.status.replace('_', ' ').slice(1)}
-                    </span>
-                  </div>
+            <div className="relative p-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium" style={{color: '#8B4513'}}>Total Requests</p>
+                  <p className="text-2xl font-bold" style={{color: '#5D3A00'}}>{verificationRequests.length}</p>
                 </div>
-
-                {/* Documents */}
-                <div className="mb-4">
-                  <h4 className="text-sm font-semibold mb-2" style={{color: '#5D3A00'}}>Submitted Documents:</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                    {request.documents.map((doc, index) => (
-                      <div key={index} className="flex items-center justify-between p-2 border rounded-md" style={{borderColor: '#FFE4D6', backgroundColor: '#FFF5E1'}}>
-                        <div className="flex items-center gap-2">
-                          <FileText size={16} style={{color: '#D87C5A'}} />
-                          <div>
-                            <p className="text-xs font-medium" style={{color: '#5D3A00'}}>{doc.name}</p>
-                            <p className="text-xs" style={{color: '#8B4513'}}>{doc.uploadDate}</p>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => handleDocumentView(doc.filename)}
-                          className="p-1 rounded-md text-white"
-                          style={{backgroundColor: '#D87C5A'}}
-                          title="View Document"
-                        >
-                          <Eye size={12} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Notes */}
-                <div className="mb-4">
-                  <h4 className="text-sm font-semibold mb-2" style={{color: '#5D3A00'}}>Notes:</h4>
-                  <p className="text-sm p-3 rounded-md" style={{backgroundColor: '#FFF5E1', color: '#8B4513'}}>
-                    {request.notes}
-                  </p>
-                  {request.rejectionReason && (
-                    <div className="mt-2 p-3 rounded-md bg-red-50">
-                      <h5 className="text-sm font-semibold text-red-800 mb-1">Rejection Reason:</h5>
-                      <p className="text-sm text-red-700">{request.rejectionReason}</p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Verification Details */}
-                <div className="flex flex-wrap gap-4 text-xs" style={{color: '#8B4513'}}>
-                  <span>Submitted: {request.submissionDate}</span>
-                  {request.verificationDate && <span>Verified: {request.verificationDate}</span>}
-                  {request.rejectionDate && <span>Rejected: {request.rejectionDate}</span>}
-                  {request.reviewedBy && <span>Reviewed by: {request.reviewedBy}</span>}
-                  {request.verifiedBy && <span>Verified by: {request.verifiedBy}</span>}
-                  {request.rejectedBy && <span>Rejected by: {request.rejectedBy}</span>}
-                </div>
+                <Shield size={24} style={{color: '#D87C5A'}} />
               </div>
-
-              {/* Actions */}
-              {(request.status === 'pending' || request.status === 'under_review') && (
-                <div className="flex flex-col gap-2 min-w-[200px]">
-                  <button
-                    onClick={() => handleVerificationAction(request.id, 'view')}
-                    className="px-4 py-2 rounded-md flex items-center gap-2 text-white"
-                    style={{backgroundColor: '#5D3A00'}}
-                  >
-                    <Eye size={16} />
-                    View Details
-                  </button>
-                  <button
-                    onClick={() => handleVerificationAction(request.id, 'approve')}
-                    className="px-4 py-2 bg-green-600 text-white rounded-md flex items-center gap-2 hover:bg-green-700"
-                  >
-                    <CheckCircle size={16} />
-                    Approve
-                  </button>
-                  <button
-                    onClick={() => handleVerificationAction(request.id, 'reject')}
-                    className="px-4 py-2 bg-red-600 text-white rounded-md flex items-center gap-2 hover:bg-red-700"
-                  >
-                    <XCircle size={16} />
-                    Reject
-                  </button>
-                  <button
-                    onClick={() => handleVerificationAction(request.id, 'request_more')}
-                    className="px-4 py-2 rounded-md flex items-center gap-2 text-white"
-                    style={{backgroundColor: '#D87C5A'}}
-                  >
-                    <Upload size={16} />
-                    Request More Info
-                  </button>
-                </div>
-              )}
             </div>
           </div>
-        ))}
+          <div className="rounded-lg shadow-sm border h-full relative overflow-hidden verification-stat-card" style={{backgroundColor: '#FFF5E1', borderColor: '#FFE4D6'}}>
+            {/* Background Image */}
+            <div 
+              className="absolute inset-0 opacity-25"
+              style={{
+                backgroundImage: 'url("https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80")', // Pending - clock/waiting
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat'
+              }}
+            />
+            <div className="relative p-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium" style={{color: '#8B4513'}}>Pending</p>
+                  <p className="text-2xl font-bold text-yellow-600">{verificationRequests.filter(r => r.status === 'pending').length}</p>
+                </div>
+                <Clock size={24} className="text-yellow-600" />
+              </div>
+            </div>
+          </div>
+          <div className="rounded-lg shadow-sm border h-full relative overflow-hidden verification-stat-card" style={{backgroundColor: '#FFF5E1', borderColor: '#FFE4D6'}}>
+            {/* Background Image */}
+            <div 
+              className="absolute inset-0 opacity-25"
+              style={{
+                backgroundImage: 'url("https://images.unsplash.com/photo-1521791136064-7986c2920216?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80")', // Verified - checkmark/verification badge
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat'
+              }}
+            />
+            <div className="relative p-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium" style={{color: '#8B4513'}}>Verified Today</p>
+                  <p className="text-2xl font-bold text-green-600">2</p>
+                </div>
+                <CheckCircle size={24} className="text-green-600" />
+              </div>
+            </div>
+          </div>
+          <div className="rounded-lg shadow-sm border h-full relative overflow-hidden verification-stat-card" style={{backgroundColor: '#FFF5E1', borderColor: '#FFE4D6'}}>
+            {/* Background Image */}
+            <div 
+              className="absolute inset-0 opacity-25"
+              style={{
+                backgroundImage: 'url("https://images.unsplash.com/photo-1586953208448-b95a79798f07?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80")', // Rejection rate - statistics/charts
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat'
+              }}
+            />
+            <div className="relative p-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium" style={{color: '#8B4513'}}>Rejection Rate</p>
+                  <p className="text-2xl font-bold text-red-600">12%</p>
+                </div>
+                <XCircle size={24} className="text-red-600" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* User Verification Management Heading */}
+        <h2 className="text-2xl font-bold flex items-center gap-2 mb-2 verification-header" style={{color: '#5D3A00'}}>
+          <Shield size={24} />
+          User Verification Management ({verificationRequests.filter(req => req.status === activeTab).length} {activeTab} requests)
+        </h2>
+
+        {/* Tabs */}
+        <div className="bg-white rounded-lg shadow-sm verification-tabs">
+          <div style={{borderBottom: '1px solid #FFE4D6'}}>
+            <nav className="flex space-x-8 px-6">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors flex items-center gap-2`}
+                  style={{
+                    borderBottomColor: activeTab === tab.id ? '#5D3A00' : 'transparent',
+                    color: activeTab === tab.id ? '#5D3A00' : '#D87C5A'
+                  }}
+                >
+                  {tab.label}
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                    activeTab === tab.id ? 'bg-brown-100 text-brown-800' : 'bg-gray-100 text-gray-600'
+                  }`}>
+                    {tab.count}
+                  </span>
+                </button>
+              ))}
+            </nav>
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="bg-transparent rounded-lg py-1 px-4 verification-filters">
+          <div className="flex flex-col lg:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2" style={{color: '#8B4513'}} />
+              <input
+                type="text"
+                placeholder="Search verification requests..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border rounded-md"
+                style={{borderColor: '#FFE4D6', backgroundColor: 'rgba(255, 255, 255, 0.8)'}}
+              />
+            </div>
+            <select
+              value={selectedUserType}
+              onChange={(e) => setSelectedUserType(e.target.value)}
+              className="px-3 py-2 border rounded-md"
+              style={{borderColor: '#FFE4D6', backgroundColor: 'rgba(255, 255, 255, 0.8)'}}
+            >
+              <option value="all">All User Types</option>
+              <option value="artist">Artists</option>
+              <option value="shop">Shop Owners</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Verification Requests */}
+        <div className="space-y-4 verification-content">
+          {getFilteredRequests().map((request) => (
+            <div key={request.id} className="bg-white rounded-lg p-6 shadow-sm border verification-request-card" style={{borderColor: '#FFE4D6'}}>
+              <div className="flex flex-col lg:flex-row gap-6">
+                {/* User Info */}
+                <div className="flex-1">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full overflow-hidden" style={{backgroundColor: '#FFF5E1'}}>
+                        {request.user.profileImage ? (
+                          <img src={request.user.profileImage} alt={request.user.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            {request.userType === 'artist' ? <User size={24} style={{color: '#D87C5A'}} /> : <Store size={24} style={{color: '#D87C5A'}} />}
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="text-lg font-semibold" style={{color: '#5D3A00'}}>{request.user.name}</h3>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            request.userType === 'artist' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
+                          }`}>
+                            {request.userType === 'artist' ? 'Artist' : 'Shop Owner'}
+                          </span>
+                        </div>
+                        <p className="text-sm" style={{color: '#8B4513'}}>{request.user.email}</p>
+                        <p className="text-xs" style={{color: '#8B4513'}}>ID: {request.user.userId}</p>
+                        {request.user.ownerName && (
+                          <p className="text-xs" style={{color: '#8B4513'}}>Owner: {request.user.ownerName}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${priorityColors[request.priority]}`}>
+                        {request.priority.charAt(0).toUpperCase() + request.priority.slice(1)} Priority
+                      </span>
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${statusColors[request.status]}`}>
+                        {request.status.replace('_', ' ').charAt(0).toUpperCase() + request.status.replace('_', ' ').slice(1)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Documents */}
+                  <div className="mb-4">
+                    <h4 className="text-sm font-semibold mb-2" style={{color: '#5D3A00'}}>Submitted Documents:</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                      {request.documents.map((doc, index) => (
+                        <div key={index} className="flex items-center justify-between p-2 border rounded-md" style={{borderColor: '#FFE4D6', backgroundColor: '#FFF5E1'}}>
+                          <div className="flex items-center gap-2">
+                            <FileText size={16} style={{color: '#D87C5A'}} />
+                            <div>
+                              <p className="text-xs font-medium" style={{color: '#5D3A00'}}>{doc.name}</p>
+                              <p className="text-xs" style={{color: '#8B4513'}}>{doc.uploadDate}</p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => handleDocumentView(doc.filename)}
+                            className="p-1 rounded-md text-white"
+                            style={{backgroundColor: '#D87C5A'}}
+                            title="View Document"
+                          >
+                            <Eye size={12} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Notes */}
+                  <div className="mb-4">
+                    <h4 className="text-sm font-semibold mb-2" style={{color: '#5D3A00'}}>Notes:</h4>
+                    <p className="text-sm p-3 rounded-md" style={{backgroundColor: '#FFF5E1', color: '#8B4513'}}>
+                      {request.notes}
+                    </p>
+                    {request.rejectionReason && (
+                      <div className="mt-2 p-3 rounded-md bg-red-50">
+                        <h5 className="text-sm font-semibold text-red-800 mb-1">Rejection Reason:</h5>
+                        <p className="text-sm text-red-700">{request.rejectionReason}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Verification Details */}
+                  <div className="flex flex-wrap gap-4 text-xs" style={{color: '#8B4513'}}>
+                    <span>Submitted: {request.submissionDate}</span>
+                    {request.verificationDate && <span>Verified: {request.verificationDate}</span>}
+                    {request.rejectionDate && <span>Rejected: {request.rejectionDate}</span>}
+                    {request.reviewedBy && <span>Reviewed by: {request.reviewedBy}</span>}
+                    {request.verifiedBy && <span>Verified by: {request.verifiedBy}</span>}
+                    {request.rejectedBy && <span>Rejected by: {request.rejectedBy}</span>}
+                  </div>
+                </div>
+
+                {/* Actions */}
+                {(request.status === 'pending' || request.status === 'under_review') && (
+                  <div className="flex flex-col gap-2 min-w-[200px]">
+                    <button
+                      onClick={() => handleVerificationAction(request.id, 'view')}
+                      className="px-4 py-2 rounded-md flex items-center gap-2 text-white"
+                      style={{backgroundColor: '#5D3A00'}}
+                    >
+                      <Eye size={16} />
+                      View Details
+                    </button>
+                    <button
+                      onClick={() => handleVerificationAction(request.id, 'approve')}
+                      className="px-4 py-2 bg-green-600 text-white rounded-md flex items-center gap-2 hover:bg-green-700"
+                    >
+                      <CheckCircle size={16} />
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => handleVerificationAction(request.id, 'reject')}
+                      className="px-4 py-2 bg-red-600 text-white rounded-md flex items-center gap-2 hover:bg-red-700"
+                    >
+                      <XCircle size={16} />
+                      Reject
+                    </button>
+                    <button
+                      onClick={() => handleVerificationAction(request.id, 'request_more')}
+                      className="px-4 py-2 rounded-md flex items-center gap-2 text-white"
+                      style={{backgroundColor: '#D87C5A'}}
+                    >
+                      <Upload size={16} />
+                      Request More Info
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
