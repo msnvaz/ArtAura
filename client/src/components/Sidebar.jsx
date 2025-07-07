@@ -1,11 +1,11 @@
 import {
   Home,
   ShoppingCart,
-  BarChart2,
   Bell,
   LogOut,
   Package,
   Handshake,
+  BarChart3,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "./Avatar";
@@ -20,7 +20,7 @@ const mainLinks = [
   { name: "Dashboard", path: "/shop/dashboard", icon: Home },
   { name: "Orders", path: "/shop/orders", icon: ShoppingCart },
   { name: "Catalog", path: "/shop/catalog", icon: Package },
-  { name: "Analytics", path: "/shop/analytics", icon: BarChart2 },
+  { name: "Analytics", path: "/shop/analytics", icon: BarChart3 },
   { name: "Sponsorships", path: "/shop/rewards", icon: Handshake },
 
   {

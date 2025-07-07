@@ -206,7 +206,7 @@ const CatalogManagement = () => {
     <div className="flex">
       <Sidebar />
     <div className="ml-20 md:ml-64 flex-1 space-y-6 bg-white min-h-screen p-6 animate-fade-in">
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-4">
+    <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-4">
       <div className="flex items-center gap-3 w-full max-w-md">
       <div className="relative flex-1 ">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#D87C5A] w-4 h-4" />
