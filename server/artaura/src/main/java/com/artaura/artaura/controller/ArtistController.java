@@ -14,7 +14,7 @@ public class ArtistController {
     private ArtistService artistService;
 
     @PostMapping("/signup")
-    public ResponseEntity<String> signup(@RequestBody ArtistSignupRequest req) {
+    public ResponseEntity<String> signup(@RequestBody ArtistSignupRequest req) { //Spring automatically maps the JSON request body to the ArtistSignupRequest DTO.
         artistService.register(req);
         return ResponseEntity.ok("Artist registered successfully");
     }
