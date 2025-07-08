@@ -1,7 +1,7 @@
 package com.artaura.artaura.service;
 
-import com.artaura.artaura.dao.impl.ArtistDAO;
-import com.artaura.artaura.dto.ArtistSignupRequest;
+import com.artaura.artaura.dao.ArtistDAO;
+import com.artaura.artaura.dto.signup.ArtistSignupRequest;
 import com.artaura.artaura.exception.CustomException;
 import com.artaura.artaura.util.PasswordEncoderUtil;
 import org.springframework.beans.factory.annotation.Autowired;

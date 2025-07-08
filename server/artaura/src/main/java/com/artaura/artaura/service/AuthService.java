@@ -1,7 +1,6 @@
 package com.artaura.artaura.service;
 
-import com.artaura.artaura.dao.impl.*;
-import com.artaura.artaura.dto.ArtistSignupRequest;
+import com.artaura.artaura.dao.*;
 import com.artaura.artaura.dto.auth.LoginRequest;
 import com.artaura.artaura.dto.auth.LoginResponse;
 import com.artaura.artaura.dto.auth.LoginUserDataDTO;

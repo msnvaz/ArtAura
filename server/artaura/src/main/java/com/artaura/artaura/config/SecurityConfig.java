@@ -34,12 +34,17 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 🚫 No session
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "api/auth/login",
+                                "/api/auth/login",
                                 "/api/artist/signup",
                                 "/api/buyer/signup",
-                                "/api/shop/signup"
+                                "/api/shop/signup",
+                                "/uploads/**"   // <<< THIS ALLOWS IMAGE ACCESS
                         ).permitAll() // ✅ Public endpoints
+
+                        .requestMatchers("/api/posts/create").authenticated()
+                        .requestMatchers("/api/posts/{role}/{userId}").authenticated()// ✅ allow this
                         .anyRequest().authenticated() // 🔒 Everything else secured
+
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class); // 🔐 JWT Filter
 

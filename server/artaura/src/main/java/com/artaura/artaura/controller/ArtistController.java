@@ -1,6 +1,6 @@
 package com.artaura.artaura.controller;
 
-import com.artaura.artaura.dto.ArtistSignupRequest;
+import com.artaura.artaura.dto.signup.ArtistSignupRequest;
 import com.artaura.artaura.service.ArtistService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

@@ -1,13 +1,11 @@
-package com.artaura.artaura.dao.impl;
+package com.artaura.artaura.dao;
 
-import com.artaura.artaura.dao.impl.ArtistDAO;
-import com.artaura.artaura.dto.ArtistSignupRequest;
+import com.artaura.artaura.dto.signup.ArtistSignupRequest;
 import com.artaura.artaura.dto.auth.LoginUserDataDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-import java.sql.ResultSet;
 import java.util.Optional;
 
 @Repository
