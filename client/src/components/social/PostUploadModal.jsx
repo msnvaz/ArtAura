@@ -70,6 +70,7 @@ const PostUploadModal = ({
                                                 alt={`Upload preview ${index + 1}`}
                                                 className="w-full h-64 object-cover rounded-lg"
                                             />
+
                                             <button
                                                 onClick={() => {
                                                     const newFiles = Array.from(newPost.imageFiles).filter((_, i) => i !== index);
