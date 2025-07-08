@@ -91,7 +91,8 @@ function Sidebar() {
       <div className="mt-6 space-y-6 pb-10">
         {/* User Info */}
         <div className="flex flex-col items-center justify-center gap-3 px-4">
-          <Avatar className="h-12 w-12 ring-2 ring-[#FFD95A] bg-[#362625]">
+          <NavLink to="/shop/profile">
+          <Avatar className="h-12 w-12 ring-2 ring-[#FFD95A] bg-[#362625] hover:scale-105 transition-transform">
             {mockUser.image ? (
               <AvatarImage src={mockUser.image} alt={mockUser.name} />
             ) : (
@@ -100,6 +101,8 @@ function Sidebar() {
               </AvatarFallback>
             )}
           </Avatar>
+        </NavLink>
+
           <div className="hidden md:flex flex-col text-sm text-center leading-tight">
             <span className="font-semibold text-[#FFD95A]">{mockUser.name}</span>
           </div>

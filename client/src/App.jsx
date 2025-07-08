@@ -7,11 +7,12 @@ import './styles/main.css';
 import Marketplace from './pages/Marketplace';
 import Competitions from './pages/Competitions';
 
-import Dashboard from './pages/shop/dashboard';
+import Dashboard from './pages/shop/Dashboard';
 import ShopOrders from './pages/shop/Orders';
 import Sponsorships from './pages/shop/Sponsorships';
 import SalesAnalytics from './pages/shop/Analytics';
 import Catalog from './pages/shop/Catalog';
+import Profile from './pages/shop/Profile';
 
 import Login from './components/auth/login';
 import UploadArtWork from './pages/Artist/UploadArtWork';
@@ -78,6 +79,7 @@ function App() {
           <Route path="/shop/sponsorships" element={<Sponsorships />} />
           <Route path="/shop/analytics" element={<SalesAnalytics />} />
           <Route path="/shop/catalog" element={<Catalog/>}/>
+          <Route path="/shop/profile" element={<Profile/>}/>
 
 
           <Route path="/uploadartwork" element={<UploadArtWork />} />
