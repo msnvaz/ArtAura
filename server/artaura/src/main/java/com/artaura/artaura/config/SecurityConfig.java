@@ -29,39 +29,45 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(csrf -> csrf.disable())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // 🔁 CORS here
+                .csrf(csrf -> csrf.disable()) // ❌ CSRF disabled for JWT stateless
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 🚫 No session
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "api/auth/login",
+                                "/api/auth/login",
                                 "/api/artist/signup",
                                 "/api/buyer/signup",
-                                "/api/shop/signup"
-                        ).permitAll()
-                        .anyRequest().authenticated()
+                                "/api/shop/signup",
+                                "/uploads/**"   // <<< THIS ALLOWS IMAGE ACCESS
+                        ).permitAll() // ✅ Public endpoints
+
+                        .requestMatchers("/api/posts/create").authenticated()
+                        .requestMatchers("/api/posts/{role}/{userId}").authenticated()// ✅ allow this
+                        .anyRequest().authenticated() // 🔒 Everything else secured
+
                 )
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class); // 🔐 JWT Filter
 
         return http.build();
     }
 
+    // ✅ This replaces the WebConfig CORS config completely
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:5173")); // Update for frontend origin
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("Authorization", "Cache-Control", "Content-Type"));
-        config.setAllowCredentials(true);
+        config.setAllowedOrigins(List.of("http://localhost:5173")); // Frontend domain
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS")); // Methods allowed
+        config.setAllowedHeaders(List.of("Authorization", "Cache-Control", "Content-Type")); // JWT, etc.
+        config.setAllowCredentials(true); // Allows sending cookies or Authorization headers
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
+        source.registerCorsConfiguration("/**", config); // Applies to all endpoints
         return source;
     }
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
-        return authConfig.getAuthenticationManager(); // Not used unless you add a custom authentication provider
+        return authConfig.getAuthenticationManager();
     }
 
     @Bean

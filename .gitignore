@@ -9,3 +9,4 @@ client/tailwind.config.js
 # Ignored package files
 package-lock.json
 package.json
+uploads

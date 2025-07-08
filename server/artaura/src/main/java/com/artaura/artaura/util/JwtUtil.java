@@ -19,6 +19,7 @@ public class JwtUtil {
         return Jwts.builder()
                 .claim("userId", userId)
                 .claim("role", role)
+                .setSubject(String.valueOf(userId))
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(SignatureAlgorithm.HS256, secret)
@@ -37,4 +38,15 @@ public class JwtUtil {
                 .setSigningKey(secret) // Use your configured secret key
                 .parseClaimsJws(token);
     }
+
+    public Long extractUserId(String token) {
+        Claims claims = extractClaims(token);
+        return claims.get("userId", Long.class);
+    }
+
+    public String extractRole(String token) {
+        Claims claims = extractClaims(token);
+        return claims.get("role", String.class);
+    }
+
 }

@@ -1,4 +1,4 @@
-package com.artaura.artaura.dao.impl;
+package com.artaura.artaura.dao;
 
 import com.artaura.artaura.dto.auth.LoginUserDataDTO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public class ModeratorDAOImpl implements ModeratorDAO {
+public class AdminDAOImpl implements AdminDAO {
 
     @Autowired
     private JdbcTemplate jdbc;
@@ -16,10 +16,10 @@ public class ModeratorDAOImpl implements ModeratorDAO {
     @Override
     public Optional<LoginUserDataDTO> findByEmail(String email) {
         try {
-            String sql = "SELECT moderator_id, email, password FROM moderators WHERE email = ?";
+            String sql = "SELECT admin_id, email, password FROM admins WHERE email = ?";
             LoginUserDataDTO dto = jdbc.queryForObject(sql, (rs, rowNum) -> {
                 LoginUserDataDTO login = new LoginUserDataDTO();
-                login.setUserId(rs.getLong("moderator_id"));
+                login.setUserId(rs.getLong("admin_id"));
                 login.setEmail(rs.getString("email"));
                 login.setPassword(rs.getString("password"));
                 return login;

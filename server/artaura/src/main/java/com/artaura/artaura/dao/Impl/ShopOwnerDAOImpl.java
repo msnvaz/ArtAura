@@ -1,7 +1,6 @@
-package com.artaura.artaura.dao.impl;
+package com.artaura.artaura.dao;
 
-import com.artaura.artaura.dao.impl.ShopOwnerDAO;
-import com.artaura.artaura.dto.ShopOwnerSignupRequest;
+import com.artaura.artaura.dto.signup.ShopOwnerSignupRequest;
 import com.artaura.artaura.dto.auth.LoginUserDataDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -12,7 +11,6 @@ import org.springframework.jdbc.support.KeyHolder;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 
-import java.sql.ResultSet;
 import java.util.Optional;
 
 @Repository

@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.Collections;
 
 @Component
-public class JwtAuthFilter extends OncePerRequestFilter {
+public class JwtAuthFilter extends OncePerRequestFilter { //runs once per request
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -32,6 +32,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         final String authHeader = request.getHeader("Authorization");
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            System.out.println("No JWT token found in request headers.");
             filterChain.doFilter(request, response); // no token, proceed as anonymous
             return;
         }
@@ -42,23 +43,32 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             Jws<Claims> claimsJws = jwtUtil.validateToken(token);
             Claims claims = claimsJws.getBody();
 
-            String email = claims.getSubject();
+            // Use subject as userId (you can parse if needed)
+            String userId = claims.getSubject();
+            if (userId == null) {
+                Object userIdClaim = claims.get("userId");
+                if (userIdClaim != null) {
+                    userId = userIdClaim.toString();
+                }
+            }
             String role = claims.get("role", String.class);
 
-            if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                // Create auth with ROLE_ prefix
+            System.out.println("JWT validated successfully. UserId: " + userId + ", Role: " + role);
+
+            if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + role);
 
                 UsernamePasswordAuthenticationToken authToken =
-                        new UsernamePasswordAuthenticationToken(email, null, Collections.singleton(authority));
+                        new UsernamePasswordAuthenticationToken(userId, null, Collections.singleton(authority));
 
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }
 
         } catch (JwtException | IllegalArgumentException e) {
-            // invalid token, you can optionally send 401 here or just ignore and continue
-            // response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            // return;
+            System.err.println("Invalid or expired JWT token: " + e.getMessage());
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("Invalid or expired token");
+            return; // stop filter chain and respond with 401
         }
 
         filterChain.doFilter(request, response);

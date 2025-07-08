@@ -1,4 +1,4 @@
-package com.artaura.artaura.dao.impl;
+package com.artaura.artaura.dao;
 
 import com.artaura.artaura.dto.auth.LoginUserDataDTO;
 

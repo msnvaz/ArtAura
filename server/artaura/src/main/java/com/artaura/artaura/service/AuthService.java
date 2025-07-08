@@ -1,7 +1,6 @@
 package com.artaura.artaura.service;
 
-import com.artaura.artaura.dao.impl.*;
-import com.artaura.artaura.dto.ArtistSignupRequest;
+import com.artaura.artaura.dao.*;
 import com.artaura.artaura.dto.auth.LoginRequest;
 import com.artaura.artaura.dto.auth.LoginResponse;
 import com.artaura.artaura.dto.auth.LoginUserDataDTO;
@@ -29,7 +28,7 @@ public class AuthService {
         var email = request.getEmail();
         var password = request.getPassword();
 
-        Optional<LoginUserDataDTO> user;
+        Optional<LoginUserDataDTO> user; //user might have a LoginUserDataDTO object, or it might be empty
 
         // Check artist
         user = artistDAO.findByEmail(email);

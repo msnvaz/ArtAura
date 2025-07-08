@@ -1,14 +1,14 @@
-package com.artaura.artaura.dao.impl;
+package com.artaura.artaura.dao;
 
-import com.artaura.artaura.dto.ShopOwnerSignupRequest;
+import com.artaura.artaura.dto.signup.BuyerSignupRequest;
 import com.artaura.artaura.dto.auth.LoginUserDataDTO;
 
 import java.util.Optional;
 
-public interface ShopOwnerDAO {
+public interface BuyerDAO {
     // ✅ Declare it here
     boolean emailExists(String email);
-    void save(ShopOwnerSignupRequest request, String hashedPassword);
+    void save(BuyerSignupRequest request, String hashedPassword);
     Optional<LoginUserDataDTO> findByEmail(String email);
 
 }

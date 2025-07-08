@@ -1,6 +1,6 @@
 package com.artaura.artaura.controller;
 
-import com.artaura.artaura.dto.BuyerSignupRequest;
+import com.artaura.artaura.dto.signup.BuyerSignupRequest;
 import com.artaura.artaura.service.BuyerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

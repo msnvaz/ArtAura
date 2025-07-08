@@ -1,7 +1,7 @@
 package com.artaura.artaura.service;
 
-import com.artaura.artaura.dao.impl.ShopOwnerDAO;
-import com.artaura.artaura.dto.ShopOwnerSignupRequest;
+import com.artaura.artaura.dao.ShopOwnerDAO;
+import com.artaura.artaura.dto.signup.ShopOwnerSignupRequest;
 import com.artaura.artaura.exception.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.artaura.artaura.util.PasswordEncoderUtil;

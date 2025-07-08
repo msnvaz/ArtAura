@@ -1,6 +1,6 @@
 package com.artaura.artaura.controller;
 
-import com.artaura.artaura.dto.ArtistSignupRequest;
+import com.artaura.artaura.dto.signup.ArtistSignupRequest;
 import com.artaura.artaura.service.ArtistService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -14,7 +14,7 @@ public class ArtistController {
     private ArtistService artistService;
 
     @PostMapping("/signup")
-    public ResponseEntity<String> signup(@RequestBody ArtistSignupRequest req) {
+    public ResponseEntity<String> signup(@RequestBody ArtistSignupRequest req) { //Spring automatically maps the JSON request body to the ArtistSignupRequest DTO.
         artistService.register(req);
         return ResponseEntity.ok("Artist registered successfully");
     }
