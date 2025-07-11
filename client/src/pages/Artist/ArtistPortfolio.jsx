@@ -1,4 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { formatDistanceToNow,  isValid } from 'date-fns';
+import ArtworkDetailModal from '../../components/artworks/ArtworkDetailModal';
+import EditProfileModal from '../../components/artist/EditProfileModal';
+import UploadPostModal from '../../components/artworks/UploadPostModal';
+import PostUploadModal from '../../components/social/PostUploadModal';
+import ChangeCoverModal from '../../components/profile/ChangeCoverModal';
+import EditPostModel from '../../components/artist/EditPostModel';
+import { useAuth } from "../../context/AuthContext"; 
 import {
   Plus,
   Edit,
@@ -28,20 +38,89 @@ import {
   Activity,
   Clock,
   Target,
-  Globe
+  Globe,
+  ArrowLeft
 } from 'lucide-react';
 
 const ArtistPortfolio = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('portfolio');
   const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [isAddingArtwork, setIsAddingArtwork] = useState(false);
+  const [isCreatingPost, setIsCreatingPost] = useState(false);
+  const [isChangingCover, setIsChangingCover] = useState(false);
+  const [isViewingArtwork, setIsViewingArtwork] = useState(false);
   const [selectedArtwork, setSelectedArtwork] = useState(null);
 
+  const [editedProfile, setEditedProfile] = useState({
+    name: '',
+    bio: '',
+    location: '',
+    website: '',
+    instagram: '',
+    twitter: '',
+    phone: '',
+    email: ''
+  });
+  const [newArtwork, setNewArtwork] = useState({
+    title: '',
+    medium: '',
+    size: '',
+    year: '',
+    price: '',
+    description: '',
+    category: '',
+    tags: '',
+    imageFiles: []
+  });
+  const [newPost, setNewPost] = useState({
+    caption: '',
+    imageFiles: [],
+    // allowComments: true,
+    // allowLikes: true,
+    // allowSharing: true
+  });
+
+  const { token, role, userId} = useAuth();
+  const [portfolioPosts, setPortfolioPosts] = useState([]);
+  useEffect(() => {
+    const fetchPosts = async () => {
+      if (!role || !userId || !token) {
+        console.warn("Missing role, userId, or token. Skipping fetch.");
+        return;
+      }
+  
+      try {
+        const response = await axios.get(
+          `http://localhost:8080/api/posts/${role}/${userId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+  
+        setPortfolioPosts(response.data);
+      } catch (error) {
+        console.error("Error fetching posts:", error);
+      }
+    };
+  
+    fetchPosts();
+  }, [role, userId, token]); // 👈 Add these so it re-runs when context loads
+  
+  
   // Mock artist data
   const artistProfile = {
     name: 'Sarah Martinez',
     bio: 'Contemporary artist specializing in abstract expressionism and digital art. My work explores the intersection of emotion and color, creating pieces that speak to the human experience.',
     location: 'New York, NY',
     joinDate: 'January 2023',
+    website: 'www.sarahmartinez.art',
+    instagram: '@sarahmartinez_art',
+    twitter: '@sarah_art',
+    phone: '+1 (555) 123-4567',
+    email: 'sarah@sarahmartinez.art',
     avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=200',
     coverImage: 'https://images.pexels.com/photos/1070981/pexels-photo-1070981.jpeg?auto=compress&cs=tinysrgb&w=800',
     stats: {
@@ -91,6 +170,220 @@ const ArtistPortfolio = () => {
       color: 'bg-purple-100 text-purple-800 border-purple-200'
     }
   ];
+
+  // Initialize edited profile when component mounts or when editing starts
+  React.useEffect(() => {
+    if (isEditingProfile) {
+      setEditedProfile({
+        name: artistProfile.name,
+        bio: artistProfile.bio,
+        location: artistProfile.location,
+        website: artistProfile.website,
+        instagram: artistProfile.instagram,
+        twitter: artistProfile.twitter,
+        phone: artistProfile.phone,
+        email: artistProfile.email
+      });
+    }
+  }, [isEditingProfile]);
+
+  const handleProfileChange = (field, value) => {
+    setEditedProfile(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleSaveProfile = () => {
+    // Here you would typically save to backend
+    console.log('Saving profile:', editedProfile);
+    setIsEditingProfile(false);
+    // Show success notification
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingProfile(false);
+    // Reset edited profile
+    setEditedProfile({
+      name: '',
+      bio: '',
+      location: '',
+      website: '',
+      instagram: '',
+      twitter: '',
+      phone: '',
+      email: ''
+    });
+  };
+
+  const handleArtworkChange = (field, value) => {
+    setNewArtwork(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleImageUpload = (e) => {
+    const files = Array.from(e.target.files);
+    setNewArtwork(prev => ({
+      ...prev,
+      imageFiles: files
+    }));
+  };
+
+  const handleSaveArtwork = () => {
+    // Here you would typically save to backend
+    console.log('Saving artwork:', newArtwork);
+    setIsAddingArtwork(false);
+    // Reset form
+    setNewArtwork({
+      title: '',
+      medium: '',
+      size: '',
+      year: '',
+      price: '',
+      description: '',
+      category: '',
+      tags: '',
+      imageFiles: []
+    });
+    // Show success notification
+  };
+
+  const handleCancelAddArtwork = () => {
+    setIsAddingArtwork(false);
+    // Reset form
+    setNewArtwork({
+      title: '',
+      medium: '',
+      size: '',
+      year: '',
+      price: '',
+      description: '',
+      category: '',
+      tags: '',
+      imageFiles: []
+    });
+  };
+
+  // Post Upload Handlers
+  const handlePostChange = (field, value) => {
+    setNewPost(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handlePostImageUpload = (e) => {
+    const files = Array.from(e.target.files);
+    setNewPost(prev => ({
+      ...prev,
+      imageFiles: files
+    }));
+  };
+
+  const handleSavePost = async () => {
+    const formData = new FormData();
+    formData.append('caption', newPost.caption);
+    formData.append('location', 'Colombo'); // optional: make dynamic
+    formData.append('image', newPost.imageFiles[0]);
+
+    // 👇 Check before making request
+    if (!token || !role || !userId) {
+      console.warn('Missing token, role, or userId. Aborting post creation.');
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        'http://localhost:8080/api/posts/create',
+        formData,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      );
+
+      console.log('Post created:', response.data);
+
+      // Reset post state
+      setIsCreatingPost(false);
+      setNewPost({
+        caption: '',
+        imageFiles: [],
+      });
+
+    } catch (error) {
+      console.error('Error uploading post:', error);
+    }
+  };
+
+
+  const handleCancelPost = () => {
+    setIsCreatingPost(false);
+    // Reset form
+    setNewPost({
+      caption: '',
+      imageFiles: [],
+      // allowComments: true,
+      // allowLikes: true,
+      // allowSharing: true
+    });
+  };
+
+  // Cover Change Handlers
+  const handleSaveCover = (newCoverFile) => {
+    // Here you would typically upload to backend and update the profile
+    console.log('Saving new cover image:', newCoverFile);
+
+    // For now, create a local URL to show the new image
+    const newCoverUrl = URL.createObjectURL(newCoverFile);
+
+    // Update the artist profile (in a real app, this would come from backend)
+    // You might need to update a global state or refetch the profile
+
+    setIsChangingCover(false);
+    // Show success notification
+    alert('Cover photo updated successfully!');
+  };
+
+  const handleCancelCoverChange = () => {
+    setIsChangingCover(false);
+  };
+
+  const handleViewArtworkDetail = (artwork) => {
+    setSelectedArtwork(artwork);
+    setIsViewingArtwork(true);
+  };
+
+  const handleCloseArtworkView = () => {
+    setIsViewingArtwork(false);
+    setSelectedArtwork(null);
+  };
+
+  const handleEditArtwork = (artwork) => {
+    console.log('Edit artwork:', artwork);
+    // Here you would typically open an edit modal or navigate to edit page
+    setIsViewingArtwork(false);
+  };
+
+  const handleDeleteArtwork = (artwork) => {
+    console.log('Delete artwork:', artwork);
+    // Here you would typically show a confirmation dialog and delete the artwork
+    setIsViewingArtwork(false);
+  };
+
+  const handleToggleFeature = (artwork) => {
+    console.log('Toggle feature for artwork:', artwork);
+    // Here you would typically update the artwork's featured status
+  };
+
+  const handleMarkAsSold = (artwork) => {
+    console.log('Mark as sold:', artwork);
+    // Here you would typically update the artwork's status to 'Sold'
+  };
 
   // Portfolio artworks
   const artworks = [
@@ -175,62 +468,7 @@ const ArtistPortfolio = () => {
   ];
 
   // Portfolio posts (Instagram-like posts)
-  const portfolioPosts = [
-    {
-      id: 1,
-      image: 'https://images.pexels.com/photos/1070981/pexels-photo-1070981.jpeg?auto=compress&cs=tinysrgb&w=400',
-      caption: 'Working on my latest piece! The creative process is always so fulfilling. #artistlife #workinprogress',
-      likes: 89,
-      comments: 12,
-      timestamp: '2024-06-28',
-      type: 'image'
-    },
-    {
-      id: 2,
-      image: 'https://images.pexels.com/photos/1545743/pexels-photo-1545743.jpeg?auto=compress&cs=tinysrgb&w=400',
-      caption: 'Just finished "Sunset Dreams"! This piece took me 3 weeks to complete. What do you think? 🎨',
-      likes: 156,
-      comments: 24,
-      timestamp: '2024-06-25',
-      type: 'image'
-    },
-    {
-      id: 3,
-      image: 'https://images.pexels.com/photos/1269968/pexels-photo-1269968.jpeg?auto=compress&cs=tinysrgb&w=400',
-      caption: 'Behind the scenes of my studio setup. Organization is key to creativity! ✨',
-      likes: 67,
-      comments: 8,
-      timestamp: '2024-06-22',
-      type: 'image'
-    },
-    {
-      id: 4,
-      image: 'https://images.pexels.com/photos/1053924/pexels-photo-1053924.jpeg?auto=compress&cs=tinysrgb&w=400',
-      caption: 'Experimenting with digital art techniques. Technology opens so many new possibilities! 💻🎨',
-      likes: 94,
-      comments: 16,
-      timestamp: '2024-06-20',
-      type: 'image'
-    },
-    {
-      id: 5,
-      image: 'https://images.pexels.com/photos/1266808/pexels-photo-1266808.jpeg?auto=compress&cs=tinysrgb&w=400',
-      caption: 'Nature is my greatest inspiration. This mountain view is going into my next watercolor series 🏔️',
-      likes: 112,
-      comments: 19,
-      timestamp: '2024-06-18',
-      type: 'image'
-    },
-    {
-      id: 6,
-      image: 'https://images.pexels.com/photos/1742370/pexels-photo-1742370.jpeg?auto=compress&cs=tinysrgb&w=400',
-      caption: 'Portrait study session today. Capturing human emotion through charcoal is such a meditative process.',
-      likes: 78,
-      comments: 11,
-      timestamp: '2024-06-15',
-      type: 'image'
-    }
-  ];
+  
 
   const exhibitions = [
     {
@@ -250,6 +488,57 @@ const ArtistPortfolio = () => {
       artworks: 2
     }
   ];
+
+  const handleDeletePost = async (postId) => {
+    try {
+      // Get token (adjust based on your actual auth setup)
+      const token = localStorage.getItem('token'); // or from useAuth()
+  
+      if (!token) {
+        alert("You must be logged in to delete posts.");
+        return;
+      }
+  
+      // Call backend delete API with Authorization header
+      await axios.delete(`http://localhost:8080/api/posts/${postId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+  
+      // Update UI after successful deletion
+      setPortfolioPosts((prevPosts) => prevPosts.filter(post => post.id !== postId));
+      
+      alert("Post deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting post:", error);
+      alert("Failed to delete the post. Try again.");
+    }
+  };
+
+  const [editingItem, setEditingItem] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+
+  const handleEditPost = (post) => {
+    setEditingItem(post);
+    setShowEditModal(true);
+  };
+  
+  const handleEditSavePost = (updatedPost) => {
+    const updatedList = portfolioPosts.map((post) =>
+      post.id === updatedPost.id ? updatedPost : post
+    );
+    setPortfolioPosts(updatedList);
+    setShowEditModal(false);
+  };
+
+  const safeFormatDistanceToNow = (date) => {
+    const d = new Date(date);
+    if (!isValid(d)) return "Invalid date";
+    return formatDistanceToNow(d, { addSuffix: true });
+  };
+  
+   
 
   return (
     <div className="min-h-screen bg-[#fdf9f4] py-8">
@@ -275,7 +564,10 @@ const ArtistPortfolio = () => {
               </div>
             </div>
           </div>
-          <button className="absolute top-6 right-6 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-colors">
+          <button
+            onClick={() => setIsChangingCover(true)}
+            className="absolute top-6 right-6 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-colors"
+          >
             <Camera className="h-4 w-4 inline mr-2" />
             Change Cover
           </button>
@@ -291,7 +583,10 @@ const ArtistPortfolio = () => {
                 alt={artistProfile.name}
                 className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
               />
-              <button className="absolute bottom-0 right-0 bg-[#7f5539] text-[#fdf9f4] p-2 rounded-full hover:bg-[#6e4c34] transition-colors">
+              <button
+                onClick={() => setIsEditingProfile(true)}
+                className="absolute bottom-0 right-0 bg-[#7f5539] text-[#fdf9f4] p-2 rounded-full hover:bg-[#6e4c34] transition-colors"
+              >
                 <Edit className="h-3 w-3" />
               </button>
             </div>
@@ -453,11 +748,17 @@ const ArtistPortfolio = () => {
                 <div className="bg-white rounded-lg shadow-sm border border-[#fdf9f4]/20 p-6">
                   <h3 className="text-lg font-semibold text-[#7f5539] mb-4">Quick Actions</h3>
                   <div className="space-y-2">
-                    <button className="w-full flex items-center space-x-3 p-3 hover:bg-[#fdf9f4]/30 rounded-lg transition-colors text-left">
+                    <button
+                      onClick={() => setIsCreatingPost(true)}
+                      className="w-full flex items-center space-x-3 p-3 hover:bg-[#fdf9f4]/30 rounded-lg transition-colors text-left"
+                    >
                       <Camera className="h-5 w-5 text-[#7f5539]" />
                       <span className="text-[#7f5539]">Create Post</span>
                     </button>
-                    <button className="w-full flex items-center space-x-3 p-3 hover:bg-[#fdf9f4]/30 rounded-lg transition-colors text-left">
+                    <button
+                      onClick={() => setIsAddingArtwork(true)}
+                      className="w-full flex items-center space-x-3 p-3 hover:bg-[#fdf9f4]/30 rounded-lg transition-colors text-left"
+                    >
                       <Plus className="h-5 w-5 text-[#7f5539]" />
                       <span className="text-[#7f5539]">Add Artwork</span>
                     </button>
@@ -485,17 +786,26 @@ const ArtistPortfolio = () => {
                         className="w-10 h-10 rounded-full object-cover"
                       />
                       <div className="flex-1">
-                        <button className="w-full text-left px-4 py-2 bg-[#fdf9f4]/50 hover:bg-[#fdf9f4]/70 rounded-full text-[#7f5539]/60 transition-colors">
+                        <button
+                          onClick={() => setIsCreatingPost(true)}
+                          className="w-full text-left px-4 py-2 bg-[#fdf9f4]/50 hover:bg-[#fdf9f4]/70 rounded-full text-[#7f5539]/60 transition-colors"
+                        >
                           What's on your mind, {artistProfile.name.split(' ')[0]}?
                         </button>
                       </div>
                     </div>
                     <div className="flex items-center justify-between mt-3 pt-3 border-t border-[#fdf9f4]/30">
-                      <button className="flex items-center space-x-2 px-4 py-2 hover:bg-[#fdf9f4]/30 rounded-lg transition-colors text-[#7f5539]">
+                      <button
+                        onClick={() => setIsCreatingPost(true)}
+                        className="flex items-center space-x-2 px-4 py-2 hover:bg-[#fdf9f4]/30 rounded-lg transition-colors text-[#7f5539]"
+                      >
                         <Camera className="h-5 w-5" />
                         <span className="font-medium">Photo/Video</span>
                       </button>
-                      <button className="bg-[#7f5539] text-[#fdf9f4] px-6 py-2 rounded-lg hover:bg-[#6e4c34] transition-colors font-medium">
+                      <button
+                        onClick={() => setIsCreatingPost(true)}
+                        className="bg-[#7f5539] text-[#fdf9f4] px-6 py-2 rounded-lg hover:bg-[#6e4c34] transition-colors font-medium"
+                      >
                         Post
                       </button>
                     </div>
@@ -505,7 +815,7 @@ const ArtistPortfolio = () => {
                 {/* Feed Posts */}
                 {portfolioPosts.map((post) => (
                   <div
-                    key={post.id}
+                    key={post.post_id}
                     className="bg-white rounded-xl shadow-sm border border-[#fdf9f4]/20 overflow-hidden"
                   >
                     {/* Post Header */}
@@ -518,12 +828,28 @@ const ArtistPortfolio = () => {
                         />
                         <div>
                           <h4 className="font-semibold text-[#7f5539]">{artistProfile.name}</h4>
-                          <p className="text-xs text-[#7f5539]/60">{post.timestamp}</p>
+                          <p className="text-xs text-[#7f5539]/60">
+                            {safeFormatDistanceToNow(post.created_at)}
+                          </p>
+
                         </div>
                       </div>
-                      <button className="text-[#7f5539]/60 hover:text-[#7f5539] transition-colors">
+                      <div className="flex space-x-3">  {/* Flex container with horizontal spacing */}
+                        <button
+                        onClick={() => handleEditPost(post)}
+                        className="text-[#7f5539]/60 hover:text-[#7f5539] transition-colors"
+>                         
                         <Edit className="h-5 w-5" />
-                      </button>
+                        </button>
+
+                        <button
+                          onClick={() => handleDeletePost(post.post_id)}
+                          className="text-red-500 hover:text-red-700 transition-colors"
+                          title="Delete Post"
+                        >
+                          <Trash2 className="h-5 w-5" />
+                        </button>
+                      </div>
                     </div>
 
                     {/* Post Caption */}
@@ -534,8 +860,8 @@ const ArtistPortfolio = () => {
                     {/* Post Image */}
                     <div className="relative">
                       <img
-                        src={post.image}
-                        alt={`Post ${post.id}`}
+                        src={`http://localhost:8080${post.image}`}
+                        alt={`Post ${post.post_id}`}
                         className="w-full h-[32rem] object-cover"
                       />
                     </div>
@@ -626,7 +952,10 @@ const ArtistPortfolio = () => {
                       </div>
                     ))}
                   </div>
-                  <button className="w-full mt-4 text-[#7f5539] hover:text-[#6e4c34] text-sm font-medium transition-colors">
+                  <button
+                    onClick={() => setActiveTab('tosell')}
+                    className="w-full mt-4 text-[#7f5539] hover:text-[#6e4c34] text-sm font-medium transition-colors"
+                  >
                     View All Artworks
                   </button>
                 </div>
@@ -708,7 +1037,10 @@ const ArtistPortfolio = () => {
                   <h3 className="text-lg font-semibold text-[#7f5539] mb-2">My Artworks</h3>
                   <p className="text-[#7f5539]/70">Manage your portfolio and showcase your best work</p>
                 </div>
-                <button className="mt-4 md:mt-0 bg-[#7f5539] text-[#fdf9f4] px-6 py-2 rounded-lg hover:bg-[#6e4c34] transition-colors font-medium flex items-center space-x-2">
+                <button
+                  onClick={() => setIsAddingArtwork(true)}
+                  className="mt-4 md:mt-0 bg-[#7f5539] text-[#fdf9f4] px-6 py-2 rounded-lg hover:bg-[#6e4c34] transition-colors font-medium flex items-center space-x-2"
+                >
                   <Plus className="h-4 w-4" />
                   <span>Add New Artwork</span>
                 </button>
@@ -735,7 +1067,10 @@ const ArtistPortfolio = () => {
                       </div>
                     )}
                     <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex space-x-2">
-                      <button className="bg-white/90 text-[#7f5539] p-2 rounded-full hover:bg-white transition-colors">
+                      <button
+                        onClick={() => handleViewArtworkDetail(artwork)}
+                        className="bg-white/90 text-[#7f5539] p-2 rounded-full hover:bg-white transition-colors"
+                      >
                         <Eye className="h-4 w-4" />
                       </button>
                       <button className="bg-white/90 text-[#7f5539] p-2 rounded-full hover:bg-white transition-colors">
@@ -772,7 +1107,10 @@ const ArtistPortfolio = () => {
                           <span>{artwork.views}</span>
                         </div>
                       </div>
-                      <button className="text-[#7f5539] hover:text-[#6e4c34] transition-colors font-medium">
+                      <button
+                        onClick={() => handleViewArtworkDetail(artwork)}
+                        className="text-[#7f5539] hover:text-[#6e4c34] transition-colors font-medium"
+                      >
                         View Details
                       </button>
                     </div>
@@ -1225,6 +1563,68 @@ const ArtistPortfolio = () => {
           </div>
         )}
       </div>
+
+      {/* Edit Profile Modal */}
+      <EditProfileModal
+        isOpen={isEditingProfile}
+        onClose={handleCancelEdit}
+        editedProfile={editedProfile}
+        onProfileChange={handleProfileChange}
+        onSave={handleSaveProfile}
+        artistProfile={artistProfile}
+      />
+
+      {/* Upload Post Modal */}
+      <UploadPostModal
+        isOpen={isAddingArtwork}
+        onClose={handleCancelAddArtwork}
+        newArtwork={newArtwork}
+        onArtworkChange={handleArtworkChange}
+        onImageUpload={handleImageUpload}
+        onSave={handleSaveArtwork}
+        onCancel={handleCancelAddArtwork}
+      />
+
+      {/* Artwork Detail Modal */}
+      <ArtworkDetailModal
+        isOpen={isViewingArtwork}
+        artwork={selectedArtwork}
+        onClose={handleCloseArtworkView}
+        onEdit={handleEditArtwork}
+        onDelete={handleDeleteArtwork}
+        onToggleFeature={handleToggleFeature}
+        onMarkAsSold={handleMarkAsSold}
+      />
+
+      {/* Post Upload Modal */}
+      <PostUploadModal
+        isOpen={isCreatingPost}
+        onClose={handleCancelPost}
+        newPost={newPost}
+        onPostChange={handlePostChange}
+        onImageUpload={handlePostImageUpload}
+        onSave={handleSavePost}
+        onCancel={handleCancelPost}
+        artistProfile={artistProfile}
+      />
+
+      {/* Change Cover Modal */}
+      <ChangeCoverModal
+        isOpen={isChangingCover}
+        onClose={handleCancelCoverChange}
+        currentCoverImage={artistProfile.coverImage}
+        onSave={handleSaveCover}
+        onCancel={handleCancelCoverChange}
+        artistProfile={artistProfile}
+      />
+
+      {showEditModal && editingItem && (
+        <EditPostModel
+          item={editingItem}
+          onClose={() => setShowEditModal(false)}
+          onSave={handleEditSavePost}
+        />
+      )}
     </div>
   );
 };
