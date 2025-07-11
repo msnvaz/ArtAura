@@ -56,9 +56,10 @@ function App() {
 
         <Route path="/shop/dashboard" element={<PageTransition><Dashboard /></PageTransition>} />
         <Route path="/shop/orders" element={<PageTransition><ShopOrders /></PageTransition>} />
-        <Route path="/shop/rewards" element={<PageTransition><RewardSystem /></PageTransition>} />
+        <Route path="/shop/sponsorships" element={<PageTransition><Sponsorships /></PageTransition>} />
         <Route path="/shop/analytics" element={<PageTransition><SalesAnalytics /></PageTransition>} />
         <Route path="/shop/catalog" element={<PageTransition><Catalog /></PageTransition>} />
+        <Route path="/shop/profile" element={<PageTransition><Profile /></PageTransition>} />
 
         <Route path="/uploadartwork" element={<PageTransition><UploadArtWork /></PageTransition>} />
         <Route path="/artworks/:id" element={<PageTransition><ArtworkDetail /></PageTransition>} />
