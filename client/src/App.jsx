@@ -6,11 +6,12 @@ import './styles/main.css';
 import Marketplace from './pages/Marketplace';
 import Competitions from './pages/Competitions';
 
-import Dashboard from './pages/shop/dashboard';
+import Dashboard from './pages/shop/Dashboard';
 import ShopOrders from './pages/shop/Orders';
-import RewardSystem from './pages/shop/Rewards';
+import Sponsorships from './pages/shop/Sponsorships';
 import SalesAnalytics from './pages/shop/Analytics';
 import Catalog from './pages/shop/Catalog';
+import Profile from './pages/shop/Profile';
 
 import Login from './components/auth/login';
 import UploadArtWork from './pages/Artist/UploadArtWork';
@@ -43,6 +44,7 @@ const PageTransition = ({ children }) => {
 function App() {
   return (
     <Router>
+
       <Routes>
         <Route path="/" element={<PageTransition><Login /></PageTransition>} />
         <Route path="/signup" element={<PageTransition><Signup /></PageTransition>} />
@@ -69,6 +71,7 @@ function App() {
         <Route path="/createChallenge" element={<PageTransition><CreateChallenge /></PageTransition>} />
         <Route path="/verifyExhibitions" element={<PageTransition><VerifyExhibitions /></PageTransition>} />
       </Routes>
+
       <Footer />
     </Router>
   );
