@@ -12,13 +12,13 @@ dist
 dist-ssr
 *.local
 
-# # Ignored package files
-# package-lock.json
-# package.json
+# Ignored package files
+package-lock.json
+package.json
 
-# # Ignored Tailwind configuration file
-# tailwind.config.js
-# vite.config.js
+# Ignored Tailwind configuration file
+tailwind.config.js
+vite.config.js
 
 # Editor directories and files
 .vscode/*
