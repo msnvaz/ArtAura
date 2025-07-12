@@ -1,10 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { formatDistanceToNow,  isValid } from 'date-fns';
 import ArtworkDetailModal from '../../components/artworks/ArtworkDetailModal';
 import EditProfileModal from '../../components/artist/EditProfileModal';
 import UploadPostModal from '../../components/artworks/UploadPostModal';
 import PostUploadModal from '../../components/social/PostUploadModal';
 import ChangeCoverModal from '../../components/profile/ChangeCoverModal';
+import EditPostModel from '../../components/artist/EditPostModel';
+import { useAuth } from "../../context/AuthContext"; 
 import {
   Plus,
   Edit,
@@ -47,6 +51,7 @@ const ArtistPortfolio = () => {
   const [isChangingCover, setIsChangingCover] = useState(false);
   const [isViewingArtwork, setIsViewingArtwork] = useState(false);
   const [selectedArtwork, setSelectedArtwork] = useState(null);
+
   const [editedProfile, setEditedProfile] = useState({
     name: '',
     bio: '',
@@ -71,11 +76,40 @@ const ArtistPortfolio = () => {
   const [newPost, setNewPost] = useState({
     caption: '',
     imageFiles: [],
-    allowComments: true,
-    allowLikes: true,
-    allowSharing: true
+    // allowComments: true,
+    // allowLikes: true,
+    // allowSharing: true
   });
 
+  const { token, role, userId} = useAuth();
+  const [portfolioPosts, setPortfolioPosts] = useState([]);
+  useEffect(() => {
+    const fetchPosts = async () => {
+      if (!role || !userId || !token) {
+        console.warn("Missing role, userId, or token. Skipping fetch.");
+        return;
+      }
+  
+      try {
+        const response = await axios.get(
+          `http://localhost:8080/api/posts/${role}/${userId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+  
+        setPortfolioPosts(response.data);
+      } catch (error) {
+        console.error("Error fetching posts:", error);
+      }
+    };
+  
+    fetchPosts();
+  }, [role, userId, token]); // 👈 Add these so it re-runs when context loads
+  
+  
   // Mock artist data
   const artistProfile = {
     name: 'Sarah Martinez',
@@ -248,20 +282,44 @@ const ArtistPortfolio = () => {
     }));
   };
 
-  const handleSavePost = () => {
-    // Here you would typically save to backend
-    console.log('Saving post:', newPost);
-    setIsCreatingPost(false);
-    // Reset form
-    setNewPost({
-      caption: '',
-      imageFiles: [],
-      allowComments: true,
-      allowLikes: true,
-      allowSharing: true
-    });
-    // Show success notification
+  const handleSavePost = async () => {
+    const formData = new FormData();
+    formData.append('caption', newPost.caption);
+    formData.append('location', 'Colombo'); // optional: make dynamic
+    formData.append('image', newPost.imageFiles[0]);
+
+    // 👇 Check before making request
+    if (!token || !role || !userId) {
+      console.warn('Missing token, role, or userId. Aborting post creation.');
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        'http://localhost:8080/api/posts/create',
+        formData,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      );
+
+      console.log('Post created:', response.data);
+
+      // Reset post state
+      setIsCreatingPost(false);
+      setNewPost({
+        caption: '',
+        imageFiles: [],
+      });
+
+    } catch (error) {
+      console.error('Error uploading post:', error);
+    }
   };
+
 
   const handleCancelPost = () => {
     setIsCreatingPost(false);
@@ -269,9 +327,9 @@ const ArtistPortfolio = () => {
     setNewPost({
       caption: '',
       imageFiles: [],
-      allowComments: true,
-      allowLikes: true,
-      allowSharing: true
+      // allowComments: true,
+      // allowLikes: true,
+      // allowSharing: true
     });
   };
 
@@ -410,62 +468,7 @@ const ArtistPortfolio = () => {
   ];
 
   // Portfolio posts (Instagram-like posts)
-  const portfolioPosts = [
-    {
-      id: 1,
-      image: 'https://images.pexels.com/photos/1070981/pexels-photo-1070981.jpeg?auto=compress&cs=tinysrgb&w=400',
-      caption: 'Working on my latest piece! The creative process is always so fulfilling. #artistlife #workinprogress',
-      likes: 89,
-      comments: 12,
-      timestamp: '2024-06-28',
-      type: 'image'
-    },
-    {
-      id: 2,
-      image: 'https://images.pexels.com/photos/1545743/pexels-photo-1545743.jpeg?auto=compress&cs=tinysrgb&w=400',
-      caption: 'Just finished "Sunset Dreams"! This piece took me 3 weeks to complete. What do you think? 🎨',
-      likes: 156,
-      comments: 24,
-      timestamp: '2024-06-25',
-      type: 'image'
-    },
-    {
-      id: 3,
-      image: 'https://images.pexels.com/photos/1269968/pexels-photo-1269968.jpeg?auto=compress&cs=tinysrgb&w=400',
-      caption: 'Behind the scenes of my studio setup. Organization is key to creativity! ✨',
-      likes: 67,
-      comments: 8,
-      timestamp: '2024-06-22',
-      type: 'image'
-    },
-    {
-      id: 4,
-      image: 'https://images.pexels.com/photos/1053924/pexels-photo-1053924.jpeg?auto=compress&cs=tinysrgb&w=400',
-      caption: 'Experimenting with digital art techniques. Technology opens so many new possibilities! 💻🎨',
-      likes: 94,
-      comments: 16,
-      timestamp: '2024-06-20',
-      type: 'image'
-    },
-    {
-      id: 5,
-      image: 'https://images.pexels.com/photos/1266808/pexels-photo-1266808.jpeg?auto=compress&cs=tinysrgb&w=400',
-      caption: 'Nature is my greatest inspiration. This mountain view is going into my next watercolor series 🏔️',
-      likes: 112,
-      comments: 19,
-      timestamp: '2024-06-18',
-      type: 'image'
-    },
-    {
-      id: 6,
-      image: 'https://images.pexels.com/photos/1742370/pexels-photo-1742370.jpeg?auto=compress&cs=tinysrgb&w=400',
-      caption: 'Portrait study session today. Capturing human emotion through charcoal is such a meditative process.',
-      likes: 78,
-      comments: 11,
-      timestamp: '2024-06-15',
-      type: 'image'
-    }
-  ];
+  
 
   const exhibitions = [
     {
@@ -485,6 +488,57 @@ const ArtistPortfolio = () => {
       artworks: 2
     }
   ];
+
+  const handleDeletePost = async (postId) => {
+    try {
+      // Get token (adjust based on your actual auth setup)
+      const token = localStorage.getItem('token'); // or from useAuth()
+  
+      if (!token) {
+        alert("You must be logged in to delete posts.");
+        return;
+      }
+  
+      // Call backend delete API with Authorization header
+      await axios.delete(`http://localhost:8080/api/posts/${postId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+  
+      // Update UI after successful deletion
+      setPortfolioPosts((prevPosts) => prevPosts.filter(post => post.id !== postId));
+      
+      alert("Post deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting post:", error);
+      alert("Failed to delete the post. Try again.");
+    }
+  };
+
+  const [editingItem, setEditingItem] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+
+  const handleEditPost = (post) => {
+    setEditingItem(post);
+    setShowEditModal(true);
+  };
+  
+  const handleEditSavePost = (updatedPost) => {
+    const updatedList = portfolioPosts.map((post) =>
+      post.id === updatedPost.id ? updatedPost : post
+    );
+    setPortfolioPosts(updatedList);
+    setShowEditModal(false);
+  };
+
+  const safeFormatDistanceToNow = (date) => {
+    const d = new Date(date);
+    if (!isValid(d)) return "Invalid date";
+    return formatDistanceToNow(d, { addSuffix: true });
+  };
+  
+   
 
   return (
     <div className="min-h-screen bg-[#fdf9f4] py-8">
@@ -761,7 +815,7 @@ const ArtistPortfolio = () => {
                 {/* Feed Posts */}
                 {portfolioPosts.map((post) => (
                   <div
-                    key={post.id}
+                    key={post.post_id}
                     className="bg-white rounded-xl shadow-sm border border-[#fdf9f4]/20 overflow-hidden"
                   >
                     {/* Post Header */}
@@ -774,12 +828,28 @@ const ArtistPortfolio = () => {
                         />
                         <div>
                           <h4 className="font-semibold text-[#7f5539]">{artistProfile.name}</h4>
-                          <p className="text-xs text-[#7f5539]/60">{post.timestamp}</p>
+                          <p className="text-xs text-[#7f5539]/60">
+                            {safeFormatDistanceToNow(post.created_at)}
+                          </p>
+
                         </div>
                       </div>
-                      <button className="text-[#7f5539]/60 hover:text-[#7f5539] transition-colors">
+                      <div className="flex space-x-3">  {/* Flex container with horizontal spacing */}
+                        <button
+                        onClick={() => handleEditPost(post)}
+                        className="text-[#7f5539]/60 hover:text-[#7f5539] transition-colors"
+>                         
                         <Edit className="h-5 w-5" />
-                      </button>
+                        </button>
+
+                        <button
+                          onClick={() => handleDeletePost(post.post_id)}
+                          className="text-red-500 hover:text-red-700 transition-colors"
+                          title="Delete Post"
+                        >
+                          <Trash2 className="h-5 w-5" />
+                        </button>
+                      </div>
                     </div>
 
                     {/* Post Caption */}
@@ -790,8 +860,8 @@ const ArtistPortfolio = () => {
                     {/* Post Image */}
                     <div className="relative">
                       <img
-                        src={post.image}
-                        alt={`Post ${post.id}`}
+                        src={`http://localhost:8080${post.image}`}
+                        alt={`Post ${post.post_id}`}
                         className="w-full h-[32rem] object-cover"
                       />
                     </div>
@@ -1547,6 +1617,14 @@ const ArtistPortfolio = () => {
         onCancel={handleCancelCoverChange}
         artistProfile={artistProfile}
       />
+
+      {showEditModal && editingItem && (
+        <EditPostModel
+          item={editingItem}
+          onClose={() => setShowEditModal(false)}
+          onSave={handleEditSavePost}
+        />
+      )}
     </div>
   );
 };

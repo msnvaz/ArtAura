@@ -1,27 +1,25 @@
-// src/pages/Login.jsx
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext'; // 🔥 Context Hook
 
 const roleDashboardMap = {
   admin: '/admin/dashboard',
-  moderator: '/moderator/dashboard',
-  artist: '/artist/dashboard',
+  moderator: '/ModeratorDashboard',
+  artist: '/artist/artistdashboard',
   shop: '/shop/dashboard',
-  buyer: '/buyer/dashboard'
+  buyer: '/community'
 };
 
 const Login = () => {
-  const [formData, setFormData] = useState({
-    email: '',
-    password: ''
-  });
+  const [formData, setFormData] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
   const navigate = useNavigate();
+
+  const { login } = useAuth(); // 🔥 Get login function from context
 
   const handleInputChange = (e) => {
     setFormData((prev) => ({
@@ -37,12 +35,15 @@ const Login = () => {
 
     try {
       const response = await axios.post('http://localhost:8080/api/auth/login', formData);
-      localStorage.setItem('token', response.data.token);
+      const { token, role, userId } = response.data;
 
-      const userRole = response.data.userInfo?.role?.toLowerCase();
+      // 🌍 Use context + persist to localStorage
+      login(token, role, userId);
+
+      const userRole = role?.toLowerCase();
       const dashboardPath = roleDashboardMap[userRole];
 
-      console.log('User Role:', userRole);
+      console.log('✅ Login successful:', { token, role, userId });
 
       if (dashboardPath) {
         navigate(dashboardPath);
@@ -62,25 +63,12 @@ const Login = () => {
   return (
     <div className="min-h-screen bg-[#faf3e0] flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-6xl bg-white rounded-3xl shadow-lg overflow-hidden flex flex-col lg:flex-row my-auto">
-
-        {/* Left Section with stacked images */}
+        {/* Left Side Images */}
         <div className="hidden lg:flex flex-col justify-center items-center bg-[#362625] w-1/2 p-8 relative rounded-l-3xl">
           <div className="relative w-full h-[400px] flex items-center justify-center">
-            <img
-              src="/src/assets/bg5.jpg"
-              alt="art1"
-              className="absolute top-24 left-6 w-48 rounded-2xl shadow-xl z-10 transform -rotate-6"
-            />
-            <img
-              src="/src/assets/bg4.jpg"
-              alt="art2"
-              className="absolute top-8 left-1/2 transform -translate-x-1/2 scale-110 w-52 rounded-2xl shadow-2xl z-20"
-            />
-            <img
-              src="/src/assets/bg3.jpg"
-              alt="art3"
-              className="absolute top-24 right-6 w-48 rounded-2xl shadow-xl z-10 transform rotate-6"
-            />
+            <img src="/src/assets/bg5.jpg" alt="art1" className="absolute top-24 left-6 w-48 rounded-2xl shadow-xl z-10 transform -rotate-6" />
+            <img src="/src/assets/bg4.jpg" alt="art2" className="absolute top-8 left-1/2 transform -translate-x-1/2 scale-110 w-52 rounded-2xl shadow-2xl z-20" />
+            <img src="/src/assets/bg3.jpg" alt="art3" className="absolute top-24 right-6 w-48 rounded-2xl shadow-xl z-10 transform rotate-6" />
           </div>
           <div className="text-white text-center mt-10 px-4">
             <h1 className="text-4xl font-bold mb-4">ArtAura</h1>
@@ -91,7 +79,7 @@ const Login = () => {
           </div>
         </div>
 
-        {/* Right Login Form Section */}
+        {/* Right Form Section */}
         <div className="w-full lg:w-1/2 p-8 lg:p-12 bg-white">
           <div className="max-w-md mx-auto">
             <div className="text-center mb-8">
