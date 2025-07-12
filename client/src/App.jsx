@@ -16,7 +16,6 @@ import Profile from './pages/shop/Profile';
 import Login from './components/auth/login';
 import UploadArtWork from './pages/Artist/UploadArtWork';
 import ArtworkDetail from './pages/Artist/ArtWorkDetail';
-import ArtistDashboard from './pages/Artist/ArtistDashboard';
 import ArtistPortfolio from './pages/Artist/ArtistPortfolio';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import Signup from './components/auth/signup2';
