@@ -1,38 +1,40 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import './styles/main.css';
 
 
 // Pages
-import Marketplace from './pages/Marketplace';
 import Competitions from './pages/Competitions';
+import Marketplace from './pages/Marketplace';
 
-import Dashboard from './pages/shop/dashboard';
-import ShopOrders from './pages/shop/Orders';
-import RewardSystem from './pages/shop/Rewards';
 import SalesAnalytics from './pages/shop/Analytics';
 import Catalog from './pages/shop/Catalog';
+import ShopOrders from './pages/shop/Orders';
+import RewardSystem from './pages/shop/Rewards';
+import Dashboard from './pages/shop/dashboard';
 
 import Login from './components/auth/login';
-import UploadArtWork from './pages/Artist/UploadArtWork';
+import ShopRegisterPage from './components/auth/shopSignup';
+import Signup from './components/auth/signup2';
 import ArtworkDetail from './pages/Artist/ArtWorkDetail';
 import ArtistDashboard from './pages/Artist/ArtistDashboard';
 import ArtistPortfolio from './pages/Artist/ArtistPortfolio';
-import AdminDashboard from './pages/admin/AdminDashboard';
-import Signup from './components/auth/signup2';
-import ShopRegisterPage from './components/auth/shopSignup';
+import UploadArtWork from './pages/Artist/UploadArtWork';
 import CommunityPage from './pages/CommunityPage';
+import AdminDashboard from './pages/admin/AdminDashboard';
 
 // Moderator Pages
-import ModeratorDashboard from "./pages/Moderator/ModeratorDashboard";
+import ChallengeList from './pages/Moderator/ChallengeList';
 import CreateChallenge from './pages/Moderator/CreateChallenge';
-import VerifyExhibitions from './pages/Moderator/VerifyExhibitions';
-//import WinnerSelection from './pages/Moderator/WinnerSelection';
+import ModeratorDashboard from './pages/Moderator/ModeratorDashboard';
+import ModeratorExhibition from './pages/Moderator/ModeratorExhibition';
+import ScoringCriteria from './pages/Moderator/ScoringCriteria';
+import VerifyExhibition from './pages/Moderator/VerifyExhibition';
+import WinnerSelection from './pages/Moderator/WinnerSelection';
 
 
 // Components
-import Header from './components/Header';
 import Footer from './components/Footer';
+import Layout from './components/moderator/layout'; // <-- Add this import for Layout
 
 
 // function App() {
@@ -45,7 +47,7 @@ import Footer from './components/Footer';
 //       <main className="flex-grow-1 w-100">
 //         <Routes>
 //           {/* <Route path="/" element={<Home />} />
-//           <Route path="/home" element={<Home />} /> */}
+//           <Route path="/home" element={<Home />} */}
 //           <Route path="/marketplace" element={<Marketplace />} />
 //           <Route path="/competitions" element={<Competitions />} />
 //           <Route path="/login" element={<Login />} />
@@ -60,15 +62,12 @@ import Footer from './components/Footer';
 function App() {
   return (
     <Router>
-      {/* <div className="App d-flex flex-column min-vh-100 w-100"> */}
-        {/* <Header /> */}
-    {/* <main className="flex-grow-1 w-100"> */}
-        <Routes>
-          <Route path="/" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/register/shop" element={<ShopRegisterPage />} />
-          <Route path="/community" element={<CommunityPage />} />
-          
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/register/shop" element={<ShopRegisterPage />} />
+        <Route path="/community" element={<CommunityPage />} />
+        
           
           <Route path="/marketplace" element={<Marketplace />} />
           <Route path="/competitions" element={<Competitions />} />
@@ -91,19 +90,20 @@ function App() {
           {/* <Route path="/moderator/dashboard" element={<ModeratorDashboard />} /> */}
           {/* <Route path="/buyer/dashboard" element={<BuyerDashboard />} /> */}
 
-          <Route path="/ModeratorDashboard" element={<ModeratorDashboard />} />
-          <Route path="/createChallenge" element={<CreateChallenge />} />
-          <Route path="/verifyExhibitions" element={<VerifyExhibitions />} />
-          {/* <Route path="/winnerSelection" element={<WinnerSelection />} /> */}
-          
-          {/* Add more routes as needed */}
+        {/* Moderator Routes */}
+        <Route path="/moderatordashboard" element={<Layout><ModeratorDashboard /></Layout>} />
+        <Route path="/challenges" element={<Layout><ChallengeList /></Layout>} />
+        <Route path="/create-challenge" element={<Layout><CreateChallenge /></Layout>} />
+        <Route path="/exhibition" element={<Layout><ModeratorExhibition /></Layout>} />
+        <Route path="/winner-selection" element={<Layout><WinnerSelection /></Layout>} />
+        <Route path="/verify-exhibition" element={<Layout><VerifyExhibition /></Layout>} />
+        <Route path="/scoring-criteria" element={<Layout><ScoringCriteria /></Layout>} />
+
+        {/* Add more routes as needed */}
 
 
-        </Routes>
-        {/* </main> */}
+      </Routes>
       <Footer />
-
-       {/* </div> */}
     </Router>
   );
 }
