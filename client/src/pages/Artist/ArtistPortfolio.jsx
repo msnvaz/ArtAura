@@ -308,6 +308,19 @@ const ArtistPortfolio = () => {
 
       console.log('Post created:', response.data);
 
+      // Optimistically add the new post to the UI
+      // If your backend returns the created post object, use response.data
+      // Otherwise, construct a new post object with available info
+      const newPostObj = {
+        post_id: Date.now(), // Temporary ID, replace if backend returns real ID
+        caption: newPost.caption,
+        image: `/uploads/${newPost.imageFiles[0]?.name}`,
+        created_at: new Date().toISOString(),
+        likes: 0,
+        comments: 0,
+      };
+      setPortfolioPosts(prev => [newPostObj, ...prev]);
+
       // Reset post state
       setIsCreatingPost(false);
       setNewPost({
@@ -489,26 +502,33 @@ const ArtistPortfolio = () => {
     }
   ];
 
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [postIdToDelete, setPostIdToDelete] = useState(null);
+
+  const openDeleteModal = (postId) => {
+    setPostIdToDelete(postId);
+    setShowDeleteModal(true);
+  };
+
+  const closeDeleteModal = () => {
+    setShowDeleteModal(false);
+    setPostIdToDelete(null);
+  };
+
   const handleDeletePost = async (postId) => {
     try {
-      // Get token (adjust based on your actual auth setup)
-      const token = localStorage.getItem('token'); // or from useAuth()
-  
+      const token = localStorage.getItem('token');
       if (!token) {
         alert("You must be logged in to delete posts.");
         return;
       }
-  
-      // Call backend delete API with Authorization header
       await axios.delete(`http://localhost:8080/api/posts/${postId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-  
-      // Update UI after successful deletion
-      setPortfolioPosts((prevPosts) => prevPosts.filter(post => post.id !== postId));
-      
+      setPortfolioPosts((prevPosts) => prevPosts.filter(post => post.post_id !== postId));
+      closeDeleteModal();
       alert("Post deleted successfully!");
     } catch (error) {
       console.error("Error deleting post:", error);
@@ -525,10 +545,7 @@ const ArtistPortfolio = () => {
   };
   
   const handleEditSavePost = (updatedPost) => {
-    const updatedList = portfolioPosts.map((post) =>
-      post.id === updatedPost.id ? updatedPost : post
-    );
-    setPortfolioPosts(updatedList);
+    setPortfolioPosts(prevPosts => prevPosts.map(post => post.post_id === updatedPost.post_id ? updatedPost : post));
     setShowEditModal(false);
   };
 
@@ -813,7 +830,10 @@ const ArtistPortfolio = () => {
                 </div>
 
                 {/* Feed Posts */}
-                {portfolioPosts.map((post) => (
+                {portfolioPosts
+                  .slice()
+                  .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                  .map((post) => (
                   <div
                     key={post.post_id}
                     className="bg-white rounded-xl shadow-sm border border-[#fdf9f4]/20 overflow-hidden"
@@ -843,7 +863,7 @@ const ArtistPortfolio = () => {
                         </button>
 
                         <button
-                          onClick={() => handleDeletePost(post.post_id)}
+                          onClick={() => openDeleteModal(post.post_id)}
                           className="text-red-500 hover:text-red-700 transition-colors"
                           title="Delete Post"
                         >
@@ -1620,11 +1640,35 @@ const ArtistPortfolio = () => {
 
       {showEditModal && editingItem && (
         <EditPostModel
+         
           item={editingItem}
           onClose={() => setShowEditModal(false)}
           onSave={handleEditSavePost}
         />
       )}
+
+      {showDeleteModal && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+    <div className="bg-white rounded-lg shadow-lg p-8 max-w-sm w-full text-center">
+      <h2 className="text-lg font-semibold mb-4 text-[#7f5539]">Delete Post</h2>
+      <p className="mb-6 text-[#7f5539]/80">Are you sure you want to delete this post? This action cannot be undone.</p>
+      <div className="flex justify-center gap-4">
+        <button
+          onClick={closeDeleteModal}
+          className="px-6 py-2 rounded bg-gray-200 text-[#7f5539] hover:bg-gray-300 font-medium"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={() => handleDeletePost(postIdToDelete)}
+          className="px-6 py-2 rounded bg-red-600 text-white hover:bg-red-700 font-medium"
+        >
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 };
