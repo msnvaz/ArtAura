@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Trophy, Settings, Heart, MessageCircle, ShoppingCart, Star } from 'lucide-react';
+import { ArrowLeft, Trophy, Settings, Heart, MessageCircle, ShoppingCart, Star, Shield, Plus, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const ScoringCriteria = () => {

@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { Award, Star, Trophy, Medal, Crown, Filter, Search, Calendar, User, Settings, Calculator, Eye } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Award, Calculator, Crown, Eye, Medal, Search, Settings, Shield, Trophy } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const WinnerSelection = () => {
+  const navigate = useNavigate();
   const [selectedChallenge, setSelectedChallenge] = useState('web-design-2024');
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('totalScore');
@@ -164,268 +165,359 @@ const WinnerSelection = () => {
     });
 
   return (
-    <div className="space-y-6 w-full">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-amber-900">Winner Selection</h1>
-          <p className="text-amber-700 mt-2">View calculated winners based on scoring criteria</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link
-            to="/scoring-criteria"
-            className="flex items-center gap-2 px-4 py-2 bg-amber-800 text-white rounded-lg hover:bg-amber-900 transition-colors"
-          >
-            <Settings size={20} />
-            Manage Scoring Criteria
-          </Link>
-        </div>
-      </div>
-
-      {/* Challenge Selection & Criteria Status */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-amber-800 mb-2">Selected Challenge</label>
-            <select
-              value={selectedChallenge}
-              onChange={(e) => setSelectedChallenge(e.target.value)}
-              className="w-full px-4 py-2 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-            >
-              {challenges.map(challenge => (
-                <option key={challenge.id} value={challenge.id}>
-                  {challenge.name} ({challenge.status})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-amber-800 mb-2">Scoring Criteria Status</label>
-            <div className={`p-3 rounded-lg border ${
-              selectedChallengeData?.hasCriteria 
-                ? 'bg-green-50 border-green-200 text-green-800' 
-                : 'bg-red-50 border-red-200 text-red-800'
-            }`}>
-              {selectedChallengeData?.hasCriteria ? (
-                <div className="flex items-center gap-2">
-                  <Trophy size={16} />
-                  <span className="font-medium">Criteria Set - Winners Calculated</span>
+    <>
+      {/* Bootstrap CSS */}
+      <link 
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" 
+        rel="stylesheet" 
+      />
+      
+      <div className="min-h-screen" style={{backgroundColor: '#FFF5E1'}}>
+        {/* Full Width Header */}
+        <div 
+          className="w-full shadow-sm p-6 mb-8 relative"
+          style={{
+            backgroundImage: 'linear-gradient(rgba(93, 58, 0, 0.85), rgba(93, 58, 0, 0.85)), url("https://images.unsplash.com/photo-1541961017774-22349e4a1262?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2058&q=80")',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat'
+          }}
+        >
+          <div className="max-w-5xl mx-auto">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="p-3 rounded-full" style={{backgroundColor: '#FFD95A'}}>
+                  <Trophy size={32} style={{color: '#5D3A00'}} />
                 </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <Settings size={16} />
-                  <span className="font-medium">No Criteria Set - Please Define Scoring</span>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Current Scoring Criteria Display */}
-        {selectedChallengeData?.hasCriteria && (
-          <div className="mt-6 p-4 bg-amber-50 rounded-lg">
-            <h3 className="font-medium text-amber-900 mb-3">Current Scoring Weights:</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-              <div className="text-center">
-                <div className="font-semibold text-amber-800">{scoringCriteria.likesWeight}%</div>
-                <div className="text-amber-600">Likes</div>
-              </div>
-              <div className="text-center">
-                <div className="font-semibold text-amber-800">{scoringCriteria.commentsWeight}%</div>
-                <div className="text-amber-600">Comments</div>
-              </div>
-              <div className="text-center">
-                <div className="font-semibold text-amber-800">{scoringCriteria.buyerPreferenceWeight}%</div>
-                <div className="text-amber-600">Buyer Preference</div>
-              </div>
-              <div className="text-center">
-                <div className="font-semibold text-amber-800">{scoringCriteria.expertPanelWeight}%</div>
-                <div className="text-amber-600">Expert Panel</div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {selectedChallengeData?.hasCriteria ? (
-        <>
-          {/* Search and Sort */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                  <input
-                    type="text"
-                    placeholder="Search submissions..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                  />
+                <div>
+                  <h1 className="text-2xl font-bold text-white">Winner Selection</h1>
+                  <p className="text-gray-200">View calculated winners based on scoring criteria</p>
                 </div>
               </div>
-              <div>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+              <div className="mt-4 md:mt-0 flex gap-2 items-center">
+                <button
+                  className="border px-3 py-2 rounded-lg font-medium flex items-center space-x-1 transition-colors whitespace-nowrap"
+                  style={{
+                    borderColor: '#FFE4D6',
+                    color: '#FFE4D6',
+                    backgroundColor: 'rgba(255, 228, 214, 0.1)'
+                  }}
+                  onMouseOver={(e) => {
+                    e.target.style.backgroundColor = '#FFE4D6';
+                    e.target.style.color = '#5D3A00';
+                  }}
+                  onMouseOut={(e) => {
+                    e.target.style.backgroundColor = 'rgba(255, 228, 214, 0.1)';
+                    e.target.style.color = '#FFE4D6';
+                  }}
+                  onClick={() => navigate('/scoring-criteria')}
                 >
-                  <option value="totalScore">Total Score</option>
-                  <option value="likes">Likes</option>
-                  <option value="expertScore">Expert Score</option>
-                  <option value="date">Date</option>
-                </select>
+                  <Settings size={14} />
+                  <span className="hidden sm:inline">Manage Criteria</span>
+                  <span className="sm:hidden">Criteria</span>
+                </button>
+                <button
+                  className="border px-3 py-2 rounded-lg font-medium flex items-center space-x-1 transition-colors whitespace-nowrap"
+                  style={{
+                    borderColor: '#FFE4D6',
+                    color: '#FFE4D6',
+                    backgroundColor: 'rgba(255, 228, 214, 0.1)'
+                  }}
+                  onMouseOver={(e) => {
+                    e.target.style.backgroundColor = '#FFE4D6';
+                    e.target.style.color = '#5D3A00';
+                  }}
+                  onMouseOut={(e) => {
+                    e.target.style.backgroundColor = 'rgba(255, 228, 214, 0.1)';
+                    e.target.style.color = '#FFE4D6';
+                  }}
+                  onClick={() => navigate('/moderatordashboard')}
+                >
+                  <Shield size={14} />
+                  <span className="hidden sm:inline">Dashboard</span>
+                  <span className="sm:hidden">Dashboard</span>
+                </button>
               </div>
             </div>
           </div>
+        </div>
+        
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
+          <div className="space-y-6">
+            {/* Challenge Selection & Criteria Status */}
+            <div className="rounded-lg shadow-sm border h-full relative overflow-hidden" style={{backgroundColor: '#FFF5E1'}}>
+              <div className="p-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{color: '#5D3A00'}}>Selected Challenge</label>
+                    <select
+                      value={selectedChallenge}
+                      onChange={(e) => setSelectedChallenge(e.target.value)}
+                      className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent"
+                      style={{borderColor: '#FFE4D6', backgroundColor: 'white'}}
+                    >
+                      {challenges.map(challenge => (
+                        <option key={challenge.id} value={challenge.id}>
+                          {challenge.name} ({challenge.status})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-          {/* Winner Podium */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold text-amber-900 mb-4">Winners</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {[1, 2, 3].map(position => {
-                const winner = submissions.find(s => s.position === position);
-                return (
-                  <div key={position} className={`p-4 rounded-lg border-2 ${getPositionColor(position)}`}>
-                    <div className="flex items-center gap-2 mb-2">
-                      {getPositionIcon(position)}
-                      <span className="font-semibold">
-                        {position === 1 ? '1st Place' : position === 2 ? '2nd Place' : '3rd Place'}
-                      </span>
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{color: '#5D3A00'}}>Scoring Criteria Status</label>
+                    <div className={`p-3 rounded-lg border ${
+                      selectedChallengeData?.hasCriteria 
+                        ? 'bg-green-50 border-green-200 text-green-800' 
+                        : 'bg-red-50 border-red-200 text-red-800'
+                    }`}>
+                      {selectedChallengeData?.hasCriteria ? (
+                        <div className="flex items-center gap-2">
+                          <Trophy size={16} />
+                          <span className="font-medium">Criteria Set - Winners Calculated</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <Settings size={16} />
+                          <span className="font-medium">No Criteria Set - Please Define Scoring</span>
+                        </div>
+                      )}
                     </div>
-                    {winner ? (
-                      <div>
-                        <p className="font-medium">{winner.title}</p>
-                        <p className="text-sm text-gray-600">{winner.participant}</p>
-                        <div className="flex items-center gap-1 mt-1">
-                          <Calculator className="h-4 w-4 text-amber-500" />
-                          <span className="text-sm font-medium">{winner.totalScore}/100</span>
+                  </div>
+                </div>
+
+                {/* Current Scoring Criteria Display */}
+                {selectedChallengeData?.hasCriteria && (
+                  <div className="mt-6 p-4 rounded-lg" style={{backgroundColor: '#FFE4D6'}}>
+                    <h3 className="font-medium mb-3" style={{color: '#5D3A00'}}>Current Scoring Weights:</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div className="text-center">
+                        <div className="font-semibold" style={{color: '#5D3A00'}}>{scoringCriteria.likesWeight}%</div>
+                        <div style={{color: '#D87C5A'}}>Likes</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="font-semibold" style={{color: '#5D3A00'}}>{scoringCriteria.commentsWeight}%</div>
+                        <div style={{color: '#D87C5A'}}>Comments</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="font-semibold" style={{color: '#5D3A00'}}>{scoringCriteria.buyerPreferenceWeight}%</div>
+                        <div style={{color: '#D87C5A'}}>Buyer Preference</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="font-semibold" style={{color: '#5D3A00'}}>{scoringCriteria.expertPanelWeight}%</div>
+                        <div style={{color: '#D87C5A'}}>Expert Panel</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {selectedChallengeData?.hasCriteria ? (
+              <>
+                {/* Search and Sort */}
+                <div className="rounded-lg shadow-sm border h-full relative overflow-hidden" style={{backgroundColor: '#FFF5E1'}}>
+                  <div className="p-6">
+                    <div className="flex flex-col md:flex-row gap-4">
+                      <div className="flex-1">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2" size={20} style={{color: '#5D3A00'}} />
+                          <input
+                            type="text"
+                            placeholder="Search submissions..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent"
+                            style={{borderColor: '#FFE4D6', backgroundColor: 'white'}}
+                          />
                         </div>
                       </div>
-                    ) : (
-                      <p className="text-gray-500 text-sm">No winner for this position</p>
-                    )}
+                      <div>
+                        <select
+                          value={sortBy}
+                          onChange={(e) => setSortBy(e.target.value)}
+                          className="px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent"
+                          style={{borderColor: '#FFE4D6', backgroundColor: 'white'}}
+                        >
+                          <option value="totalScore">Total Score</option>
+                          <option value="likes">Likes</option>
+                          <option value="expertScore">Expert Score</option>
+                          <option value="date">Date</option>
+                        </select>
+                      </div>
+                    </div>
                   </div>
-                );
-              })}
-            </div>
-          </div>
+                </div>
 
-          {/* Submissions List */}
-          <div className="grid grid-cols-1 gap-6">
-            {filteredSubmissions.map((submission) => (
-              <div key={submission.id} className={`bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden border-2 ${submission.position ? getPositionColor(submission.position) : 'border-gray-200'}`}>
-                <div className="p-6">
-                  <div className="flex items-start gap-6">
-                    <img
-                      src={submission.imageUrl}
-                      alt={submission.title}
-                      className="w-24 h-24 object-cover rounded-lg"
-                    />
-                    
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900">{submission.title}</h3>
-                        {submission.position && (
-                          <div className="flex items-center gap-1">
-                            {getPositionIcon(submission.position)}
-                            <span className="text-sm font-medium">Winner</span>
+                {/* Winner Podium */}
+                <div className="rounded-lg shadow-sm border h-full relative overflow-hidden" style={{backgroundColor: '#FFF5E1'}}>
+                  <div className="p-6">
+                    <h2 className="text-xl font-semibold mb-4" style={{color: '#5D3A00'}}>Winners</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {[1, 2, 3].map(position => {
+                        const winner = submissions.find(s => s.position === position);
+                        return (
+                          <div key={position} className={`p-4 rounded-lg border-2 ${getPositionColor(position)}`}>
+                            <div className="flex items-center gap-2 mb-2">
+                              {getPositionIcon(position)}
+                              <span className="font-semibold">
+                                {position === 1 ? '1st Place' : position === 2 ? '2nd Place' : '3rd Place'}
+                              </span>
+                            </div>
+                            {winner ? (
+                              <div>
+                                <p className="font-medium">{winner.title}</p>
+                                <p className="text-sm text-gray-600">{winner.participant}</p>
+                                <div className="flex items-center gap-1 mt-1">
+                                  <Calculator className="h-4 w-4" style={{color: '#D87C5A'}} />
+                                  <span className="text-sm font-medium">{winner.totalScore}/100</span>
+                                </div>
+                              </div>
+                            ) : (
+                              <p className="text-gray-500 text-sm">No winner for this position</p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Submissions List */}
+                <div className="grid grid-cols-1 gap-6">
+                  {filteredSubmissions.map((submission) => (
+                    <div key={submission.id} className={`rounded-lg shadow-sm border-2 hover:shadow-lg transition-shadow overflow-hidden ${submission.position ? getPositionColor(submission.position) : ''}`} style={{backgroundColor: '#FFF5E1'}}>
+                      <div className="p-6">
+                        <div className="flex items-start gap-6">
+                          <img
+                            src={submission.imageUrl}
+                            alt={submission.title}
+                            className="w-24 h-24 object-cover rounded-lg"
+                          />
+                          
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <h3 className="text-lg font-semibold" style={{color: '#5D3A00'}}>{submission.title}</h3>
+                              {submission.position && (
+                                <div className="flex items-center gap-1">
+                                  {getPositionIcon(submission.position)}
+                                  <span className="text-sm font-medium">Winner</span>
+                                </div>
+                              )}
+                            </div>
+                            
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                              <div className="text-sm">
+                                <span className="text-gray-500">Participant:</span>
+                                <p className="font-medium" style={{color: '#5D3A00'}}>{submission.participant}</p>
+                              </div>
+                              <div className="text-sm">
+                                <span className="text-gray-500">Total Score:</span>
+                                <p className="font-bold" style={{color: '#D87C5A'}}>{submission.totalScore}/100</p>
+                              </div>
+                              <div className="text-sm">
+                                <span className="text-gray-500">Likes:</span>
+                                <p className="font-medium" style={{color: '#5D3A00'}}>{submission.likes}</p>
+                              </div>
+                              <div className="text-sm">
+                                <span className="text-gray-500">Expert Score:</span>
+                                <p className="font-medium" style={{color: '#5D3A00'}}>{submission.expertScore}/10</p>
+                              </div>
+                            </div>
+
+                            <div className="flex flex-wrap gap-1 mb-4">
+                              {submission.tags.map((tag) => (
+                                <span key={tag} className="px-2 py-1 text-xs rounded-full" style={{backgroundColor: '#FFE4D6', color: '#5D3A00'}}>
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col gap-2">
+                            <button
+                              onClick={() => setShowScoreBreakdown(showScoreBreakdown === submission.id ? null : submission.id)}
+                              className="flex items-center gap-2 px-4 py-2 border rounded-lg transition-colors"
+                              style={{
+                                borderColor: '#FFE4D6',
+                                color: '#5D3A00',
+                                backgroundColor: 'white'
+                              }}
+                              onMouseOver={(e) => {
+                                e.target.style.backgroundColor = '#FFE4D6';
+                              }}
+                              onMouseOut={(e) => {
+                                e.target.style.backgroundColor = 'white';
+                              }}
+                            >
+                              <Eye size={16} />
+                              Score Details
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Score Breakdown */}
+                        {showScoreBreakdown === submission.id && (
+                          <div className="mt-6 p-4 rounded-lg" style={{backgroundColor: '#FFE4D6'}}>
+                            <h4 className="font-medium mb-3" style={{color: '#5D3A00'}}>Score Breakdown</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                              <div className="text-center">
+                                <div className="text-sm text-gray-600">Likes ({scoringCriteria.likesWeight}%)</div>
+                                <div className="font-semibold" style={{color: '#5D3A00'}}>{submission.likesScore}/100</div>
+                                <div className="text-xs text-gray-500">{submission.likes} likes</div>
+                              </div>
+                              <div className="text-center">
+                                <div className="text-sm text-gray-600">Comments ({scoringCriteria.commentsWeight}%)</div>
+                                <div className="font-semibold" style={{color: '#5D3A00'}}>{submission.commentsScore}/100</div>
+                                <div className="text-xs text-gray-500">{submission.comments} comments</div>
+                              </div>
+                              <div className="text-center">
+                                <div className="text-sm text-gray-600">Buyer Preference ({scoringCriteria.buyerPreferenceWeight}%)</div>
+                                <div className="font-semibold" style={{color: '#5D3A00'}}>{submission.buyerScore}/100</div>
+                                <div className="text-xs text-gray-500">{submission.buyerPreference}/10 avg</div>
+                              </div>
+                              <div className="text-center">
+                                <div className="text-sm text-gray-600">Expert Panel ({scoringCriteria.expertPanelWeight}%)</div>
+                                <div className="font-semibold" style={{color: '#5D3A00'}}>{submission.expertScoreNormalized}/100</div>
+                                <div className="text-xs text-gray-500">{submission.expertScore}/10 avg</div>
+                              </div>
+                            </div>
+                            <div className="mt-3 pt-3 border-t text-center">
+                              <div className="text-sm text-gray-600">Weighted Total Score</div>
+                              <div className="text-xl font-bold" style={{color: '#D87C5A'}}>{calculateWeightedScore(submission)}/100</div>
+                            </div>
                           </div>
                         )}
                       </div>
-                      
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                        <div className="text-sm">
-                          <span className="text-gray-500">Participant:</span>
-                          <p className="font-medium">{submission.participant}</p>
-                        </div>
-                        <div className="text-sm">
-                          <span className="text-gray-500">Total Score:</span>
-                          <p className="font-bold text-amber-800">{submission.totalScore}/100</p>
-                        </div>
-                        <div className="text-sm">
-                          <span className="text-gray-500">Likes:</span>
-                          <p className="font-medium">{submission.likes}</p>
-                        </div>
-                        <div className="text-sm">
-                          <span className="text-gray-500">Expert Score:</span>
-                          <p className="font-medium">{submission.expertScore}/10</p>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-wrap gap-1 mb-4">
-                        {submission.tags.map((tag) => (
-                          <span key={tag} className="px-2 py-1 bg-amber-100 text-amber-800 text-xs rounded-full">
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
                     </div>
-
-                    <div className="flex flex-col gap-2">
-                      <button
-                        onClick={() => setShowScoreBreakdown(showScoreBreakdown === submission.id ? null : submission.id)}
-                        className="flex items-center gap-2 px-4 py-2 text-amber-800 hover:bg-amber-50 border border-amber-200 rounded-lg transition-colors"
-                      >
-                        <Eye size={16} />
-                        Score Details
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Score Breakdown */}
-                  {showScoreBreakdown === submission.id && (
-                    <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                      <h4 className="font-medium text-gray-900 mb-3">Score Breakdown</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div className="text-center">
-                          <div className="text-sm text-gray-600">Likes ({scoringCriteria.likesWeight}%)</div>
-                          <div className="font-semibold">{submission.likesScore}/100</div>
-                          <div className="text-xs text-gray-500">{submission.likes} likes</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-sm text-gray-600">Comments ({scoringCriteria.commentsWeight}%)</div>
-                          <div className="font-semibold">{submission.commentsScore}/100</div>
-                          <div className="text-xs text-gray-500">{submission.comments} comments</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-sm text-gray-600">Buyer Preference ({scoringCriteria.buyerPreferenceWeight}%)</div>
-                          <div className="font-semibold">{submission.buyerScore}/100</div>
-                          <div className="text-xs text-gray-500">{submission.buyerPreference}/10 avg</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-sm text-gray-600">Expert Panel ({scoringCriteria.expertPanelWeight}%)</div>
-                          <div className="font-semibold">{submission.expertScoreNormalized}/100</div>
-                          <div className="text-xs text-gray-500">{submission.expertScore}/10 avg</div>
-                        </div>
-                      </div>
-                      <div className="mt-3 pt-3 border-t text-center">
-                        <div className="text-sm text-gray-600">Weighted Total Score</div>
-                        <div className="text-xl font-bold text-amber-800">{calculateWeightedScore(submission)}/100</div>
-                      </div>
-                    </div>
-                  )}
+                  ))}
                 </div>
+              </>
+            ) : (
+              <div className="text-center py-12">
+                <Settings className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No Scoring Criteria Set</h3>
+                <p className="text-gray-500 mb-4">Please define scoring criteria before viewing winners.</p>
+                <button
+                  onClick={() => navigate('/scoring-criteria')}
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-lg transition-colors"
+                  style={{backgroundColor: '#D87C5A', color: 'white'}}
+                  onMouseOver={(e) => {
+                    e.target.style.backgroundColor = '#B85A3A';
+                  }}
+                  onMouseOut={(e) => {
+                    e.target.style.backgroundColor = '#D87C5A';
+                  }}
+                >
+                  <Settings size={20} />
+                  Set Scoring Criteria
+                </button>
               </div>
-            ))}
+            )}
           </div>
-        </>
-      ) : (
-        <div className="text-center py-12">
-          <Settings className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No Scoring Criteria Set</h3>
-          <p className="text-gray-500 mb-4">Please define scoring criteria before viewing winners.</p>
-          <Link
-            to="/scoring-criteria"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-amber-800 text-white rounded-lg hover:bg-amber-900 transition-colors"
-          >
-            <Settings size={20} />
-            Set Scoring Criteria
-          </Link>
         </div>
-      )}
-    </div>
+      </div>
+    </>
   );
 };
 
