@@ -1,16 +1,19 @@
 import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import './styles/main.css';
 
-
 // Pages
 import Competitions from './pages/Competitions';
 import Marketplace from './pages/Marketplace';
 
+import Dashboard from './pages/shop/Dashboard';
+import ShopOrders from './pages/shop/Orders';
+import Sponsorships from './pages/shop/Sponsorships';
 import SalesAnalytics from './pages/shop/Analytics';
 import Catalog from './pages/shop/Catalog';
 import ShopOrders from './pages/shop/Orders';
 import RewardSystem from './pages/shop/Rewards';
 import Dashboard from './pages/shop/dashboard';
+import Profile from './pages/shop/Profile';
 
 import Login from './components/auth/login';
 import ShopRegisterPage from './components/auth/shopSignup';
@@ -36,53 +39,39 @@ import WinnerSelection from './pages/Moderator/WinnerSelection';
 import Footer from './components/Footer';
 import Layout from './components/moderator/layout'; // <-- Add this import for Layout
 
-
-// function App() {
-//   // const location = useLocation();
-//   // const isAdminRoute = location.pathname === '/admin';
-
-//   return (
-//     <div className="App d-flex flex-column min-vh-100 w-100">
-//       {/* {!isAdminRoute && <Header />} */}
-//       <main className="flex-grow-1 w-100">
-//         <Routes>
-//           {/* <Route path="/" element={<Home />} />
-//           <Route path="/home" element={<Home />} */}
-//           <Route path="/marketplace" element={<Marketplace />} />
-//           <Route path="/competitions" element={<Competitions />} />
-//           <Route path="/login" element={<Login />} />
-//           {/* <Route path="/admin" element={<AdminDashboard />} /> */}
-//         </Routes>
-//       </main>
-//       {/* {!isAdminRoute && <Footer />} */}
-//     </div>
-//   );
-// }
+// Page transition wrapper component using CSS animations
+const PageTransition = ({ children }) => {
+  return (
+    <div className="page-transition-wrapper">
+      {children}
+    </div>
+  );
+};
 
 function App() {
   return (
     <Router>
+
       <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/register/shop" element={<ShopRegisterPage />} />
-        <Route path="/community" element={<CommunityPage />} />
+        <Route path="/" element={<PageTransition><Login /></PageTransition>} />
+        <Route path="/signup" element={<PageTransition><Signup /></PageTransition>} />
+        <Route path="/register/shop" element={<PageTransition><ShopRegisterPage /></PageTransition>} />
+        <Route path="/community" element={<PageTransition><CommunityPage /></PageTransition>} />
         
-          
-          <Route path="/marketplace" element={<Marketplace />} />
-          <Route path="/competitions" element={<Competitions />} />
+        <Route path="/marketplace" element={<PageTransition><Marketplace /></PageTransition>} />
+        <Route path="/competitions" element={<PageTransition><Competitions /></PageTransition>} />
 
-          <Route path="/shop/dashboard" element={<Dashboard />} />
-          <Route path="/shop/orders" element={<ShopOrders/>}/>
-          <Route path="/shop/rewards" element={<RewardSystem />} />
-          <Route path="/shop/analytics" element={<SalesAnalytics />} />
-          <Route path="/shop/catalog" element={<Catalog/>}/>
+        <Route path="/shop/dashboard" element={<PageTransition><Dashboard /></PageTransition>} />
+        <Route path="/shop/orders" element={<PageTransition><ShopOrders /></PageTransition>} />
+        <Route path="/shop/sponsorships" element={<PageTransition><Sponsorships /></PageTransition>} />
+        <Route path="/shop/analytics" element={<PageTransition><SalesAnalytics /></PageTransition>} />
+        <Route path="/shop/catalog" element={<PageTransition><Catalog /></PageTransition>} />
+        <Route path="/shop/profile" element={<PageTransition><Profile /></PageTransition>} />
 
-
-          <Route path="/uploadartwork" element={<UploadArtWork />} />
-          <Route path="/artworks/:id" element={<ArtworkDetail />} />
-          <Route path="/artist/artistdashboard" element={<ArtistDashboard />} /> 
-          <Route path="/artist/artistportfolio" element={<ArtistPortfolio />} />
+        <Route path="/uploadartwork" element={<PageTransition><UploadArtWork /></PageTransition>} />
+        <Route path="/artworks/:id" element={<PageTransition><ArtworkDetail /></PageTransition>} />
+        <Route path="/artist/artistdashboard" element={<PageTransition><ArtistDashboard /></PageTransition>} /> 
+        <Route path="/artist/artistportfolio" element={<PageTransition><ArtistPortfolio /></PageTransition>} />
 
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
 

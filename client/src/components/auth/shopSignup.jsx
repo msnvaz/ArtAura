@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Store } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
 import axios from 'axios';
+import AlertMessage from "../AlertMessage";
 
 // Step 1: Basic Info
 function BasicInfoStep({ formData, onChange, showPassword, setShowPassword }) {
@@ -213,8 +214,8 @@ function LocationInfoStep({ formData, onChange }) {
           Street Address <span className="text-red-500">*</span>
         </label>
         <input
-          id="address"
-          name="address"
+          id="streetAddress"
+          name="streetAddress"
           type="text"
           required
           value={formData.address}
@@ -453,6 +454,8 @@ function NavigationButtons({ currentStep, prevStep, nextStep, isStepValid, isLas
 function ShopRegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("success");
   const [formData, setFormData] = useState({
     shopName: '',
     ownerName: '',
@@ -462,8 +465,7 @@ function ShopRegisterPage() {
     businessType: '',
     description: '',
     contactNo: '',
-    website: '',
-    address: '',
+    streetAddress: '',
     city: '',
     state: '',
     zipCode: '',
@@ -523,19 +525,23 @@ function ShopRegisterPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match');
+      setMessage("Passwords do not match.");
+      setMessageType("error");
       return;
     }
     if (!validateEmail(formData.email)) {
-      alert('Please enter a valid email address.');
+      setMessage("Please enter a valid email address.");
+      setMessageType("error");
       return;
     }
     if (formData.password.length < 8) {
-      alert('Password must be at least 8 characters long.');
+      setMessage("Password must be at least 8 characters long.");
+      setMessageType("error");
       return;
     }
     if (formData.categories.length === 0) {
-      alert('Please select at least one shop category');
+      setMessage("Please select at least one shop category.");
+      setMessageType("error");
       return;
     }
 
@@ -543,11 +549,10 @@ function ShopRegisterPage() {
     delete payload.confirmPassword;
 
     try {
-      const response = await axios.post('http://localhost:8080/api/auth/shop', payload, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
+      const response = await axios.post('http://localhost:8081/api/shop/signup', payload, {
+        headers: { 'Content-Type': 'application/json' }
       });
+
       if (response.status === 201 || response.status === 200) {
         setUser({
           id: '1',
@@ -556,17 +561,18 @@ function ShopRegisterPage() {
           role: 'shop',
           avatar: undefined
         });
-        alert('Shop registered successfully!');
-        navigate('/');
+        setMessage("Shop registered successfully!");
+        setMessageType("success");
+        setTimeout(() => navigate("/"), 1500);
       } else {
-        alert('Failed to register shop');
+        setMessage("Failed to register shop.");
+        setMessageType("error");
       }
     } catch (error) {
-      if (error.response && error.response.data && error.response.data.message) {
-        alert('Error: ' + error.response.data.message);
-      } else {
-        alert('Error: ' + error.message);
-      }
+      setMessage(
+        error.response?.data?.message || "Something went wrong during registration."
+      );
+      setMessageType("error");
     }
   };
 
@@ -585,7 +591,7 @@ function ShopRegisterPage() {
       case 2:
         return formData.businessType && formData.description && formData.contactNo;
       case 3:
-        return formData.address && formData.city && formData.state && formData.zipCode && formData.country;
+        return formData.streetAddress && formData.city && formData.state && formData.zipCode && formData.country;
       case 4:
         return formData.categories.length > 0 && formData.agreedTerms;
       default:
@@ -607,6 +613,8 @@ function ShopRegisterPage() {
             Join our community and start selling art supplies to artists worldwide
           </p>
         </div>
+
+        {message && <AlertMessage type={messageType} message={message} />} {/* ✅ Alert shown here */}
         
         <ProgressBar currentStep={currentStep} />
         
