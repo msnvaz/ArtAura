@@ -140,7 +140,7 @@ const ModeratorDashboard = () => {
                 <button
                   key={action.id}
                   onClick={() => {
-                    if (action.id === 'challenges') navigate('/create-challenge');
+                    if (action.id === 'challenges') navigate('/challenges');
                     else if (action.id === 'verification') navigate('/verify-exhibition');
                     else if (action.id === 'scoring') navigate('/scoring-criteria');
                     else if (action.id === 'winner') navigate('/winner-selection');
@@ -238,7 +238,7 @@ const ModeratorDashboard = () => {
             backgroundRepeat: 'no-repeat'
           }}
         >
-          <div className="max-w-5xl mx-auto">
+          <div className="max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between">
               <div className="flex items-center space-x-4">
                 <div className="p-3 rounded-full" style={{backgroundColor: '#FFD95A'}}>
@@ -342,7 +342,7 @@ const ModeratorDashboard = () => {
           </div>
         </div>
         
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
           {/* Navigation Tabs */}
           <div className="bg-white rounded-lg shadow-sm mb-8">
             <div style={{borderBottom: '1px solid #FFE4D6'}}>
@@ -350,7 +350,13 @@ const ModeratorDashboard = () => {
                 {menuItems.map((item) => (
                   <button
                     key={item.id}
-                    onClick={() => setActiveSection(item.id)}
+                    onClick={() => {
+                      if (item.id === 'challenges') {
+                        navigate('/challenges');
+                      } else {
+                        setActiveSection(item.id);
+                      }
+                    }}
                     className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors flex items-center gap-2`}
                     style={{
                       borderBottomColor: activeSection === item.id ? '#5D3A00' : 'transparent',
