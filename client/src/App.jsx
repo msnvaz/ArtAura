@@ -10,9 +10,6 @@ import ShopOrders from './pages/shop/Orders';
 import Sponsorships from './pages/shop/Sponsorships';
 import SalesAnalytics from './pages/shop/Analytics';
 import Catalog from './pages/shop/Catalog';
-import ShopOrders from './pages/shop/Orders';
-import RewardSystem from './pages/shop/Rewards';
-import Dashboard from './pages/shop/dashboard';
 import Profile from './pages/shop/Profile';
 
 import Login from './components/auth/login';
