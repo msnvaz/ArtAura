@@ -1,10 +1,9 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import './styles/main.css';
 
 // Pages
-import Marketplace from './pages/Marketplace';
 import Competitions from './pages/Competitions';
+import Marketplace from './pages/Marketplace';
 
 import Dashboard from './pages/shop/Dashboard';
 import ShopOrders from './pages/shop/Orders';
@@ -14,23 +13,28 @@ import Catalog from './pages/shop/Catalog';
 import Profile from './pages/shop/Profile';
 
 import Login from './components/auth/login';
-import UploadArtWork from './pages/Artist/UploadArtWork';
+import ShopRegisterPage from './components/auth/shopSignup';
+import Signup from './components/auth/signup2';
 import ArtworkDetail from './pages/Artist/ArtWorkDetail';
 import ArtistDashboard from './pages/Artist/ArtistDashboard';
 import ArtistPortfolio from './pages/Artist/ArtistPortfolio';
-import AdminDashboard from './pages/admin/AdminDashboard';
-import Signup from './components/auth/signup2';
-import ShopRegisterPage from './components/auth/shopSignup';
+import UploadArtWork from './pages/Artist/UploadArtWork';
 import CommunityPage from './pages/CommunityPage';
+import AdminDashboard from './pages/admin/AdminDashboard';
 
 // Moderator Pages
-import ModeratorDashboard from "./pages/Moderator/ModeratorDashboard";
+import ChallengeList from './pages/Moderator/ChallengeList';
 import CreateChallenge from './pages/Moderator/CreateChallenge';
-import VerifyExhibitions from './pages/Moderator/VerifyExhibitions';
+import ModeratorDashboard from './pages/Moderator/ModeratorDashboard';
+import ModeratorExhibition from './pages/Moderator/ModeratorExhibition';
+import ScoringCriteria from './pages/Moderator/ScoringCriteria';
+import VerifyExhibition from './pages/Moderator/VerifyExhibition';
+import WinnerSelection from './pages/Moderator/WinnerSelection';
+
 
 // Components
-import Header from './components/Header';
 import Footer from './components/Footer';
+import Layout from './components/moderator/layout'; // <-- Add this import for Layout
 
 // Page transition wrapper component using CSS animations
 const PageTransition = ({ children }) => {
@@ -66,13 +70,25 @@ function App() {
         <Route path="/artist/artistdashboard" element={<PageTransition><ArtistDashboard /></PageTransition>} /> 
         <Route path="/artist/artistportfolio" element={<PageTransition><ArtistPortfolio /></PageTransition>} />
 
-        <Route path="/admin/dashboard" element={<PageTransition><AdminDashboard /></PageTransition>} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
 
-        <Route path="/ModeratorDashboard" element={<PageTransition><ModeratorDashboard /></PageTransition>} />
-        <Route path="/createChallenge" element={<PageTransition><CreateChallenge /></PageTransition>} />
-        <Route path="/verifyExhibitions" element={<PageTransition><VerifyExhibitions /></PageTransition>} />
+          {/* <Route path="/artist/dashboard" element={<ArtistDashboard />} /> */}
+          {/* <Route path="/moderator/dashboard" element={<ModeratorDashboard />} /> */}
+          {/* <Route path="/buyer/dashboard" element={<BuyerDashboard />} /> */}
+
+        {/* Moderator Routes */}
+        <Route path="/moderatordashboard" element={<Layout><ModeratorDashboard /></Layout>} />
+        <Route path="/challenges" element={<Layout><ChallengeList /></Layout>} />
+        <Route path="/create-challenge" element={<Layout><CreateChallenge /></Layout>} />
+        <Route path="/exhibition" element={<Layout><ModeratorExhibition /></Layout>} />
+        <Route path="/winner-selection" element={<Layout><WinnerSelection /></Layout>} />
+        <Route path="/verify-exhibition" element={<Layout><VerifyExhibition /></Layout>} />
+        <Route path="/scoring-criteria" element={<Layout><ScoringCriteria /></Layout>} />
+
+        {/* Add more routes as needed */}
+
+
       </Routes>
-
       <Footer />
     </Router>
   );
