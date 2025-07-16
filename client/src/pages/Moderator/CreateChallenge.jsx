@@ -14,6 +14,9 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [requestSponsorship, setRequestSponsorship] = useState(false);
+  const [sponsorshipType, setSponsorshipType] = useState('');
+  const [sponsorshipMessage, setSponsorshipMessage] = useState('');
   const navigate = useNavigate();
 
   const handleInputChange = (e) => {
@@ -66,7 +69,13 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
         title: formData.title.trim(),
         publishDateTime: `${formData.publishDate}T${formData.publishTime}`,
         deadlineDateTime: `${formData.deadlineDate}T${formData.deadlineTime}`,
-        description: formData.description.trim()
+        description: formData.description.trim(),
+        sponsorshipRequest: requestSponsorship
+          ? {
+              type: sponsorshipType,
+              message: sponsorshipMessage
+            }
+          : null
       };
 
       if (onSubmit) await onSubmit(challengeData);
@@ -79,6 +88,9 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
         deadlineTime: '',
         description: ''
       });
+      setRequestSponsorship(false);
+      setSponsorshipType('');
+      setSponsorshipMessage('');
 
     } catch (error) {
       // handle error
@@ -235,6 +247,46 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
           <p className="mt-1 text-sm text-amber-700">
             {formData.description.length}/500 characters
           </p>
+        </div>
+        {/* Sponsorship Request Section */}
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <label className="flex items-center gap-2 text-amber-800 font-medium mb-2">
+            <input
+              type="checkbox"
+              checked={requestSponsorship}
+              onChange={e => setRequestSponsorship(e.target.checked)}
+              className="accent-amber-800 h-4 w-4"
+            />
+            Request Sponsorships for this Challenge?
+          </label>
+          {requestSponsorship && (
+            <div className="space-y-4 mt-2">
+              <div>
+                <label className="block text-sm font-medium text-amber-800 mb-1">Expected Sponsorship Type</label>
+                <select
+                  value={sponsorshipType}
+                  onChange={e => setSponsorshipType(e.target.value)}
+                  className="w-full px-4 py-2 border rounded-lg bg-white text-amber-900 border-amber-300 focus:ring-2 focus:ring-amber-800"
+                >
+                  <option value="">Select type...</option>
+                  <option value="Monetary">Monetary</option>
+                  <option value="Gift">Gift</option>
+                  <option value="Voucher">Voucher</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-amber-800 mb-1">Message to Shops (optional)</label>
+                <textarea
+                  value={sponsorshipMessage}
+                  onChange={e => setSponsorshipMessage(e.target.value)}
+                  rows={3}
+                  placeholder="Describe what kind of sponsorship you expect, or any special notes..."
+                  className="w-full px-4 py-2 border rounded-lg bg-white text-amber-900 border-amber-300 focus:ring-2 focus:ring-amber-800"
+                />
+              </div>
+            </div>
+          )}
         </div>
         {/* Submit Button */}
         <div className="flex justify-end pt-6">
