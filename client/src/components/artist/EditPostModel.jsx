@@ -60,7 +60,7 @@ function EditModal({ item, onClose, onSave }) {
 
       // Make PUT request to backend
       const response = await axios.put(
-        `http://localhost:8080/api/posts/${item.post_id}`, // confirm your ID key here
+        `http://localhost:8081/api/posts/${item.post_id}`, // confirm your ID key here
         data,
         {
           headers: {

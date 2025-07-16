@@ -1,6 +1,7 @@
 package com.artaura.artaura.config;
 
-import com.artaura.artaura.security.JwtAuthFilter;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,7 +18,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.List;
+import com.artaura.artaura.security.JwtAuthFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -38,14 +39,17 @@ public class SecurityConfig {
                                 "/api/artist/signup",
                                 "/api/buyer/signup",
                                 "/api/shop/signup",
-                                "/uploads/**"   // <<< THIS ALLOWS IMAGE ACCESS
-                        ).permitAll() // ✅ Public endpoints
+                                "/uploads/**",
+                                "/api/artworks/create"
+                        ).permitAll()
 
                         .requestMatchers("/api/posts/create").authenticated()
-                        .requestMatchers("/api/posts/{role}/{userId}").authenticated()// ✅ allow this
-                        .anyRequest().authenticated() // 🔒 Everything else secured
-
+                        .requestMatchers("/api/posts/{role}/{userId}").authenticated()
+                        .requestMatchers("/api/artworks/{role}/{userId}").authenticated() // ❌ You missed .authenticated() here
+//                        .requestMatchers("").authenticated()
+                        .anyRequest().authenticated()
                 )
+
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class); // 🔐 JWT Filter
 
         return http.build();
@@ -55,7 +59,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:5173")); // Frontend domain
+        config.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:5174")); // Frontend domain - allow both ports
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS")); // Methods allowed
         config.setAllowedHeaders(List.of("Authorization", "Cache-Control", "Content-Type")); // JWT, etc.
         config.setAllowCredentials(true); // Allows sending cookies or Authorization headers

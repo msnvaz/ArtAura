@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Plus, Upload, Save, X } from 'lucide-react';
+
+import axios from 'axios';
 
 const UploadPostModal = ({
     isOpen,
@@ -7,10 +9,55 @@ const UploadPostModal = ({
     newArtwork,
     onArtworkChange,
     onImageUpload,
-    onSave,
+    onSave, // will be replaced by internal handler
     onCancel
 }) => {
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+
     if (!isOpen) return null;
+
+    const handleSave = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError(null);
+        try {
+            const token = localStorage.getItem('token');
+            const userId = localStorage.getItem('userId');
+            if (!token || !userId) {
+                setError('Authentication required.');
+                setLoading(false);
+                window.location.href = '/login';
+                return;
+            }
+            const formData = new FormData();
+            // Send all artwork fields as a JSON string under 'artwork'
+            const artworkPayload = {
+                ...newArtwork,
+                artistId: userId
+            };
+            formData.append('artwork', JSON.stringify(artworkPayload));
+            // Only send the first image (backend expects one file)
+            if (Array.isArray(newArtwork.imageFiles) && newArtwork.imageFiles.length > 0) {
+                formData.append('image', newArtwork.imageFiles[0]);
+            }
+            const response = await axios.post(
+                'http://localhost:8081/api/artworks/create',
+                formData,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'multipart/form-data'
+                    }
+                }
+            );
+            setLoading(false);
+            if (onClose) onClose();
+        } catch (err) {
+            setError(err?.response?.data?.message || 'Failed to add artwork.');
+            setLoading(false);
+        }
+    };
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -31,7 +78,7 @@ const UploadPostModal = ({
 
                 {/* Modal Content */}
                 <div className="p-6">
-                    <form className="space-y-6">
+                    <form className="space-y-6" onSubmit={handleSave}>
                         {/* Image Upload Section */}
                         <div className="space-y-4">
                             <h3 className="text-lg font-semibold text-[#7f5539]">Artwork Images</h3>
@@ -241,20 +288,26 @@ const UploadPostModal = ({
                 </div>
 
                 {/* Modal Footer */}
-                <div className="flex items-center justify-end space-x-4 p-6 border-t border-[#fdf9f4]/50">
-                    <button
-                        onClick={onCancel}
-                        className="px-6 py-2 border border-[#7f5539]/30 text-[#7f5539] rounded-lg hover:bg-[#7f5539]/5 transition-colors font-medium"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        onClick={onSave}
-                        className="px-6 py-2 bg-[#7f5539] text-white rounded-lg hover:bg-[#6e4c34] transition-colors font-medium flex items-center space-x-2"
-                    >
-                        <Save size={16} />
-                        <span>Add Artwork</span>
-                    </button>
+                <div className="flex flex-col items-end space-y-2 p-6 border-t border-[#fdf9f4]/50">
+                    {error && <div className="text-red-600 text-sm mb-2 w-full text-right">{error}</div>}
+                    <div className="flex items-center justify-end space-x-4 w-full">
+                        <button
+                            type="button"
+                            onClick={onCancel}
+                            className="px-6 py-2 border border-[#7f5539]/30 text-[#7f5539] rounded-lg hover:bg-[#7f5539]/5 transition-colors font-medium"
+                            disabled={loading}
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            className="px-6 py-2 bg-[#7f5539] text-white rounded-lg hover:bg-[#6e4c34] transition-colors font-medium flex items-center space-x-2 disabled:opacity-60"
+                            disabled={loading}
+                        >
+                            <Save size={16} />
+                            <span>{loading ? 'Adding...' : 'Add Artwork'}</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

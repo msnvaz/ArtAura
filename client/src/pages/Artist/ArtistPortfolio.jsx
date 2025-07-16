@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { formatDistanceToNow,  isValid } from 'date-fns';
+import { formatDistanceToNow, isValid } from 'date-fns';
 import ArtworkDetailModal from '../../components/artworks/ArtworkDetailModal';
 import EditProfileModal from '../../components/artist/EditProfileModal';
 import UploadPostModal from '../../components/artworks/UploadPostModal';
 import PostUploadModal from '../../components/social/PostUploadModal';
 import ChangeCoverModal from '../../components/profile/ChangeCoverModal';
 import EditPostModel from '../../components/artist/EditPostModel';
-import { useAuth } from "../../context/AuthContext"; 
+import { useAuth } from "../../context/AuthContext";
 import {
   Plus,
   Edit,
@@ -81,7 +81,7 @@ const ArtistPortfolio = () => {
     // allowSharing: true
   });
 
-  const { token, role, userId} = useAuth();
+  const { token, role, userId } = useAuth();
   const [portfolioPosts, setPortfolioPosts] = useState([]);
   useEffect(() => {
     const fetchPosts = async () => {
@@ -89,27 +89,55 @@ const ArtistPortfolio = () => {
         console.warn("Missing role, userId, or token. Skipping fetch.");
         return;
       }
-  
+
       try {
         const response = await axios.get(
-          `http://localhost:8080/api/posts/${role}/${userId}`,
+          `http://localhost:8081/api/posts/${role}/${userId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
             },
           }
         );
-  
+
         setPortfolioPosts(response.data);
       } catch (error) {
         console.error("Error fetching posts:", error);
       }
     };
-  
+
     fetchPosts();
   }, [role, userId, token]); // 👈 Add these so it re-runs when context loads
-  
-  
+
+  const [artworks, setArtworks] = useState([]);
+
+  useEffect(() => {
+    const fetchArtworks = async () => {
+      if (!userId) {
+        // Don't fetch if userId is null/undefined
+        setArtworks([]);
+        return;
+      }
+      try {
+        const token = localStorage.getItem('token'); // Assuming JWT is stored in localStorage
+        const response = await axios.get(`http://localhost:8081/api/artworks/artist/${userId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        // Ensure response.data is an array
+        setArtworks(Array.isArray(response.data) ? response.data : []);
+      } catch (error) {
+        console.error('Failed to fetch artworks:', error);
+        // Ensure artworks stays as an empty array on error
+        setArtworks([]);
+      }
+    };
+
+    fetchArtworks();
+  }, [userId]);
+
+
   // Mock artist data
   const artistProfile = {
     name: 'Sarah Martinez',
@@ -296,7 +324,7 @@ const ArtistPortfolio = () => {
 
     try {
       const response = await axios.post(
-        'http://localhost:8080/api/posts/create',
+        'http://localhost:8081/api/posts/create',
         formData,
         {
           headers: {
@@ -385,90 +413,8 @@ const ArtistPortfolio = () => {
     // Here you would typically update the artwork's status to 'Sold'
   };
 
-  // Portfolio artworks
-  const artworks = [
-    {
-      id: 1,
-      title: 'Sunset Dreams',
-      medium: 'Oil on Canvas',
-      size: '24" x 36"',
-      year: '2024',
-      price: '$1,200',
-      status: 'Available',
-      image: 'https://images.pexels.com/photos/1545743/pexels-photo-1545743.jpeg?auto=compress&cs=tinysrgb&w=400',
-      likes: 45,
-      views: 234,
-      featured: true
-    },
-    {
-      id: 2,
-      title: 'Urban Reflection',
-      medium: 'Digital Art',
-      size: 'Digital Print',
-      year: '2024',
-      price: '$450',
-      status: 'Sold',
-      image: 'https://images.pexels.com/photos/1053924/pexels-photo-1053924.jpeg?auto=compress&cs=tinysrgb&w=400',
-      likes: 32,
-      views: 189,
-      featured: false
-    },
-    {
-      id: 3,
-      title: 'Abstract Flow',
-      medium: 'Acrylic on Canvas',
-      size: '18" x 24"',
-      year: '2023',
-      price: '$800',
-      status: 'Available',
-      image: 'https://images.pexels.com/photos/1269968/pexels-photo-1269968.jpeg?auto=compress&cs=tinysrgb&w=400',
-      likes: 67,
-      views: 345,
-      featured: true
-    },
-    {
-      id: 4,
-      title: 'Mountain Serenity',
-      medium: 'Watercolor',
-      size: '16" x 20"',
-      year: '2023',
-      price: '$600',
-      status: 'Available',
-      image: 'https://images.pexels.com/photos/1266808/pexels-photo-1266808.jpeg?auto=compress&cs=tinysrgb&w=400',
-      likes: 28,
-      views: 156,
-      featured: false
-    },
-    {
-      id: 5,
-      title: 'Digital Dreams',
-      medium: 'Digital Art',
-      size: 'Digital Print',
-      year: '2023',
-      price: '$350',
-      status: 'Available',
-      image: 'https://images.pexels.com/photos/1546009/pexels-photo-1546009.jpeg?auto=compress&cs=tinysrgb&w=400',
-      likes: 41,
-      views: 198,
-      featured: false
-    },
-    {
-      id: 6,
-      title: 'Portrait Study',
-      medium: 'Charcoal on Paper',
-      size: '12" x 16"',
-      year: '2023',
-      price: '$400',
-      status: 'Available',
-      image: 'https://images.pexels.com/photos/1742370/pexels-photo-1742370.jpeg?auto=compress&cs=tinysrgb&w=400',
-      likes: 35,
-      views: 167,
-      featured: false
-    }
-  ];
-
   // Portfolio posts (Instagram-like posts)
-  
+
 
   const exhibitions = [
     {
@@ -493,22 +439,22 @@ const ArtistPortfolio = () => {
     try {
       // Get token (adjust based on your actual auth setup)
       const token = localStorage.getItem('token'); // or from useAuth()
-  
+
       if (!token) {
         alert("You must be logged in to delete posts.");
         return;
       }
-  
+
       // Call backend delete API with Authorization header
-      await axios.delete(`http://localhost:8080/api/posts/${postId}`, {
+      await axios.delete(`http://localhost:8081/api/posts/${postId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-  
+
       // Update UI after successful deletion
       setPortfolioPosts((prevPosts) => prevPosts.filter(post => post.id !== postId));
-      
+
       alert("Post deleted successfully!");
     } catch (error) {
       console.error("Error deleting post:", error);
@@ -523,7 +469,7 @@ const ArtistPortfolio = () => {
     setEditingItem(post);
     setShowEditModal(true);
   };
-  
+
   const handleEditSavePost = (updatedPost) => {
     const updatedList = portfolioPosts.map((post) =>
       post.id === updatedPost.id ? updatedPost : post
@@ -537,8 +483,8 @@ const ArtistPortfolio = () => {
     if (!isValid(d)) return "Invalid date";
     return formatDistanceToNow(d, { addSuffix: true });
   };
-  
-   
+
+
 
   return (
     <div className="min-h-screen bg-[#fdf9f4] py-8">
@@ -663,7 +609,7 @@ const ArtistPortfolio = () => {
             <nav className="flex space-x-8 px-6">
               {[
                 { id: 'portfolio', label: 'Portfolio', count: portfolioPosts.length },
-                { id: 'tosell', label: 'To sell', count: artworks.length },
+                { id: 'tosell', label: 'To sell', count: Array.isArray(artworks) ? artworks.length : 0 },
                 { id: 'exhibitions', label: 'Exhibitions', count: exhibitions.length },
                 { id: 'achievements', label: 'Achievements', count: badges.length },
                 { id: 'analytics', label: 'Analytics' }
@@ -705,16 +651,18 @@ const ArtistPortfolio = () => {
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-[#7f5539]/70">Total Likes</span>
-                      <span className="font-semibold text-[#7f5539]">{portfolioPosts.reduce((sum, post) => sum + post.likes, 0)}</span>
+                      <span className="font-semibold text-[#7f5539]">{portfolioPosts.reduce((sum, post) => sum + (post.likes || 0), 0)}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-[#7f5539]/70">Total Comments</span>
-                      <span className="font-semibold text-[#7f5539]">{portfolioPosts.reduce((sum, post) => sum + post.comments, 0)}</span>
+                      <span className="font-semibold text-[#7f5539]">{portfolioPosts.reduce((sum, post) => sum + (post.comments || 0), 0)}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-[#7f5539]/70">Avg. Engagement</span>
                       <span className="font-semibold text-[#7f5539]">
-                        {Math.round((portfolioPosts.reduce((sum, post) => sum + post.likes + post.comments, 0)) / portfolioPosts.length)}
+                        {portfolioPosts.length > 0
+                          ? Math.round((portfolioPosts.reduce((sum, post) => sum + (post.likes || 0) + (post.comments || 0), 0)) / portfolioPosts.length)
+                          : 0}
                       </span>
                     </div>
                   </div>
@@ -756,7 +704,13 @@ const ArtistPortfolio = () => {
                       <span className="text-[#7f5539]">Create Post</span>
                     </button>
                     <button
-                      onClick={() => setIsAddingArtwork(true)}
+                      onClick={() => {
+                        setNewArtwork({
+                          ...newArtwork,
+                          category: 'to sell',
+                        });
+                        setIsAddingArtwork(true);
+                      }}
                       className="w-full flex items-center space-x-3 p-3 hover:bg-[#fdf9f4]/30 rounded-lg transition-colors text-left"
                     >
                       <Plus className="h-5 w-5 text-[#7f5539]" />
@@ -836,10 +790,10 @@ const ArtistPortfolio = () => {
                       </div>
                       <div className="flex space-x-3">  {/* Flex container with horizontal spacing */}
                         <button
-                        onClick={() => handleEditPost(post)}
-                        className="text-[#7f5539]/60 hover:text-[#7f5539] transition-colors"
->                         
-                        <Edit className="h-5 w-5" />
+                          onClick={() => handleEditPost(post)}
+                          className="text-[#7f5539]/60 hover:text-[#7f5539] transition-colors"
+                        >
+                          <Edit className="h-5 w-5" />
                         </button>
 
                         <button
@@ -860,7 +814,7 @@ const ArtistPortfolio = () => {
                     {/* Post Image */}
                     <div className="relative">
                       <img
-                        src={`http://localhost:8080${post.image}`}
+                        src={`http://localhost:8081${post.image}`}
                         alt={`Post ${post.post_id}`}
                         className="w-full h-[32rem] object-cover"
                       />
@@ -887,13 +841,13 @@ const ArtistPortfolio = () => {
 
                       {/* Like Count */}
                       <div className="mb-3">
-                        <p className="font-semibold text-[#7f5539] text-base">{post.likes} likes</p>
+                        <p className="font-semibold text-[#7f5539] text-base">{post.likes || 0} likes</p>
                       </div>
 
                       {/* Comments Preview */}
                       <div className="space-y-2">
                         <button className="text-[#7f5539]/60 hover:text-[#7f5539] text-sm transition-colors">
-                          View all {post.comments} comments
+                          View all {post.comments || 0} comments
                         </button>
                       </div>
 
@@ -934,8 +888,8 @@ const ArtistPortfolio = () => {
                     <span>Top Artworks</span>
                   </h3>
                   <div className="space-y-3">
-                    {artworks.slice(0, 4).map((artwork) => (
-                      <div key={artwork.id} className="flex items-center space-x-3">
+                    {Array.isArray(artworks) && artworks.slice(0, 4).map((artwork) => (
+                      <div key={artwork.id || artwork.artwork_id} className="flex items-center space-x-3">
                         <img
                           src={artwork.image}
                           alt={artwork.title}
@@ -1038,7 +992,13 @@ const ArtistPortfolio = () => {
                   <p className="text-[#7f5539]/70">Manage your portfolio and showcase your best work</p>
                 </div>
                 <button
-                  onClick={() => setIsAddingArtwork(true)}
+                  onClick={() => {
+                    setNewArtwork({
+                      ...newArtwork,
+                      category: 'to sell',
+                    });
+                    setIsAddingArtwork(true);
+                  }}
                   className="mt-4 md:mt-0 bg-[#7f5539] text-[#fdf9f4] px-6 py-2 rounded-lg hover:bg-[#6e4c34] transition-colors font-medium flex items-center space-x-2"
                 >
                   <Plus className="h-4 w-4" />
@@ -1049,9 +1009,9 @@ const ArtistPortfolio = () => {
 
             {/* Artworks Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {artworks.map((artwork) => (
+              {Array.isArray(artworks) && artworks.map((artwork) => (
                 <div
-                  key={artwork.id}
+                  key={artwork.artwork_id}
                   className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-lg transition-all duration-300 group"
                 >
                   <div className="relative">
@@ -1214,8 +1174,8 @@ const ArtistPortfolio = () => {
                     <div>
                       <p className="text-green-600 text-sm font-medium">Total Engagement</p>
                       <p className="text-2xl font-bold text-green-800">
-                        {(portfolioPosts.reduce((sum, post) => sum + post.likes + post.comments, 0) +
-                          artworks.reduce((sum, art) => sum + art.likes, 0)).toLocaleString()}
+                        {(portfolioPosts.reduce((sum, post) => sum + (post.likes || 0) + (post.comments || 0), 0) +
+                          (Array.isArray(artworks) ? artworks.reduce((sum, art) => sum + (art.likes || 0), 0) : 0)).toLocaleString()}
                       </p>
                       <div className="flex items-center mt-1">
                         <TrendingUp className="text-green-500 mr-1" size={16} />
@@ -1271,7 +1231,9 @@ const ArtistPortfolio = () => {
                       <span className="text-sm font-medium">Avg. Views per Artwork</span>
                     </div>
                     <span className="text-[#7f5539] font-semibold">
-                      {Math.round(artworks.reduce((sum, art) => sum + art.views, 0) / artworks.length)}
+                      {Array.isArray(artworks) && artworks.length > 0
+                        ? Math.round(artworks.reduce((sum, art) => sum + (art.views || 0), 0) / artworks.length)
+                        : 0}
                     </span>
                   </div>
                   <div className="flex items-center justify-between p-3 bg-[#fdf9f4]/50 rounded-lg">
@@ -1280,7 +1242,9 @@ const ArtistPortfolio = () => {
                       <span className="text-sm font-medium">Avg. Likes per Artwork</span>
                     </div>
                     <span className="text-[#7f5539] font-semibold">
-                      {Math.round(artworks.reduce((sum, art) => sum + art.likes, 0) / artworks.length)}
+                      {Array.isArray(artworks) && artworks.length > 0
+                        ? Math.round(artworks.reduce((sum, art) => sum + (art.likes || 0), 0) / artworks.length)
+                        : 0}
                     </span>
                   </div>
                   <div className="flex items-center justify-between p-3 bg-[#fdf9f4]/50 rounded-lg">
@@ -1289,7 +1253,9 @@ const ArtistPortfolio = () => {
                       <span className="text-sm font-medium">Conversion Rate</span>
                     </div>
                     <span className="text-[#7f5539] font-semibold">
-                      {((artistProfile.stats.sales / artistProfile.stats.artworks) * 100).toFixed(1)}%
+                      {artistProfile.stats.artworks > 0
+                        ? ((artistProfile.stats.sales / artistProfile.stats.artworks) * 100).toFixed(1)
+                        : '0.0'}%
                     </span>
                   </div>
                   <div className="flex items-center justify-between p-3 bg-[#fdf9f4]/50 rounded-lg">
@@ -1298,7 +1264,7 @@ const ArtistPortfolio = () => {
                       <span className="text-sm font-medium">Featured Artworks</span>
                     </div>
                     <span className="text-[#7f5539] font-semibold">
-                      {artworks.filter(art => art.featured).length}
+                      {Array.isArray(artworks) ? artworks.filter(art => art.featured).length : 0}
                     </span>
                   </div>
                 </div>
@@ -1407,12 +1373,12 @@ const ArtistPortfolio = () => {
                               <p className="font-medium text-[#7f5539] text-sm">
                                 {post.caption.substring(0, 30)}...
                               </p>
-                              <p className="text-xs text-[#7f5539]/60">{post.likes} likes • {post.comments} comments</p>
+                              <p className="text-xs text-[#7f5539]/60">{post.likes || 0} likes • {post.comments || 0} comments</p>
                             </div>
                           </div>
                           <div className="text-right">
                             <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
-                              {((post.likes + post.comments) / 10).toFixed(1)}% engagement
+                              {(((post.likes || 0) + (post.comments || 0)) / 10).toFixed(1)}% engagement
                             </span>
                           </div>
                         </div>
@@ -1432,8 +1398,8 @@ const ArtistPortfolio = () => {
                 <div className="text-center p-4 bg-gradient-to-br from-red-50 to-red-100 rounded-lg">
                   <Heart className="mx-auto text-red-500 mb-2" size={24} />
                   <p className="text-2xl font-bold text-[#7f5539]">
-                    {(portfolioPosts.reduce((sum, post) => sum + post.likes, 0) +
-                      artworks.reduce((sum, art) => sum + art.likes, 0)).toLocaleString()}
+                    {(portfolioPosts.reduce((sum, post) => sum + (post.likes || 0), 0) +
+                      (Array.isArray(artworks) ? artworks.reduce((sum, art) => sum + (art.likes || 0), 0) : 0)).toLocaleString()}
                   </p>
                   <p className="text-sm text-gray-600">Total Likes</p>
                   <div className="flex items-center justify-center mt-1">
@@ -1445,7 +1411,7 @@ const ArtistPortfolio = () => {
                 <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg">
                   <MessageCircle className="mx-auto text-blue-500 mb-2" size={24} />
                   <p className="text-2xl font-bold text-[#7f5539]">
-                    {portfolioPosts.reduce((sum, post) => sum + post.comments, 0)}
+                    {portfolioPosts.reduce((sum, post) => sum + (post.comments || 0), 0)}
                   </p>
                   <p className="text-sm text-gray-600">Comments</p>
                   <div className="flex items-center justify-center mt-1">
@@ -1495,7 +1461,9 @@ const ArtistPortfolio = () => {
                 <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4">
                   <h5 className="text-blue-700 font-medium mb-2">Average Sale Price</h5>
                   <p className="text-2xl font-bold text-blue-800">
-                    ${Math.round(15400 / artistProfile.stats.sales).toLocaleString()}
+                    ${artistProfile.stats.sales > 0
+                      ? Math.round(15400 / artistProfile.stats.sales).toLocaleString()
+                      : '0'}
                   </p>
                   <p className="text-sm text-blue-600 mt-1">+12.8% from last month</p>
                   <div className="mt-3 text-xs text-blue-700">
@@ -1581,7 +1549,6 @@ const ArtistPortfolio = () => {
         newArtwork={newArtwork}
         onArtworkChange={handleArtworkChange}
         onImageUpload={handleImageUpload}
-        onSave={handleSaveArtwork}
         onCancel={handleCancelAddArtwork}
       />
 
@@ -1630,3 +1597,4 @@ const ArtistPortfolio = () => {
 };
 
 export default ArtistPortfolio;
+
