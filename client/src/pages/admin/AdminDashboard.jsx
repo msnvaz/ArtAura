@@ -29,46 +29,6 @@ const AdminDashboard = () => {
     setIsLoaded(true);
   }, []);
 
-  // Logout function that calls the backend API
-  const handleLogout = async () => {
-    try {
-      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-      
-      const response = await fetch('http://localhost:8081/api/auth/logout', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        // Remove token from client storage
-        localStorage.removeItem('authToken');
-        sessionStorage.removeItem('authToken');
-        
-        // Redirect to login page
-        window.location.href = '/';
-        
-        console.log('Logout successful:', data.message);
-      } else {
-        console.error('Logout failed:', data.message);
-        // Still remove token and redirect even if server call fails
-        localStorage.removeItem('authToken');
-        sessionStorage.removeItem('authToken');
-        window.location.href = '/';
-      }
-    } catch (error) {
-      console.error('Logout error:', error);
-      // Still remove token and redirect even if there's a network error
-      localStorage.removeItem('authToken');
-      sessionStorage.removeItem('authToken');
-      window.location.href = '/';
-    }
-  };
-
   const menuItems = [
     { id: 'overview', label: 'Overview', icon: BarChart3 },
     { id: 'users', label: 'Users', icon: Users },
@@ -232,6 +192,14 @@ const AdminDashboard = () => {
                       color: '#FFE4D6',
                       backgroundColor: 'rgba(255, 228, 214, 0.1)'
                     }}
+                    onMouseOver={(e) => {
+                      e.target.style.backgroundColor = '#FFE4D6';
+                      e.target.style.color = '#5D3A00';
+                    }}
+                    onMouseOut={(e) => {
+                      e.target.style.backgroundColor = 'rgba(255, 228, 214, 0.1)';
+                      e.target.style.color = '#FFE4D6';
+                    }}
                   >
                     <btn.icon size={14} />
                     <span className="hidden sm:inline">{btn.fullText}</span>
@@ -247,9 +215,15 @@ const AdminDashboard = () => {
                     color: 'white',
                     border: 'none'
                   }}
+                  onMouseOver={(e) => {
+                    e.target.style.backgroundColor = '#B85A3A';
+                  }}
+                  onMouseOut={(e) => {
+                    e.target.style.backgroundColor = '#D87C5A';
+                  }}
                   onClick={() => {
                     if (window.confirm('Are you sure you want to logout?')) {
-                      handleLogout();
+                      console.log('Logout clicked');
                     }
                   }}
                 >
