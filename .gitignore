@@ -4,6 +4,7 @@ client/package.json
 client/postcss.config.js
 client/src/App.jsx
 client/tailwind.config.js
+client/.env
 .vscode/
 
 # Ignored package files

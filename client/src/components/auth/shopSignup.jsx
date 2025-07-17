@@ -549,7 +549,7 @@ function ShopRegisterPage() {
     delete payload.confirmPassword;
 
     try {
-      const response = await axios.post('http://localhost:8080/api/shop/signup', payload, {
+      const response = await axios.post('http://localhost:8081/api/shop/signup', payload, {
         headers: { 'Content-Type': 'application/json' }
       });
 
