@@ -32,31 +32,31 @@ public class AuthController {
         try {
             // Extract token from Authorization header for logging purposes
             String authHeader = request.getHeader("Authorization");
-            
+
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
                 // Token exists, logout successful
                 // In a production app, you might want to:
                 // 1. Add token to a blacklist/redis cache
                 // 2. Log the logout event
                 // 3. Clear any server-side sessions
-                
+
                 return ResponseEntity.ok(new ApiResponse(
-                    true, 
-                    "Logout successful. Please remove the token from client storage.", 
+                    true,
+                    "Logout successful. Please remove the token from client storage.",
                     null
                 ));
             } else {
                 return ResponseEntity.ok(new ApiResponse(
-                    true, 
-                    "Logout successful. No active session found.", 
+                    true,
+                    "Logout successful. No active session found.",
                     null
                 ));
             }
-            
+
         } catch (Exception e) {
             return ResponseEntity.status(500).body(new ApiResponse(
-                false, 
-                "Logout failed: " + e.getMessage(), 
+                false,
+                "Logout failed: " + e.getMessage(),
                 null
             ));
         }
@@ -69,27 +69,27 @@ public class AuthController {
     public ResponseEntity<ApiResponse> verifyToken(HttpServletRequest request) {
         try {
             String authHeader = request.getHeader("Authorization");
-            
+
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
                 // In a real implementation, you would validate the JWT token here
                 // For now, we'll just check if the header exists
                 return ResponseEntity.ok(new ApiResponse(
-                    true, 
-                    "Token header found", 
+                    true,
+                    "Token header found",
                     null
                 ));
             } else {
                 return ResponseEntity.status(401).body(new ApiResponse(
-                    false, 
-                    "No token provided", 
+                    false,
+                    "No token provided",
                     null
                 ));
             }
-            
+
         } catch (Exception e) {
             return ResponseEntity.status(500).body(new ApiResponse(
-                false, 
-                "Token verification failed: " + e.getMessage(), 
+                false,
+                "Token verification failed: " + e.getMessage(),
                 null
             ));
         }
