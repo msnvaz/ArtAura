@@ -207,7 +207,7 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
             backgroundRepeat: "no-repeat",
           }}
         >
-          <div className="max-w-5xl mx-auto">
+          <div className="max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between">
               <div className="flex items-center space-x-4">
                 <div
@@ -272,8 +272,8 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
             </div>
           </div>
         </div>
-
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
           {/* Form Container */}
           <div
             className="rounded-lg shadow-sm border h-full relative overflow-hidden"

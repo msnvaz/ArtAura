@@ -76,13 +76,25 @@ const ChallengeList = () => {
   });
 
   return (
-    <div className="space-y-6 w-full">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-amber-900">Challenge Management</h1>
-          <p className="text-amber-700 mt-2">Manage and monitor all your challenges</p>
-        </div>
+    <>
+      {/* Bootstrap CSS */}
+      <link 
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" 
+        rel="stylesheet" 
+      />
+      
+      <div className="min-h-screen" style={{backgroundColor: '#FFF5E1'}}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
+          <div className="space-y-6 w-full pt-8">
+      {/* Top Navigation */}
+      <div className="flex justify-between items-center mb-2">
+        <button
+          onClick={() => window.location.assign('/moderatordashboard')}
+          className="flex items-center gap-2 px-4 py-2 bg-amber-700 text-white rounded-lg hover:bg-amber-900 transition-colors"
+        >
+          <Trophy size={20} />
+          Moderator Dashboard
+        </button>
         <Link
           to="/create-challenge"
           className="flex items-center gap-2 px-4 py-2 bg-amber-800 text-white rounded-lg hover:bg-amber-900 transition-colors"
@@ -90,6 +102,13 @@ const ChallengeList = () => {
           <Plus size={20} />
           Create Challenge
         </Link>
+      </div>
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-amber-900">Challenge Management</h1>
+          <p className="text-amber-700 mt-2">Manage and monitor all your challenges</p>
+        </div>
       </div>
 
       {/* Filters */}
@@ -184,7 +203,10 @@ const ChallengeList = () => {
           <p className="text-gray-500">Try adjusting your search or filter criteria.</p>
         </div>
       )}
-    </div>
+          </div>
+        </div>
+      </div>
+    </>
   );
 };
 
