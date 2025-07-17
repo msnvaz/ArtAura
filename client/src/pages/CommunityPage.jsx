@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import Navbar from "../components/common/Navbar";
 import Post from "../components/community/Posts";
 import TopArtists from "../components/community/TopArtists";
-import RecentChallenges from "../components/community/PopularHashtags";
 import ExhibitionPostForm from "../components/community/ExhibitionPostForm";
 import axios from "axios";
 

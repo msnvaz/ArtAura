@@ -69,7 +69,6 @@ function AppWrapper() {
         <Route path="/artists" element={<PageTransition><ArtistsPage /></PageTransition>} />
         <Route path="/public-challenges" element={<PageTransition><ChallengesPage /></PageTransition>} />
         <Route path="/challenge-submission/:challengeId" element={<PageTransition><ChallengeSubmissionPage /></PageTransition>} />
-        <Route path="/challenge-submissions/:challengeId" element={<PageTransition><ChallengeSubmissionsPage /></PageTransition>} />
 
         {/* Shop Pages */}
         <Route path="/shop/dashboard" element={<PageTransition><Dashboard /></PageTransition>} />
