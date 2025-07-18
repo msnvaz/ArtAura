@@ -133,7 +133,7 @@ const ArtworkManagement = () => {
       const artwork = artworks.find(a => a.artworkId === artworkId);
       if (!artwork) return;
 
-      const newStatus = artwork.status === 'ACTIVE' ? 'FLAGGED' : 'ACTIVE';
+      const newStatus = artwork.status === 'Sold' ? 'Available' : 'Sold';
       await adminArtworkApi.updateArtworkStatus(artworkId, newStatus);
       
       // Update local state
@@ -149,7 +149,7 @@ const ArtworkManagement = () => {
         setSelectedArtwork({ ...selectedArtwork, status: newStatus });
       }
       
-      setSuccessMessage(`Artwork ${newStatus === 'ACTIVE' ? 'approved' : 'flagged'} successfully`);
+      setSuccessMessage(`Artwork marked as ${newStatus.toLowerCase()} successfully`);
     } catch (err) {
       setError('Failed to update artwork status. Please try again.');
       console.error('Error updating artwork status:', err);
@@ -188,7 +188,7 @@ const ArtworkManagement = () => {
     const matchesSearch = artwork.title.toLowerCase().includes(artworkSearchTerm.toLowerCase()) ||
                          artwork.artistName.toLowerCase().includes(artworkSearchTerm.toLowerCase()) ||
                          artwork.category.toLowerCase().includes(artworkSearchTerm.toLowerCase());
-    const matchesStatus = artworkFilterStatus === 'all' || artwork.status.toLowerCase() === artworkFilterStatus.toLowerCase();
+    const matchesStatus = artworkFilterStatus === 'all' || artwork.status === artworkFilterStatus;
     return matchesSearch && matchesStatus;
   });
 
@@ -203,28 +203,28 @@ const ArtworkManagement = () => {
       changeType: 'positive'
     },
     { 
-      label: 'Approved', 
-      value: (statistics.approvedArtworks || artworks.filter(a => a.status === 'ACTIVE' || a.status === 'Approved').length).toLocaleString(), 
+      label: 'Available', 
+      value: (statistics.availableArtworks || artworks.filter(a => a.status === 'Available').length).toLocaleString(), 
       icon: UserCheck, 
       color: '#5D9CDB',
-      change: statistics.approvedArtworksChange || '+12%',
+      change: statistics.availableArtworksChange || '+12%',
       changeType: 'positive'
     },
     { 
-      label: 'Pending Review', 
-      value: (statistics.pendingArtworks || artworks.filter(a => a.status === 'PENDING' || a.status === 'Pending').length).toLocaleString(), 
+      label: 'Sold', 
+      value: (statistics.soldArtworks || artworks.filter(a => a.status === 'Sold').length).toLocaleString(), 
       icon: AlertTriangle, 
-      color: '#FFD95A',
-      change: statistics.pendingArtworksChange || '+5%',
-      changeType: 'neutral'
+      color: '#28a745',
+      change: statistics.soldArtworksChange || '+25%',
+      changeType: 'positive'
     },
     { 
-      label: 'Flagged Content', 
-      value: (statistics.flaggedArtworks || artworks.filter(a => a.status === 'FLAGGED' || a.status === 'Flagged').length).toLocaleString(), 
+      label: 'Reserved', 
+      value: (statistics.reservedArtworks || artworks.filter(a => a.status === 'Reserved').length).toLocaleString(), 
       icon: ShieldAlert, 
-      color: '#E74C3C',
-      change: statistics.flaggedArtworksChange || '-25%',
-      changeType: 'positive'
+      color: '#FFD95A',
+      change: statistics.reservedArtworksChange || '+5%',
+      changeType: 'neutral'
     }
   ];
 
@@ -259,9 +259,10 @@ const ArtworkManagement = () => {
                 />
                 <div className="mt-4 flex items-center justify-between">
                   <span className={`px-3 py-1 text-sm font-medium rounded-full ${
-                    selectedArtwork.status === 'ACTIVE' || selectedArtwork.status === 'Approved' ? 'text-green-800 bg-green-100' :
-                    selectedArtwork.status === 'PENDING' || selectedArtwork.status === 'Pending' ? 'text-yellow-800 bg-yellow-100' :
-                    'text-red-800 bg-red-100'
+                    selectedArtwork.status === 'Available' ? 'text-green-800 bg-green-100' :
+                    selectedArtwork.status === 'Sold' ? 'text-blue-800 bg-blue-100' :
+                    selectedArtwork.status === 'Reserved' ? 'text-yellow-800 bg-yellow-100' :
+                    'text-gray-800 bg-gray-100'
                   }`}>
                     {selectedArtwork.status}
                   </span>
@@ -293,9 +294,14 @@ const ArtworkManagement = () => {
                       <p>{selectedArtwork.createdAt ? new Date(selectedArtwork.createdAt).toLocaleDateString() : selectedArtwork.uploadDate}</p>
                     </div>
                     <div>
-                      <span className="font-medium" style={{color: '#5D3A00'}}>Content Status:</span>
-                      <p className={selectedArtwork.status === 'FLAGGED' || selectedArtwork.blocked ? 'text-red-600 font-medium' : 'text-green-600 font-medium'}>
-                        {selectedArtwork.status === 'FLAGGED' || selectedArtwork.blocked ? 'Flagged' : 'Approved'}
+                      <span className="font-medium" style={{color: '#5D3A00'}}>Status:</span>
+                      <p className={
+                        selectedArtwork.status === 'Available' ? 'text-green-600 font-medium' :
+                        selectedArtwork.status === 'Sold' ? 'text-blue-600 font-medium' :
+                        selectedArtwork.status === 'Reserved' ? 'text-yellow-600 font-medium' :
+                        'text-gray-600 font-medium'
+                      }>
+                        {selectedArtwork.status}
                       </p>
                     </div>
                   </div>
@@ -325,13 +331,13 @@ const ArtworkManagement = () => {
                   handleBlockArtwork(selectedArtwork.artworkId || selectedArtwork.id);
                 }}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
-                  selectedArtwork.status === 'FLAGGED' || selectedArtwork.blocked
+                  selectedArtwork.status === 'Sold'
                     ? 'bg-green-100 text-green-800 hover:bg-green-200' 
-                    : 'bg-red-100 text-red-800 hover:bg-red-200'
+                    : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
                 }`}
               >
-                {selectedArtwork.status === 'FLAGGED' || selectedArtwork.blocked ? <UserCheck size={16} /> : <Ban size={16} />}
-                {selectedArtwork.status === 'FLAGGED' || selectedArtwork.blocked ? 'Approve Artwork' : 'Flag as Inappropriate'}
+                {selectedArtwork.status === 'Sold' ? <UserCheck size={16} /> : <Ban size={16} />}
+                {selectedArtwork.status === 'Sold' ? 'Mark as Available' : 'Mark as Sold'}
               </button>
               <button
                 onClick={() => {
@@ -548,9 +554,9 @@ const ArtworkManagement = () => {
                 style={{borderColor: '#FFE4D6', backgroundColor: 'rgba(255, 255, 255, 0.8)'}}
               >
                 <option value="all">All Status</option>
-                <option value="approved">Approved</option>
-                <option value="pending">Pending</option>
-                <option value="flagged">Flagged</option>
+                <option value="Available">Available</option>
+                <option value="Sold">Sold</option>
+                <option value="Reserved">Reserved</option>
               </select>
             </div>
           </div>
@@ -590,9 +596,10 @@ const ArtworkManagement = () => {
                 />
                 <div className="absolute top-3 right-3">
                   <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                    artwork.status === 'ACTIVE' || artwork.status === 'Approved' ? 'text-green-800 bg-green-100' :
-                    artwork.status === 'PENDING' || artwork.status === 'Pending' ? 'text-yellow-800 bg-yellow-100' :
-                    'text-red-800 bg-red-100'
+                    artwork.status === 'Available' ? 'text-green-800 bg-green-100' :
+                    artwork.status === 'Sold' ? 'text-blue-800 bg-blue-100' :
+                    artwork.status === 'Reserved' ? 'text-yellow-800 bg-yellow-100' :
+                    'text-gray-800 bg-gray-100'
                   }`}>
                     {artwork.status}
                   </span>
@@ -635,9 +642,9 @@ const ArtworkManagement = () => {
                     <button
                       onClick={() => handleBlockArtwork(artwork.artworkId || artwork.id)}
                       className={`p-2 rounded-lg transition-all ${
-                        artwork.status === 'FLAGGED' || artwork.blocked
+                        artwork.status === 'Sold'
                           ? 'bg-green-100 text-green-800 hover:bg-green-200' 
-                          : 'bg-red-100 text-red-800 hover:bg-red-200'
+                          : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
                       }`}
                       onMouseOver={(e) => {
                         e.target.style.transform = 'scale(1.05)';
@@ -645,9 +652,9 @@ const ArtworkManagement = () => {
                       onMouseOut={(e) => {
                         e.target.style.transform = 'scale(1)';
                       }}
-                      title={artwork.status === 'FLAGGED' || artwork.blocked ? 'Approve Artwork' : 'Flag Artwork'}
+                      title={artwork.status === 'Sold' ? 'Mark as Available' : 'Mark as Sold'}
                     >
-                      {artwork.status === 'FLAGGED' || artwork.blocked ? <UserCheck size={16} /> : <Ban size={16} />}
+                      {artwork.status === 'Sold' ? <UserCheck size={16} /> : <Ban size={16} />}
                     </button>
                     <button
                       onClick={() => handleToggleFeatured(artwork.artworkId || artwork.id)}
