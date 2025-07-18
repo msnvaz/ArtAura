@@ -37,7 +37,7 @@ const VerifyExhibition = () => {
 const [exhibitionPosts, setExhibitionPosts] = useState([
   {
     id: 1,
-    title: "Modern Art Showcase 2024",
+    title: "Modern Art Showcase 2025",
     description: "A contemporary art exhibition featuring local artists exploring themes of urban life and digital culture. This immersive experience will showcase cutting-edge installations, interactive digital art pieces, and thought-provoking sculptures that challenge traditional artistic boundaries.",
     location: "Downtown Gallery, Main Street",
     startDate: "2024-08-15",

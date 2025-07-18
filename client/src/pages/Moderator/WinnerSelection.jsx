@@ -10,9 +10,8 @@ const WinnerSelection = () => {
   const [showScoreBreakdown, setShowScoreBreakdown] = useState(null);
 
   const challenges = [
-    { id: 'web-design-2024', name: 'Web Design Challenge 2024', status: 'active', hasCriteria: true },
-    { id: 'mobile-app-innovation', name: 'Mobile App Innovation', status: 'review', hasCriteria: true },
-    { id: 'ai-art-competition', name: 'AI Art Competition', status: 'completed', hasCriteria: false }
+    { id: 'national-drawing-competition', name: 'National Drawing Competition', status: 'active', hasCriteria: true },
+    { id: 'landscape-painting-challenge', name: 'Landscape Painting Challenge', status: 'active', hasCriteria: false }
   ];
 
   // Mock scoring criteria for the selected challenge
@@ -164,6 +163,41 @@ const WinnerSelection = () => {
       }
     });
 
+  // Use the same previousChallenges data/structure as ModeratorDashboard
+  const pastChallenges = [
+    {
+      id: 'abstract-art-contest',
+      name: 'Abstract Art Contest',
+      description: 'A national web design challenge for creative portfolios and landing pages.',
+      deadline: '2025-07-30',
+      participants: 180,
+      submissions: 120,
+      winners: [
+        { position: 1, name: 'Alice Smith', title: 'Modern Web Portfolio' },
+        { position: 2, name: 'John Doe', title: 'Creative Landing Page' },
+        { position: 3, name: 'Priya Patel', title: 'Responsive Blog UI' }
+      ]
+    },
+    {
+      id: 'digital-art-2024',
+      name: 'Digital Art 2024',
+      description: 'A digital art contest for surreal and fantasy artworks.',
+      deadline: '2024-09-15',
+      participants: 140,
+      submissions: 90,
+      winners: [
+        { position: 1, name: 'Liam Wong', title: 'Neon Cityscape' },
+        { position: 2, name: 'Maria Garcia', title: 'Surreal Portrait' },
+        { position: 3, name: 'Chen Wei', title: 'Fantasy Forest' }
+      ]
+    }
+  ];
+
+  const handleManageCriteria = () => {
+    // Logic to navigate or open criteria management
+    navigate('/scoring-criteria');
+  };
+
   return (
     <>
       {/* Bootstrap CSS */}
@@ -171,7 +205,7 @@ const WinnerSelection = () => {
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" 
         rel="stylesheet" 
       />
-      
+
       <div className="min-h-screen" style={{backgroundColor: '#FFF5E1'}}>
         {/* Full Width Header */}
         <div 
@@ -210,7 +244,7 @@ const WinnerSelection = () => {
                     e.target.style.backgroundColor = 'rgba(255, 228, 214, 0.1)';
                     e.target.style.color = '#FFE4D6';
                   }}
-                  onClick={() => navigate('/scoring-criteria')}
+                  onClick={handleManageCriteria}
                 >
                   <Settings size={14} />
                   <span className="hidden sm:inline">Manage Criteria</span>
@@ -241,7 +275,7 @@ const WinnerSelection = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
           <div className="space-y-6">
             {/* Challenge Selection & Criteria Status */}
@@ -262,6 +296,19 @@ const WinnerSelection = () => {
                         </option>
                       ))}
                     </select>
+
+                    {/* More details for selected challenge */}
+                    {selectedChallengeData && (
+                      <div className="mt-4 p-4 rounded-lg border bg-white" style={{borderColor: '#FFE4D6'}}>
+                        <h4 className="font-semibold mb-2" style={{color: '#5D3A00'}}>{selectedChallengeData.name}</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                          <div><span className="font-medium" style={{color: '#D87C5A'}}>Status:</span> {selectedChallengeData.status}</div>
+                          <div><span className="font-medium" style={{color: '#D87C5A'}}>Start Date:</span> {selectedChallengeData.startDate || '2025-08-01'}</div>
+                          <div><span className="font-medium" style={{color: '#D87C5A'}}>Deadline:</span> {selectedChallengeData.deadline || '2025-08-30'}</div>
+                          <div><span className="font-medium" style={{color: '#D87C5A'}}>Participants:</span> {selectedChallengeData.participants || '210+'}</div>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div>
@@ -514,6 +561,44 @@ const WinnerSelection = () => {
                 </button>
               </div>
             )}
+
+            {/* Past Challenges Winners Section (always visible below criteria button) */}
+            <div className="rounded-lg shadow-sm border h-full relative overflow-hidden mt-8" style={{backgroundColor: '#FFF5E1'}}>
+              <div className="p-6">
+                <h2 className="text-xl font-semibold mb-4" style={{color: '#5D3A00'}}>Previous Challenges Winners</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {pastChallenges.map((challenge) => (
+                    <div key={challenge.id} className="rounded-lg border bg-white p-4" style={{borderColor: '#FFE4D6'}}>
+                      <h3 className="font-semibold mb-1" style={{color: '#D87C5A'}}>{challenge.name}</h3>
+                      <p className="text-sm text-gray-600 mb-2">{challenge.description}</p>
+                      <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
+                        <Clock size={14} />
+                        <span>Deadline: {challenge.deadline}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
+                        <Users size={14} />
+                        <span>{challenge.participants} participants • {challenge.submissions} submissions</span>
+                      </div>
+                      <div className="mt-2">
+                        <span className="block text-xs font-semibold text-green-700 mb-1">Winners:</span>
+                        <div className="space-y-1">
+                          {challenge.winners.map((winner) => (
+                            <div key={winner.position} className="flex items-center gap-2">
+                              {getPositionIcon(winner.position)}
+                              <span className="font-medium" style={{color: '#5D3A00'}}>
+                                {winner.position === 1 ? '1st Place' : winner.position === 2 ? '2nd Place' : '3rd Place'}:
+                              </span>
+                              <span>{winner.name}</span>
+                              <span className="text-gray-500">- {winner.title}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
