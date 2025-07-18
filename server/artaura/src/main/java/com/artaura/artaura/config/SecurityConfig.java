@@ -36,12 +36,16 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/api/auth/login",
+                                "/api/auth/logout",
+                                "/api/auth/verify", 
                                 "/api/artist/signup",
                                 "/api/buyer/signup",
                                 "/api/shop/signup",
                                 "/uploads/**",
+                                "/api/admin/artworks/**",
                                 "/api/artworks/create"
                         ).permitAll()
+
 
                         .requestMatchers("/api/posts/create").authenticated()
                         .requestMatchers("/api/posts/{role}/{userId}").authenticated()

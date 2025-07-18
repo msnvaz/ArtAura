@@ -10,6 +10,8 @@ import ChangeCoverModal from '../../components/profile/ChangeCoverModal';
 import EditPostModel from '../../components/artist/EditPostModel';
 import EditArtworkModal from '../../components/artworks/EditArtworkModal';
 import DeleteConfirmationModal from '../../components/artworks/DeleteConfirmationModal';
+import ManageAchievementsModal from "../../components/artist/ManageAchievementsModal";
+
 import { useAuth } from "../../context/AuthContext";
 import {
   Plus,
@@ -55,6 +57,7 @@ const ArtistPortfolio = () => {
   const [selectedArtwork, setSelectedArtwork] = useState(null);
   const [isEditingArtwork, setIsEditingArtwork] = useState(false);
   const [isDeletingArtwork, setIsDeletingArtwork] = useState(false);
+  const [showAchievementsModal, setShowAchievementsModal] = useState(false);
 
   const [editedProfile, setEditedProfile] = useState({
     name: '',
@@ -549,6 +552,20 @@ const ArtistPortfolio = () => {
       tags: '',
       imageFiles: []
     });
+  // Cover Change Handlers
+  const handleSaveCover = (newCoverFile) => {
+    // Here you would typically upload to backend and update the profile
+    console.log("Saving new cover image:", newCoverFile);
+
+    // For now, create a local URL to show the new image
+    const newCoverUrl = URL.createObjectURL(newCoverFile);
+
+    // Update the artist profile (in a real app, this would come from backend)
+    // You might need to update a global state or refetch the profile
+
+    setIsChangingCover(false);
+    // Show success notification
+    alert("Cover photo updated successfully!");
   };
 
   const handleSaveNewArtwork = async (artworkData) => {
@@ -650,6 +667,19 @@ const ArtistPortfolio = () => {
       artworks: 2
     }
   ];
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [postIdToDelete, setPostIdToDelete] = useState(null);
+
+  const openDeleteModal = (postId) => {
+    setPostIdToDelete(postId);
+    setShowDeleteModal(true);
+  };
+
+  const closeDeleteModal = () => {
+    setShowDeleteModal(false);
+    setPostIdToDelete(null);
+  };
 
   const handleDeletePost = async (postId) => {
     try {
@@ -983,7 +1013,9 @@ const ArtistPortfolio = () => {
                       <div className="text-sm text-[#7f5539]/60">Sales</div>
                     </div>
                     <div>
-                      <div className="text-2xl font-bold text-[#7f5539]">{artistProfile.stats.followers}</div>
+                      <div className="text-2xl font-bold text-[#7f5539]">
+                        {artistProfile.stats.followers}
+                      </div>
                       <div className="text-sm text-[#7f5539]/60">Followers</div>
                     </div>
                     <div>
@@ -1216,7 +1248,67 @@ const ArtistPortfolio = () => {
                           <p className="text-xs text-[#7f5539]/60">
                             {safeFormatDistanceToNow(post.created_at)}
                           </p>
+                          </div>
+                        </div>
+                        <div className="flex space-x-3">
+                          {" "}
+                          {/* Flex container with horizontal spacing */}
+                          <button
+                            onClick={() => handleEditPost(post)}
+                            className="text-[#7f5539]/60 hover:text-[#7f5539] transition-colors"
+                          >
+                            <Edit className="h-5 w-5" />
+                          </button>
+                          <button
+                            onClick={() => openDeleteModal(post.post_id)}
+                            className="text-red-500 hover:text-red-700 transition-colors"
+                            title="Delete Post"
+                          >
+                            <Trash2 className="h-5 w-5" />
+                          </button>
+                        </div>
+                      </div>
 
+                      {/* Post Caption */}
+                      <div className="px-5 pb-4">
+                        <p className="text-[#7f5539] leading-relaxed">
+                          {post.caption}
+                        </p>
+                      </div>
+
+                      {/* Post Image */}
+                      <div className="relative">
+                        <img
+                          src={`http://localhost:8081${post.image}`}
+                          alt={`Post ${post.post_id}`}
+                          className="w-full h-[32rem] object-cover"
+                        />
+                      </div>
+
+                      {/* Post Actions */}
+                      <div className="p-5">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center space-x-5">
+                            <button className="flex items-center space-x-1 text-[#7f5539] hover:text-[#6e4c34] transition-colors">
+                              <Heart className="h-7 w-7" />
+                            </button>
+                            <button className="flex items-center space-x-1 text-[#7f5539] hover:text-[#6e4c34] transition-colors">
+                              <MessageCircle className="h-7 w-7" />
+                            </button>
+                            <button className="flex items-center space-x-1 text-[#7f5539] hover:text-[#6e4c34] transition-colors">
+                              <Upload className="h-7 w-7" />
+                            </button>
+                          </div>
+                          <button className="text-[#7f5539] hover:text-[#6e4c34] transition-colors">
+                            <Star className="h-7 w-7" />
+                          </button>
+                        </div>
+
+                        {/* Like Count */}
+                        <div className="mb-3">
+                          <p className="font-semibold text-[#7f5539] text-base">
+                            {post.likes} likes
+                          </p>
                         </div>
                       </div>
                       <div className="flex space-x-3">  {/* Flex container with horizontal spacing */}
@@ -1547,16 +1639,24 @@ const ArtistPortfolio = () => {
         )}
 
         {/* Achievements Tab */}
-        {activeTab === 'achievements' && (
+        {activeTab === "achievements" && (
           <div className="bg-white rounded-lg shadow-sm p-6">
-            <h3 className="text-lg font-semibold text-[#7f5539] mb-6">Awards & Recognition</h3>
-
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-[#7f5539]">
+                Awards & Recognition
+              </h3>
+              <button
+                onClick={() => setShowAchievementsModal(true)}
+                className="bg-[#7f5539] text-[#fdf9f4] px-4 py-2 rounded-lg hover:bg-[#6e4c34] transition-colors font-medium flex items-center gap-2"
+              >
+                <Plus className="h-4 w-4" /> Manage Achievements
+              </button>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {badges.map((badge) => (
                 <div
                   key={badge.id}
                   className={`p-6 rounded-lg border-2 ${badge.color} hover:shadow-lg transition-shadow`}
-
                 >
                   <div className="flex items-start space-x-4">
                     <div className="p-3 bg-white rounded-full">
@@ -1568,7 +1668,8 @@ const ArtistPortfolio = () => {
                       <p className="text-xs opacity-60">{badge.date}</p>
                       <div className="mt-3">
                         <span className="inline-block px-3 py-1 bg-white/50 rounded-full text-xs font-medium">
-                          {badge.type.charAt(0).toUpperCase() + badge.type.slice(1)}
+                          {badge.type.charAt(0).toUpperCase() +
+                            badge.type.slice(1)}
                         </span>
                       </div>
                     </div>
@@ -2043,6 +2144,13 @@ const ArtistPortfolio = () => {
         onConfirm={handleConfirmDeleteArtwork}
         onCancel={handleCancelDeleteArtwork}
         isLoading={false}
+
+
+      <ManageAchievementsModal
+        isOpen={showAchievementsModal}
+        onClose={() => setShowAchievementsModal(false)}
+        achievements={badges}
+        onSave={() => {}}
       />
     </div>
   );
