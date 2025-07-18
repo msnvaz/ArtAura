@@ -31,7 +31,7 @@ const ArtworksGrid = ({
                 >
                     <div className="relative">
                         <img
-                            src={artwork.image}
+                            src={`http://localhost:8081${artwork.imageUrl}`}
                             alt={artwork.title}
                             className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                         />

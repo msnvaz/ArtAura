@@ -36,6 +36,7 @@ public class JwtUtil {
     public Jws<Claims> validateToken(String token) {
         return Jwts.parser()
                 .setSigningKey(secret) // Use your configured secret key
+                .setAllowedClockSkewSeconds(60) // Allow 60 seconds clock skew
                 .parseClaimsJws(token);
     }
 

@@ -127,7 +127,7 @@ const PublicArtistPortfolio = () => {
             year: '2024',
             price: '$450',
             status: 'Sold',
-            image: 'https://images.pexels.com/photos/1053924/pexels-photo-1053924.jpeg?auto=compress&cs=tinysrgb&w=400',
+            image: 'http://localhost:8081https://images.pexels.com/photos/1053924/pexels-photo-1053924.jpeg?auto=compress&cs=tinysrgb&w=400',
             likes: 32,
             views: 189,
             featured: false,
@@ -729,7 +729,7 @@ const PublicArtistPortfolio = () => {
                                             <div key={artwork.id} className="flex items-center space-x-3 cursor-pointer hover:bg-[#fdf9f4]/30 p-2 rounded-lg transition-colors"
                                                 onClick={() => handleViewArtworkDetail(artwork)}>
                                                 <img
-                                                    src={artwork.image}
+                                                    src={`http://localhost:8081${artwork.imageUrl}`}
                                                     alt={artwork.title}
                                                     className="w-12 h-12 rounded-lg object-cover"
                                                 />

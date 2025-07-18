@@ -8,6 +8,8 @@ import UploadPostModal from '../../components/artworks/UploadPostModal';
 import PostUploadModal from '../../components/social/PostUploadModal';
 import ChangeCoverModal from '../../components/profile/ChangeCoverModal';
 import EditPostModel from '../../components/artist/EditPostModel';
+import EditArtworkModal from '../../components/artworks/EditArtworkModal';
+import DeleteConfirmationModal from '../../components/artworks/DeleteConfirmationModal';
 import { useAuth } from "../../context/AuthContext";
 import {
   Plus,
@@ -51,6 +53,8 @@ const ArtistPortfolio = () => {
   const [isChangingCover, setIsChangingCover] = useState(false);
   const [isViewingArtwork, setIsViewingArtwork] = useState(false);
   const [selectedArtwork, setSelectedArtwork] = useState(null);
+  const [isEditingArtwork, setIsEditingArtwork] = useState(false);
+  const [isDeletingArtwork, setIsDeletingArtwork] = useState(false);
 
   const [editedProfile, setEditedProfile] = useState({
     name: '',
@@ -259,39 +263,180 @@ const ArtistPortfolio = () => {
     }));
   };
 
-  const handleSaveArtwork = () => {
-    // Here you would typically save to backend
-    console.log('Saving artwork:', newArtwork);
-    setIsAddingArtwork(false);
-    // Reset form
-    setNewArtwork({
-      title: '',
-      medium: '',
-      size: '',
-      year: '',
-      price: '',
-      description: '',
-      category: '',
-      tags: '',
-      imageFiles: []
-    });
-    // Show success notification
+  const handleSaveArtwork = async (updatedArtworkData) => {
+    try {
+      const formData = new FormData();
+
+      // Get the artwork ID - try different possible property names
+      const artworkId = updatedArtworkData.artworkId ||
+                        updatedArtworkData.artwork_id ||
+                        updatedArtworkData.id ||
+                        selectedArtwork?.artworkId ||
+                        selectedArtwork?.artwork_id ||
+                        selectedArtwork?.id;
+
+      if (!artworkId) {
+        console.error('No artwork ID found in:', updatedArtworkData, selectedArtwork);
+        alert('Error: Artwork ID not found. Please try again.');
+        return;
+      }
+
+      // Append all artwork data to FormData (excluding ID and image file temporarily)
+      Object.keys(updatedArtworkData).forEach(key => {
+        if (key !== 'imageFile' && key !== 'artworkId' && key !== 'artwork_id' && key !== 'id') {
+          const value = updatedArtworkData[key];
+          if (value !== null && value !== undefined) {
+            formData.append(key, value);
+          }
+        }
+      });
+
+      // Append image file if provided
+      if (updatedArtworkData.imageFile) {
+        formData.append('image', updatedArtworkData.imageFile);
+      }
+
+      const token = localStorage.getItem('token');
+
+      if (!token) {
+        alert('Authentication error. Please log in again.');
+        return;
+      }
+
+      console.log('Updating artwork with ID:', artworkId);
+      console.log('FormData contents:', Object.fromEntries(formData.entries()));
+
+      // Try without multipart/form-data first - send as JSON if no file
+      if (!updatedArtworkData.imageFile) {
+        // If no image file, send as JSON
+        const jsonData = {};
+        Object.keys(updatedArtworkData).forEach(key => {
+          if (key !== 'imageFile' && key !== 'artworkId' && key !== 'artwork_id' && key !== 'id') {
+            const value = updatedArtworkData[key];
+            if (value !== null && value !== undefined) {
+              jsonData[key] = value;
+            }
+          }
+        });
+
+        const response = await axios.put(
+          `http://localhost:8081/api/artworks/${artworkId}`,
+          jsonData,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+
+        console.log('Update response:', response.data);
+
+        // Update the artworks list with the updated artwork
+        setArtworks(prevArtworks =>
+          prevArtworks.map(artwork => {
+            const currentId = artwork.artworkId || artwork.artwork_id || artwork.id;
+            return currentId === artworkId ? { ...artwork, ...response.data } : artwork;
+          })
+        );
+
+        setIsEditingArtwork(false);
+        setSelectedArtwork(null);
+
+        // Show success message
+        alert('Artwork updated successfully!');
+      } else {
+        // If there's an image file, use FormData but don't set Content-Type header
+        const response = await axios.put(
+          `http://localhost:8081/api/artworks/${artworkId}`,
+          formData,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`
+              // Don't set Content-Type - let axios handle it automatically
+            }
+          }
+        );
+
+        console.log('Update response:', response.data);
+
+        // Update the artworks list with the updated artwork
+        setArtworks(prevArtworks =>
+          prevArtworks.map(artwork => {
+            const currentId = artwork.artworkId || artwork.artwork_id || artwork.id;
+            return currentId === artworkId ? { ...artwork, ...response.data } : artwork;
+          })
+        );
+
+        setIsEditingArtwork(false);
+        setSelectedArtwork(null);
+
+        // Show success message
+        alert('Artwork updated successfully!');
+      }
+
+    } catch (error) {
+      console.error('Error updating artwork:', error);
+
+      // More detailed error handling
+      if (error.response) {
+        console.error('Server response:', error.response.data);
+        console.error('Status code:', error.response.status);
+
+        if (error.response.status === 401) {
+          alert('Authentication failed. Please log in again.');
+        } else if (error.response.status === 403) {
+          alert('You do not have permission to update this artwork.');
+        } else if (error.response.status === 404) {
+          alert('Artwork not found. It may have been deleted.');
+        } else if (error.response.status === 415) {
+          alert('Server does not support the file format. Please try a different image format.');
+        } else {
+          alert(`Failed to update artwork: ${error.response.data.message || error.response.data || 'Server error'}`);
+        }
+      } else if (error.request) {
+        console.error('No response received:', error.request);
+        alert('Network error. Please check your connection and try again.');
+      } else {
+        console.error('Request setup error:', error.message);
+        alert('Failed to update artwork. Please try again.');
+      }
+    }
   };
 
-  const handleCancelAddArtwork = () => {
-    setIsAddingArtwork(false);
-    // Reset form
-    setNewArtwork({
-      title: '',
-      medium: '',
-      size: '',
-      year: '',
-      price: '',
-      description: '',
-      category: '',
-      tags: '',
-      imageFiles: []
-    });
+  const handleConfirmDeleteArtwork = async () => {
+    if (!selectedArtwork) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const artworkId = selectedArtwork.artworkId || selectedArtwork.id;
+
+      await axios.delete(
+        `http://localhost:8081/api/artworks/${artworkId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
+
+      // Remove the artwork from the artworks list
+      setArtworks(prevArtworks =>
+        prevArtworks.filter(artwork =>
+          (artwork.artworkId || artwork.id) !== artworkId
+        )
+      );
+
+      setIsDeletingArtwork(false);
+      setSelectedArtwork(null);
+
+      // Show success message
+      alert('Artwork deleted successfully!');
+
+    } catch (error) {
+      console.error('Error deleting artwork:', error);
+      alert('Failed to delete artwork. Please try again.');
+    }
   };
 
   // Post Upload Handlers
@@ -361,6 +506,32 @@ const ArtistPortfolio = () => {
     });
   };
 
+  const handleCancelAddArtwork = () => {
+    setIsAddingArtwork(false);
+    // Reset form
+    setNewArtwork({
+      title: '',
+      medium: '',
+      size: '',
+      year: '',
+      price: '',
+      description: '',
+      category: '',
+      tags: '',
+      imageFiles: []
+    });
+  };
+
+  const handleCancelEditArtwork = () => {
+    setIsEditingArtwork(false);
+    setSelectedArtwork(null);
+  };
+
+  const handleCancelDeleteArtwork = () => {
+    setIsDeletingArtwork(false);
+    setSelectedArtwork(null);
+  };
+
   // Cover Change Handlers
   const handleSaveCover = (newCoverFile) => {
     // Here you would typically upload to backend and update the profile
@@ -392,14 +563,14 @@ const ArtistPortfolio = () => {
   };
 
   const handleEditArtwork = (artwork) => {
-    console.log('Edit artwork:', artwork);
-    // Here you would typically open an edit modal or navigate to edit page
+    setSelectedArtwork(artwork);
+    setIsEditingArtwork(true);
     setIsViewingArtwork(false);
   };
 
   const handleDeleteArtwork = (artwork) => {
-    console.log('Delete artwork:', artwork);
-    // Here you would typically show a confirmation dialog and delete the artwork
+    setSelectedArtwork(artwork);
+    setIsDeletingArtwork(true);
     setIsViewingArtwork(false);
   };
 
@@ -889,16 +1060,16 @@ const ArtistPortfolio = () => {
                   </h3>
                   <div className="space-y-3">
                     {Array.isArray(artworks) && artworks.slice(0, 4).map((artwork) => (
-                      <div key={artwork.id || artwork.artwork_id} className="flex items-center space-x-3">
+                      <div key={artwork.artwork_id || artwork.id || artwork.title} className="flex items-center space-x-3">
                         <img
-                          src={artwork.image}
+                          src={`http://localhost:8081${artwork.imageUrl}`}
                           alt={artwork.title}
                           className="w-12 h-12 rounded-lg object-cover"
                         />
                         <div className="flex-1">
                           <p className="text-sm font-medium text-[#7f5539]">{artwork.title}</p>
                           <div className="flex items-center space-x-2 text-xs text-[#7f5539]/60">
-                            <span>{artwork.likes} likes</span>
+                            <span>{artwork.likes_count || artwork.likes} likes</span>
                             <span>•</span>
                             <span>{artwork.price}</span>
                           </div>
@@ -1010,13 +1181,10 @@ const ArtistPortfolio = () => {
             {/* Artworks Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {Array.isArray(artworks) && artworks.map((artwork) => (
-                <div
-                  key={artwork.artwork_id}
-                  className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-lg transition-all duration-300 group"
-                >
+                <div key={artwork.artwork_id || artwork.id || artwork.title} className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-lg transition-all duration-300 group">
                   <div className="relative">
                     <img
-                      src={artwork.image}
+                      src={`http://localhost:8081${artwork.imageUrl}`}
                       alt={artwork.title}
                       className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                     />
@@ -1033,10 +1201,16 @@ const ArtistPortfolio = () => {
                       >
                         <Eye className="h-4 w-4" />
                       </button>
-                      <button className="bg-white/90 text-[#7f5539] p-2 rounded-full hover:bg-white transition-colors">
+                      <button
+                        onClick={() => handleEditArtwork(artwork)}
+                        className="bg-white/90 text-[#7f5539] p-2 rounded-full hover:bg-white transition-colors"
+                      >
                         <Edit className="h-4 w-4" />
                       </button>
-                      <button className="bg-white/90 text-red-500 p-2 rounded-full hover:bg-white transition-colors">
+                      <button
+                        onClick={() => handleDeleteArtwork(artwork)}
+                        className="bg-white/90 text-red-500 p-2 rounded-full hover:bg-white transition-colors"
+                      >
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
@@ -1592,6 +1766,24 @@ const ArtistPortfolio = () => {
           onSave={handleEditSavePost}
         />
       )}
+
+      {/* Edit Artwork Modal */}
+      <EditArtworkModal
+        isOpen={isEditingArtwork}
+        artwork={selectedArtwork}
+        onClose={handleCancelEditArtwork}
+        onSave={handleSaveArtwork}
+        onCancel={handleCancelEditArtwork}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={isDeletingArtwork}
+        artwork={selectedArtwork}
+        onConfirm={handleConfirmDeleteArtwork}
+        onCancel={handleCancelDeleteArtwork}
+        isLoading={false}
+      />
     </div>
   );
 };
