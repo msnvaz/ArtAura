@@ -59,8 +59,9 @@ function EditModal({ item, onClose, onSave }) {
       }
 
       // Make PUT request to backend
+      const API_URL = import.meta.env.VITE_API_URL;
       await axios.put(
-        `http://localhost:8080/api/posts/${item.post_id}`,
+        `${API_URL}/api/posts/${item.post_id}`,
         data,
         {
           headers: {
