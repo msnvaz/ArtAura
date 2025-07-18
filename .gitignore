@@ -11,3 +11,5 @@ client/.env
 package-lock.json
 package.json
 uploads
+
+server/.env
