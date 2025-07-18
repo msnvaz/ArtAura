@@ -41,36 +41,19 @@ function EditModal({ item, onClose, onSave }) {
     setError("");
 
     try {
-      const data = new FormData();
-      data.append("caption", formData.caption);
+      // Instead of making our own API call, just pass the updated data to the parent
+      // The parent (ArtistPortfolio) will handle the API call
+      const updatedPost = {
+        ...item,
+        caption: formData.caption,
+        // If there's a new image, we'd need to handle that separately
+        // For now, just update the caption
+      };
 
-      // Append image only if new image selected
-      if (formData.image) {
-        data.append("image", formData.image);
-      }
+      console.log('EditPostModel: Sending updated post to parent:', updatedPost);
 
-      // Get JWT token from localStorage or context (adjust if needed)
-      const token = localStorage.getItem("token");
-
-      if (!token) {
-        setError("Authentication token not found. Please login again.");
-        setLoading(false);
-        return;
-      }
-
-      // Make PUT request to backend
-      const response = await axios.put(
-        `http://localhost:8081/api/posts/${item.post_id}`, // confirm your ID key here
-        data,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-
-      onSave(response.data); // pass updated post back to parent
+      // Call the parent's onSave function with the updated post
+      onSave(updatedPost);
       handleClose();
     } catch (err) {
       console.error(err);
@@ -106,16 +89,17 @@ function EditModal({ item, onClose, onSave }) {
           {error && <div className="text-red-600 text-sm">{error}</div>}
 
           <div>
-            <label className="block text-sm font-medium" htmlFor="caption">
+            <label className="block text-sm font-medium mb-2" htmlFor="caption">
               Caption
             </label>
-            <input
-              type="text"
+            <textarea
               id="caption"
               name="caption"
               value={formData.caption}
               onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7f5539]/60"
+              rows={4}
+              placeholder="Write your caption here..."
+              className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7f5539]/60 resize-vertical"
             />
           </div>
 
