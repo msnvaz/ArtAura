@@ -65,9 +65,7 @@ const Navbar = ({ onToggleSidebar }) => {
 
             {/* Right Actions */}
             <div className="flex items-center space-x-4">
-              <button className="text-white hover:text-[#87CEEB] p-2.5 rounded-xl hover:bg-[#87CEEB]/10 transition-colors">
-                <NotificationsPopup />
-              </button>
+              <NotificationsPopup />
 
               {/* Profile Dropdown or Sign In Button */}
               {isSignedIn ? (
