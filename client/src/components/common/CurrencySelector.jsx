@@ -1,5 +1,5 @@
 import React from 'react';
-import { DollarSign, Globe } from 'lucide-react';
+import { Globe } from 'lucide-react';
 import { useCurrency } from '../../context/CurrencyContext';
 
 const CurrencySelector = ({ className = "" }) => {
@@ -38,7 +38,6 @@ const CurrencySelector = ({ className = "" }) => {
             color: currency === 'USD' ? 'white' : '#5D3A00'
           }}
         >
-          <DollarSign size={14} />
           <span className="font-semibold">USD</span>
         </button>
       </div>
