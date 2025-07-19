@@ -11,7 +11,8 @@ import {
   MoreVertical,
   X,
   Plus,
-  Loader2
+  Loader2,
+  Heart
 } from 'lucide-react';
 import { useCurrency } from '../../context/CurrencyContext';
 import CurrencySelector from '../../components/common/CurrencySelector';
@@ -63,10 +64,10 @@ const ArtworkManagement = () => {
     setIsLoaded(true);
   }, []);
 
-  // Load data when filters change
+  // Load data when filters change (but not search term - that's handled by local filtering)
   useEffect(() => {
     loadArtworks();
-  }, [artworkSearchTerm, artworkFilterStatus, pagination.page, pagination.size]);
+  }, [artworkFilterStatus, pagination.page, pagination.size]);
 
   // API functions
   const loadArtworks = async () => {
@@ -74,27 +75,14 @@ const ArtworkManagement = () => {
       setLoading(true);
       setError(null);
       
-      let response;
-      
-      if (artworkSearchTerm) {
-        // Use search endpoint for general search
-        const searchResults = await adminArtworkApi.searchArtworks(artworkSearchTerm);
-        response = {
-          content: searchResults || [],
-          totalElements: searchResults?.length || 0,
-          totalPages: 1,
-          currentPage: 0
-        };
-      } else {
-        // Use filtering endpoint for regular browsing
-        const filters = {
-          page: pagination.page,
-          size: pagination.size,
-          status: artworkFilterStatus !== 'all' ? artworkFilterStatus : undefined
-        };
+      // Always use the getAllArtworks endpoint and let local filtering handle search
+      const filters = {
+        page: pagination.page,
+        size: pagination.size,
+        status: artworkFilterStatus !== 'all' ? artworkFilterStatus : undefined
+      };
 
-        response = await adminArtworkApi.getAllArtworks(filters);
-      }
+      const response = await adminArtworkApi.getAllArtworks(filters);
 
       // Use artworks directly without status mapping
       const processedArtworks = response.content || [];
@@ -197,9 +185,25 @@ const ArtworkManagement = () => {
   };
 
   const filteredArtworks = artworks.filter(artwork => {
-    const matchesSearch = artwork.title.toLowerCase().includes(artworkSearchTerm.toLowerCase()) ||
-                         artwork.artistName.toLowerCase().includes(artworkSearchTerm.toLowerCase()) ||
-                         artwork.category.toLowerCase().includes(artworkSearchTerm.toLowerCase());
+    // Debug: log the artwork structure to understand the data
+    if (artworkSearchTerm && artworks.length > 0 && artworks.indexOf(artwork) === 0) {
+      console.log('Sample artwork structure:', artwork);
+    }
+    
+    const artistName = artwork.artistName || artwork.artist || '';
+    const title = artwork.title || '';
+    const category = artwork.category || '';
+    
+    // Debug: log search values
+    if (artworkSearchTerm) {
+      console.log('Searching for:', artworkSearchTerm);
+      console.log('Title:', title, 'Artist:', artistName, 'Category:', category);
+    }
+    
+    const matchesSearch = !artworkSearchTerm || 
+                         title.toLowerCase().includes(artworkSearchTerm.toLowerCase()) ||
+                         artistName.toLowerCase().includes(artworkSearchTerm.toLowerCase()) ||
+                         category.toLowerCase().includes(artworkSearchTerm.toLowerCase());
     const matchesStatus = artworkFilterStatus === 'all' || artwork.status === artworkFilterStatus;
     return matchesSearch && matchesStatus;
   });
@@ -357,11 +361,11 @@ const ArtworkManagement = () => {
               }}
               className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
                 artwork.isFeatured
-                  ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-                  : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+                  ? 'bg-red-100 text-red-800 hover:bg-red-200'
+                  : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
               }`}
             >
-              <Plus size={16} />
+              <Heart size={16} fill={artwork.isFeatured ? 'currentColor' : 'none'} />
               {artwork.isFeatured ? 'Remove from Featured' : 'Add to Featured'}
             </button>
             <button
@@ -546,7 +550,7 @@ const ArtworkManagement = () => {
               <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2" style={{color: '#5D3A00'}} />
               <input
                 type="text"
-                placeholder="Search artworks by title, artist, or category..."
+                placeholder="Search by title, artist name, or category..."
                 value={artworkSearchTerm}
                 onChange={(e) => setArtworkSearchTerm(e.target.value)}
                 className="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent w-full sm:w-64"
@@ -677,8 +681,8 @@ const ArtworkManagement = () => {
                           onClick={() => handleToggleFeatured(artwork.artworkId || artwork.id)}
                           className={`p-2 rounded-lg transition-all ${
                             artwork.isFeatured
-                              ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-                              : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+                              ? 'bg-red-100 text-red-800 hover:bg-red-200'
+                              : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                           }`}
                           onMouseOver={(e) => {
                             e.target.style.transform = 'scale(1.05)';
@@ -688,7 +692,7 @@ const ArtworkManagement = () => {
                           }}
                           title={artwork.isFeatured ? 'Remove from Featured' : 'Add to Featured'}
                         >
-                          <Plus size={16} />
+                          <Heart size={16} fill={artwork.isFeatured ? 'currentColor' : 'none'} />
                         </button>
                       </div>
                     </div>
