@@ -43,7 +43,10 @@ public class SecurityConfig {
                         "/api/artworks/create",
                         "/api/achievements/artist/**",
                         "/api/achievements/create",
-                        "/api/achievements/**"
+                        "/api/achievements/**",
+                        "/api/exhibitions/artist/**",
+                        "/api/exhibitions/create",
+                        "/api/exhibitions/**"
                 ).permitAll()
                 .requestMatchers("/api/posts/create").authenticated()
                 .requestMatchers("/api/posts/{role}/{userId}").authenticated()

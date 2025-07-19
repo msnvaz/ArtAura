@@ -8,6 +8,7 @@ import UploadPostModal from '../../components/artworks/UploadPostModal';
 import PostUploadModal from '../../components/social/PostUploadModal';
 import ChangeCoverModal from '../../components/profile/ChangeCoverModal';
 import EditPostModel from '../../components/artist/EditPostModel';
+import ExhibitionsSection from '../../components/artist/ExhibitionsSection';
 import AchievementsSection from '../../components/artist/AchievementsSection';
 import EditArtworkModal from '../../components/artworks/EditArtworkModal';
 import DeleteConfirmationModal from '../../components/artworks/DeleteConfirmationModal';
@@ -121,6 +122,7 @@ const ArtistPortfolio = () => {
   const [achievementsCount, setAchievementsCount] = useState(0);
   const [recentAchievements, setRecentAchievements] = useState([]);
   const [topAchievements, setTopAchievements] = useState([]);
+  const [exhibitionsCount, setExhibitionsCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   // Fetch artist profile data
@@ -251,6 +253,34 @@ const ArtistPortfolio = () => {
   useEffect(() => {
     fetchAchievementsData();
   }, [userId]);
+
+  // Fetch exhibitions count function (reusable)
+  const fetchExhibitionsCount = async () => {
+    if (!userId || !token) {
+      console.warn("Missing userId or token. Skipping exhibitions count fetch.");
+      return;
+    }
+
+    try {
+      const response = await axios.get(`http://localhost:8081/api/exhibitions/artist/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      const exhibitions = response.data || [];
+      setExhibitionsCount(exhibitions.length);
+      console.log('Initial exhibitions count loaded:', exhibitions.length);
+    } catch (error) {
+      console.error("Error fetching exhibitions count:", error);
+      setExhibitionsCount(0);
+    }
+  };
+
+  // Fetch initial exhibitions count
+  useEffect(() => {
+    fetchExhibitionsCount();
+  }, [userId, token]);
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -1329,7 +1359,7 @@ const ArtistPortfolio = () => {
               {[
                 { id: 'portfolio', label: 'Portfolio', count: portfolioPosts.length },
                 { id: 'tosell', label: 'To sell', count: Array.isArray(artworks) ? artworks.length : 0 },
-                { id: 'exhibitions', label: 'Exhibitions', count: exhibitions.length },
+                { id: 'exhibitions', label: 'Exhibitions', count: exhibitionsCount },
                 { id: 'achievements', label: 'Achievements', count: achievementsCount },
                 { id: 'analytics', label: 'Analytics' }
               ].map((tab) => (
@@ -1816,33 +1846,9 @@ const ArtistPortfolio = () => {
 
         {/* Exhibitions Tab */}
         {activeTab === 'exhibitions' && (
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-[#7f5539]">My Exhibitions</h3>
-              <button className="bg-[#7f5539] text-[#fdf9f4] px-4 py-2 rounded-lg hover:bg-[#6e4c34] transition-colors font-medium">
-                Apply for Exhibition
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              {exhibitions.map((exhibition, index) => (
-                <div key={exhibition.id || `main-exhibition-${index}`} className="p-4 bg-[#fdf9f4]/30 rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-medium text-[#7f5539]">{exhibition.title}</h4>
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${exhibition.status === 'Upcoming' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
-                      }`}>
-                      {exhibition.status}
-                    </span>
-                  </div>
-                  <div className="text-sm text-[#7f5539]/70 space-y-1">
-                    <p>Location: {exhibition.location}</p>
-                    <p>Date: {exhibition.date}</p>
-                    <p>Artworks: {exhibition.artworks} pieces</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <ExhibitionsSection
+            onExhibitionsCountChange={setExhibitionsCount}
+          />
         )}
 
         {/* Achievements Tab */}
