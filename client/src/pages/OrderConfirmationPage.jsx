@@ -96,7 +96,10 @@ const OrderConfirmationPage = () => {
                 <div className="flex justify-between text-sm">
                   <span className="text-[#7f5539]">Subtotal</span>
                   <span className="font-medium text-[#7f5539]">
-                    ${orderSummary.subtotal.toFixed(2)}
+                    LKR{" "}
+                    {orderSummary.subtotal.toLocaleString(undefined, {
+                      maximumFractionDigits: 2,
+                    })}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
@@ -104,13 +107,18 @@ const OrderConfirmationPage = () => {
                   <span className="font-medium text-[#7f5539]">
                     {orderSummary.shipping === 0
                       ? "FREE"
-                      : `$${orderSummary.shipping.toFixed(2)}`}
+                      : `LKR ${orderSummary.shipping.toLocaleString(undefined, {
+                          maximumFractionDigits: 2,
+                        })}`}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-[#7f5539]">Tax</span>
                   <span className="font-medium text-[#7f5539]">
-                    ${orderSummary.tax.toFixed(2)}
+                    LKR{" "}
+                    {orderSummary.tax.toLocaleString(undefined, {
+                      maximumFractionDigits: 2,
+                    })}
                   </span>
                 </div>
                 <hr className="border-[#FFE4D6]" />
@@ -119,7 +127,10 @@ const OrderConfirmationPage = () => {
                     Total Paid
                   </span>
                   <span className="font-bold text-[#D87C5A]">
-                    ${orderSummary.total.toFixed(2)}
+                    LKR{" "}
+                    {orderSummary.total.toLocaleString(undefined, {
+                      maximumFractionDigits: 2,
+                    })}
                   </span>
                 </div>
               </div>

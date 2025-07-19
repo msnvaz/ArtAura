@@ -120,7 +120,7 @@ const CartSidebar = () => {
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-bold text-[#D87C5A]">
-                          ${(item.price * item.quantity).toFixed(2)}
+                          LKR {(item.price * item.quantity).toLocaleString()}
                         </span>
                         <button
                           onClick={() => handleRemoveClick(item.id)}
@@ -145,7 +145,7 @@ const CartSidebar = () => {
                 Total:
               </span>
               <span className="text-xl font-bold text-[#D87C5A]">
-                ${getCartTotal().toFixed(2)}
+                LKR {getCartTotal().toLocaleString()}
               </span>
             </div>
             <button

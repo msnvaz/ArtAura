@@ -8,7 +8,7 @@ const TopArtists = () => {
   const topArtists = [
     {
       id: 1,
-      name: "Sarah Martinez",
+      name: "Nimali Perera",
       avatar: "https://randomuser.me/api/portraits/women/44.jpg",
       reviews: 124,
       followers: 2840,
@@ -17,7 +17,7 @@ const TopArtists = () => {
     },
     {
       id: 2,
-      name: "Liam Chen",
+      name: "Kasun Fernando",
       avatar: "https://randomuser.me/api/portraits/men/32.jpg",
       reviews: 98,
       followers: 1950,
@@ -26,7 +26,7 @@ const TopArtists = () => {
     },
     {
       id: 3,
-      name: "Ava Patel",
+      name: "Amaya Jayasinghe",
       avatar: "https://randomuser.me/api/portraits/women/68.jpg",
       reviews: 87,
       followers: 1620,
@@ -35,8 +35,8 @@ const TopArtists = () => {
     },
     {
       id: 4,
-      name: "Marcus Johnson",
-      avatar: "https://randomuser.me/api/portraits/men/25.jpg",
+      name: "Nadeesha Gunawardena",
+      avatar: "https://randomuser.me/api/portraits/women/25.jpg",
       reviews: 73,
       followers: 1450,
       rating: 4.6,
@@ -44,8 +44,8 @@ const TopArtists = () => {
     },
     {
       id: 5,
-      name: "Emily Rodriguez",
-      avatar: "https://randomuser.me/api/portraits/women/35.jpg",
+      name: "Sahan Perera",
+      avatar: "https://randomuser.me/api/portraits/men/15.jpg",
       reviews: 65,
       followers: 1200,
       rating: 4.5,

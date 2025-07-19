@@ -147,7 +147,7 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
                   Total Amount
                 </h3>
                 <p className="text-2xl font-bold text-[#D87C5A]">
-                  ${order.total}
+                  LKR {order.total.toLocaleString()}
                 </p>
               </div>
             </div>
@@ -182,7 +182,7 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
                     </div>
                     <div className="text-right">
                       <p className="font-semibold text-[#D87C5A] text-lg">
-                        ${item.price}
+                        LKR {item.price.toLocaleString()}
                       </p>
                       {order.status === "delivered" && (
                         <button
@@ -274,24 +274,20 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
                     <div className="flex justify-between">
                       <span className="text-[#7f5539]/70">Subtotal:</span>
                       <span className="text-[#7f5539]">
-                        ${(order.total * 0.9).toFixed(2)}
+                        LKR {(order.total * 0.95).toLocaleString()}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-[#7f5539]/70">Shipping:</span>
                       <span className="text-[#7f5539]">
-                        ${(order.total * 0.05).toFixed(2)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[#7f5539]/70">Tax:</span>
-                      <span className="text-[#7f5539]">
-                        ${(order.total * 0.05).toFixed(2)}
+                        LKR {(order.total * 0.05).toLocaleString()}
                       </span>
                     </div>
                     <div className="flex justify-between font-semibold pt-1 border-t border-[#FFD95A]">
                       <span className="text-[#7f5539]">Total:</span>
-                      <span className="text-[#D87C5A]">${order.total}</span>
+                      <span className="text-[#D87C5A]">
+                        LKR {order.total.toLocaleString()}
+                      </span>
                     </div>
                   </div>
                 </div>

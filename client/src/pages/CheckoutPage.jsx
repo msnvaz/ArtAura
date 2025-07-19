@@ -32,8 +32,8 @@ const CheckoutPage = () => {
   const [isProcessing, setIsProcessing] = useState(false);
 
   const subtotal = getCartTotal();
-  const shipping = subtotal > 50 ? 0 : 9.99;
-  const tax = subtotal * 0.08;
+  const shipping = subtotal > 5000 ? 0 : 800; // Free shipping over LKR 5,000, else LKR 800
+  const tax = subtotal * 0.08; // 8% tax
   const total = subtotal + shipping + tax;
 
   const handleInputChange = (field, value) => {
@@ -363,7 +363,7 @@ const CheckoutPage = () => {
                           Qty: {item.quantity}
                         </p>
                         <p className="text-sm font-bold text-[#D87C5A]">
-                          ${(item.price * item.quantity).toFixed(2)}
+                          LKR {(item.price * item.quantity).toLocaleString()}
                         </p>
                       </div>
                     </div>
@@ -376,26 +376,34 @@ const CheckoutPage = () => {
                   <div className="flex justify-between text-sm">
                     <span className="text-[#7f5539]">Subtotal</span>
                     <span className="font-medium text-[#7f5539]">
-                      ${subtotal.toFixed(2)}
+                      LKR {subtotal.toLocaleString()}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-[#7f5539]">Shipping</span>
                     <span className="font-medium text-[#7f5539]">
-                      {shipping === 0 ? "FREE" : `$${shipping.toFixed(2)}`}
+                      {shipping === 0
+                        ? "FREE"
+                        : `LKR ${shipping.toLocaleString()}`}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-[#7f5539]">Tax</span>
                     <span className="font-medium text-[#7f5539]">
-                      ${tax.toFixed(2)}
+                      LKR{" "}
+                      {tax.toLocaleString(undefined, {
+                        maximumFractionDigits: 2,
+                      })}
                     </span>
                   </div>
                   <hr className="border-[#FFE4D6]" />
                   <div className="flex justify-between text-lg">
                     <span className="font-semibold text-[#7f5539]">Total</span>
                     <span className="font-bold text-[#D87C5A]">
-                      ${total.toFixed(2)}
+                      LKR{" "}
+                      {total.toLocaleString(undefined, {
+                        maximumFractionDigits: 2,
+                      })}
                     </span>
                   </div>
                 </div>

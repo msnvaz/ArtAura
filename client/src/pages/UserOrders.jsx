@@ -30,22 +30,22 @@ const UserOrders = () => {
         id: "ORD-001",
         date: "2024-01-15",
         status: "delivered",
-        total: 89.99,
+        total: 125000.0,
         items: [
           {
             id: 1,
             title: "Abstract Ocean Painting",
-            artist: "Sarah Martinez",
-            price: 89.99,
+            artist: "Sanduni Fernando",
+            price: 125000.0,
             image:
-              "https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=300&h=300&fit=crop",
+              "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=300&h=300&fit=crop&crop=center",
             quantity: 1,
           },
         ],
         shipping: {
-          address: "123 Art Street, Creative City, CA 90210",
-          method: "Standard Shipping",
-          trackingNumber: "TR123456789",
+          address: "No. 25, Colombo Road, Pinnawala, Kegalle 71120",
+          method: "Premium Insured Delivery",
+          trackingNumber: "SL123456789",
         },
         payment: {
           method: "Credit Card",
@@ -56,25 +56,25 @@ const UserOrders = () => {
         id: "ORD-002",
         date: "2024-01-10",
         status: "shipped",
-        total: 149.97,
+        total: 285000.0,
         items: [
           {
             id: 2,
-            title: "Modern Art Print Set",
-            artist: "Liam Chen",
-            price: 74.99,
+            title: "Limited Edition Art Print Set",
+            artist: "Kasun Silva",
+            price: 142500.0,
             image:
-              "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=300&h=300&fit=crop",
+              "https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=300&h=300&fit=crop&crop=center",
             quantity: 2,
           },
         ],
         shipping: {
-          address: "123 Art Street, Creative City, CA 90210",
-          method: "Express Shipping",
-          trackingNumber: "TR987654321",
+          address: "No. 25, Colombo Road, Pinnawala, Kegalle 71120",
+          method: "Express Insured Delivery",
+          trackingNumber: "SL987654321",
         },
         payment: {
-          method: "PayPal",
+          method: "Bank Transfer",
           last4: null,
         },
       },
@@ -82,21 +82,20 @@ const UserOrders = () => {
         id: "ORD-003",
         date: "2024-01-05",
         status: "processing",
-        total: 199.99,
+        total: 450000.0,
         items: [
           {
             id: 3,
-            title: "Custom Portrait Commission",
-            artist: "Ava Patel",
-            price: 199.99,
-            image:
-              "https://images.unsplash.com/photo-1571115764595-644a1f56a55c?w=300&h=300&fit=crop",
+            title: "Custom Portrait Commission - Oil on Canvas",
+            artist: "Priya Jayasuriya",
+            price: 450000.0,
+            image: "/art3.jpeg", // public image
             quantity: 1,
           },
         ],
         shipping: {
-          address: "123 Art Street, Creative City, CA 90210",
-          method: "Standard Shipping",
+          address: "No. 25, Colombo Road, Pinnawala, Kegalle 71120",
+          method: "White Glove Delivery",
           trackingNumber: null,
         },
         payment: {
@@ -108,21 +107,21 @@ const UserOrders = () => {
         id: "ORD-004",
         date: "2023-12-28",
         status: "pending",
-        total: 59.99,
+        total: 175000.0,
         items: [
           {
             id: 4,
-            title: "Watercolor Landscape",
-            artist: "Marcus Johnson",
-            price: 59.99,
+            title: "Premium Watercolor Landscape Collection",
+            artist: "Dilshan Gamage",
+            price: 175000.0,
             image:
-              "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=300&h=300&fit=crop",
+              "https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=300&h=300&fit=crop&crop=center",
             quantity: 1,
           },
         ],
         shipping: {
-          address: "123 Art Street, Creative City, CA 90210",
-          method: "Standard Shipping",
+          address: "No. 25, Colombo Road, Pinnawala, Kegalle 71120",
+          method: "Premium Insured Delivery",
           trackingNumber: null,
         },
         payment: {
@@ -320,7 +319,7 @@ const UserOrders = () => {
                           <span className="font-medium">Total Amount:</span>
                           <br />
                           <span className="text-[#D87C5A] font-semibold">
-                            ${order.total}
+                            LKR {order.total.toLocaleString()}
                           </span>
                         </div>
                         <div>

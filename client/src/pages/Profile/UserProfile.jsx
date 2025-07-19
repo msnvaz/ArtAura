@@ -39,36 +39,36 @@ const UserProfile = () => {
       // Use mock data for now
       setProfileData({
         id: auth?.userId || 1,
-        firstName: "John",
-        lastName: "Doe",
-        email: "john.doe@example.com",
-        phone: "+1 (555) 123-4567",
-        streetAddress: "123 Art Street",
-        city: "Creative City",
-        state: "CA",
-        postalCode: "90210",
+        firstName: "Pawani",
+        lastName: "Kumari",
+        email: "pawani.kumari@gmail.com",
+        phone: "+94 77 123 4567",
+        streetAddress: "No. 45, Pinnawala",
+        city: "Rambukkana",
+        state: "Kegalle",
+        postalCode: "71100",
         joinDate: "2024-01-15",
         role: auth?.role || "buyer",
-        avatar: "/src/assets/user.png",
-        bio: "Art enthusiast and collector.",
+        avatar: "https://randomuser.me/api/portraits/women/42.jpg",
+        bio: "Art enthusiast and collector from Sri Lanka.",
       });
     } catch (error) {
       console.error("Error fetching profile:", error);
       // Use mock data for now
       setProfileData({
         id: auth?.userId || 1,
-        firstName: "John",
-        lastName: "Doe",
-        email: "john.doe@example.com",
-        phone: "+1 (555) 123-4567",
-        streetAddress: "123 Art Street",
-        city: "Creative City",
-        state: "CA",
-        postalCode: "90210",
+        firstName: "Pawani",
+        lastName: "Kumari",
+        email: "pawani.kumari@gmail.com",
+        phone: "+94 77 123 4567",
+        streetAddress: "No. 45, Pinnawala",
+        city: "Rambukkana",
+        state: "Kegalle",
+        postalCode: "71100",
         joinDate: "2024-01-15",
         role: auth?.role || "buyer",
-        avatar: "/src/assets/user.png",
-        bio: "Art enthusiast and collector.",
+        avatar: "https://randomuser.me/api/portraits/women/42.jpg",
+        bio: "Art enthusiast and collector from Sri Lanka.",
       });
     } finally {
       setLoading(false);

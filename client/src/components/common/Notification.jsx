@@ -1,11 +1,29 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Bell } from 'lucide-react';
+import React, { useState, useRef, useEffect } from "react";
+import { Bell } from "lucide-react";
 
 const notificationsMock = [
-  { id: 1, text: 'New comment on your post', time: '2m ago' },
-  { id: 2, text: 'Your artwork got featured!', time: '1h ago' },
-  { id: 3, text: 'New follower: @artlover', time: '3h ago' },
-  { id: 4, text: 'Challenge deadline approaching', time: '1d ago' },
+  { id: 1, text: "New comment on your post", time: "2m ago" },
+  {
+    id: 2,
+    text: "Your artwork was featured on ArtAura Sri Lanka!",
+    time: "1h ago",
+  },
+  { id: 3, text: "New follower: @artlover.lk", time: "3h ago" },
+  {
+    id: 4,
+    text: 'Challenge deadline ("Digital Art Showcase 2025") is approaching',
+    time: "1d ago",
+  },
+  {
+    id: 5,
+    text: 'Your submission for "Abstract Expression Colombo" received 5 new likes',
+    time: "2d ago",
+  },
+  {
+    id: 6,
+    text: "Art exhibition at Colombo Art Gallery starts tomorrow",
+    time: "3d ago",
+  },
 ];
 
 export default function NotificationsPopup() {
@@ -20,10 +38,10 @@ export default function NotificationsPopup() {
       }
     }
     if (open) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [open]);
 
@@ -42,29 +60,35 @@ export default function NotificationsPopup() {
 
       {/* Popup */}
       {open && (
-        <div className="absolute right-0 mt-2 w-80 bg-slate-900 border border-slate-700 rounded-xl shadow-xl z-50
-                        animate-fadeInDown overflow-hidden">
-          <div className="p-4 border-b border-slate-700 font-semibold text-slate-200">
+        <div
+          className="absolute right-0 mt-2 w-80 bg-[#232323] border border-[#FFD95A] rounded-xl shadow-xl z-50
+                        animate-fadeInDown overflow-hidden"
+        >
+          <div className="p-4 border-b border-[#FFD95A] font-semibold text-white">
             Notifications
           </div>
           <ul className="max-h-64 overflow-y-auto">
             {notificationsMock.length === 0 && (
-              <li className="p-4 text-slate-400 text-center">No new notifications</li>
+              <li className="p-4 text-[#FFD95A] text-center">
+                No new notifications
+              </li>
             )}
             {notificationsMock.map((notif) => (
               <li
                 key={notif.id}
-                className="px-4 py-3 hover:bg-slate-800 cursor-pointer flex justify-between items-center text-slate-300"
+                className="px-4 py-3 hover:bg-[#D87C5A] cursor-pointer flex justify-between items-center text-white"
               >
                 <span className="text-sm">{notif.text}</span>
-                <span className="text-xs text-slate-500 ml-2">{notif.time}</span>
+                <span className="text-xs text-[#FFD95A] ml-2">
+                  {notif.time}
+                </span>
               </li>
             ))}
           </ul>
-          <div className="p-3 border-t border-slate-700 text-center">
+          <div className="p-3 border-t border-[#FFD95A] text-center">
             <button
-              onClick={() => alert('Redirect to all notifications')}
-              className="text-blue-500 hover:underline text-sm font-medium"
+              onClick={() => alert("Redirect to all notifications")}
+              className="text-[#FFD95A] hover:underline text-sm font-medium"
             >
               View all
             </button>

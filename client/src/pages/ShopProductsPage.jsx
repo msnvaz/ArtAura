@@ -32,13 +32,12 @@ const ShopProductsPage = () => {
     {
       id: 1,
       name: "Professional Acrylic Paint Set",
-      price: 89.99,
-      originalPrice: 119.99,
+      price: 2850.0,
+      originalPrice: 3800.0,
       category: "Painting Supplies",
-      shopName: "ArtCraft Store",
+      shopName: "Colombo Art Centre",
       shopLogo: "https://randomuser.me/api/portraits/men/1.jpg",
-      image:
-        "https://images.pexels.com/photos/1145434/pexels-photo-1145434.jpeg?auto=compress&cs=tinysrgb&w=600",
+      image: "/paintSet.jpeg", // public image
       rating: 4.8,
       reviews: 124,
       description:
@@ -51,13 +50,12 @@ const ShopProductsPage = () => {
     {
       id: 2,
       name: "Digital Drawing Tablet",
-      price: 299.99,
-      originalPrice: 399.99,
+      price: 45000.0,
+      originalPrice: 60000.0,
       category: "Digital Art Tools",
-      shopName: "TechArt Hub",
+      shopName: "TechArt Lanka",
       shopLogo: "https://randomuser.me/api/portraits/women/2.jpg",
-      image:
-        "https://images.pexels.com/photos/196644/pexels-photo-196644.jpeg?auto=compress&cs=tinysrgb&w=600",
+      image: "/drawingTablet.jpeg", // public image
       rating: 4.9,
       reviews: 87,
       description:
@@ -70,13 +68,12 @@ const ShopProductsPage = () => {
     {
       id: 3,
       name: "Canvas Stretched Frame Set",
-      price: 45.99,
+      price: 1380.0,
       originalPrice: null,
       category: "Canvas & Paper",
-      shopName: "Canvas Corner",
+      shopName: "Kandy Canvas Corner",
       shopLogo: "https://randomuser.me/api/portraits/men/3.jpg",
-      image:
-        "https://images.pexels.com/photos/1209843/pexels-photo-1209843.jpeg?auto=compress&cs=tinysrgb&w=600",
+      image: "/canvasFrame.jpeg", // public image
       rating: 4.6,
       reviews: 56,
       description:
@@ -89,13 +86,12 @@ const ShopProductsPage = () => {
     {
       id: 4,
       name: "Watercolor Brush Set",
-      price: 34.99,
-      originalPrice: 49.99,
+      price: 1050.0,
+      originalPrice: 1500.0,
       category: "Brushes & Tools",
-      shopName: "Brush Masters",
+      shopName: "Galle Brush Masters",
       shopLogo: "https://randomuser.me/api/portraits/women/4.jpg",
-      image:
-        "https://images.pexels.com/photos/1193743/pexels-photo-1193743.jpeg?auto=compress&cs=tinysrgb&w=600",
+      image: "/galleFort.jpeg", // public image
       rating: 4.7,
       reviews: 92,
       description:
@@ -107,41 +103,21 @@ const ShopProductsPage = () => {
     },
     {
       id: 5,
-      name: "Sculpture Clay Kit",
-      price: 67.99,
-      originalPrice: null,
-      category: "Sculpture Supplies",
-      shopName: "Clay Works",
+      name: "Heritage Art Poster",
+      price: 2200.0,
+      originalPrice: 3000.0,
+      category: "Art Prints",
+      shopName: "Heritage Gallery",
       shopLogo: "https://randomuser.me/api/portraits/men/5.jpg",
-      image:
-        "https://images.pexels.com/photos/1047540/pexels-photo-1047540.jpeg?auto=compress&cs=tinysrgb&w=600",
+      image: "/poster.jpeg", // public image
       rating: 4.5,
-      reviews: 38,
+      reviews: 41,
       description:
-        "Complete clay sculpting kit with tools and firing instructions.",
+        "A beautiful poster print inspired by Sri Lankan heritage and culture. Perfect for home or studio décor.",
       inStock: true,
       stockCount: 12,
-      tags: ["clay", "sculpture", "tools"],
-      discount: 0,
-    },
-    {
-      id: 6,
-      name: "Art Book Collection",
-      price: 129.99,
-      originalPrice: 179.99,
-      category: "Art Books & Education",
-      shopName: "Knowledge Arts",
-      shopLogo: "https://randomuser.me/api/portraits/women/6.jpg",
-      image:
-        "https://images.pexels.com/photos/1290141/pexels-photo-1290141.jpeg?auto=compress&cs=tinysrgb&w=600",
-      rating: 4.9,
-      reviews: 156,
-      description:
-        "Comprehensive collection of art technique books and tutorials.",
-      inStock: true,
-      stockCount: 7,
-      tags: ["books", "education", "learning"],
-      discount: 28,
+      tags: ["poster", "heritage", "print"],
+      discount: 27,
     },
   ];
 
@@ -289,11 +265,11 @@ const ShopProductsPage = () => {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <span className="text-lg font-bold text-[#D87C5A]">
-              ${product.price}
+              LKR {product.price.toLocaleString()}
             </span>
             {product.originalPrice && (
               <span className="text-sm text-[#7f5539]/50 line-through">
-                ${product.originalPrice}
+                LKR {product.originalPrice.toLocaleString()}
               </span>
             )}
           </div>

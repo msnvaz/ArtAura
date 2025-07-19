@@ -66,7 +66,7 @@ const ProfileDropdown = ({
               />
               <div>
                 <p className="text-white font-medium">{userName}</p>
-                <p className="text-white/60 text-sm">Artist</p>
+                <p className="text-white/60 text-sm">Art Lover</p>
               </div>
             </div>
           </div>

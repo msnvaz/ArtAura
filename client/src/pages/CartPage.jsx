@@ -26,7 +26,7 @@ const CartPage = () => {
   const [itemToRemove, setItemToRemove] = useState(null);
 
   const subtotal = getCartTotal();
-  const shipping = subtotal > 50 ? 0 : 9.99;
+  const shipping = subtotal > 5000 ? 0 : 800;
   const tax = subtotal * 0.08; // 8% tax
   const total = subtotal + shipping + tax;
 
@@ -140,8 +140,10 @@ const CartPage = () => {
                               </p>
                               {item.originalPrice && (
                                 <p className="text-xs text-green-600 mt-1">
-                                  Save $
-                                  {(item.originalPrice - item.price).toFixed(2)}
+                                  Save LKR{" "}
+                                  {(
+                                    item.originalPrice - item.price
+                                  ).toLocaleString()}
                                 </p>
                               )}
                             </div>
@@ -177,14 +179,15 @@ const CartPage = () => {
                             </div>
                             <div className="text-right">
                               <div className="font-bold text-[#D87C5A]">
-                                ${(item.price * item.quantity).toFixed(2)}
+                                LKR{" "}
+                                {(item.price * item.quantity).toLocaleString()}
                               </div>
                               {item.originalPrice && (
                                 <div className="text-sm text-[#7f5539]/50 line-through">
-                                  $
-                                  {(item.originalPrice * item.quantity).toFixed(
-                                    2
-                                  )}
+                                  LKR{" "}
+                                  {(
+                                    item.originalPrice * item.quantity
+                                  ).toLocaleString()}
                                 </div>
                               )}
                             </div>
@@ -218,31 +221,39 @@ const CartPage = () => {
                       Subtotal ({getCartItemsCount()} items)
                     </span>
                     <span className="font-medium text-[#7f5539]">
-                      ${subtotal.toFixed(2)}
+                      LKR {subtotal.toLocaleString()}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-[#7f5539]">Shipping</span>
                     <span className="font-medium text-[#7f5539]">
-                      {shipping === 0 ? "FREE" : `$${shipping.toFixed(2)}`}
+                      {shipping === 0
+                        ? "FREE"
+                        : `LKR ${shipping.toLocaleString()}`}
                     </span>
                   </div>
                   {shipping === 0 && (
                     <p className="text-xs text-green-600">
-                      Free shipping on orders over $50!
+                      Free shipping on orders over LKR 5,000!
                     </p>
                   )}
                   <div className="flex justify-between">
                     <span className="text-[#7f5539]">Tax</span>
                     <span className="font-medium text-[#7f5539]">
-                      ${tax.toFixed(2)}
+                      LKR{" "}
+                      {tax.toLocaleString(undefined, {
+                        maximumFractionDigits: 2,
+                      })}
                     </span>
                   </div>
                   <hr className="border-[#FFE4D6]" />
                   <div className="flex justify-between text-lg">
                     <span className="font-semibold text-[#7f5539]">Total</span>
                     <span className="font-bold text-[#D87C5A]">
-                      ${total.toFixed(2)}
+                      LKR{" "}
+                      {total.toLocaleString(undefined, {
+                        maximumFractionDigits: 2,
+                      })}
                     </span>
                   </div>
                 </div>

@@ -35,96 +35,125 @@ const ChallengeSubmissionsPage = () => {
   // Mock challenge data
   const mockChallenge = {
     id: 1,
-    title: "Digital Art Showcase 2025",
+    title: "Digital Heritage Lanka 2025",
     description:
-      "Create stunning digital artwork using any medium and showcase your creativity",
+      "Create stunning digital artwork inspired by Sri Lankan cultural heritage, temples, and traditional motifs using any digital medium",
     category: "Digital Art",
     startDate: "2025-07-01",
     endDate: "2025-07-31",
-    prize: "$1,500",
+    prize: "LKR 15,000",
     participants: 234,
     submissions: 156,
-    difficulty: "Intermediate",
     status: "active",
     timeLeft: "13 days",
-    organizer: "ArtAura Team",
+    organizer: "Digital Arts Collective Sri Lanka",
     image:
-      "https://images.pexels.com/photos/1545743/pexels-photo-1545743.jpeg?auto=compress&cs=tinysrgb&w=600",
+      "/heritage.jpeg",
   };
 
   // Mock submissions data
   const mockSubmissions = [
     {
       id: 1,
-      title: "Neon Dreams",
+      title: "Temple of the Sacred Tooth",
       artist: {
-        name: "Sarah Martinez",
+        name: "Sanduni Perera",
         avatar: "https://randomuser.me/api/portraits/women/44.jpg",
         followers: 1254,
       },
-      image:
-        "https://images.pexels.com/photos/1545743/pexels-photo-1545743.jpeg?auto=compress&cs=tinysrgb&w=600",
+      image: "/kandyTemple.jpeg", // public image
       description:
-        "A vibrant digital painting exploring the contrast between technology and nature",
+        "A vibrant digital interpretation of the sacred Temple of the Tooth in Kandy, blending traditional architecture with modern artistic vision",
       votes: 156,
       submittedAt: "2025-07-18T10:30:00Z",
-      tags: ["digital", "neon", "futuristic"],
+      tags: ["temple", "kandy", "heritage"],
       software: "Photoshop",
       timeSpent: "12 hours",
     },
     {
       id: 2,
-      title: "Abstract Emotions",
+      title: "Lankan Tea Gardens",
       artist: {
-        name: "Alex Chen",
+        name: "Kasun Fernando",
         avatar: "https://randomuser.me/api/portraits/men/32.jpg",
         followers: 892,
       },
-      image:
-        "https://images.pexels.com/photos/1269968/pexels-photo-1269968.jpeg?auto=compress&cs=tinysrgb&w=600",
+      image: "/teaPlants.jpeg", // public image
       description:
-        "An emotional journey expressed through abstract digital forms and bold colors",
+        "An emotional journey through the misty tea gardens of Nuwara Eliya, capturing the essence of Ceylon's hill country heritage",
       votes: 89,
       submittedAt: "2025-07-17T14:20:00Z",
-      tags: ["abstract", "emotions", "colorful"],
+      tags: ["tea", "hills", "nuwara-eliya"],
       software: "Procreate",
       timeSpent: "8 hours",
     },
     {
       id: 3,
-      title: "Cyberpunk City",
+      title: "Ancient Sigiriya Rock",
       artist: {
-        name: "Maya Patel",
+        name: "Priya Jayasinghe",
         avatar: "https://randomuser.me/api/portraits/women/68.jpg",
         followers: 2156,
       },
-      image:
-        "https://images.pexels.com/photos/1053924/pexels-photo-1053924.jpeg?auto=compress&cs=tinysrgb&w=600",
+      image: "/sigiriya.jpeg", // public image
       description:
-        "A futuristic cityscape inspired by cyberpunk aesthetics and neon lighting",
+        "A majestic digital artwork showcasing the iconic Sigiriya Rock Fortress with traditional Kandyan artistic elements",
       votes: 234,
       submittedAt: "2025-07-16T09:00:00Z",
-      tags: ["cyberpunk", "city", "futuristic"],
+      tags: ["sigiriya", "fortress", "ancient"],
       software: "Blender + Photoshop",
       timeSpent: "24 hours",
     },
     {
       id: 4,
-      title: "Digital Nature",
+      title: "Galle Fort Heritage",
       artist: {
-        name: "James Wilson",
+        name: "Dilshan Silva",
         avatar: "https://randomuser.me/api/portraits/men/15.jpg",
         followers: 743,
       },
-      image:
-        "https://images.pexels.com/photos/1269968/pexels-photo-1269968.jpeg?auto=compress&cs=tinysrgb&w=600",
+      image: "/galleFort.jpeg", // public image
       description:
-        "Blending natural elements with digital artistry to create a harmonious composition",
+        "Blending Dutch colonial architecture of Galle Fort with vibrant Sri Lankan cultural motifs and tropical elements",
       votes: 127,
       submittedAt: "2025-07-15T16:45:00Z",
-      tags: ["nature", "digital", "harmony"],
+      tags: ["galle", "colonial", "heritage"],
       software: "Adobe Illustrator",
       timeSpent: "15 hours",
+    },
+    {
+      id: 5,
+      title: "Colombo Street Life",
+      artist: {
+        name: "Nimali Wickramasinghe",
+        avatar: "https://randomuser.me/api/portraits/women/25.jpg",
+        followers: 567,
+      },
+      image: "/colomboLife.jpeg", // public image
+      description:
+        "A vibrant portrayal of modern Colombo's bustling street life, featuring tuk-tuks, vendors, and the multicultural energy of the capital",
+      votes: 98,
+      submittedAt: "2025-07-14T11:20:00Z",
+      tags: ["colombo", "street", "urban"],
+      software: "Digital Paint",
+      timeSpent: "10 hours",
+    },
+    {
+      id: 6,
+      title: "Kandyan Dancer",
+      artist: {
+        name: "Amara Rathnayake",
+        avatar: "https://randomuser.me/api/portraits/women/33.jpg",
+        followers: 1089,
+      },
+      image: "/kandyanDancer.jpeg", // public image
+      description:
+        "Traditional Kandyan dancer captured in dynamic motion, celebrating our rich cultural dance heritage with digital artistry",
+      votes: 145,
+      submittedAt: "2025-07-13T08:15:00Z",
+      tags: ["dance", "traditional", "culture"],
+      software: "Clip Studio Paint",
+      timeSpent: "18 hours",
     },
   ];
 
