@@ -604,7 +604,7 @@ const UsersManagement = () => {
             <td className="px-6 py-4 text-sm" style={{color: '#5D3A00'}}>{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : ''}</td>
             <td className="px-6 py-4 text-sm" style={{color: '#5D3A00'}}>
             <span className="font-medium">
-              {user.userType === 'artist' ? (user.totalSales || 0) : '-'}
+              {user.userType === 'artist' ? (user.total_artworks || 0) : '-'}
             </span>
 
             </td>
