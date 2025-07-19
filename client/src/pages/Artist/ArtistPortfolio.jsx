@@ -812,60 +812,33 @@ const ArtistPortfolio = () => {
 
       console.log('Updating post:', updatedPost);
 
-      // First try the simpler PUT endpoint
-      let response;
-      try {
-        response = await axios.put(
-          `http://localhost:8081/api/posts/${updatedPost.post_id}`,
-          {
-            caption: updatedPost.caption,
-            location: updatedPost.location || 'Colombo',
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          }
-        );
-        console.log('Update response:', response.data);
-      } catch (apiError) {
-        // If the first endpoint fails, try the alternative
-        console.log('First endpoint failed, trying alternative...');
-        try {
-          response = await axios.put(
-            `http://localhost:8081/api/posts/update/${updatedPost.post_id}`,
-            {
-              caption: updatedPost.caption,
-              location: updatedPost.location || 'Colombo',
-            },
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-                'Content-Type': 'application/json'
-              }
-            }
-          );
-          console.log('Alternative endpoint worked:', response.data);
-        } catch (secondError) {
-          console.log('Both API endpoints failed, updating locally only');
-          // Just update locally if both API calls fail
-          setPortfolioPosts(prevPosts =>
-            prevPosts.map(post =>
-              post.post_id === updatedPost.post_id ? { ...post, caption: updatedPost.caption } : post
-            )
-          );
-          setShowEditModal(false);
-          setEditingItem(null);
-          alert('Post caption updated successfully!');
-          return;
-        }
+      // Create FormData for multipart request as expected by backend
+      const formData = new FormData();
+      formData.append('caption', updatedPost.caption);
+
+      // Add location if it exists
+      if (updatedPost.location) {
+        formData.append('location', updatedPost.location);
       }
 
-      // Update the local state with the response data
+      // The backend expects @RequestPart, so send as multipart/form-data
+      const response = await axios.put(
+        `http://localhost:8081/api/posts/${updatedPost.post_id}`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            // Don't set Content-Type - let axios handle multipart/form-data
+          }
+        }
+      );
+
+      console.log('Update response:', response.data);
+
+      // Update the local state with the updated data
       setPortfolioPosts(prevPosts =>
         prevPosts.map(post =>
-          post.post_id === updatedPost.post_id ? { ...post, ...response.data } : post
+          post.post_id === updatedPost.post_id ? { ...post, caption: updatedPost.caption, location: updatedPost.location } : post
         )
       );
 
@@ -874,20 +847,30 @@ const ArtistPortfolio = () => {
       setEditingItem(null);
 
       alert('Post updated successfully!');
+
     } catch (error) {
-      console.error('Unexpected error:', error);
+      console.error('Error updating post:', error);
 
-      // Always update locally as fallback and close modal
-      setPortfolioPosts(prevPosts =>
-        prevPosts.map(post =>
-          post.post_id === updatedPost.post_id ? { ...post, caption: updatedPost.caption } : post
-        )
-      );
+      if (error.response) {
+        console.error('Server response:', error.response.data);
+        console.error('Status code:', error.response.status);
 
-      setShowEditModal(false);
-      setEditingItem(null);
-
-      alert('Post caption updated successfully!');
+        if (error.response.status === 401) {
+          alert('Authentication failed. Please log in again.');
+        } else if (error.response.status === 403) {
+          alert('You are not authorized to edit this post.');
+        } else if (error.response.status === 404) {
+          alert('Post not found.');
+        } else {
+          alert(`Failed to update post: ${error.response.data || error.response.statusText}`);
+        }
+      } else if (error.request) {
+        console.error('No response received:', error.request);
+        alert('Network error. Please check your connection and try again.');
+      } else {
+        console.error('Request setup error:', error.message);
+        alert('Failed to update post. Please try again.');
+      }
     }
   };
 

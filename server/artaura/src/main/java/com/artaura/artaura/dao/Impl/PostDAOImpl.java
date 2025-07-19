@@ -20,18 +20,17 @@ public class PostDAOImpl implements PostDAO {
 
     @Override
     public void savePost(int userId, String role, PostCreateDTO postDTO) {
-        String sql = "INSERT INTO post (user_id, role, caption, image, location) " +
-                "VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO post (user_id, role, caption, image, location) "
+                + "VALUES (?, ?, ?, ?, ?)";
 
         jdbcTemplate.update(sql,
-                userId,                          // ✅ passed separately
-                role,                            // ✅ passed separately
+                userId, // ✅ passed separately
+                role, // ✅ passed separately
                 postDTO.getCaption(),
-                postDTO.getImage(),              // ✅ should be image path like /uploads/image.jpg
+                postDTO.getImage(), // ✅ should be image path like /uploads/image.jpg
                 postDTO.getLocation()// 🕐 sets the current date
         );
     }
-
 
     @Override
     public void deletePostById(Long postId) {
@@ -52,9 +51,20 @@ public class PostDAOImpl implements PostDAO {
         }
 
         if (dto.getImage() != null) {
-            if (!first) sql.append(", ");
+            if (!first) {
+                sql.append(", ");
+            }
             sql.append("image = ?");
             params.add(dto.getImage());
+            first = false;
+        }
+
+        if (dto.getLocation() != null) {
+            if (!first) {
+                sql.append(", ");
+            }
+            sql.append("location = ?");
+            params.add(dto.getLocation());
             first = false;
         }
 
@@ -63,8 +73,6 @@ public class PostDAOImpl implements PostDAO {
 
         jdbcTemplate.update(sql.toString(), params.toArray());
     }
-
-
 
     public List<PostResponseDTO> getPostsByUser(String role, Long userId) {
         String sql = "SELECT * FROM post WHERE user_id = ? AND role = ?";
@@ -96,6 +104,4 @@ public class PostDAOImpl implements PostDAO {
         });
     }
 
-
 }
-
