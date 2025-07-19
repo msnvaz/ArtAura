@@ -5,7 +5,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="bc3f369b-70c2-4079-bb42-8db22a19629a" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/server/artaura/src/main/java/com/artaura/artaura/controller/AuthController.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/artaura/src/main/java/com/artaura/artaura/controller/AuthController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/pages/admin/Users.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/pages/admin/Users.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/artaura/src/main/java/com/artaura/artaura/dao/Impl/AdminDAOImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/artaura/src/main/java/com/artaura/artaura/dao/Impl/AdminDAOImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/artaura/src/main/java/com/artaura/artaura/dao/Impl/ArtistDAOImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/artaura/src/main/java/com/artaura/artaura/dao/Impl/ArtistDAOImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/artaura/src/main/java/com/artaura/artaura/dao/Impl/BuyerDAOImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/artaura/src/main/java/com/artaura/artaura/dao/Impl/BuyerDAOImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/artaura/src/main/java/com/artaura/artaura/dao/Impl/ModeratorDAOImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/artaura/src/main/java/com/artaura/artaura/dao/Impl/ModeratorDAOImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/artaura/src/main/java/com/artaura/artaura/dao/Impl/ShopOwnerDAOImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/artaura/src/main/java/com/artaura/artaura/dao/Impl/ShopOwnerDAOImpl.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

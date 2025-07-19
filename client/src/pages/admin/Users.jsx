@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useCurrency } from '../../context/CurrencyContext';
 import CurrencySelector from '../../components/common/CurrencySelector';
+import  adminUserApi  from '../../services/adminUserApi';
 
 const UsersManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -23,68 +24,92 @@ const UsersManagement = () => {
   const { formatPrice } = useCurrency();
   const [isLoaded, setIsLoaded] = useState(false);
 
+  // API state
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Fetch users from backend
   useEffect(() => {
-    setIsLoaded(true);
-  }, []);
+    const fetchUsers = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const filters = {
+          search: searchTerm,
+          status: filterStatus !== 'all' ? filterStatus.charAt(0).toUpperCase() + filterStatus.slice(1) : undefined
+        };
+        const response = await adminUserApi.getAllUsers(filters);
+        // Flatten response if paginated
+        setUsers(response.users || response.content || []);
+      } catch (err) {
+        setError('Failed to load users. Please try again.');
+        setUsers([]);
+      } finally {
+        setLoading(false);
+        setIsLoaded(true);
+      }
+    };
+    fetchUsers();
+  }, [searchTerm, filterStatus]);
 
-  // Mock data for users
-  const [users, setUsers] = useState([
-    { id: 1, name: 'Kavinda Perera', email: 'kavinda.perera@gmail.com', type: 'Artist', status: 'Active', joinDate: '2024-01-15', artworks: 12, blocked: false, revenue: 1250.50, totalSales: 8 },
-    { id: 2, name: 'Nimali Fernando', email: 'nimali.fernando@yahoo.com', type: 'Collector', status: 'Active', joinDate: '2024-02-20', artworks: 0, blocked: false, revenue: 0, totalPurchases: 15, totalSpent: 3200.75 },
-    { id: 3, name: 'Ashen Jayawardena', email: 'ashen.jayawardena@outlook.com', type: 'Artist', status: 'Pending', joinDate: '2024-03-10', artworks: 5, blocked: false, revenue: 675.25, totalSales: 3 },
-    { id: 4, name: 'Sachini Rathnayake', email: 'sachini.rathnayake@gmail.com', type: 'Artist', status: 'Suspended', joinDate: '2024-01-30', artworks: 8, blocked: true, revenue: 920.00, totalSales: 5 },
-    { id: 5, name: 'Dinesh Wickramasinghe', email: 'dinesh.wickrama@gmail.com', type: 'Collector', status: 'Active', joinDate: '2024-02-05', artworks: 0, blocked: false, revenue: 0, totalPurchases: 8, totalSpent: 1850.30 },
-    { id: 6, name: 'Malini Gunawardana', email: 'malini.gunawardana@hotmail.com', type: 'Artist', status: 'Active', joinDate: '2024-01-10', artworks: 15, blocked: false, revenue: 2150.80, totalSales: 12 },
-    { id: 7, name: 'Rajeev Bandara', email: 'rajeev.bandara@artaura.lk', type: 'Admin', status: 'Active', joinDate: '2023-12-01', artworks: 0, blocked: false, revenue: 0 }
-  ]);
-
-  const handleBlockUser = (userId) => {
-    setUsers(users.map(user => 
-      user.id === userId ? { 
-        ...user, 
-        blocked: !user.blocked, 
-        status: user.blocked ? 'Active' : 'Suspended' 
-      } : user
-    ));
+  const handleBlockUser = async (userId, userType, status) => {
+    try {
+      const newStatus = status === 'Suspended' ? 'Active' : 'Suspended';
+      await adminUserApi.updateUserStatus(userId, userType, newStatus);
+      setUsers(users.map(user =>
+        user.userId === userId
+          ? { ...user, status: newStatus }
+          : user
+      ));
+      if (selectedUser && selectedUser.userId === userId) {
+        setSelectedUser({ ...selectedUser, status: newStatus });
+      }
+    } catch (err) {
+      setError('Failed to update user status.');
+    }
   };
 
   const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === 'all' || user.status.toLowerCase() === filterStatus.toLowerCase();
+    const matchesSearch =
+      (user.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email?.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesStatus =
+      filterStatus === 'all' || user.status?.toLowerCase() === filterStatus.toLowerCase();
     return matchesSearch && matchesStatus;
   });
 
   // User management stats
   const userStats = [
-    { 
-      label: 'Total Users', 
-      value: users.length.toLocaleString(), 
-      icon: Users, 
+    {
+      label: 'Total Users',
+      value: users.length.toLocaleString(),
+      icon: Users,
       color: '#D87C5A',
       change: '+12%',
       changeType: 'positive'
     },
-    { 
-      label: 'Active Users', 
-      value: users.filter(u => u.status === 'Active').length.toLocaleString(), 
-      icon: UserCheck, 
+    {
+      label: 'Active Users',
+      value: users.filter(u => u.status === 'Active').length.toLocaleString(),
+      icon: UserCheck,
       color: '#5D9CDB',
       change: '+8%',
       changeType: 'positive'
     },
-    { 
-      label: 'Pending Verification', 
-      value: users.filter(u => u.status === 'Pending').length.toLocaleString(), 
-      icon: UserX, 
+    {
+      label: 'Pending Verification',
+      value: users.filter(u => u.status === 'Pending').length.toLocaleString(),
+      icon: UserX,
       color: '#FFD95A',
       change: '-3%',
       changeType: 'negative'
     },
-    { 
-      label: 'Suspended Users', 
-      value: users.filter(u => u.status === 'Suspended').length.toLocaleString(), 
-      icon: ShieldAlert, 
+    {
+      label: 'Suspended Users',
+      value: users.filter(u => u.status === 'Suspended').length.toLocaleString(),
+      icon: ShieldAlert,
       color: '#E74C3C',
       change: '-15%',
       changeType: 'positive'
@@ -117,7 +142,7 @@ const UsersManagement = () => {
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="font-medium">Name:</span> 
-                    <span>{selectedUser.name}</span>
+                    <span>{selectedUser.firstName} {selectedUser.lastName}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="font-medium">Email:</span> 
@@ -126,10 +151,10 @@ const UsersManagement = () => {
                   <div className="flex justify-between">
                     <span className="font-medium">Type:</span> 
                     <span className="px-2 py-1 text-xs font-medium rounded-full" style={{
-                      backgroundColor: selectedUser.type === 'Artist' ? '#FFE4D6' : selectedUser.type === 'Admin' ? '#FFD95A' : selectedUser.type === 'Collector' ? '#E8F5E8' : '#FFF5E1',
+                      backgroundColor: selectedUser.userType === 'artist' ? '#FFE4D6' : selectedUser.userType === 'moderator' ? '#FFD95A' : selectedUser.userType === 'buyer' ? '#E8F5E8' : '#FFF5E1',
                       color: '#5D3A00'
                     }}>
-                      {selectedUser.type}
+                      {selectedUser.userType}
                     </span>
                   </div>
                   <div className="flex justify-between">
@@ -149,48 +174,28 @@ const UsersManagement = () => {
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="font-medium">Join Date:</span> 
-                    <span>{selectedUser.joinDate}</span>
+                    <span>{selectedUser.createdAt ? new Date(selectedUser.createdAt).toLocaleDateString() : ''}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Artworks:</span> 
-                    <span className="font-bold" style={{color: '#D87C5A'}}>{selectedUser.artworks}</span>
-                  </div>
-                  {selectedUser.type === 'Artist' && selectedUser.revenue !== undefined && (
+                  {selectedUser.userType === 'artist' && (
                     <>
                       <div className="flex justify-between">
-                        <span className="font-medium">Total Revenue:</span> 
-                        <span className="font-bold" style={{color: '#D87C5A'}}>
-                          {formatPrice(selectedUser.revenue)}
-                        </span>
+                        <span className="font-medium">Total Views:</span> 
+                        <span className="font-bold" style={{color: '#D87C5A'}}>{selectedUser.totalViews || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-medium">Total Followers:</span> 
+                        <span className="font-bold" style={{color: '#D87C5A'}}>{selectedUser.totalFollowers || 0}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="font-medium">Total Sales:</span> 
-                        <span className="font-bold" style={{color: '#D87C5A'}}>
-                          {selectedUser.totalSales || 0}
-                        </span>
-                      </div>
-                    </>
-                  )}
-                  {selectedUser.type === 'Collector' && selectedUser.totalSpent !== undefined && (
-                    <>
-                      <div className="flex justify-between">
-                        <span className="font-medium">Total Spent:</span> 
-                        <span className="font-bold" style={{color: '#D87C5A'}}>
-                          {formatPrice(selectedUser.totalSpent)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium">Total Purchases:</span> 
-                        <span className="font-bold" style={{color: '#D87C5A'}}>
-                          {selectedUser.totalPurchases || 0}
-                        </span>
+                        <span className="font-bold" style={{color: '#D87C5A'}}>{selectedUser.totalSales || 0}</span>
                       </div>
                     </>
                   )}
                   <div className="flex justify-between">
                     <span className="font-medium">Account Status:</span> 
-                    <span className={selectedUser.blocked ? 'text-red-600 font-medium' : 'text-green-600 font-medium'}>
-                      {selectedUser.blocked ? 'Blocked' : 'Active'}
+                    <span className={selectedUser.status === 'Suspended' ? 'text-red-600 font-medium' : 'text-green-600 font-medium'}>
+                      {selectedUser.status === 'Suspended' ? 'Blocked' : 'Active'}
                     </span>
                   </div>
                   <div className="flex justify-between">
@@ -203,17 +208,16 @@ const UsersManagement = () => {
             <div className="mt-8 flex gap-3">
               <button
                 onClick={() => {
-                  handleBlockUser(selectedUser.id);
-                  setSelectedUser({...selectedUser, blocked: !selectedUser.blocked, status: selectedUser.blocked ? 'Active' : 'Suspended'});
+                  handleBlockUser(selectedUser.userId, selectedUser.userType, selectedUser.status);
                 }}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
-                  selectedUser.blocked 
+                  selectedUser.status === 'Suspended' 
                     ? 'bg-green-100 text-green-800 hover:bg-green-200' 
                     : 'bg-red-100 text-red-800 hover:bg-red-200'
                 }`}
               >
-                {selectedUser.blocked ? <UserCheck size={16} /> : <UserX size={16} />}
-                {selectedUser.blocked ? 'Unblock User' : 'Block User'}
+                {selectedUser.status === 'Suspended' ? <UserCheck size={16} /> : <UserX size={16} />}
+                {selectedUser.status === 'Suspended' ? 'Unblock User' : 'Block User'}
               </button>
               <button
                 className="px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
@@ -395,135 +399,138 @@ const UsersManagement = () => {
         {/* Users Table */}
         <div className="bg-white rounded-lg shadow-sm overflow-hidden users-table">
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead style={{backgroundColor: '#FFF5E1'}}>
-                <tr>
-                  <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>User</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Type</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Status</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Join Date</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Artworks</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Revenue/Spent</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredUsers.map((user, index) => (
-                  <tr key={user.id} className={`user-row ${index % 2 === 0 ? 'bg-white' : ''}`} style={{backgroundColor: index % 2 === 1 ? '#FFF5E1' : 'white'}}>
-                    <td className="px-6 py-4">
-                      <div>
-                        <div className="font-medium" style={{color: '#5D3A00'}}>{user.name}</div>
-                        <div className="text-sm" style={{color: '#D87C5A'}}>{user.email}</div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm" style={{color: '#5D3A00'}}>
-                      <span className="px-2 py-1 text-xs font-medium rounded-full" style={{
-                        backgroundColor: user.type === 'Artist' ? '#FFE4D6' : user.type === 'Admin' ? '#FFD95A' : user.type === 'Collector' ? '#E8F5E8' : '#FFF5E1',
-                        color: '#5D3A00'
-                      }}>
-                        {user.type}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                        user.status === 'Active' ? 'text-green-800 bg-green-100' :
-                        user.status === 'Pending' ? 'text-yellow-800 bg-yellow-100' :
-                        'text-red-800 bg-red-100'
-                      }`}>
-                        {user.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm" style={{color: '#5D3A00'}}>{user.joinDate}</td>
-                    <td className="px-6 py-4 text-sm" style={{color: '#5D3A00'}}>
-                      <span className="font-medium">{user.artworks}</span>
-                    </td>
-                    <td className="px-6 py-4 text-sm" style={{color: '#5D3A00'}}>
-                      {user.type === 'Artist' && user.revenue !== undefined ? (
-                        <div>
-                          <div className="font-medium" style={{color: '#D87C5A'}}>
-                            {formatPrice(user.revenue)}
-                          </div>
-                          <div className="text-xs opacity-75">
-                            {user.totalSales || 0} sales
-                          </div>
-                        </div>
-                      ) : user.type === 'Collector' && user.totalSpent !== undefined ? (
-                        <div>
-                          <div className="font-medium" style={{color: '#D87C5A'}}>
-                            {formatPrice(user.totalSpent)}
-                          </div>
-                          <div className="text-xs opacity-75">
-                            {user.totalPurchases || 0} purchases
-                          </div>
-                        </div>
-                      ) : (
-                        <span className="text-gray-400">-</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => {setSelectedUser(user); setShowUserModal(true);}}
-                          className="p-2 rounded-lg transition-colors"
-                          style={{backgroundColor: '#FFE4D6', color: '#5D3A00'}}
-                          onMouseOver={(e) => {
-                            e.target.style.backgroundColor = '#FFD95A';
-                            e.target.style.transform = 'scale(1.05)';
-                          }}
-                          onMouseOut={(e) => {
-                            e.target.style.backgroundColor = '#FFE4D6';
-                            e.target.style.transform = 'scale(1)';
-                          }}
-                          title="View Details"
-                        >
-                          <Eye size={16} />
-                        </button>
-                        <button
-                          onClick={() => handleBlockUser(user.id)}
-                          className={`p-2 rounded-lg transition-all ${
-                            user.blocked 
-                              ? 'bg-green-100 text-green-800 hover:bg-green-200' 
-                              : 'bg-red-100 text-red-800 hover:bg-red-200'
-                          }`}
-                          onMouseOver={(e) => {
-                            e.target.style.transform = 'scale(1.05)';
-                          }}
-                          onMouseOut={(e) => {
-                            e.target.style.transform = 'scale(1)';
-                          }}
-                          title={user.blocked ? 'Unblock User' : 'Block User'}
-                        >
-                          {user.blocked ? <UserCheck size={16} /> : <UserX size={16} />}
-                        </button>
-                        <button
-                          className="p-2 rounded-lg transition-colors"
-                          style={{backgroundColor: '#FFE4D6', color: '#5D3A00'}}
-                          onMouseOver={(e) => {
-                            e.target.style.backgroundColor = '#FFD95A';
-                            e.target.style.transform = 'scale(1.05)';
-                          }}
-                          onMouseOut={(e) => {
-                            e.target.style.backgroundColor = '#FFE4D6';
-                            e.target.style.transform = 'scale(1)';
-                          }}
-                          title="More Options"
-                        >
-                          <MoreVertical size={16} />
-                        </button>
-                      </div>
-                    </td>
+            {loading ? (
+              <div className="p-8 text-center" style={{ color: '#D87C5A' }}>
+                <Users size={48} className="mx-auto mb-4 opacity-50" />
+                <p className="text-lg font-medium mb-2">Loading users...</p>
+              </div>
+            ) : error ? (
+              <div className="p-8 text-center" style={{ color: '#D87C5A' }}>
+                <Users size={48} className="mx-auto mb-4 opacity-50" />
+                <p className="text-lg font-medium mb-2">{error}</p>
+                <p className="text-sm">Try again later</p>
+              </div>
+            ) : filteredUsers.length === 0 ? (
+              <div className="p-8 text-center" style={{ color: '#D87C5A' }}>
+                <Users size={48} className="mx-auto mb-4 opacity-50" />
+                <p className="text-lg font-medium mb-2">No users found</p>
+                <p className="text-sm">Try adjusting your search terms or filters</p>
+              </div>
+            ) : (
+              <table className="w-full">
+                <thead style={{ backgroundColor: '#FFF5E1' }}>
+                  <tr>
+                    <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>User</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Type</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Status</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Join Date</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Artworks</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Revenue/Spent</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filteredUsers.map((user, index) => (
+                    <tr key={user.userId} className={`user-row ${index % 2 === 0 ? 'bg-white' : ''}`} style={{backgroundColor: index % 2 === 1 ? '#FFF5E1' : 'white'}}>
+                      <td className="px-6 py-4">
+                        <div>
+                          <div className="font-medium" style={{color: '#5D3A00'}}>{user.firstName} {user.lastName}</div>
+                          <div className="text-sm" style={{color: '#D87C5A'}}>{user.email}</div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-sm" style={{color: '#5D3A00'}}>
+                        <span className="px-2 py-1 text-xs font-medium rounded-full" style={{
+                          backgroundColor: user.userType === 'artist' ? '#FFE4D6' : user.userType === 'moderator' ? '#FFD95A' : user.userType === 'buyer' ? '#E8F5E8' : '#FFF5E1',
+                          color: '#5D3A00'
+                        }}>
+                          {user.userType}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                          user.status === 'Active' ? 'text-green-800 bg-green-100' :
+                          user.status === 'Pending' ? 'text-yellow-800 bg-yellow-100' :
+                          'text-red-800 bg-red-100'
+                        }`}>
+                          {user.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm" style={{color: '#5D3A00'}}>{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : ''}</td>
+                      <td className="px-6 py-4 text-sm" style={{color: '#5D3A00'}}>
+                        <span className="font-medium">{user.userType === 'artist' ? user.totalSales || 0 : '-'}</span>
+                      </td>
+                      <td className="px-6 py-4 text-sm" style={{color: '#5D3A00'}}>
+                         
+                          <div>
+                            <div className="font-medium" style={{color: '#D87C5A'}}>
+                              {formatPrice(user.revenue || 0, "LKR")}
+                            </div>
+                            <div className="text-xs opacity-75">
+                              {user.totalSales || 0} {user.userType === 'artist' ? "sales" : "purchases"}
+                            </div>
+                          </div>
+                        
+                          
+                        
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => {setSelectedUser(user); setShowUserModal(true);}}
+                            className="p-2 rounded-lg transition-colors"
+                            style={{backgroundColor: '#FFE4D6', color: '#5D3A00'}}
+                            onMouseOver={(e) => {
+                              e.target.style.backgroundColor = '#FFD95A';
+                              e.target.style.transform = 'scale(1.05)';
+                            }}
+                            onMouseOut={(e) => {
+                              e.target.style.backgroundColor = '#FFE4D6';
+                              e.target.style.transform = 'scale(1)';
+                            }}
+                            title="View Details"
+                          >
+                            <Eye size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleBlockUser(user.userId, user.userType, user.status)}
+                            className={`p-2 rounded-lg transition-all ${
+                              user.status === 'Suspended' 
+                                ? 'bg-green-100 text-green-800 hover:bg-green-200' 
+                                : 'bg-red-100 text-red-800 hover:bg-red-200'
+                            }`}
+                            onMouseOver={(e) => {
+                              e.target.style.transform = 'scale(1.05)';
+                            }}
+                            onMouseOut={(e) => {
+                              e.target.style.transform = 'scale(1)';
+                            }}
+                            title={user.status === 'Suspended' ? 'Unblock User' : 'Block User'}
+                          >
+                            {user.status === 'Suspended' ? <UserCheck size={16} /> : <UserX size={16} />}
+                          </button>
+                          <button
+                            className="p-2 rounded-lg transition-colors"
+                            style={{backgroundColor: '#FFE4D6', color: '#5D3A00'}}
+                            onMouseOver={(e) => {
+                              e.target.style.backgroundColor = '#FFD95A';
+                              e.target.style.transform = 'scale(1.05)';
+                            }}
+                            onMouseOut={(e) => {
+                              e.target.style.backgroundColor = '#FFE4D6';
+                              e.target.style.transform = 'scale(1)';
+                            }}
+                            title="More Options"
+                          >
+                            <MoreVertical size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
-          {filteredUsers.length === 0 && (
-            <div className="p-8 text-center" style={{color: '#D87C5A'}}>
-              <Users size={48} className="mx-auto mb-4 opacity-50" />
-              <p className="text-lg font-medium mb-2">No users found</p>
-              <p className="text-sm">Try adjusting your search terms or filters</p>
-            </div>
-          )}
         </div>
 
         {/* User Details Modal */}
