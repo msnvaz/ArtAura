@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import {
   Search,
   Filter,
-  Heart,
   Star,
   MapPin,
   Calendar,
@@ -15,9 +14,11 @@ import {
   Palette,
   Camera,
   Brush,
+  MessageSquare,
 } from "lucide-react";
 import Navbar from "../components/common/Navbar";
 import CartSidebar from "../components/cart/CartSidebar";
+import CommissionRequestModal from "../components/modals/CommissionRequestModal";
 
 const ArtistsPage = () => {
   const [artists, setArtists] = useState([]);
@@ -30,14 +31,18 @@ const ArtistsPage = () => {
   const [viewMode, setViewMode] = useState("grid");
   const [showFilters, setShowFilters] = useState(false);
 
+  // Commission modal state
+  const [showCommissionModal, setShowCommissionModal] = useState(false);
+  const [selectedArtist, setSelectedArtist] = useState(null);
+
   // Mock data for artists
   const mockArtists = [
     {
       id: 1,
-      name: "Sarah Martinez",
+      name: "Sanduni Fernando",
       avatar: "https://randomuser.me/api/portraits/women/44.jpg",
       specialty: "Digital Art",
-      location: "New York, USA",
+      location: "Colombo, Sri Lanka",
       rating: 4.9,
       reviews: 156,
       followers: 2840,
@@ -55,16 +60,16 @@ const ArtistsPage = () => {
     },
     {
       id: 2,
-      name: "Liam Chen",
+      name: "Kasun Silva",
       avatar: "https://randomuser.me/api/portraits/men/32.jpg",
       specialty: "Sculpture",
-      location: "San Francisco, USA",
+      location: "Kandy, Sri Lanka",
       rating: 4.8,
       reviews: 98,
       followers: 1950,
       artworks: 32,
       joinDate: "2023-03-22",
-      bio: "Contemporary sculptor working with metal and stone to create thought-provoking installations.",
+      bio: "Contemporary sculptor working with wood and stone to create thought-provoking installations inspired by Sri Lankan heritage.",
       featured: false,
       verified: true,
       badges: ["Rising Star"],
@@ -75,16 +80,16 @@ const ArtistsPage = () => {
     },
     {
       id: 3,
-      name: "Ava Patel",
+      name: "Priya Jayasuriya",
       avatar: "https://randomuser.me/api/portraits/women/68.jpg",
       specialty: "Photography",
-      location: "London, UK",
+      location: "Galle, Sri Lanka",
       rating: 4.7,
       reviews: 124,
       followers: 3200,
       artworks: 78,
       joinDate: "2022-11-08",
-      bio: "Fine art photographer capturing the beauty of urban landscapes and human emotions.",
+      bio: "Fine art photographer capturing the beauty of Sri Lankan landscapes, culture, and human emotions.",
       featured: true,
       verified: true,
       badges: ["Featured Artist", "Top Photographer"],
@@ -96,16 +101,16 @@ const ArtistsPage = () => {
     },
     {
       id: 4,
-      name: "Marcus Johnson",
+      name: "Dilshan Gamage",
       avatar: "https://randomuser.me/api/portraits/men/25.jpg",
       specialty: "Painting",
-      location: "Paris, France",
+      location: "Negombo, Sri Lanka",
       rating: 4.6,
       reviews: 87,
       followers: 1620,
       artworks: 56,
       joinDate: "2023-05-12",
-      bio: "Oil painter exploring abstract expressionism and contemporary themes through vivid colors.",
+      bio: "Oil painter exploring abstract expressionism and traditional Sri Lankan themes through vivid colors.",
       featured: false,
       verified: false,
       badges: ["New Artist"],
@@ -116,16 +121,16 @@ const ArtistsPage = () => {
     },
     {
       id: 5,
-      name: "Emily Rodriguez",
+      name: "Tharushi Wickramasinghe",
       avatar: "https://randomuser.me/api/portraits/women/35.jpg",
       specialty: "Mixed Media",
-      location: "Tokyo, Japan",
+      location: "Jaffna, Sri Lanka",
       rating: 4.9,
       reviews: 203,
       followers: 4150,
       artworks: 89,
       joinDate: "2022-08-30",
-      bio: "Mixed media artist combining traditional techniques with modern technology to create unique experiences.",
+      bio: "Mixed media artist combining traditional Sri Lankan techniques with modern technology to create unique experiences.",
       featured: true,
       verified: true,
       badges: ["Top Rated", "Innovation Award"],
@@ -137,16 +142,16 @@ const ArtistsPage = () => {
     },
     {
       id: 6,
-      name: "David Kim",
+      name: "Chamika Rathnayake",
       avatar: "https://randomuser.me/api/portraits/men/45.jpg",
       specialty: "Illustration",
-      location: "Seoul, South Korea",
+      location: "Matara, Sri Lanka",
       rating: 4.5,
       reviews: 67,
       followers: 980,
       artworks: 34,
       joinDate: "2023-07-01",
-      bio: "Children's book illustrator and comic artist creating whimsical characters and magical worlds.",
+      bio: "Children's book illustrator and comic artist creating whimsical characters inspired by Sri Lankan folklore.",
       featured: false,
       verified: true,
       badges: ["Emerging Talent"],
@@ -172,14 +177,15 @@ const ArtistsPage = () => {
 
   const locations = [
     "All Locations",
-    "New York, USA",
-    "San Francisco, USA",
-    "London, UK",
-    "Paris, France",
-    "Tokyo, Japan",
-    "Seoul, South Korea",
-    "Berlin, Germany",
-    "Sydney, Australia",
+    "Colombo, Sri Lanka",
+    "Kandy, Sri Lanka",
+    "Galle, Sri Lanka",
+    "Negombo, Sri Lanka",
+    "Jaffna, Sri Lanka",
+    "Matara, Sri Lanka",
+    "Anuradhapura, Sri Lanka",
+    "Trincomalee, Sri Lanka",
+    "Batticaloa, Sri Lanka",
   ];
 
   useEffect(() => {
@@ -251,6 +257,16 @@ const ArtistsPage = () => {
   const handleViewProfile = (artistId) => {
     console.log(`Viewing profile of artist ${artistId}`);
     // Add navigation logic here
+  };
+
+  const handleOpenCommissionModal = (artist) => {
+    setSelectedArtist(artist);
+    setShowCommissionModal(true);
+  };
+
+  const handleCloseCommissionModal = () => {
+    setSelectedArtist(null);
+    setShowCommissionModal(false);
   };
 
   const getBadgeColor = (badge) => {
@@ -399,10 +415,11 @@ const ArtistsPage = () => {
             View Profile
           </button>
           <button
-            onClick={() => handleFollowArtist(artist.id)}
-            className="flex items-center justify-center w-10 h-10 border-2 border-[#FFD95A] text-[#D87C5A] rounded-lg hover:bg-[#FFD95A] hover:text-[#7f5539] transition-colors"
+            onClick={() => handleOpenCommissionModal(artist)}
+            className="flex-1 bg-[#7f5539] hover:bg-[#D87C5A] text-white py-2 px-4 rounded-lg font-medium transition-colors"
           >
-            <Heart className="w-4 h-4" />
+            <MessageSquare className="w-5 h-5 inline-block -mt-1 mr-1" />
+            Commission
           </button>
         </div>
       </div>
@@ -577,6 +594,13 @@ const ArtistsPage = () => {
           )}
         </div>
       </div>
+
+      {/* Commission Request Modal */}
+      <CommissionRequestModal
+        isOpen={showCommissionModal}
+        artist={selectedArtist}
+        onClose={handleCloseCommissionModal}
+      />
     </div>
   );
 };

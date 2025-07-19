@@ -95,8 +95,8 @@ const Navbar = ({ onToggleSidebar }) => {
               {/* Profile Dropdown or Sign In Button */}
               {isSignedIn ? (
                 <ProfileDropdown
-                  profileImage={image}
-                  userName="John Doe"
+                  profileImage="https://randomuser.me/api/portraits/women/42.jpg"
+                  userName="Pawani Kumari"
                   isSignedIn={isSignedIn}
                 />
               ) : (
