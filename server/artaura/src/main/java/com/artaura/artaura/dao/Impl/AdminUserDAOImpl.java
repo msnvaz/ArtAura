@@ -61,6 +61,8 @@ public class AdminUserDAOImpl implements AdminUserDAO {
         dto.setCreatedAt(rs.getTimestamp("created_at") != null ? rs.getTimestamp("created_at").toLocalDateTime() : null);
         dto.setAgreedTerms(rs.getBoolean("agreed_terms"));
         dto.setContactNo(rs.getString("contactNo"));
+        dto.setTotalPurchases(rs.getInt("total_purchases"));
+        dto.setSpent(rs.getInt("spent"));
         return dto;
     };
 
@@ -78,7 +80,7 @@ public class AdminUserDAOImpl implements AdminUserDAO {
     public List<AdminUserDTO> getAllUsers() {
         List<AdminUserDTO> users = new ArrayList<>();
         users.addAll(jdbc.query("SELECT a.*, IFNULL(SUM(aw.price), 0) AS revenue FROM artists a LEFT JOIN artworks aw ON a.artist_id = aw.artist_id AND aw.status = 'Sold' GROUP BY a.artist_id", artistMapper));
-        users.addAll(jdbc.query("SELECT * FROM buyers", buyerMapper));
+        users.addAll(jdbc.query("SELECT  b.*, COUNT(p.purchase_id) AS total_purchases, IFNULL(SUM(p.price), 0) AS spent FROM buyers b LEFT JOIN purchases p ON b.buyer_id = p.buyer_id GROUP BY b.buyer_id" , buyerMapper));
         users.addAll(jdbc.query("SELECT * FROM moderators", moderatorMapper));
         return users;
     }

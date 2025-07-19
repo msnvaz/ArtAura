@@ -34,6 +34,8 @@ public class AdminUserDTO {
     private Integer totalSales;
 
     private Integer revenue;
+    private Integer spent;
+    private Integer totalPurchases;
     
     // Constructors
     public AdminUserDTO() {}
@@ -128,7 +130,11 @@ public class AdminUserDTO {
     public Integer getRevenue() {return revenue;}
     public void setRevenue(Integer revenue) { this.revenue = revenue; }
 
+    public Integer getSpent() {return spent;}
+    public void setSpent(Integer spent) { this.spent = spent; }
 
+    public Integer getTotalPurchases() {return totalPurchases;}
+    public void setTotalPurchases(Integer totalPurchases) { this.totalPurchases = totalPurchases; }
     // Helper methods
     public String getFullName() {
         if (firstName != null && lastName != null) {

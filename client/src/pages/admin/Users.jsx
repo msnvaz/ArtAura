@@ -397,86 +397,85 @@ const UsersManagement = () => {
         </div>
 
         {/* Users Table */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden users-table">
-          <div className="overflow-x-auto">
-            {loading ? (
-              <div className="p-8 text-center" style={{ color: '#D87C5A' }}>
-                <Users size={48} className="mx-auto mb-4 opacity-50" />
-                <p className="text-lg font-medium mb-2">Loading users...</p>
+          <div className="bg-white rounded-lg shadow-sm overflow-hidden users-table">
+            <div className="overflow-x-auto">
+              {loading ? (
+                <div className="p-8 text-center" style={{ color: '#D87C5A' }}>
+            <Users size={48} className="mx-auto mb-4 opacity-50" />
+            <p className="text-lg font-medium mb-2">Loading users...</p>
+                </div>
+              ) : error ? (
+                <div className="p-8 text-center" style={{ color: '#D87C5A' }}>
+            <Users size={48} className="mx-auto mb-4 opacity-50" />
+            <p className="text-lg font-medium mb-2">{error}</p>
+            <p className="text-sm">Try again later</p>
+                </div>
+              ) : filteredUsers.length === 0 ? (
+                <div className="p-8 text-center" style={{ color: '#D87C5A' }}>
+            <Users size={48} className="mx-auto mb-4 opacity-50" />
+            <p className="text-lg font-medium mb-2">No users found</p>
+            <p className="text-sm">Try adjusting your search terms or filters</p>
+                </div>
+              ) : (
+                <table className="w-full">
+            <thead style={{ backgroundColor: '#FFF5E1' }}>
+              <tr>
+                <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>User</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Type</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Status</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Join Date</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Artworks</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Revenue/Spent</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredUsers.map((user, index) => (
+                <tr key={user.userId} className={`user-row ${index % 2 === 0 ? 'bg-white' : ''}`} style={{backgroundColor: index % 2 === 1 ? '#FFF5E1' : 'white'}}>
+            <td className="px-6 py-4">
+              <div>
+                <div className="font-medium" style={{color: '#5D3A00'}}>{user.firstName} {user.lastName}</div>
+                <div className="text-sm" style={{color: '#D87C5A'}}>{user.email}</div>
               </div>
-            ) : error ? (
-              <div className="p-8 text-center" style={{ color: '#D87C5A' }}>
-                <Users size={48} className="mx-auto mb-4 opacity-50" />
-                <p className="text-lg font-medium mb-2">{error}</p>
-                <p className="text-sm">Try again later</p>
-              </div>
-            ) : filteredUsers.length === 0 ? (
-              <div className="p-8 text-center" style={{ color: '#D87C5A' }}>
-                <Users size={48} className="mx-auto mb-4 opacity-50" />
-                <p className="text-lg font-medium mb-2">No users found</p>
-                <p className="text-sm">Try adjusting your search terms or filters</p>
-              </div>
-            ) : (
-              <table className="w-full">
-                <thead style={{ backgroundColor: '#FFF5E1' }}>
-                  <tr>
-                    <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>User</th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Type</th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Status</th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Join Date</th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Artworks</th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Revenue/Spent</th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredUsers.map((user, index) => (
-                    <tr key={user.userId} className={`user-row ${index % 2 === 0 ? 'bg-white' : ''}`} style={{backgroundColor: index % 2 === 1 ? '#FFF5E1' : 'white'}}>
-                      <td className="px-6 py-4">
-                        <div>
-                          <div className="font-medium" style={{color: '#5D3A00'}}>{user.firstName} {user.lastName}</div>
-                          <div className="text-sm" style={{color: '#D87C5A'}}>{user.email}</div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-sm" style={{color: '#5D3A00'}}>
-                        <span className="px-2 py-1 text-xs font-medium rounded-full" style={{
-                          backgroundColor: user.userType === 'artist' ? '#FFE4D6' : user.userType === 'moderator' ? '#FFD95A' : user.userType === 'buyer' ? '#E8F5E8' : '#FFF5E1',
-                          color: '#5D3A00'
-                        }}>
-                          {user.userType}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                          user.status === 'Active' ? 'text-green-800 bg-green-100' :
-                          user.status === 'Pending' ? 'text-yellow-800 bg-yellow-100' :
-                          'text-red-800 bg-red-100'
-                        }`}>
-                          {user.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm" style={{color: '#5D3A00'}}>{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : ''}</td>
-                      <td className="px-6 py-4 text-sm" style={{color: '#5D3A00'}}>
-                        <span className="font-medium">{user.userType === 'artist' ? user.totalSales || 0 : '-'}</span>
-                      </td>
-                      <td className="px-6 py-4 text-sm" style={{color: '#5D3A00'}}>
-                         
-                          <div>
-                            <div className="font-medium" style={{color: '#D87C5A'}}>
-                              {formatPrice(user.revenue || 0, "LKR")}
-                            </div>
-                            <div className="text-xs opacity-75">
-                              {user.totalSales || 0} {user.userType === 'artist' ? "sales" : "purchases"}
-                            </div>
-                          </div>
-                        
-                          
-                        
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => {setSelectedUser(user); setShowUserModal(true);}}
+            </td>
+            <td className="px-6 py-4 text-sm" style={{color: '#5D3A00'}}>
+              <span className="px-2 py-1 text-xs font-medium rounded-full" style={{
+                backgroundColor: user.userType === 'artist' ? '#FFE4D6' : user.userType === 'moderator' ? '#FFD95A' : user.userType === 'buyer' ? '#E8F5E8' : '#FFF5E1',
+                color: '#5D3A00'
+              }}>
+                {user.userType}
+              </span>
+            </td>
+            <td className="px-6 py-4">
+              <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                user.status === 'Active' ? 'text-green-800 bg-green-100' :
+                user.status === 'Pending' ? 'text-yellow-800 bg-yellow-100' :
+                'text-red-800 bg-red-100'
+              }`}>
+                {user.status}
+              </span>
+            </td>
+            <td className="px-6 py-4 text-sm" style={{color: '#5D3A00'}}>{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : ''}</td>
+            <td className="px-6 py-4 text-sm" style={{color: '#5D3A00'}}>
+            <span className="font-medium">
+              {user.userType === 'artist' ? (user.totalSales || 0) : '-'}
+            </span>
+
+            </td>
+            <td className="px-6 py-4 text-sm" style={{color: '#5D3A00'}}>
+                <div>
+            <div className="font-medium" style={{color: '#D87C5A'}}>
+              {formatPrice(user.userType === 'artist' ? (user.revenue || 0) : (user.spent || 0), "LKR")}
+            </div>
+            <div className="text-xs opacity-75">
+              {user.userType === 'artist' ? (user.totalSales || 0) : (user.totalPurchases || 0)} {user.userType === 'artist' ? "sales" : "purchases"}
+            </div>
+                </div>
+            </td>
+            <td className="px-6 py-4">
+              <div className="flex items-center gap-2">
+                <button
+            onClick={() => {setSelectedUser(user); setShowUserModal(true);}}
                             className="p-2 rounded-lg transition-colors"
                             style={{backgroundColor: '#FFE4D6', color: '#5D3A00'}}
                             onMouseOver={(e) => {
