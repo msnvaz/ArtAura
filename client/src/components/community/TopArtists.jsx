@@ -1,7 +1,10 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { Star, TrendingUp, Users } from "lucide-react";
 
 const TopArtists = () => {
+  const navigate = useNavigate();
+
   const topArtists = [
     {
       id: 1,
@@ -67,6 +70,10 @@ const TopArtists = () => {
     }
   };
 
+  const handleDiscoverMoreArtists = () => {
+    navigate("/artists");
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-md border border-[#FFD95A] p-6 mb-6">
       <div className="flex items-center justify-between mb-4">
@@ -126,7 +133,10 @@ const TopArtists = () => {
         ))}
       </div>
 
-      <button className="w-full mt-4 py-2 bg-[#FFF5E1] hover:bg-[#FFD95A] text-[#7f5539] rounded-lg font-medium transition-colors">
+      <button
+        onClick={handleDiscoverMoreArtists}
+        className="w-full mt-4 py-2 bg-[#FFF5E1] hover:bg-[#FFD95A] text-[#7f5539] rounded-lg font-medium transition-colors"
+      >
         Discover More Artists
       </button>
     </div>

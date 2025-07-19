@@ -1,13 +1,5 @@
 import React, { useState } from "react";
-import {
-  Calendar,
-  MapPin,
-  Clock,
-  Users,
-  Upload,
-  X,
-  Image as ImageIcon,
-} from "lucide-react";
+import { Calendar, X } from "lucide-react";
 
 const ExhibitionPostForm = () => {
   const [showForm, setShowForm] = useState(false);
@@ -23,11 +15,9 @@ const ExhibitionPostForm = () => {
     category: "",
     entryFee: "",
     maxParticipants: "",
-    website: "",
     contactEmail: "",
     contactPhone: "",
     requirements: "",
-    image: null,
   });
 
   const categories = [
@@ -53,16 +43,6 @@ const ExhibitionPostForm = () => {
     }));
   };
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setFormData((prev) => ({
-        ...prev,
-        image: file,
-      }));
-    }
-  };
-
   const handleSubmit = (e) => {
     e.preventDefault();
     // Handle form submission
@@ -80,11 +60,9 @@ const ExhibitionPostForm = () => {
       category: "",
       entryFee: "",
       maxParticipants: "",
-      website: "",
       contactEmail: "",
       contactPhone: "",
       requirements: "",
-      image: null,
     });
     setShowForm(false);
   };
@@ -103,11 +81,9 @@ const ExhibitionPostForm = () => {
       category: "",
       entryFee: "",
       maxParticipants: "",
-      website: "",
       contactEmail: "",
       contactPhone: "",
       requirements: "",
-      image: null,
     });
   };
 
@@ -354,21 +330,6 @@ const ExhibitionPostForm = () => {
             </div>
           </div>
 
-          {/* Website */}
-          <div>
-            <label className="block text-sm font-medium text-[#7f5539] mb-1">
-              Website
-            </label>
-            <input
-              type="url"
-              name="website"
-              value={formData.website}
-              onChange={handleInputChange}
-              className="w-full px-4 py-2 border border-[#FFD95A] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFD95A] text-[#7f5539]"
-              placeholder="https://example.com"
-            />
-          </div>
-
           {/* Requirements */}
           <div>
             <label className="block text-sm font-medium text-[#7f5539] mb-1">
@@ -382,38 +343,6 @@ const ExhibitionPostForm = () => {
               className="w-full px-4 py-2 border border-[#FFD95A] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFD95A] text-[#7f5539] resize-none"
               placeholder="Any special requirements, submission guidelines, etc."
             />
-          </div>
-
-          {/* Image Upload */}
-          <div>
-            <label className="block text-sm font-medium text-[#7f5539] mb-1">
-              Exhibition Image
-            </label>
-            <div className="flex items-center gap-4">
-              <label className="flex items-center gap-2 px-4 py-2 border border-[#FFD95A] rounded-lg cursor-pointer hover:bg-[#FFD95A]/20 transition-colors">
-                <Upload className="w-4 h-4 text-[#7f5539]" />
-                <span className="text-sm text-[#7f5539]">
-                  {formData.image ? formData.image.name : "Choose image"}
-                </span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="hidden"
-                />
-              </label>
-              {formData.image && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    setFormData((prev) => ({ ...prev, image: null }))
-                  }
-                  className="text-[#D87C5A] hover:text-[#7f5539] p-1 rounded-full hover:bg-[#FFD95A]/20 transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
           </div>
 
           {/* Submit Buttons */}
