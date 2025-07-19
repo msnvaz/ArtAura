@@ -42,7 +42,8 @@ public class SecurityConfig {
                         "/uploads/**",
                         "/api/artworks/create",
                         "/api/achievements/artist/**",
-                        "/api/achievements/create"
+                        "/api/achievements/create",
+                        "/api/achievements/**"
                 ).permitAll()
                 .requestMatchers("/api/posts/create").authenticated()
                 .requestMatchers("/api/posts/{role}/{userId}").authenticated()

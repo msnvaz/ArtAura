@@ -3,7 +3,7 @@ import { Trophy, Star, Medal, Award, FileText, Shield, Plus, Edit, Trash2 } from
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 
-const AchievementsSection = ({ artistId, isOwnProfile = false, onAchievementsCountChange }) => {
+const AchievementsSection = ({ artistId, isOwnProfile = false, onAchievementsCountChange, onAchievementsRefresh }) => {
     const [achievements, setAchievements] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isAddingAchievement, setIsAddingAchievement] = useState(false);
@@ -94,6 +94,10 @@ const AchievementsSection = ({ artistId, isOwnProfile = false, onAchievementsCou
 
             if (response.status === 200) {
                 await fetchAchievements();
+                // Refresh parent component's achievements data
+                if (onAchievementsRefresh) {
+                    onAchievementsRefresh();
+                }
                 setIsAddingAchievement(false);
                 resetForm();
                 alert('Achievement added successfully!');
@@ -106,9 +110,19 @@ const AchievementsSection = ({ artistId, isOwnProfile = false, onAchievementsCou
 
     const handleUpdateAchievement = async () => {
         try {
+            const updateData = {
+                title: editingAchievement.title,
+                type: editingAchievement.type,
+                achievementDate: editingAchievement.achievementDate,
+                prize: editingAchievement.prize,
+                description: editingAchievement.description,
+                iconType: editingAchievement.iconType,
+                colorScheme: editingAchievement.colorScheme
+            };
+
             const response = await axios.put(
                 `http://localhost:8081/api/achievements/${editingAchievement.achievementId}`,
-                editingAchievement,
+                updateData,
                 {
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -119,6 +133,10 @@ const AchievementsSection = ({ artistId, isOwnProfile = false, onAchievementsCou
 
             if (response.status === 200) {
                 await fetchAchievements();
+                // Refresh parent component's achievements data
+                if (onAchievementsRefresh) {
+                    onAchievementsRefresh();
+                }
                 setEditingAchievement(null);
                 alert('Achievement updated successfully!');
             }
@@ -145,6 +163,10 @@ const AchievementsSection = ({ artistId, isOwnProfile = false, onAchievementsCou
 
             if (response.status === 200) {
                 await fetchAchievements();
+                // Refresh parent component's achievements data
+                if (onAchievementsRefresh) {
+                    onAchievementsRefresh();
+                }
                 alert('Achievement deleted successfully!');
             }
         } catch (error) {

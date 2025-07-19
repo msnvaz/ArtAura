@@ -42,11 +42,40 @@ import {
   Clock,
   Target,
   Globe,
-  ArrowLeft
+  ArrowLeft,
+  FileText,
+  Shield
 } from 'lucide-react';
 
 const ArtistPortfolio = () => {
   const navigate = useNavigate();
+
+  // Helper functions for achievement display
+  const getAchievementIcon = (iconType) => {
+    const iconMap = {
+      trophy: <Trophy className="h-4 w-4" />,
+      star: <Star className="h-4 w-4" />,
+      medal: <Medal className="h-4 w-4" />,
+      award: <Award className="h-4 w-4" />,
+      certificate: <FileText className="h-4 w-4" />,
+      badge: <Shield className="h-4 w-4" />
+    };
+    return iconMap[iconType] || <Trophy className="h-4 w-4" />;
+  };
+
+  const getAchievementColor = (colorScheme) => {
+    const colorMap = {
+      gold: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      silver: 'bg-gray-100 text-gray-800 border-gray-200',
+      bronze: 'bg-orange-100 text-orange-800 border-orange-200',
+      blue: 'bg-blue-100 text-blue-800 border-blue-200',
+      purple: 'bg-purple-100 text-purple-800 border-purple-200',
+      green: 'bg-green-100 text-green-800 border-green-200',
+      red: 'bg-red-100 text-red-800 border-red-200'
+    };
+    return colorMap[colorScheme] || 'bg-yellow-100 text-yellow-800 border-yellow-200';
+  };
+
   const [activeTab, setActiveTab] = useState('portfolio');
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isAddingArtwork, setIsAddingArtwork] = useState(false);
@@ -90,6 +119,8 @@ const ArtistPortfolio = () => {
   const [portfolioPosts, setPortfolioPosts] = useState([]);
   const [artistProfile, setArtistProfile] = useState(null);
   const [achievementsCount, setAchievementsCount] = useState(0);
+  const [recentAchievements, setRecentAchievements] = useState([]);
+  const [topAchievements, setTopAchievements] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Fetch artist profile data
@@ -164,6 +195,62 @@ const ArtistPortfolio = () => {
 
     fetchProfile();
   }, [userId, token]);
+
+  // Fetch recent achievements function (reusable)
+  const fetchAchievementsData = async () => {
+    if (!userId) {
+      console.warn("Missing userId. Skipping achievements fetch.");
+      return;
+    }
+
+    try {
+      const response = await axios.get(`http://localhost:8081/api/achievements/artist/${userId}`);
+      const achievements = response.data || [];
+
+      // Set the total count for navigation tab
+      setAchievementsCount(achievements.length);
+
+      // Transform achievements data to match the display format
+      const sortedAchievements = achievements.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+      // Get the 3 most recent for sidebar
+      const recentForSidebar = sortedAchievements
+        .slice(0, 3)
+        .map(achievement => ({
+          id: achievement.achievementId,
+          title: achievement.title,
+          prize: achievement.prize || achievement.type,
+          icon: getAchievementIcon(achievement.iconType),
+          color: getAchievementColor(achievement.colorScheme)
+        }));
+
+      // Get up to 8 achievements for top section, with additional info
+      const topForDisplay = sortedAchievements
+        .slice(0, 8)
+        .map(achievement => ({
+          id: achievement.achievementId,
+          title: achievement.title,
+          prize: achievement.prize || achievement.type,
+          type: achievement.type,
+          date: new Date(achievement.achievementDate).toLocaleDateString(),
+          icon: getAchievementIcon(achievement.iconType),
+          color: getAchievementColor(achievement.colorScheme)
+        }));
+
+      setRecentAchievements(recentForSidebar);
+      setTopAchievements(topForDisplay);
+    } catch (error) {
+      console.error("Error fetching recent achievements:", error);
+      setRecentAchievements([]);
+      setTopAchievements([]);
+      setAchievementsCount(0);
+    }
+  };
+
+  // Fetch recent achievements
+  useEffect(() => {
+    fetchAchievementsData();
+  }, [userId]);
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -1207,21 +1294,28 @@ const ArtistPortfolio = () => {
                   <span>Achievements & Awards</span>
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                  {badges.map((badge, index) => (
-                    <div
-                      key={badge.id || `badge-${index}`}
-                      className={`p-3 rounded-lg border-2 ${badge.color} hover:scale-105 transition-transform cursor-pointer`}
-
-                    >
-                      <div className="flex items-center space-x-2 mb-1">
-                        {badge.icon}
-                        <span className="font-medium text-sm">{badge.type.charAt(0).toUpperCase() + badge.type.slice(1)}</span>
+                  {topAchievements.length > 0 ? (
+                    topAchievements.map((achievement, index) => (
+                      <div
+                        key={achievement.id || `top-achievement-${index}`}
+                        className={`p-3 rounded-lg border-2 ${achievement.color} hover:scale-105 transition-transform cursor-pointer`}
+                      >
+                        <div className="flex items-center space-x-2 mb-1">
+                          {achievement.icon}
+                          <span className="font-medium text-sm">{achievement.type ? achievement.type.charAt(0).toUpperCase() + achievement.type.slice(1) : 'Achievement'}</span>
+                        </div>
+                        <div className="text-xs font-medium mb-1">{achievement.title}</div>
+                        <div className="text-xs opacity-75">{achievement.prize}</div>
+                        <div className="text-xs opacity-60 mt-1">{achievement.date}</div>
                       </div>
-                      <div className="text-xs font-medium mb-1">{badge.title}</div>
-                      <div className="text-xs opacity-75">{badge.prize}</div>
-                      <div className="text-xs opacity-60 mt-1">{badge.date}</div>
+                    ))
+                  ) : (
+                    <div className="col-span-full text-center py-8">
+                      <Trophy className="h-12 w-12 text-[#7f5539]/30 mx-auto mb-3" />
+                      <p className="text-[#7f5539]/60 mb-2">No achievements yet</p>
+                      <p className="text-sm text-[#7f5539]/40">Start creating and winning competitions to earn achievements!</p>
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             </div>
@@ -1300,19 +1394,30 @@ const ArtistPortfolio = () => {
                     <span>Recent Achievements</span>
                   </h3>
                   <div className="space-y-3">
-                    {badges.slice(0, 3).map((badge, index) => (
-                      <div key={badge.id || `recent-badge-${index}`} className="flex items-center space-x-3">
-                        <div className={`p-2 rounded-lg ${badge.color}`}>
-                          {React.cloneElement(badge.icon, { className: "h-4 w-4" })}
+                    {recentAchievements.length > 0 ? (
+                      recentAchievements.map((achievement, index) => (
+                        <div key={achievement.id || `recent-achievement-${index}`} className="flex items-center space-x-3">
+                          <div className={`p-2 rounded-lg ${achievement.color}`}>
+                            {achievement.icon}
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-[#7f5539]">{achievement.title}</p>
+                            <p className="text-xs text-[#7f5539]/60">{achievement.prize}</p>
+                          </div>
                         </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-[#7f5539]">{badge.title}</p>
-                          <p className="text-xs text-[#7f5539]/60">{badge.prize}</p>
-                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-4">
+                        <Trophy className="h-8 w-8 text-[#7f5539]/30 mx-auto mb-2" />
+                        <p className="text-sm text-[#7f5539]/60">No achievements yet</p>
+                        <p className="text-xs text-[#7f5539]/40">Start creating to earn achievements!</p>
                       </div>
-                    ))}
+                    )}
                   </div>
-                  <button className="w-full mt-4 text-[#7f5539] hover:text-[#6e4c34] text-sm font-medium transition-colors">
+                  <button
+                    onClick={() => setActiveTab('achievements')}
+                    className="w-full mt-4 text-[#7f5539] hover:text-[#6e4c34] text-sm font-medium transition-colors"
+                  >
                     View All Achievements
                   </button>
                 </div>
@@ -1746,6 +1851,7 @@ const ArtistPortfolio = () => {
             artistId={userId}
             isOwnProfile={true}
             onAchievementsCountChange={setAchievementsCount}
+            onAchievementsRefresh={fetchAchievementsData}
           />
         )}
 

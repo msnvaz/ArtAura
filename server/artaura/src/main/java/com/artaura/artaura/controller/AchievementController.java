@@ -75,13 +75,7 @@ public class AchievementController {
     @PutMapping("/{achievementId}")
     public ResponseEntity<String> updateAchievement(
             @PathVariable Long achievementId,
-            @RequestParam("title") String title,
-            @RequestParam("type") String type,
-            @RequestParam("achievement_date") String achievementDate,
-            @RequestParam(value = "prize", required = false) String prize,
-            @RequestParam(value = "description", required = false) String description,
-            @RequestParam(value = "icon_type", defaultValue = "award") String iconType,
-            @RequestParam(value = "color_scheme", defaultValue = "gold") String colorScheme,
+            @RequestBody AchievementUpdateDTO updateData,
             HttpServletRequest request
     ) {
         try {
@@ -101,17 +95,8 @@ public class AchievementController {
                 return ResponseEntity.status(401).body("Invalid token");
             }
 
-            AchievementUpdateDTO dto = new AchievementUpdateDTO();
-            dto.setAchievementId(achievementId);
-            dto.setTitle(title);
-            dto.setType(type);
-            dto.setAchievementDate(java.time.LocalDate.parse(achievementDate));
-            dto.setPrize(prize);
-            dto.setDescription(description);
-            dto.setIconType(iconType);
-            dto.setColorScheme(colorScheme);
-
-            achievementService.updateAchievement(dto);
+            updateData.setAchievementId(achievementId);
+            achievementService.updateAchievement(updateData);
             return ResponseEntity.ok("Achievement updated successfully");
 
         } catch (Exception e) {
