@@ -31,6 +31,7 @@ public class AdminUserDTO {
     private LocalDateTime joinDate;
     private Integer totalViews;
     private Integer totalFollowers;
+    private Integer total_artworks; // Total sales made by the artist
     private Integer totalSales;
 
     private Integer revenue;
@@ -129,6 +130,9 @@ public class AdminUserDTO {
 
     public Integer getRevenue() {return revenue;}
     public void setRevenue(Integer revenue) { this.revenue = revenue; }
+
+    public Integer gettotal_artworks() {return total_artworks;}
+    public void settotal_artworks(Integer total_artworks) { this.total_artworks = total_artworks; }
 
     public Integer getSpent() {return spent;}
     public void setSpent(Integer spent) { this.spent = spent; }

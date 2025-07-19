@@ -30,4 +30,8 @@ public class ModeratorDAOImpl implements ModeratorDAO {
             return Optional.empty();
         }
     }
+
+    public JdbcTemplate getJdbc() {
+        return jdbc;
+    }
 }

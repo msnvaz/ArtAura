@@ -23,6 +23,8 @@ const UsersManagement = () => {
   const [showUserModal, setShowUserModal] = useState(false);
   const { formatPrice } = useCurrency();
   const [isLoaded, setIsLoaded] = useState(false);
+  const [showConfirmPopup, setShowConfirmPopup] = useState(false);
+  const [confirmAction, setConfirmAction] = useState(null);
 
   // API state
   const [users, setUsers] = useState([]);
@@ -55,24 +57,40 @@ const UsersManagement = () => {
   }, [searchTerm, filterStatus]);
 
   const handleBlockUser = async (userId, userType, status) => {
-    try {
-      const newStatus = status === 'Suspended' ? 'Active' : 'Suspended';
-      const result = await adminUserApi.updateUserStatus(userId, userType, newStatus);
-      if (result.success) {
-        // Update only the affected user in the users array
-        setUsers(prevUsers =>
-          prevUsers.map(u =>
-            u.userId === userId ? { ...u, ...result.user, status: newStatus } : u
-          )
-        );
-        // Update modal user if open
-        if (selectedUser && selectedUser.userId === userId && result.user) {
-          setSelectedUser({ ...selectedUser, ...result.user, status: newStatus });
+    const newStatus = status === 'Suspended' ? 'Active' : 'Suspended';
+    const actionText = newStatus === 'Suspended' ? 'block' : 'unblock';
+    const user = users.find(u => u.userId === userId);
+    
+    setConfirmAction({
+      type: actionText,
+      user: user,
+      onConfirm: async () => {
+        try {
+          const result = await adminUserApi.updateUserStatus(userId, userType, newStatus);
+          if (result.success) {
+            setUsers(prevUsers =>
+              prevUsers.map(u =>
+                u.userId === userId ? { ...u, ...result.user, status: newStatus } : u
+              )
+            );
+            if (selectedUser && selectedUser.userId === userId && result.user) {
+              setSelectedUser({ ...selectedUser, ...result.user, status: newStatus });
+            }
+          }
+          setShowConfirmPopup(false);
+          setConfirmAction(null);
+        } catch (err) {
+          setError('Failed to update user status.');
+          setShowConfirmPopup(false);
+          setConfirmAction(null);
         }
+      },
+      onCancel: () => {
+        setShowConfirmPopup(false);
+        setConfirmAction(null);
       }
-    } catch (err) {
-      setError('Failed to update user status.');
-    }
+    });
+    setShowConfirmPopup(true);
   };
 
   const filteredUsers = users.filter(user => {
@@ -203,26 +221,20 @@ const UsersManagement = () => {
                       {selectedUser.status === 'Suspended' ? 'Blocked' : 'Active'}
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Last Activity:</span> 
-                    <span>2 hours ago</span>
-                  </div>
+                  
                 </div>
               </div>
             </div>
             <div className="mt-8 flex gap-3">
               <button
-                onClick={() => {
-                  handleBlockUser(selectedUser.userId, selectedUser.userType, selectedUser.status);
-                }}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
-                  selectedUser.status === 'Suspended' 
-                    ? 'bg-green-100 text-green-800 hover:bg-green-200' 
-                    : 'bg-red-100 text-red-800 hover:bg-red-200'
-                }`}
+                onClick={() => setShowUserModal(false)}
+                className="px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
+                style={{backgroundColor: '#FFE4D6', color: '#5D3A00'}}
+                onMouseOver={(e) => e.target.style.backgroundColor = '#FFD95A'}
+                onMouseOut={(e) => e.target.style.backgroundColor = '#FFE4D6'}
               >
-                {selectedUser.status === 'Suspended' ? <UserCheck size={16} /> : <UserX size={16} />}
-                {selectedUser.status === 'Suspended' ? 'Unblock User' : 'Block User'}
+                <X size={16} />
+                Back
               </button>
               <button
                 className="px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
@@ -241,6 +253,135 @@ const UsersManagement = () => {
               >
                 <Plus size={16} />
                 Send Message
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Confirmation Popup Component
+  const ConfirmationPopup = () => {
+    if (!showConfirmPopup || !confirmAction) return null;
+
+    const isBlocking = confirmAction.type === 'block';
+    const actionColor = isBlocking ? '#E74C3C' : '#27AE60';
+    const iconBgColor = isBlocking ? '#F1948A' : '#82E0AA';
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg shadow-lg max-w-md w-full mx-4 max-h-90vh overflow-y-auto">
+          <div className="p-6">
+            {/* Close Button */}
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-bold" style={{color: '#5D3A00'}}>
+                {isBlocking ? 'Block User' : 'Unblock User'}
+              </h3>
+              <button
+                onClick={confirmAction.onCancel}
+                className="p-2 rounded-lg transition-colors"
+                style={{backgroundColor: '#FFE4D6', color: '#5D3A00'}}
+                onMouseOver={(e) => e.target.style.backgroundColor = '#FFD95A'}
+                onMouseOut={(e) => e.target.style.backgroundColor = '#FFE4D6'}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Header with Icon */}
+            <div className="flex items-center justify-center mb-4">
+              <div 
+                className="w-16 h-16 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: iconBgColor }}
+              >
+                {isBlocking ? (
+                  <UserX size={32} style={{ color: actionColor }} />
+                ) : (
+                  <UserCheck size={32} style={{ color: actionColor }} />
+                )}
+              </div>
+            </div>
+
+            {/* User Info */}
+            <div 
+              className="rounded-lg p-3 mb-4"
+              style={{ backgroundColor: '#FFF5E1', border: '1px solid #FFE4D6' }}
+            >
+              <div className="flex items-center gap-3">
+                <div 
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold"
+                  style={{ backgroundColor: '#D87C5A' }}
+                >
+                  {confirmAction.user?.firstName?.charAt(0)}{confirmAction.user?.lastName?.charAt(0)}
+                </div>
+                <div>
+                  <div className="font-medium" style={{ color: '#5D3A00' }}>
+                    {confirmAction.user?.firstName} {confirmAction.user?.lastName}
+                  </div>
+                  <div className="text-sm" style={{ color: '#D87C5A' }}>
+                    {confirmAction.user?.email}
+                  </div>
+                  <span 
+                    className="inline-block px-2 py-1 text-xs font-medium rounded-full mt-1"
+                    style={{
+                      backgroundColor: confirmAction.user?.userType === 'artist' ? '#FFE4D6' : 
+                                     confirmAction.user?.userType === 'moderator' ? '#FFD95A' : 
+                                     confirmAction.user?.userType === 'buyer' ? '#E8F5E8' : '#FFF5E1',
+                      color: '#5D3A00'
+                    }}
+                  >
+                    {confirmAction.user?.userType}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Confirmation Message */}
+            <div className="mb-6">
+              <p className="text-center mb-2" style={{ color: '#5D3A00' }}>
+                Are you sure you want to{' '}
+                <span className="font-semibold" style={{ color: actionColor }}>
+                  {confirmAction.type}
+                </span>{' '}
+                this user?
+              </p>
+              <p className="text-center text-sm" style={{ color: '#666' }}>
+                {isBlocking 
+                  ? 'They will no longer be able to access their account.' 
+                  : 'They will regain access to their account.'}
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={confirmAction.onCancel}
+                className="flex-1 px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
+                style={{backgroundColor: '#FFE4D6', color: '#5D3A00'}}
+                onMouseOver={(e) => e.target.style.backgroundColor = '#FFD95A'}
+                onMouseOut={(e) => e.target.style.backgroundColor = '#FFE4D6'}
+              >
+                <X size={16} />
+                Cancel
+              </button>
+              <button
+                onClick={confirmAction.onConfirm}
+                className="flex-1 px-4 py-2 rounded-lg font-medium transition-colors text-white flex items-center gap-2"
+                style={{ backgroundColor: actionColor }}
+                onMouseOver={(e) => {
+                  e.target.style.backgroundColor = isBlocking ? '#C0392B' : '#229954';
+                  e.target.style.transform = 'translateY(-1px)';
+                  e.target.style.boxShadow = `0 4px 12px ${actionColor}40`;
+                }}
+                onMouseOut={(e) => {
+                  e.target.style.backgroundColor = actionColor;
+                  e.target.style.transform = 'translateY(0px)';
+                  e.target.style.boxShadow = 'none';
+                }}
+              >
+                {isBlocking ? <UserX size={16} /> : <UserCheck size={16} />}
+                {isBlocking ? 'Block User' : 'Unblock User'}
               </button>
             </div>
           </div>
@@ -539,6 +680,9 @@ const UsersManagement = () => {
 
         {/* User Details Modal */}
         <UserModal />
+
+        {/* Confirmation Popup */}
+        <ConfirmationPopup />
       </div>
     </>
   );
