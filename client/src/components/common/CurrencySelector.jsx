@@ -7,10 +7,6 @@ const CurrencySelector = ({ className = "" }) => {
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <div className="flex items-center gap-1 text-sm" style={{color: '#5D3A00'}}>
-        <Globe size={16} />
-        <span className="hidden sm:inline">Currency:</span>
-      </div>
       <div className="flex bg-white border rounded-lg overflow-hidden" style={{borderColor: '#FFE4D6'}}>
         <button
           onClick={() => setCurrency('LKR')}
@@ -40,9 +36,6 @@ const CurrencySelector = ({ className = "" }) => {
         >
           <span className="font-semibold">USD</span>
         </button>
-      </div>
-      <div className="text-xs opacity-75 hidden md:block" style={{color: '#5D3A00'}}>
-        1 USD = {exchangeRate.toFixed(2)} LKR
       </div>
     </div>
   );

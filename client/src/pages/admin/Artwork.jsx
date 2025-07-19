@@ -96,7 +96,10 @@ const ArtworkManagement = () => {
         response = await adminArtworkApi.getAllArtworks(filters);
       }
 
-      setArtworks(response.content || []);
+      // Use artworks directly without status mapping
+      const processedArtworks = response.content || [];
+
+      setArtworks(processedArtworks);
       setPagination(prev => ({
         ...prev,
         totalElements: response.totalElements || 0,
@@ -128,12 +131,21 @@ const ArtworkManagement = () => {
     }
   };
 
+  // Status values that match the database enum ('Available', 'Sold', 'Reserved')
+  const validStatuses = ['Available', 'Sold', 'Reserved'];
+
   const handleBlockArtwork = async (artworkId) => {
     try {
       const artwork = artworks.find(a => a.artworkId === artworkId);
       if (!artwork) return;
 
       const newStatus = artwork.status === 'Sold' ? 'Available' : 'Sold';
+      
+      if (!validStatuses.includes(newStatus)) {
+        setError(`Invalid status: ${newStatus}`);
+        return;
+      }
+
       await adminArtworkApi.updateArtworkStatus(artworkId, newStatus);
       
       // Update local state

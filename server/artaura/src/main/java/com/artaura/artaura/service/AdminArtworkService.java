@@ -105,13 +105,20 @@ public class AdminArtworkService {
      * Update artwork status
      */
     public boolean updateArtworkStatus(Long artworkId, String status) {
-        // Validate status values
-        List<String> validStatuses = List.of("active", "inactive", "pending", "rejected", "approved");
-        if (!validStatuses.contains(status.toLowerCase())) {
-            throw new IllegalArgumentException("Invalid status: " + status);
+        System.out.println("AdminArtworkService: updateArtworkStatus called with artworkId=" + artworkId + ", status=" + status);
+        
+        // Validate status values - must match database enum ('Available', 'Sold', 'Reserved')
+        List<String> validStatuses = List.of("Available", "Sold", "Reserved");
+        if (!validStatuses.contains(status)) {
+            System.out.println("AdminArtworkService: Invalid status provided: " + status + ". Valid statuses are: " + validStatuses);
+            throw new IllegalArgumentException("Invalid status: " + status + ". Valid statuses are: " + validStatuses);
         }
         
-        return adminArtworkDAO.updateArtworkStatus(artworkId, status);
+        System.out.println("AdminArtworkService: Status validation passed, calling DAO");
+        boolean result = adminArtworkDAO.updateArtworkStatus(artworkId, status);
+        System.out.println("AdminArtworkService: DAO returned: " + result);
+        
+        return result;
     }
 
     /**
