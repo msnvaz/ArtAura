@@ -59,9 +59,15 @@ const UsersManagement = () => {
       const newStatus = status === 'Suspended' ? 'Active' : 'Suspended';
       const result = await adminUserApi.updateUserStatus(userId, userType, newStatus);
       if (result.success) {
-        await fetchUsers(); // <-- Re-fetch users after status update
+        // Update only the affected user in the users array
+        setUsers(prevUsers =>
+          prevUsers.map(u =>
+            u.userId === userId ? { ...u, ...result.user, status: newStatus } : u
+          )
+        );
+        // Update modal user if open
         if (selectedUser && selectedUser.userId === userId && result.user) {
-          setSelectedUser({ ...selectedUser, status: result.user.status });
+          setSelectedUser({ ...selectedUser, ...result.user, status: newStatus });
         }
       }
     } catch (err) {
