@@ -17,6 +17,7 @@ import {
   Brush,
 } from "lucide-react";
 import Navbar from "../components/common/Navbar";
+import CartSidebar from "../components/cart/CartSidebar";
 
 const ArtistsPage = () => {
   const [artists, setArtists] = useState([]);
@@ -411,6 +412,7 @@ const ArtistsPage = () => {
   return (
     <div className="min-h-screen bg-[#FFF5E1]">
       <Navbar />
+      <CartSidebar />
 
       <div className="pt-20 pb-10">
         <div className="max-w-7xl mx-auto px-4">

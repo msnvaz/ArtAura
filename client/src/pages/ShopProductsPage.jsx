@@ -11,6 +11,8 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import Navbar from "../components/common/Navbar";
+import { useCart } from "../context/CartContext";
+import CartSidebar from "../components/cart/CartSidebar";
 
 const ShopProductsPage = () => {
   const [products, setProducts] = useState([]);
@@ -22,6 +24,8 @@ const ShopProductsPage = () => {
   const [sortBy, setSortBy] = useState("newest");
   const [viewMode, setViewMode] = useState("grid");
   const [showFilters, setShowFilters] = useState(false);
+
+  const { addToCart, toggleCart } = useCart();
 
   // Mock data for products
   const mockProducts = [
@@ -197,6 +201,9 @@ const ShopProductsPage = () => {
       );
     }
 
+    // Only show in-stock products
+    filtered = filtered.filter((product) => product.inStock);
+
     // Sorting
     switch (sortBy) {
       case "price-low":
@@ -218,8 +225,11 @@ const ShopProductsPage = () => {
   }, [products, searchTerm, selectedCategory, priceRange, sortBy]);
 
   const handleAddToCart = (productId) => {
-    console.log(`Adding product ${productId} to cart`);
-    // Add cart logic here
+    const product = products.find((p) => p.id === productId);
+    if (product && product.inStock) {
+      addToCart(product);
+      toggleCart(); // Open cart sidebar
+    }
   };
 
   const handleAddToWishlist = (productId) => {
@@ -245,12 +255,6 @@ const ShopProductsPage = () => {
             <span className="text-white font-bold text-lg">Out of Stock</span>
           </div>
         )}
-        <button
-          onClick={() => handleAddToWishlist(product.id)}
-          className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-md hover:bg-[#FFD95A] transition-colors"
-        >
-          <Heart className="w-4 h-4 text-[#7f5539]" />
-        </button>
       </div>
 
       <div className="p-4">
@@ -319,6 +323,7 @@ const ShopProductsPage = () => {
   return (
     <div className="min-h-screen bg-[#FFF5E1]">
       <Navbar />
+      <CartSidebar />
 
       <div className="pt-20 pb-10">
         <div className="max-w-7xl mx-auto px-4">

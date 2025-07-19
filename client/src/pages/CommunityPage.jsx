@@ -4,6 +4,7 @@ import Post from "../components/community/Posts";
 import TopArtists from "../components/community/TopArtists";
 import ExhibitionPostForm from "../components/community/ExhibitionPostForm";
 import RecentChallenges from "../components/community/RecentChallenges";
+import CartSidebar from "../components/cart/CartSidebar";
 import axios from "axios";
 
 const CommunityPage = () => {
@@ -66,6 +67,9 @@ const CommunityPage = () => {
     <div className="min-h-screen bg-[#FFF5E1] overflow-x-hidden">
       {/* Navbar */}
       <Navbar />
+
+      {/* Cart Sidebar */}
+      <CartSidebar />
 
       {/* Main Container */}
       <div className="flex justify-center pt-24 pb-10">

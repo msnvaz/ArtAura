@@ -22,6 +22,7 @@ import {
   Zap,
 } from "lucide-react";
 import Navbar from "../components/common/Navbar";
+import CartSidebar from "../components/cart/CartSidebar";
 import { useAuth } from "../context/AuthContext"; // Import AuthContext
 
 const ChallengesPage = () => {
@@ -267,6 +268,7 @@ const ChallengesPage = () => {
   return (
     <div className="min-h-screen bg-[#FFF5E1]">
       <Navbar />
+      <CartSidebar />
 
       <div className="pt-20 pb-10">
         <div className="max-w-7xl mx-auto px-4">
