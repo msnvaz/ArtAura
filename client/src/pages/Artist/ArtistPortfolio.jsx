@@ -87,6 +87,82 @@ const ArtistPortfolio = () => {
 
   const { token, role, userId } = useAuth();
   const [portfolioPosts, setPortfolioPosts] = useState([]);
+  const [artistProfile, setArtistProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch artist profile data
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!userId || !token) {
+        console.warn("Missing userId or token. Skipping profile fetch.");
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const response = await axios.get(
+          `http://localhost:8081/api/artist/profile/${userId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        // Transform the response to match the expected structure
+        const profileData = response.data;
+        console.log('Profile data received:', profileData);
+
+        const avatarUrl = profileData.avatarUrl ? `http://localhost:8081${profileData.avatarUrl}?t=${Date.now()}` : 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=200';
+        const coverUrl = profileData.coverImageUrl ? `http://localhost:8081${profileData.coverImageUrl}?t=${Date.now()}` : 'https://images.pexels.com/photos/1070981/pexels-photo-1070981.jpeg?auto=compress&cs=tinysrgb&w=800';
+
+        console.log('Avatar URL:', avatarUrl);
+        console.log('Cover URL:', coverUrl);
+
+        setArtistProfile({
+          ...profileData,
+          name: `${profileData.firstName} ${profileData.lastName}`,
+          avatar: avatarUrl,
+          coverImage: coverUrl,
+          joinDate: profileData.joinDate ? new Date(profileData.joinDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : 'Recently joined',
+          phone: profileData.contactNo,
+          stats: {
+            artworks: profileData.artworksCount || 0,
+            sales: profileData.totalSales || 0,
+            followers: profileData.totalFollowers || 0,
+            views: profileData.totalViews || 0
+          }
+        });
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+        // Fallback to default profile if fetch fails
+        setArtistProfile({
+          name: 'Artist Profile',
+          bio: 'No bio available',
+          location: 'Not specified',
+          joinDate: 'Recently joined',
+          website: '',
+          instagram: '',
+          twitter: '',
+          phone: '',
+          email: '',
+          avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=200',
+          coverImage: 'https://images.pexels.com/photos/1070981/pexels-photo-1070981.jpeg?auto=compress&cs=tinysrgb&w=800',
+          stats: {
+            artworks: 0,
+            sales: 0,
+            followers: 0,
+            views: 0
+          }
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [userId, token]);
+
   useEffect(() => {
     const fetchPosts = async () => {
       if (!role || !userId || !token) {
@@ -141,28 +217,6 @@ const ArtistPortfolio = () => {
     fetchArtworks();
   }, [userId]);
 
-
-  // Mock artist data
-  const artistProfile = {
-    name: 'Sarah Martinez',
-    bio: 'Contemporary artist specializing in abstract expressionism and digital art. My work explores the intersection of emotion and color, creating pieces that speak to the human experience.',
-    location: 'New York, NY',
-    joinDate: 'January 2023',
-    website: 'www.sarahmartinez.art',
-    instagram: '@sarahmartinez_art',
-    twitter: '@sarah_art',
-    phone: '+1 (555) 123-4567',
-    email: 'sarah@sarahmartinez.art',
-    avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=200',
-    coverImage: 'https://images.pexels.com/photos/1070981/pexels-photo-1070981.jpeg?auto=compress&cs=tinysrgb&w=800',
-    stats: {
-      artworks: 24,
-      sales: 18,
-      followers: 342,
-      views: 12847
-    }
-  };
-
   // Winner badges data
   const badges = [
     {
@@ -205,19 +259,19 @@ const ArtistPortfolio = () => {
 
   // Initialize edited profile when component mounts or when editing starts
   React.useEffect(() => {
-    if (isEditingProfile) {
+    if (isEditingProfile && artistProfile) {
       setEditedProfile({
-        name: artistProfile.name,
-        bio: artistProfile.bio,
-        location: artistProfile.location,
-        website: artistProfile.website,
-        instagram: artistProfile.instagram,
-        twitter: artistProfile.twitter,
-        phone: artistProfile.phone,
-        email: artistProfile.email
+        name: artistProfile.name || '',
+        bio: artistProfile.bio || '',
+        location: artistProfile.location || '',
+        website: artistProfile.website || '',
+        instagram: artistProfile.instagram || '',
+        twitter: artistProfile.twitter || '',
+        phone: artistProfile.phone || artistProfile.contactNo || '',
+        email: artistProfile.email || ''
       });
     }
-  }, [isEditingProfile]);
+  }, [isEditingProfile, artistProfile]);
 
   const handleProfileChange = (field, value) => {
     setEditedProfile(prev => ({
@@ -226,11 +280,72 @@ const ArtistPortfolio = () => {
     }));
   };
 
-  const handleSaveProfile = () => {
-    // Here you would typically save to backend
-    console.log('Saving profile:', editedProfile);
-    setIsEditingProfile(false);
-    // Show success notification
+  const handleSaveProfile = async () => {
+    if (!userId || !token) {
+      alert('Authentication error. Please log in again.');
+      return;
+    }
+
+    try {
+      // Prepare the update data
+      const updateData = {
+        firstName: editedProfile.name ? editedProfile.name.split(' ')[0] : artistProfile?.firstName || '',
+        lastName: editedProfile.name ? editedProfile.name.split(' ').slice(1).join(' ') : artistProfile?.lastName || '',
+        bio: editedProfile.bio,
+        location: editedProfile.location,
+        website: editedProfile.website,
+        instagram: editedProfile.instagram,
+        twitter: editedProfile.twitter,
+        contactNo: editedProfile.phone
+      };
+
+      console.log('Updating profile:', updateData);
+
+      const response = await axios.put(
+        `http://localhost:8081/api/artist/profile/${userId}`,
+        updateData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      console.log('Profile update response:', response.data);
+
+      // Update the local artist profile state
+      setArtistProfile(prevProfile => ({
+        ...prevProfile,
+        name: `${updateData.firstName} ${updateData.lastName}`,
+        firstName: updateData.firstName,
+        lastName: updateData.lastName,
+        bio: updateData.bio,
+        location: updateData.location,
+        website: updateData.website,
+        instagram: updateData.instagram,
+        twitter: updateData.twitter,
+        phone: updateData.contactNo,
+        contactNo: updateData.contactNo
+      }));
+
+      setIsEditingProfile(false);
+      alert('Profile updated successfully!');
+
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      if (error.response) {
+        if (error.response.status === 401) {
+          alert('Authentication failed. Please log in again.');
+        } else if (error.response.status === 404) {
+          alert('Artist profile not found.');
+        } else {
+          alert(`Failed to update profile: ${error.response.data || error.response.statusText}`);
+        }
+      } else {
+        alert('Network error. Please check your connection and try again.');
+      }
+    }
   };
 
   const handleCancelEdit = () => {
@@ -905,17 +1020,111 @@ const ArtistPortfolio = () => {
 
   const handleSaveCover = async (newCoverImage) => {
     try {
-      // Here you would typically upload the new cover image to your backend
-      console.log('Saving new cover image:', newCoverImage);
+      if (!userId || !token) {
+        alert('Authentication error. Please log in again.');
+        return;
+      }
 
-      // For now, just close the modal
+      console.log('Uploading new cover image:', newCoverImage);
+
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append('image', newCoverImage);
+
+      const response = await axios.post(
+        `http://localhost:8081/api/artist/profile/${userId}/cover`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      );
+
+      console.log('Cover upload response:', response.data);
+
+      // Update the local artist profile state with new cover image
+      const newImageUrl = response.data.imageUrl;
+      const fullImageUrl = `http://localhost:8081${newImageUrl}?t=${Date.now()}`;
+
+      setArtistProfile(prevProfile => ({
+        ...prevProfile,
+        coverImage: fullImageUrl,
+        coverImageUrl: newImageUrl
+      }));
+
       setIsChangingCover(false);
       alert('Cover image updated successfully!');
+
     } catch (error) {
-      console.error('Error updating cover image:', error);
-      alert('Failed to update cover image');
+      console.error('Error uploading cover image:', error);
+      alert('Failed to update cover image. Please try again.');
     }
   };
+
+  const handleAvatarUpload = async (avatarFile) => {
+    try {
+      if (!userId || !token) {
+        alert('Authentication error. Please log in again.');
+        return;
+      }
+
+      console.log('Uploading new avatar:', avatarFile);
+
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append('image', avatarFile);
+
+      const response = await axios.post(
+        `http://localhost:8081/api/artist/profile/${userId}/avatar`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      );
+
+      console.log('Avatar upload response:', response.data);
+
+      // Update the local artist profile state with new avatar
+      const newImageUrl = response.data.imageUrl;
+      const fullImageUrl = `http://localhost:8081${newImageUrl}?t=${Date.now()}`;
+
+      console.log('New avatar URL:', fullImageUrl);
+
+      setArtistProfile(prevProfile => {
+        console.log('Previous profile:', prevProfile);
+        const updatedProfile = {
+          ...prevProfile,
+          avatar: fullImageUrl,
+          avatarUrl: newImageUrl
+        };
+        console.log('Updated profile:', updatedProfile);
+        return updatedProfile;
+      });
+
+      alert('Profile picture updated successfully!');
+
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      alert('Failed to update profile picture. Please try again.');
+    }
+  };
+
+  // Loading state
+  if (loading || !artistProfile) {
+    return (
+      <div className="min-h-screen bg-[#fdf9f4] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-[#7f5539] mx-auto"></div>
+          <p className="mt-4 text-[#7f5539] text-lg">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#fdf9f4] py-8">
@@ -1013,9 +1222,9 @@ const ArtistPortfolio = () => {
                   <span>Achievements & Awards</span>
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                  {badges.map((badge) => (
+                  {badges.map((badge, index) => (
                     <div
-                      key={badge.id}
+                      key={badge.id || `badge-${index}`}
                       className={`p-3 rounded-lg border-2 ${badge.color} hover:scale-105 transition-transform cursor-pointer`}
 
                     >
@@ -1106,8 +1315,8 @@ const ArtistPortfolio = () => {
                     <span>Recent Achievements</span>
                   </h3>
                   <div className="space-y-3">
-                    {badges.slice(0, 3).map((badge) => (
-                      <div key={badge.id} className="flex items-center space-x-3">
+                    {badges.slice(0, 3).map((badge, index) => (
+                      <div key={badge.id || `recent-badge-${index}`} className="flex items-center space-x-3">
                         <div className={`p-2 rounded-lg ${badge.color}`}>
                           {React.cloneElement(badge.icon, { className: "h-4 w-4" })}
                         </div>
@@ -1198,9 +1407,9 @@ const ArtistPortfolio = () => {
                 </div>
 
                 {/* Feed Posts */}
-                {portfolioPosts.map((post) => (
+                {portfolioPosts.map((post, index) => (
                   <div
-                    key={post.post_id}
+                    key={post.post_id || `post-${index}`}
                     className="bg-white rounded-xl shadow-sm border border-[#fdf9f4]/20 overflow-hidden"
                   >
                     {/* Post Header */}
@@ -1319,8 +1528,8 @@ const ArtistPortfolio = () => {
                     <span>Top Artworks</span>
                   </h3>
                   <div className="space-y-3">
-                    {Array.isArray(artworks) && artworks.slice(0, 4).map((artwork) => (
-                      <div key={artwork.artwork_id || artwork.id || artwork.title} className="flex items-center space-x-3">
+                    {Array.isArray(artworks) && artworks.slice(0, 4).map((artwork, index) => (
+                      <div key={artwork.artwork_id || artwork.id || `featured-artwork-${index}`} className="flex items-center space-x-3">
                         <img
                           src={`http://localhost:8081${artwork.imageUrl}`}
                           alt={artwork.title}
@@ -1395,8 +1604,8 @@ const ArtistPortfolio = () => {
                     <span>Upcoming Events</span>
                   </h3>
                   <div className="space-y-3">
-                    {exhibitions.map((exhibition) => (
-                      <div key={exhibition.id} className="p-3 bg-[#fdf9f4]/30 rounded-lg">
+                    {exhibitions.map((exhibition, index) => (
+                      <div key={exhibition.id || `exhibition-${index}`} className="p-3 bg-[#fdf9f4]/30 rounded-lg">
                         <p className="text-sm font-medium text-[#7f5539]">{exhibition.title}</p>
                         <p className="text-xs text-[#7f5539]/60">{exhibition.location}</p>
                         <p className="text-xs text-[#7f5539]/60">{exhibition.date}</p>
@@ -1440,8 +1649,8 @@ const ArtistPortfolio = () => {
 
             {/* Artworks Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {Array.isArray(artworks) && artworks.map((artwork) => (
-                <div key={artwork.artwork_id || artwork.id || artwork.title} className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-lg transition-all duration-300 group">
+              {Array.isArray(artworks) && artworks.map((artwork, index) => (
+                <div key={artwork.artwork_id || artwork.id || `artwork-${index}`} className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-lg transition-all duration-300 group">
                   <div className="relative">
                     <img
                       src={`http://localhost:8081${artwork.imageUrl}`}
@@ -1526,8 +1735,8 @@ const ArtistPortfolio = () => {
             </div>
 
             <div className="space-y-4">
-              {exhibitions.map((exhibition) => (
-                <div key={exhibition.id} className="p-4 bg-[#fdf9f4]/30 rounded-lg">
+              {exhibitions.map((exhibition, index) => (
+                <div key={exhibition.id || `main-exhibition-${index}`} className="p-4 bg-[#fdf9f4]/30 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="font-medium text-[#7f5539]">{exhibition.title}</h4>
                     <span className={`px-3 py-1 rounded-full text-sm font-medium ${exhibition.status === 'Upcoming' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
@@ -1552,9 +1761,9 @@ const ArtistPortfolio = () => {
             <h3 className="text-lg font-semibold text-[#7f5539] mb-6">Awards & Recognition</h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {badges.map((badge) => (
+              {badges.map((badge, index) => (
                 <div
-                  key={badge.id}
+                  key={badge.id || `awards-badge-${index}`}
                   className={`p-6 rounded-lg border-2 ${badge.color} hover:shadow-lg transition-shadow`}
 
                 >
@@ -1974,6 +2183,7 @@ const ArtistPortfolio = () => {
         onProfileChange={handleProfileChange}
         onSave={handleSaveProfile}
         artistProfile={artistProfile}
+        onAvatarUpload={handleAvatarUpload}
       />
 
       {/* Upload Post Modal */}

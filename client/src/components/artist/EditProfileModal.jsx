@@ -8,12 +8,20 @@ const EditProfileModal = ({
     editedProfile,
     onProfileChange,
     onSave,
-    artistProfile
+    artistProfile,
+    onAvatarUpload
 }) => {
     if (!isOpen) return null;
 
     // Debug: Log props to console
     console.log('EditProfileModal props:', { isOpen, editedProfile, artistProfile });
+
+    const handleAvatarChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            onAvatarUpload(file);
+        }
+    };
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -66,16 +74,29 @@ const EditProfileModal = ({
                                         alt="Avatar"
                                         className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg"
                                     />
-                                    <button className="absolute -bottom-1 -right-1 bg-[#7f5539] text-white p-2 rounded-full hover:bg-[#6e4c34] transition-colors">
+                                    <button
+                                        onClick={() => document.getElementById('avatar-upload').click()}
+                                        className="absolute -bottom-1 -right-1 bg-[#7f5539] text-white p-2 rounded-full hover:bg-[#6e4c34] transition-colors"
+                                    >
                                         <Camera size={12} />
                                     </button>
                                 </div>
                                 <div className="flex-1">
-                                    <button className="bg-[#7f5539]/10 text-[#7f5539] px-4 py-2 rounded-lg hover:bg-[#7f5539]/20 transition-colors font-medium flex items-center space-x-2">
+                                    <button
+                                        onClick={() => document.getElementById('avatar-upload').click()}
+                                        className="bg-[#7f5539]/10 text-[#7f5539] px-4 py-2 rounded-lg hover:bg-[#7f5539]/20 transition-colors font-medium flex items-center space-x-2"
+                                    >
                                         <Upload size={16} />
                                         <span>Upload New Picture</span>
                                     </button>
-                                    <p className="text-xs text-[#7f5539]/60 mt-1">JPG, PNG or GIF. Max size 2MB.</p>
+                                    <input
+                                        id="avatar-upload"
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleAvatarChange}
+                                        className="hidden"
+                                    />
+                                    <p className="text-xs text-[#7f5539]/60 mt-1">JPG, PNG or GIF. Max size 5MB.</p>
                                 </div>
                             </div>
                         </div>
