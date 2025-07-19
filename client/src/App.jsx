@@ -17,7 +17,7 @@ import Login from "./components/auth/login";
 import ShopRegisterPage from "./components/auth/shopSignup";
 import Signup from "./components/auth/signup2";
 import ArtworkDetail from "./pages/Artist/ArtWorkDetail";
-import ArtistDashboard from "./pages/Artist/ArtistDashboard";
+
 import ArtistPortfolio from "./pages/Artist/ArtistPortfolio";
 import UploadArtWork from "./pages/Artist/UploadArtWork";
 import CommunityPage from "./pages/CommunityPage";
