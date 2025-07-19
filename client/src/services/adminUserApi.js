@@ -28,6 +28,19 @@ export const adminUserApi = {
       throw error;
     }
   },
+
+  updateUserStatus: async (userId, userType, status) => {
+    try {
+      const response = await axiosInstance.put(`/admin/users/${userId}/status`, {
+        userType,
+        status
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error updating user status:', error);
+      throw error;
+    }
+  },
 };
 
 export default adminUserApi;

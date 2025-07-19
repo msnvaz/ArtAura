@@ -30,40 +30,39 @@ const UsersManagement = () => {
   const [error, setError] = useState(null);
 
   // Fetch users from backend
+  const fetchUsers = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const filters = {
+        search: searchTerm,
+        status: filterStatus !== 'all' ? filterStatus.charAt(0).toUpperCase() + filterStatus.slice(1) : undefined
+      };
+      const response = await adminUserApi.getAllUsers(filters);
+      // Flatten response if paginated
+      setUsers(response.users || response.content || []);
+    } catch (err) {
+      setError('Failed to load users. Please try again.');
+      setUsers([]);
+    } finally {
+      setLoading(false);
+      setIsLoaded(true);
+    }
+  };
+
   useEffect(() => {
-    const fetchUsers = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const filters = {
-          search: searchTerm,
-          status: filterStatus !== 'all' ? filterStatus.charAt(0).toUpperCase() + filterStatus.slice(1) : undefined
-        };
-        const response = await adminUserApi.getAllUsers(filters);
-        // Flatten response if paginated
-        setUsers(response.users || response.content || []);
-      } catch (err) {
-        setError('Failed to load users. Please try again.');
-        setUsers([]);
-      } finally {
-        setLoading(false);
-        setIsLoaded(true);
-      }
-    };
     fetchUsers();
   }, [searchTerm, filterStatus]);
 
   const handleBlockUser = async (userId, userType, status) => {
     try {
       const newStatus = status === 'Suspended' ? 'Active' : 'Suspended';
-      await adminUserApi.updateUserStatus(userId, userType, newStatus);
-      setUsers(users.map(user =>
-        user.userId === userId
-          ? { ...user, status: newStatus }
-          : user
-      ));
-      if (selectedUser && selectedUser.userId === userId) {
-        setSelectedUser({ ...selectedUser, status: newStatus });
+      const result = await adminUserApi.updateUserStatus(userId, userType, newStatus);
+      if (result.success) {
+        await fetchUsers(); // <-- Re-fetch users after status update
+        if (selectedUser && selectedUser.userId === userId && result.user) {
+          setSelectedUser({ ...selectedUser, status: result.user.status });
+        }
       }
     } catch (err) {
       setError('Failed to update user status.');

@@ -80,7 +80,7 @@ public class AdminUserDAOImpl implements AdminUserDAO {
     public List<AdminUserDTO> getAllUsers() {
         List<AdminUserDTO> users = new ArrayList<>();
         users.addAll(jdbc.query("SELECT a.*, IFNULL(SUM(aw.price), 0) AS revenue FROM artists a LEFT JOIN artworks aw ON a.artist_id = aw.artist_id AND aw.status = 'Sold' GROUP BY a.artist_id", artistMapper));
-        users.addAll(jdbc.query("SELECT  b.*, COUNT(p.purchase_id) AS total_purchases, IFNULL(SUM(p.price), 0) AS spent FROM buyers b LEFT JOIN purchases p ON b.buyer_id = p.buyer_id GROUP BY b.buyer_id" , buyerMapper));
+        users.addAll(jdbc.query("SELECT b.*, COUNT(p.purchase_id) AS total_purchases, IFNULL(SUM(p.price), 0) AS spent FROM buyers b LEFT JOIN purchases p ON b.buyer_id = p.buyer_id GROUP BY b.buyer_id", buyerMapper));
         users.addAll(jdbc.query("SELECT * FROM moderators", moderatorMapper));
         return users;
     }
@@ -99,8 +99,15 @@ public class AdminUserDAOImpl implements AdminUserDAO {
 
     @Override
     public boolean updateUserStatus(Long userId, String userType, String status) {
-        // TODO: Implement update status logic
-        return false;
+        int updated = 0;
+        if ("artist".equalsIgnoreCase(userType)) {
+            updated = jdbc.update("UPDATE artists SET status = ? WHERE artist_id = ?", status, userId);
+        } else if ("buyer".equalsIgnoreCase(userType)) {
+            updated = jdbc.update("UPDATE buyers SET status = ? WHERE buyer_id = ?", status, userId);
+        } else if ("moderator".equalsIgnoreCase(userType)) {
+            updated = jdbc.update("UPDATE moderators SET status = ? WHERE moderator_id = ?", status, userId);
+        }
+        return updated > 0;
     }
 
     @Override

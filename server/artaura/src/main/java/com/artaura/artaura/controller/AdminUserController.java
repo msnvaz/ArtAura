@@ -77,6 +77,10 @@ public class AdminUserController {
             Map<String, Object> response = new HashMap<>();
             response.put("success", updated);
             response.put("message", updated ? "Status updated successfully" : "Failed to update status");
+            if (updated) {
+                AdminUserDTO updatedUser = adminUserService.getUserById(id, userType);
+                response.put("user", updatedUser);
+            }
             return updated ? ResponseEntity.ok(response) : ResponseEntity.badRequest().body(response);
         } catch (Exception e) {
             Map<String, Object> errorResponse = new HashMap<>();
