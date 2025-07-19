@@ -27,49 +27,37 @@ public class AuthService {
     public LoginResponse login(LoginRequest request) {
         var email = request.getEmail();
         var password = request.getPassword();
-        
-        System.out.println("🔍 AuthService: Processing login for email: " + email);
 
         Optional<LoginUserDataDTO> user; //user might have a LoginUserDataDTO object, or it might be empty
 
         // Check artist
         user = artistDAO.findByEmail(email);
         if (user.isPresent() && encoder.matches(password, user.get().getPassword())) {
-            String token = jwtUtil.generateToken(user.get().getUserId(), "artist");
-            System.out.println("✅ Login successful for artist. Token generated: " + token.substring(0, 20) + "...");
-            return new LoginResponse(token, "artist", user.get().getUserId());
+            return new LoginResponse(jwtUtil.generateToken(user.get().getUserId(), "artist"), "artist", user.get().getUserId());
         }
 
         // Check buyer
         user = buyerDAO.findByEmail(email);
         if (user.isPresent() && encoder.matches(password, user.get().getPassword())) {
-            String token = jwtUtil.generateToken(user.get().getUserId(), "buyer");
-            System.out.println("✅ Login successful for buyer. Token generated: " + token.substring(0, 20) + "...");
-            return new LoginResponse(token, "buyer", user.get().getUserId());
+            return new LoginResponse(jwtUtil.generateToken(user.get().getUserId(), "buyer"), "buyer", user.get().getUserId());
         }
 
         // Check shop owner
         user = shopDAO.findByEmail(email);
         if (user.isPresent() && encoder.matches(password, user.get().getPassword())) {
-            String token = jwtUtil.generateToken(user.get().getUserId(), "shop");
-            System.out.println("✅ Login successful for shop owner. Token generated: " + token.substring(0, 20) + "...");
-            return new LoginResponse(token, "shop", user.get().getUserId());
+            return new LoginResponse(jwtUtil.generateToken(user.get().getUserId(), "shop"), "shop", user.get().getUserId());
         }
 
         // Check moderator
         user = moderatorDAO.findByEmail(email);
         if (user.isPresent() && encoder.matches(password, user.get().getPassword())) {
-            String token = jwtUtil.generateToken(user.get().getUserId(), "moderator");
-            System.out.println("✅ Login successful for moderator. Token generated: " + token.substring(0, 20) + "...");
-            return new LoginResponse(token, "moderator", user.get().getUserId());
+            return new LoginResponse(jwtUtil.generateToken(user.get().getUserId(), "moderator"), "moderator", user.get().getUserId());
         }
 
         // Check admin
         user = adminDAO.findByEmail(email);
         if (user.isPresent() && encoder.matches(password, user.get().getPassword())) {
-            String token = jwtUtil.generateToken(user.get().getUserId(), "admin");
-            System.out.println("✅ Login successful for admin. Token generated: " + token.substring(0, 20) + "...");
-            return new LoginResponse(token, "admin", user.get().getUserId());
+            return new LoginResponse(jwtUtil.generateToken(user.get().getUserId(), "admin"), "admin", user.get().getUserId());
         }
 
         throw new RuntimeException("Invalid credentials");

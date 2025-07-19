@@ -40,7 +40,7 @@ public class PostDAOImpl implements PostDAO {
     }
 
     @Override
-    public PostResponseDTO updatePost(PostUpdateDTO dto) {
+    public void updatePost(PostUpdateDTO dto) {
         StringBuilder sql = new StringBuilder("UPDATE post SET ");
         List<Object> params = new ArrayList<>();
         boolean first = true;
@@ -62,9 +62,6 @@ public class PostDAOImpl implements PostDAO {
         params.add(dto.getPostId());
 
         jdbcTemplate.update(sql.toString(), params.toArray());
-
-        // ✅ return the updated post after applying changes
-        return getPostById(dto.getPostId());
     }
 
 

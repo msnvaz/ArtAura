@@ -14,7 +14,6 @@
     "axios": "^1.10.0",
     "bootstrap": "^5.3.7",
     "daisyui": "^5.0.43",
-    "date-fns": "^4.1.0",
     "lucide-react": "^0.522.0",
     "react": "^19.1.0",
     "react-bootstrap": "^2.10.10",

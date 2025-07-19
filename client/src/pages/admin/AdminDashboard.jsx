@@ -192,6 +192,14 @@ const AdminDashboard = () => {
                       color: '#FFE4D6',
                       backgroundColor: 'rgba(255, 228, 214, 0.1)'
                     }}
+                    onMouseOver={(e) => {
+                      e.target.style.backgroundColor = '#FFE4D6';
+                      e.target.style.color = '#5D3A00';
+                    }}
+                    onMouseOut={(e) => {
+                      e.target.style.backgroundColor = 'rgba(255, 228, 214, 0.1)';
+                      e.target.style.color = '#FFE4D6';
+                    }}
                   >
                     <btn.icon size={14} />
                     <span className="hidden sm:inline">{btn.fullText}</span>
@@ -206,6 +214,12 @@ const AdminDashboard = () => {
                     backgroundColor: '#D87C5A',
                     color: 'white',
                     border: 'none'
+                  }}
+                  onMouseOver={(e) => {
+                    e.target.style.backgroundColor = '#B85A3A';
+                  }}
+                  onMouseOut={(e) => {
+                    e.target.style.backgroundColor = '#D87C5A';
                   }}
                   onClick={() => {
                     if (window.confirm('Are you sure you want to logout?')) {

@@ -16,7 +16,7 @@ public class JwtUtil {
     private long expiration;
 
     public String generateToken(Long userId, String role) {
-        String token = Jwts.builder()
+        return Jwts.builder()
                 .claim("userId", userId)
                 .claim("role", role)
                 .setSubject(String.valueOf(userId))
@@ -24,11 +24,6 @@ public class JwtUtil {
                 .setExpiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(SignatureAlgorithm.HS256, secret)
                 .compact();
-        
-        System.out.println("🔐 JWT Token generated successfully for userId: " + userId + ", role: " + role);
-        System.out.println("🔑 Token preview: " + token.substring(0, Math.min(30, token.length())) + "...");
-        
-        return token;
     }
 
     public Claims extractClaims(String token) throws ExpiredJwtException {
