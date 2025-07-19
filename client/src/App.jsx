@@ -10,6 +10,8 @@ import "./styles/main.css";
 // Pages
 import Competitions from "./pages/Competitions";
 import Marketplace from "./pages/Marketplace";
+import UserOrders from "./pages/UserOrders";
+import UserProfile from "./pages/Profile/UserProfile";
 
 import Dashboard from "./pages/shop/Dashboard";
 import ShopOrders from "./pages/shop/Orders";
@@ -31,6 +33,8 @@ import ShopProductsPage from "./pages/ShopProductsPage";
 import ArtistsPage from "./pages/ArtistsPage";
 import ChallengesPage from "./pages/ChallengesPage";
 import ChallengeSubmissionPage from "./pages/ChallengeSubmissionPage";
+import ChallengeSubmissionsPage from "./pages/ChallengeSubmissionsPage";
+import MyPosts from "./pages/MyPosts";
 
 // Cart and Checkout Pages
 import CartPage from "./pages/CartPage";
@@ -53,27 +57,18 @@ import FooterLarge from "./components/FooterLarge";
 import Layout from "./components/moderator/layout";
 
 // Page transition wrapper component using CSS animations
-const PageTransition = ({ children }) => {
-  return <div className="page-transition-wrapper">{children}</div>;
-};
+const PageTransition = ({ children }) => <div className="page-transition-wrapper">{children}</div>;
 
-// Wrapper component to useLocation inside Router for footer decision
 function AppWrapper() {
   const location = useLocation();
-
-  // Decide which footer to show based on current path
-  const isLargeFooter =
-    location.pathname === "/" || location.pathname === "/signup";
+  const isLargeFooter = location.pathname === "/" || location.pathname === "/signup";
 
   return (
     <>
       <Routes>
-        {/* Auth Routes */}
         <Route path="/" element={<PageTransition><Login /></PageTransition>} />
         <Route path="/signup" element={<PageTransition><Signup /></PageTransition>} />
         <Route path="/register/shop" element={<PageTransition><ShopRegisterPage /></PageTransition>} />
-
-        {/* Public Pages */}
         <Route path="/community" element={<PageTransition><CommunityPage /></PageTransition>} />
         <Route path="/marketplace" element={<PageTransition><Marketplace /></PageTransition>} />
         <Route path="/competitions" element={<PageTransition><Competitions /></PageTransition>} />
@@ -81,31 +76,26 @@ function AppWrapper() {
         <Route path="/artists" element={<PageTransition><ArtistsPage /></PageTransition>} />
         <Route path="/public-challenges" element={<PageTransition><ChallengesPage /></PageTransition>} />
         <Route path="/challenge-submission/:challengeId" element={<PageTransition><ChallengeSubmissionPage /></PageTransition>} />
-
-        {/* Cart & Checkout */}
+        <Route path="/my-posts" element={<PageTransition><MyPosts /></PageTransition>} />
+        <Route path="/challenge-submissions" element={<PageTransition><ChallengeSubmissionsPage /></PageTransition>} />
+        <Route path="/challenge-submissions/:challengeId" element={<PageTransition><ChallengeSubmissionsPage /></PageTransition>} />
+        <Route path="/orders" element={<PageTransition><UserOrders /></PageTransition>} />
+        <Route path="/profile" element={<PageTransition><UserProfile /></PageTransition>} />
         <Route path="/cart" element={<PageTransition><CartPage /></PageTransition>} />
         <Route path="/checkout" element={<PageTransition><CheckoutPage /></PageTransition>} />
         <Route path="/payment" element={<PageTransition><PaymentPage /></PageTransition>} />
         <Route path="/order-confirmation" element={<PageTransition><OrderConfirmationPage /></PageTransition>} />
-
-        {/* Shop (Seller) Pages */}
         <Route path="/shop/dashboard" element={<PageTransition><Dashboard /></PageTransition>} />
         <Route path="/shop/orders" element={<PageTransition><ShopOrders /></PageTransition>} />
         <Route path="/shop/sponsorships" element={<PageTransition><Sponsorships /></PageTransition>} />
         <Route path="/shop/analytics" element={<PageTransition><SalesAnalytics /></PageTransition>} />
         <Route path="/shop/catalog" element={<PageTransition><Catalog /></PageTransition>} />
         <Route path="/shop/profile" element={<PageTransition><Profile /></PageTransition>} />
-
-        {/* Artist Pages */}
         <Route path="/uploadartwork" element={<PageTransition><UploadArtWork /></PageTransition>} />
         <Route path="/artworks/:id" element={<PageTransition><ArtworkDetail /></PageTransition>} />
         <Route path="/artist/artistdashboard" element={<PageTransition><ArtistDashboard /></PageTransition>} />
         <Route path="/artist/artistportfolio" element={<PageTransition><ArtistPortfolio /></PageTransition>} />
-
-        {/* Admin Page */}
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
-
-        {/*  Moderator Pages */}
         <Route path="/moderatordashboard" element={<Layout><ModeratorDashboard /></Layout>} />
         <Route path="/challenges" element={<Layout><ChallengeList /></Layout>} />
         <Route path="/create-challenge" element={<Layout><CreateChallenge /></Layout>} />
@@ -114,8 +104,6 @@ function AppWrapper() {
         <Route path="/verify-exhibition" element={<Layout><VerifyExhibition /></Layout>} />
         <Route path="/scoring-criteria" element={<Layout><ScoringCriteria /></Layout>} />
       </Routes>
-
-      {/* Footer selection */}
       {isLargeFooter ? <FooterLarge /> : <Footer />}
     </>
   );
