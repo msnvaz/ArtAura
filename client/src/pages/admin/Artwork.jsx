@@ -22,7 +22,7 @@ const ArtworkManagement = () => {
   const [artworkSearchTerm, setArtworkSearchTerm] = useState('');
   const [artworkFilterStatus, setArtworkFilterStatus] = useState('all');
   const [selectedArtwork, setSelectedArtwork] = useState(null);
-  const [showArtworkModal, setShowArtworkModal] = useState(false);
+  const [expandedArtworkId, setExpandedArtworkId] = useState(null);
   const { formatPrice } = useCurrency();
   const [isLoaded, setIsLoaded] = useState(false);
   
@@ -96,7 +96,10 @@ const ArtworkManagement = () => {
         response = await adminArtworkApi.getAllArtworks(filters);
       }
 
-      setArtworks(response.content || []);
+      // Use artworks directly without status mapping
+      const processedArtworks = response.content || [];
+
+      setArtworks(processedArtworks);
       setPagination(prev => ({
         ...prev,
         totalElements: response.totalElements || 0,
@@ -128,12 +131,21 @@ const ArtworkManagement = () => {
     }
   };
 
+  // Status values that match the database enum ('Available', 'Sold', 'Reserved')
+  const validStatuses = ['Available', 'Sold', 'Reserved'];
+
   const handleBlockArtwork = async (artworkId) => {
     try {
       const artwork = artworks.find(a => a.artworkId === artworkId);
       if (!artwork) return;
 
       const newStatus = artwork.status === 'Sold' ? 'Available' : 'Sold';
+      
+      if (!validStatuses.includes(newStatus)) {
+        setError(`Invalid status: ${newStatus}`);
+        return;
+      }
+
       await adminArtworkApi.updateArtworkStatus(artworkId, newStatus);
       
       // Update local state
@@ -228,149 +240,149 @@ const ArtworkManagement = () => {
     }
   ];
 
-  // Artwork Details Modal
-  const ArtworkModal = () => {
-    if (!showArtworkModal || !selectedArtwork) return null;
-    
+  // Artwork Details Component
+  const ArtworkDetails = ({ artwork }) => {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg shadow-lg max-w-4xl w-full mx-4 max-h-90vh overflow-y-auto">
-          <div className="p-4">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-2xl font-bold" style={{color: '#5D3A00'}}>Artwork Details</h3>
-              <button
-                onClick={() => setShowArtworkModal(false)}
-                className="p-2 rounded-lg transition-colors"
-                style={{backgroundColor: '#FFE4D6', color: '#5D3A00'}}
-                onMouseOver={(e) => e.target.style.backgroundColor = '#FFD95A'}
-                onMouseOut={(e) => e.target.style.backgroundColor = '#FFE4D6'}
-              >
-                <X size={20} />
-              </button>
-            </div>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {/* Artwork Image */}
-              <div>
-                <img 
-                  src={selectedArtwork.imageUrl} 
-                  alt={selectedArtwork.title}
-                  className="w-full h-64 lg:h-80 object-cover rounded-lg shadow-sm"
-                />
-                <div className="mt-4 flex items-center justify-between">
-                  <span className={`px-3 py-1 text-sm font-medium rounded-full ${
-                    selectedArtwork.status === 'Available' ? 'text-green-800 bg-green-100' :
-                    selectedArtwork.status === 'Sold' ? 'text-blue-800 bg-blue-100' :
-                    selectedArtwork.status === 'Reserved' ? 'text-yellow-800 bg-yellow-100' :
-                    'text-gray-800 bg-gray-100'
-                  }`}>
-                    {selectedArtwork.status}
-                  </span>
-                  <div className="text-sm" style={{color: '#D87C5A'}}>
-                    {selectedArtwork.viewsCount || selectedArtwork.views || 0} views • {selectedArtwork.likesCount || selectedArtwork.likes || 0} likes
-                  </div>
-                </div>
-              </div>
-              
-              {/* Artwork Details */}
-              <div>
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="text-xl font-bold mb-2" style={{color: '#5D3A00'}}>{selectedArtwork.title}</h4>
-                    <p className="text-lg" style={{color: '#D87C5A'}}>by {selectedArtwork.artistName || selectedArtwork.artist}</p>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <span className="font-medium" style={{color: '#5D3A00'}}>Category:</span>
-                      <p>{selectedArtwork.category}</p>
-                    </div>
-                    <div>
-                      <span className="font-medium" style={{color: '#5D3A00'}}>Price:</span>
-                      <p className="text-lg font-bold" style={{color: '#5D3A00'}}>{formatPrice(selectedArtwork.price)}</p>
-                    </div>
-                    <div>
-                      <span className="font-medium" style={{color: '#5D3A00'}}>Upload Date:</span>
-                      <p>{selectedArtwork.createdAt ? new Date(selectedArtwork.createdAt).toLocaleDateString() : selectedArtwork.uploadDate}</p>
-                    </div>
-                    <div>
-                      <span className="font-medium" style={{color: '#5D3A00'}}>Status:</span>
-                      <p className={
-                        selectedArtwork.status === 'Available' ? 'text-green-600 font-medium' :
-                        selectedArtwork.status === 'Sold' ? 'text-blue-600 font-medium' :
-                        selectedArtwork.status === 'Reserved' ? 'text-yellow-600 font-medium' :
-                        'text-gray-600 font-medium'
-                      }>
-                        {selectedArtwork.status}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <span className="font-medium" style={{color: '#5D3A00'}}>Performance Metrics:</span>
-                    <div className="mt-2 grid grid-cols-2 gap-4">
-                      <div className="bg-gray-50 p-3 rounded-lg">
-                        <div className="text-sm text-gray-600">Total Views</div>
-                        <div className="text-lg font-bold" style={{color: '#5D3A00'}}>{(selectedArtwork.viewsCount || selectedArtwork.views || 0).toLocaleString()}</div>
-                      </div>
-                      <div className="bg-gray-50 p-3 rounded-lg">
-                        <div className="text-sm text-gray-600">Engagement</div>
-                        <div className="text-lg font-bold" style={{color: '#5D3A00'}}>
-                          {Math.round(((selectedArtwork.likesCount || selectedArtwork.likes || 0) / (selectedArtwork.viewsCount || selectedArtwork.views || 1)) * 100)}%
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+      <div className="bg-white rounded-lg shadow-lg border-2 border-orange-200 overflow-hidden w-full">
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-2xl font-bold" style={{color: '#5D3A00'}}>Artwork Details</h3>
+            <button
+              onClick={() => {
+                setExpandedArtworkId(null);
+                setSelectedArtwork(null);
+              }}
+              className="p-2 rounded-lg transition-colors"
+              style={{backgroundColor: '#FFE4D6', color: '#5D3A00'}}
+              onMouseOver={(e) => e.target.style.backgroundColor = '#FFD95A'}
+              onMouseOut={(e) => e.target.style.backgroundColor = '#FFE4D6'}
+            >
+              <X size={20} />
+            </button>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Artwork Image */}
+            <div>
+              <img 
+                src={artwork.imageUrl} 
+                alt={artwork.title}
+                className="w-full h-64 lg:h-80 object-cover rounded-lg shadow-sm"
+              />
+              <div className="mt-4 flex items-center justify-between">
+                <span className={`px-3 py-1 text-sm font-medium rounded-full ${
+                  artwork.status === 'Available' ? 'text-green-800 bg-green-100' :
+                  artwork.status === 'Sold' ? 'text-blue-800 bg-blue-100' :
+                  artwork.status === 'Reserved' ? 'text-yellow-800 bg-yellow-100' :
+                  'text-gray-800 bg-gray-100'
+                }`}>
+                  {artwork.status}
+                </span>
+                <div className="text-sm" style={{color: '#D87C5A'}}>
+                  {artwork.viewsCount || artwork.views || 0} views • {artwork.likesCount || artwork.likes || 0} likes
                 </div>
               </div>
             </div>
             
-            <div className="mt-8 flex gap-3">
-              <button
-                onClick={() => {
-                  handleBlockArtwork(selectedArtwork.artworkId || selectedArtwork.id);
-                }}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
-                  selectedArtwork.status === 'Sold'
-                    ? 'bg-green-100 text-green-800 hover:bg-green-200' 
-                    : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
-                }`}
-              >
-                {selectedArtwork.status === 'Sold' ? <UserCheck size={16} /> : <Ban size={16} />}
-                {selectedArtwork.status === 'Sold' ? 'Mark as Available' : 'Mark as Sold'}
-              </button>
-              <button
-                onClick={() => {
-                  handleToggleFeatured(selectedArtwork.artworkId || selectedArtwork.id);
-                }}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
-                  selectedArtwork.isFeatured
-                    ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-                    : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
-                }`}
-              >
-                <Plus size={16} />
-                {selectedArtwork.isFeatured ? 'Remove from Featured' : 'Add to Featured'}
-              </button>
-              <button
-                className="px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
-                style={{backgroundColor: '#FFE4D6', color: '#5D3A00'}}
-                onMouseOver={(e) => e.target.style.backgroundColor = '#FFD95A'}
-                onMouseOut={(e) => e.target.style.backgroundColor = '#FFE4D6'}
-              >
-                <Eye size={16} />
-                View Full Resolution
-              </button>
-              <button
-                className="px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
-                style={{backgroundColor: '#D87C5A', color: 'white'}}
-                onMouseOver={(e) => e.target.style.backgroundColor = '#B85A3A'}
-                onMouseOut={(e) => e.target.style.backgroundColor = '#D87C5A'}
-              >
-                <Plus size={16} />
-                Contact Artist
-              </button>
+            {/* Artwork Details */}
+            <div>
+              <div className="space-y-4">
+                <div>
+                  <h4 className="text-xl font-bold mb-2" style={{color: '#5D3A00'}}>{artwork.title}</h4>
+                  <p className="text-lg" style={{color: '#D87C5A'}}>by {artwork.artistName || artwork.artist}</p>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <span className="font-medium" style={{color: '#5D3A00'}}>Category:</span>
+                    <p>{artwork.category}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium" style={{color: '#5D3A00'}}>Price:</span>
+                    <p className="text-lg font-bold" style={{color: '#5D3A00'}}>{formatPrice(artwork.price)}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium" style={{color: '#5D3A00'}}>Upload Date:</span>
+                    <p>{artwork.createdAt ? new Date(artwork.createdAt).toLocaleDateString() : artwork.uploadDate}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium" style={{color: '#5D3A00'}}>Status:</span>
+                    <p className={
+                      artwork.status === 'Available' ? 'text-green-600 font-medium' :
+                      artwork.status === 'Sold' ? 'text-blue-600 font-medium' :
+                      artwork.status === 'Reserved' ? 'text-yellow-600 font-medium' :
+                      'text-gray-600 font-medium'
+                    }>
+                      {artwork.status}
+                    </p>
+                  </div>
+                </div>
+                
+                <div>
+                  <span className="font-medium" style={{color: '#5D3A00'}}>Performance Metrics:</span>
+                  <div className="mt-2 grid grid-cols-2 gap-4">
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <div className="text-sm text-gray-600">Total Views</div>
+                      <div className="text-lg font-bold" style={{color: '#5D3A00'}}>{(artwork.viewsCount || artwork.views || 0).toLocaleString()}</div>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <div className="text-sm text-gray-600">Engagement</div>
+                      <div className="text-lg font-bold" style={{color: '#5D3A00'}}>
+                        {Math.round(((artwork.likesCount || artwork.likes || 0) / (artwork.viewsCount || artwork.views || 1)) * 100)}%
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
+          </div>
+          
+          <div className="mt-8 flex gap-3 flex-wrap">
+            <button
+              onClick={() => {
+                handleBlockArtwork(artwork.artworkId || artwork.id);
+              }}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
+                artwork.status === 'Sold'
+                  ? 'bg-green-100 text-green-800 hover:bg-green-200' 
+                  : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+              }`}
+            >
+              {artwork.status === 'Sold' ? <UserCheck size={16} /> : <Ban size={16} />}
+              {artwork.status === 'Sold' ? 'Mark as Available' : 'Mark as Sold'}
+            </button>
+            <button
+              onClick={() => {
+                handleToggleFeatured(artwork.artworkId || artwork.id);
+              }}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
+                artwork.isFeatured
+                  ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                  : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+              }`}
+            >
+              <Plus size={16} />
+              {artwork.isFeatured ? 'Remove from Featured' : 'Add to Featured'}
+            </button>
+            <button
+              onClick={() => window.open(artwork.imageUrl, '_blank')}
+              className="px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
+              style={{backgroundColor: '#FFE4D6', color: '#5D3A00'}}
+              onMouseOver={(e) => e.target.style.backgroundColor = '#FFD95A'}
+              onMouseOut={(e) => e.target.style.backgroundColor = '#FFE4D6'}
+            >
+              <Eye size={16} />
+              View Full Resolution
+            </button>
+            <button
+              className="px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
+              style={{backgroundColor: '#D87C5A', color: 'white'}}
+              onMouseOver={(e) => e.target.style.backgroundColor = '#B85A3A'}
+              onMouseOut={(e) => e.target.style.backgroundColor = '#D87C5A'}
+            >
+              <Plus size={16} />
+              Contact Artist
+            </button>
           </div>
         </div>
       </div>
@@ -513,9 +525,6 @@ const ArtworkManagement = () => {
                       <span className="text-xs opacity-75" style={{color: '#5D3A00'}}>vs last month</span>
                     </div>
                   </div>
-                  <div className="p-2 rounded-lg shadow-lg" style={{backgroundColor: stat.color}}>
-                    <stat.icon size={20} className="text-white" />
-                  </div>
                 </div>
               </div>
             </div>
@@ -525,7 +534,6 @@ const ArtworkManagement = () => {
         {/* Artwork Management Heading */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-2 artwork-header">
           <h2 className="text-2xl font-bold flex items-center gap-2" style={{color: '#5D3A00'}}>
-            <Image size={24} />
             Artwork Management ({filteredArtworks.length} artworks)
           </h2>
           <CurrencySelector className="flex-shrink-0" />
@@ -563,121 +571,137 @@ const ArtworkManagement = () => {
         </div>
 
         {/* Artworks Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 artwork-grid">
-          {loading ? (
-            <div className="col-span-full flex justify-center items-center py-12">
-              <div className="flex items-center gap-3" style={{color: '#D87C5A'}}>
-                <Loader2 className="animate-spin" size={24} />
-                <span>Loading artworks...</span>
-              </div>
-            </div>
-          ) : error ? (
-            <div className="col-span-full text-center py-12">
-              <div className="text-red-600 mb-4">{error}</div>
-              <button
-                onClick={loadArtworks}
-                className="px-4 py-2 bg-red-100 text-red-800 rounded-lg hover:bg-red-200 transition-colors"
-              >
-                Try Again
-              </button>
-            </div>
-          ) : filteredArtworks.length === 0 ? (
-            <div className="col-span-full text-center py-12" style={{color: '#5D3A00'}}>
-              <Image size={48} className="mx-auto mb-4 opacity-50" />
-              <p>No artworks found matching your criteria.</p>
-            </div>
-          ) : filteredArtworks.map((artwork) => (
-            <div key={artwork.artworkId || artwork.id} className="bg-white rounded-lg shadow-sm overflow-hidden artwork-card">
-              <div className="relative">
-                <img 
-                  src={artwork.imageUrl} 
-                  alt={artwork.title}
-                  className="w-full h-48 object-cover"
-                />
-                <div className="absolute top-3 right-3">
-                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                    artwork.status === 'Available' ? 'text-green-800 bg-green-100' :
-                    artwork.status === 'Sold' ? 'text-blue-800 bg-blue-100' :
-                    artwork.status === 'Reserved' ? 'text-yellow-800 bg-yellow-100' :
-                    'text-gray-800 bg-gray-100'
-                  }`}>
-                    {artwork.status}
-                  </span>
+        <div className="space-y-4 artwork-grid">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {loading ? (
+              <div className="col-span-full flex justify-center items-center py-12">
+                <div className="flex items-center gap-3" style={{color: '#D87C5A'}}>
+                  <Loader2 className="animate-spin" size={24} />
+                  <span>Loading artworks...</span>
                 </div>
               </div>
-              <div className="p-4">
-                <div className="mb-3">
-                  <h3 className="font-bold text-lg mb-1" style={{color: '#5D3A00'}}>{artwork.title}</h3>
-                  <p className="text-sm" style={{color: '#D87C5A'}}>by {artwork.artistName || artwork.artist}</p>
-                  <p className="text-xs mt-1" style={{color: '#5D3A00'}}>{artwork.category}</p>
-                </div>
-                <div className="flex justify-between items-center mb-3">
-                  <span className="font-bold text-lg" style={{color: '#5D3A00'}}>{formatPrice(artwork.price)}</span>
-                  <div className="flex items-center gap-3 text-sm" style={{color: '#D87C5A'}}>
-                    <span>{artwork.viewsCount || artwork.views || 0} views</span>
-                    <span>{artwork.likesCount || artwork.likes || 0} likes</span>
+            ) : error ? (
+              <div className="col-span-full text-center py-12">
+                <div className="text-red-600 mb-4">{error}</div>
+                <button
+                  onClick={loadArtworks}
+                  className="px-4 py-2 bg-red-100 text-red-800 rounded-lg hover:bg-red-200 transition-colors"
+                >
+                  Try Again
+                </button>
+              </div>
+            ) : filteredArtworks.length === 0 ? (
+              <div className="col-span-full text-center py-12" style={{color: '#5D3A00'}}>
+                <Image size={48} className="mx-auto mb-4 opacity-50" />
+                <p>No artworks found matching your criteria.</p>
+              </div>
+            ) : filteredArtworks.map((artwork) => {
+              const isExpanded = expandedArtworkId === (artwork.artworkId || artwork.id);
+              return (
+                <div 
+                  key={artwork.artworkId || artwork.id}
+                  className={`bg-white rounded-lg shadow-sm overflow-hidden artwork-card cursor-pointer transition-all ${
+                    isExpanded ? 'ring-2 ring-orange-300 shadow-lg' : ''
+                  }`}
+                  onClick={() => {
+                    const artworkId = artwork.artworkId || artwork.id;
+                    if (isExpanded) {
+                      setExpandedArtworkId(null);
+                      setSelectedArtwork(null);
+                    } else {
+                      setExpandedArtworkId(artworkId);
+                      setSelectedArtwork(artwork);
+                    }
+                  }}
+                >
+                  <div className="relative">
+                    <img 
+                      src={artwork.imageUrl} 
+                      alt={artwork.title}
+                      className="w-full h-48 object-cover"
+                    />
+                    <div className="absolute top-3 right-3">
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                        artwork.status === 'Available' ? 'text-green-800 bg-green-100' :
+                        artwork.status === 'Sold' ? 'text-blue-800 bg-blue-100' :
+                        artwork.status === 'Reserved' ? 'text-yellow-800 bg-yellow-100' :
+                        'text-gray-800 bg-gray-100'
+                      }`}>
+                        {artwork.status}
+                      </span>
+                    </div>
+                    {isExpanded && (
+                      <div className="absolute top-3 left-3">
+                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800">
+                          Selected
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-4">
+                    <div className="mb-3">
+                      <h3 className="font-bold text-lg mb-1" style={{color: '#5D3A00'}}>{artwork.title}</h3>
+                      <p className="text-sm" style={{color: '#D87C5A'}}>by {artwork.artistName || artwork.artist}</p>
+                      <p className="text-xs mt-1" style={{color: '#5D3A00'}}>{artwork.category}</p>
+                    </div>
+                    <div className="flex justify-between items-center mb-3">
+                      <span className="font-bold text-lg" style={{color: '#5D3A00'}}>{formatPrice(artwork.price)}</span>
+                      <div className="flex items-center gap-3 text-sm" style={{color: '#D87C5A'}}>
+                        <span>{artwork.viewsCount || artwork.views || 0} views</span>
+                        <span>{artwork.likesCount || artwork.likes || 0} likes</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs" style={{color: '#5D3A00'}}>
+                        Uploaded: {artwork.createdAt ? new Date(artwork.createdAt).toLocaleDateString() : artwork.uploadDate}
+                      </span>
+                      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          onClick={() => handleBlockArtwork(artwork.artworkId || artwork.id)}
+                          className={`p-2 rounded-lg transition-all ${
+                            artwork.status === 'Sold'
+                              ? 'bg-green-100 text-green-800 hover:bg-green-200' 
+                              : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+                          }`}
+                          onMouseOver={(e) => {
+                            e.target.style.transform = 'scale(1.05)';
+                          }}
+                          onMouseOut={(e) => {
+                            e.target.style.transform = 'scale(1)';
+                          }}
+                          title={artwork.status === 'Sold' ? 'Mark as Available' : 'Mark as Sold'}
+                        >
+                          {artwork.status === 'Sold' ? <UserCheck size={16} /> : <Ban size={16} />}
+                        </button>
+                        <button
+                          onClick={() => handleToggleFeatured(artwork.artworkId || artwork.id)}
+                          className={`p-2 rounded-lg transition-all ${
+                            artwork.isFeatured
+                              ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                              : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+                          }`}
+                          onMouseOver={(e) => {
+                            e.target.style.transform = 'scale(1.05)';
+                          }}
+                          onMouseOut={(e) => {
+                            e.target.style.transform = 'scale(1)';
+                          }}
+                          title={artwork.isFeatured ? 'Remove from Featured' : 'Add to Featured'}
+                        >
+                          <Plus size={16} />
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs" style={{color: '#5D3A00'}}>
-                    Uploaded: {artwork.createdAt ? new Date(artwork.createdAt).toLocaleDateString() : artwork.uploadDate}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => {setSelectedArtwork(artwork); setShowArtworkModal(true);}}
-                      className="p-2 rounded-lg transition-colors"
-                      style={{backgroundColor: '#FFE4D6', color: '#5D3A00'}}
-                      onMouseOver={(e) => {
-                        e.target.style.backgroundColor = '#FFD95A';
-                        e.target.style.transform = 'scale(1.05)';
-                      }}
-                      onMouseOut={(e) => {
-                        e.target.style.backgroundColor = '#FFE4D6';
-                        e.target.style.transform = 'scale(1)';
-                      }}
-                      title="View Details"
-                    >
-                      <Eye size={16} />
-                    </button>
-                    <button
-                      onClick={() => handleBlockArtwork(artwork.artworkId || artwork.id)}
-                      className={`p-2 rounded-lg transition-all ${
-                        artwork.status === 'Sold'
-                          ? 'bg-green-100 text-green-800 hover:bg-green-200' 
-                          : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
-                      }`}
-                      onMouseOver={(e) => {
-                        e.target.style.transform = 'scale(1.05)';
-                      }}
-                      onMouseOut={(e) => {
-                        e.target.style.transform = 'scale(1)';
-                      }}
-                      title={artwork.status === 'Sold' ? 'Mark as Available' : 'Mark as Sold'}
-                    >
-                      {artwork.status === 'Sold' ? <UserCheck size={16} /> : <Ban size={16} />}
-                    </button>
-                    <button
-                      onClick={() => handleToggleFeatured(artwork.artworkId || artwork.id)}
-                      className={`p-2 rounded-lg transition-all ${
-                        artwork.isFeatured
-                          ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-                          : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
-                      }`}
-                      onMouseOver={(e) => {
-                        e.target.style.transform = 'scale(1.05)';
-                      }}
-                      onMouseOut={(e) => {
-                        e.target.style.transform = 'scale(1)';
-                      }}
-                      title={artwork.isFeatured ? 'Remove from Featured' : 'Add to Featured'}
-                    >
-                      <Plus size={16} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
+              );
+            })}
+          </div>
+          
+          {/* Expanded Details - Separate row to maintain grid layout */}
+          {expandedArtworkId && selectedArtwork && (
+            <ArtworkDetails artwork={selectedArtwork} />
+          )}
         </div>
 
         {/* Pagination */}
@@ -714,7 +738,7 @@ const ArtworkManagement = () => {
         )}
 
         {/* Artwork Details Modal */}
-        <ArtworkModal />
+        {/* Details are now inline with the grid */}
       </div>
     </>
   );
