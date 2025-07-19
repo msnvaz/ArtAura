@@ -34,22 +34,22 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable()) // ❌ CSRF disabled for JWT stateless
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 🚫 No session
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/api/auth/login",
-                                "/api/artist/signup",
-                                "/api/buyer/signup",
-                                "/api/shop/signup",
-                                "/uploads/**",
-                                "/api/artworks/create"
-                        ).permitAll()
-
-                        .requestMatchers("/api/posts/create").authenticated()
-                        .requestMatchers("/api/posts/{role}/{userId}").authenticated()
-                        .requestMatchers("/api/artworks/{role}/{userId}").authenticated() // ❌ You missed .authenticated() here
-//                        .requestMatchers("").authenticated()
-                        .anyRequest().authenticated()
+                .requestMatchers(
+                        "/api/auth/login",
+                        "/api/artist/signup",
+                        "/api/buyer/signup",
+                        "/api/shop/signup",
+                        "/uploads/**",
+                        "/api/artworks/create",
+                        "/api/achievements/artist/**",
+                        "/api/achievements/create"
+                ).permitAll()
+                .requestMatchers("/api/posts/create").authenticated()
+                .requestMatchers("/api/posts/{role}/{userId}").authenticated()
+                .requestMatchers("/api/artworks/{role}/{userId}").authenticated() // ❌ You missed .authenticated() here
+                //                        .requestMatchers("").authenticated()
+                .anyRequest().authenticated()
                 )
-
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class); // 🔐 JWT Filter
 
         return http.build();

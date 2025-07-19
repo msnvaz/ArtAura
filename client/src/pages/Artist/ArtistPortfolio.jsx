@@ -8,6 +8,7 @@ import UploadPostModal from '../../components/artworks/UploadPostModal';
 import PostUploadModal from '../../components/social/PostUploadModal';
 import ChangeCoverModal from '../../components/profile/ChangeCoverModal';
 import EditPostModel from '../../components/artist/EditPostModel';
+import AchievementsSection from '../../components/artist/AchievementsSection';
 import EditArtworkModal from '../../components/artworks/EditArtworkModal';
 import DeleteConfirmationModal from '../../components/artworks/DeleteConfirmationModal';
 import { useAuth } from "../../context/AuthContext";
@@ -88,6 +89,7 @@ const ArtistPortfolio = () => {
   const { token, role, userId } = useAuth();
   const [portfolioPosts, setPortfolioPosts] = useState([]);
   const [artistProfile, setArtistProfile] = useState(null);
+  const [achievementsCount, setAchievementsCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   // Fetch artist profile data
@@ -1234,7 +1236,7 @@ const ArtistPortfolio = () => {
                 { id: 'portfolio', label: 'Portfolio', count: portfolioPosts.length },
                 { id: 'tosell', label: 'To sell', count: Array.isArray(artworks) ? artworks.length : 0 },
                 { id: 'exhibitions', label: 'Exhibitions', count: exhibitions.length },
-                { id: 'achievements', label: 'Achievements', count: badges.length },
+                { id: 'achievements', label: 'Achievements', count: achievementsCount },
                 { id: 'analytics', label: 'Analytics' }
               ].map((tab) => (
                 <button
@@ -1740,35 +1742,11 @@ const ArtistPortfolio = () => {
 
         {/* Achievements Tab */}
         {activeTab === 'achievements' && (
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h3 className="text-lg font-semibold text-[#7f5539] mb-6">Awards & Recognition</h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {badges.map((badge, index) => (
-                <div
-                  key={badge.id || `awards-badge-${index}`}
-                  className={`p-6 rounded-lg border-2 ${badge.color} hover:shadow-lg transition-shadow`}
-
-                >
-                  <div className="flex items-start space-x-4">
-                    <div className="p-3 bg-white rounded-full">
-                      {badge.icon}
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-semibold mb-1">{badge.title}</h4>
-                      <p className="text-sm opacity-75 mb-2">{badge.prize}</p>
-                      <p className="text-xs opacity-60">{badge.date}</p>
-                      <div className="mt-3">
-                        <span className="inline-block px-3 py-1 bg-white/50 rounded-full text-xs font-medium">
-                          {badge.type.charAt(0).toUpperCase() + badge.type.slice(1)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <AchievementsSection
+            artistId={userId}
+            isOwnProfile={true}
+            onAchievementsCountChange={setAchievementsCount}
+          />
         )}
 
         {/* Analytics Tab */}
