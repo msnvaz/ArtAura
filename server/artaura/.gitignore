@@ -31,9 +31,5 @@ build/
 
 ### VS Code ###
 .vscode/
-<<<<<<< HEAD
 .idea/
-=======
-
 .env
->>>>>>> f3e611b2991c6645d66f9d8b18e37ae7d953473a
