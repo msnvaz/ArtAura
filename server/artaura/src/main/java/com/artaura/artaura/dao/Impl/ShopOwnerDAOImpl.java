@@ -70,6 +70,9 @@ public class ShopOwnerDAOImpl implements ShopOwnerDAO {
         );
     }
 
+    public JdbcTemplate getJdbc() {
+        return jdbc;
+    }
 
     @Override
     public Optional<LoginUserDataDTO> findByEmail(String email) {

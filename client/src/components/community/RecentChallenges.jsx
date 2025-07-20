@@ -20,10 +20,11 @@ const RecentChallenges = () => {
   const mockRecentChallenges = [
     {
       id: 1,
-      title: "Digital Art Showcase 2025",
-      description: "Create stunning digital artwork using any medium",
+      title: "Digital Art Showcase 2025 (Sri Lanka)",
+      description:
+        "Create stunning digital artwork inspired by Sri Lankan culture or landscapes.",
       category: "Digital Art",
-      prize: "$1,500",
+      prize: "LKR 450,000",
       participants: 234,
       timeLeft: "13 days",
       difficulty: "Intermediate",
@@ -34,10 +35,11 @@ const RecentChallenges = () => {
     },
     {
       id: 2,
-      title: "Abstract Expression",
-      description: "Express emotions through abstract art forms",
+      title: "Abstract Expression Colombo",
+      description:
+        "Express emotions through abstract art forms with a Sri Lankan twist.",
       category: "Abstract Art",
-      prize: "$1,000",
+      prize: "LKR 300,000",
       participants: 189,
       timeLeft: "28 days",
       difficulty: "Advanced",
@@ -48,10 +50,11 @@ const RecentChallenges = () => {
     },
     {
       id: 3,
-      title: "Photography Masters",
-      description: "Capture everyday moments with unique perspective",
+      title: "Photography Masters Sri Lanka",
+      description:
+        "Capture everyday moments in Sri Lanka with a unique perspective.",
       category: "Photography",
-      prize: "$800",
+      prize: "LKR 240,000",
       participants: 312,
       timeLeft: "23 days",
       difficulty: "Beginner",
