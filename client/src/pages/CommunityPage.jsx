@@ -217,33 +217,30 @@ const CommunityPage = () => {
             <div className="flex space-x-4 mb-6">
               <button
                 onClick={() => handleFilterChange("all")}
-                className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-all flex items-center justify-center ${
-                  activeFilter === "all"
+                className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-all flex items-center justify-center ${activeFilter === "all"
                     ? "bg-[#7f5539] text-white shadow-md"
                     : "bg-white text-[#7f5539]"
-                }`}
+                  }`}
               >
                 <Users className="w-5 h-5 mr-2" />
                 All
               </button>
               <button
                 onClick={() => handleFilterChange("regular")}
-                className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-all flex items-center justify-center ${
-                  activeFilter === "regular"
+                className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-all flex items-center justify-center ${activeFilter === "regular"
                     ? "bg-[#7f5539] text-white shadow-md"
                     : "bg-white text-[#7f5539]"
-                }`}
+                  }`}
               >
                 <Image className="w-5 h-5 mr-2" />
                 Posts
               </button>
               <button
                 onClick={() => handleFilterChange("exhibition")}
-                className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-all flex items-center justify-center ${
-                  activeFilter === "exhibition"
+                className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-all flex items-center justify-center ${activeFilter === "exhibition"
                     ? "bg-[#7f5539] text-white shadow-md"
                     : "bg-white text-[#7f5539]"
-                }`}
+                  }`}
               >
                 <Calendar className="w-5 h-5 mr-2" />
                 Exhibitions

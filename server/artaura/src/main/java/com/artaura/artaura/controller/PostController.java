@@ -53,11 +53,11 @@ public class PostController {
             postDTO.setCaption(caption);
             postDTO.setLocation(location);
             postDTO.setImage("/uploads/" + fileName);  // only the path
-            postDTO.setUserId(userId.intValue());     // cast to int if needed
+            postDTO.setUserId(userId);     // Use Long directly
             postDTO.setRole(role);
 
             // 💾 Save post
-            postService.createPost(userId.intValue(), role, postDTO);
+            postService.createPost(userId, role, postDTO);
 
             return ResponseEntity.status(HttpStatus.CREATED).body("Post created successfully!");
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Trophy, Star, Medal, Award, FileText, Shield, Plus, Edit, Trash2 } from 'lucide-react';
-import axios from 'axios';
+import axiosInstance from '../../util/axiosInstance';
 import { useAuth } from '../../context/AuthContext';
 
 const AchievementsSection = ({ artistId, isOwnProfile = false, onAchievementsCountChange, onAchievementsRefresh }) => {
@@ -50,7 +50,7 @@ const AchievementsSection = ({ artistId, isOwnProfile = false, onAchievementsCou
 
         try {
             setLoading(true);
-            const response = await axios.get(`http://localhost:8081/api/achievements/artist/${artistId}`);
+            const response = await axiosInstance.get(`/achievements/artist/${artistId}`);
             const achievementsData = response.data || [];
             setAchievements(achievementsData);
 
@@ -81,15 +81,9 @@ const AchievementsSection = ({ artistId, isOwnProfile = false, onAchievementsCou
                 colorScheme: newAchievement.color_scheme
             };
 
-            const response = await axios.post(
-                'http://localhost:8081/api/achievements/create',
-                achievementData,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                }
+            const response = await axiosInstance.post(
+                '/achievements/create',
+                achievementData
             );
 
             if (response.status === 200) {
@@ -120,15 +114,9 @@ const AchievementsSection = ({ artistId, isOwnProfile = false, onAchievementsCou
                 colorScheme: editingAchievement.colorScheme
             };
 
-            const response = await axios.put(
-                `http://localhost:8081/api/achievements/${editingAchievement.achievementId}`,
-                updateData,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                }
+            const response = await axiosInstance.put(
+                `/achievements/${editingAchievement.achievementId}`,
+                updateData
             );
 
             if (response.status === 200) {
@@ -152,13 +140,8 @@ const AchievementsSection = ({ artistId, isOwnProfile = false, onAchievementsCou
         }
 
         try {
-            const response = await axios.delete(
-                `http://localhost:8081/api/achievements/${achievementId}`,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                }
+            const response = await axiosInstance.delete(
+                `/achievements/${achievementId}`
             );
 
             if (response.status === 200) {
