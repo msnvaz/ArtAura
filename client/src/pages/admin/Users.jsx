@@ -174,10 +174,7 @@ const UsersManagement = () => {
                   <div className="flex justify-between">
                     <span className="font-medium">Type:</span> 
                     <span className="px-2 py-1 text-xs font-medium rounded-full" style={{
-                      backgroundColor: selectedUser.userType === 'artist' ? '#FFE4D6' : 
-                                     selectedUser.userType === 'moderator' ? '#FFD95A' : 
-                                     selectedUser.userType === 'buyer' ? '#E8F5E8' : 
-                                     selectedUser.userType === 'shop' ? '#E8E0FF' : '#FFF5E1',
+                      backgroundColor: selectedUser.userType === 'artist' ? '#FFE4D6' : selectedUser.userType === 'moderator' ? '#FFD95A' : selectedUser.userType === 'buyer' ? '#E8F5E8' : selectedUser.userType === 'shop' ? '#E3F2FD' : '#FFF5E1',
                       color: '#5D3A00'
                     }}>
                       {selectedUser.userType}
@@ -293,7 +290,7 @@ const UsersManagement = () => {
             </div>
 
             {/* Header with Icon */}
-            <div className="flex items-center justify-center mb-6">
+            <div className="flex items-center justify-center mb-4">
               <div 
                 className="w-16 h-16 rounded-full flex items-center justify-center"
                 style={{ backgroundColor: iconBgColor }}
@@ -555,10 +552,7 @@ const UsersManagement = () => {
             </td>
             <td className="px-6 py-4 text-sm" style={{color: '#5D3A00'}}>
               <span className="px-2 py-1 text-xs font-medium rounded-full" style={{
-                backgroundColor: user.userType === 'artist' ? '#FFE4D6' : 
-                                user.userType === 'moderator' ? '#FFD95A' : 
-                                user.userType === 'buyer' ? '#E8F5E8' : 
-                                user.userType === 'shop' ? '#E8E0FF' : '#FFF5E1',
+                backgroundColor: user.userType === 'artist' ? '#FFE4D6' : user.userType === 'moderator' ? '#FFD95A' : user.userType === 'buyer' ? '#E8F5E8' : user.userType === 'shop' ? '#E3F2FD' : '#FFF5E1',
                 color: '#5D3A00'
               }}>
                 {user.userType}
