@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import Sidebar from '../../components/Sidebar';
 
-
 import { 
   Search, 
   Plus, 
@@ -13,7 +12,9 @@ import {
   AlertTriangle,
   CheckCircle,
   Star,
-  X
+  X,
+  Upload,
+  Camera
 } from 'lucide-react';
 
 const CatalogManagement = () => {
@@ -23,6 +24,8 @@ const CatalogManagement = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [imageModalType, setImageModalType] = useState('add');
   const [productToDelete, setProductToDelete] = useState(null);
   const [productToEdit, setProductToEdit] = useState(null);
 
@@ -137,8 +140,8 @@ const CatalogManagement = () => {
     category: 'Paints',
     price: '',
     stock: '',
-    rating: 4.0,
-    sales: 0
+    status: 'in-stock',
+    image: '/src/assets/catalog.jpeg'
   });
 
   const getStatus = (stock) => {
@@ -147,28 +150,138 @@ const CatalogManagement = () => {
     return 'in-stock';
   };
 
+  // Image upload functions
+  const openImageModal = (type) => {
+    setImageModalType(type);
+    setShowImageModal(true);
+  };
 
+  const handleImageUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          // Create canvas to compress image
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          
+          // Set dimensions for database storage
+          const maxWidth = 200;
+          const maxHeight = 200;
+          
+          let { width, height } = img;
+          
+          // Calculate new dimensions
+          if (width > height) {
+            if (width > maxWidth) {
+              height = (height * maxWidth) / width;
+              width = maxWidth;
+            }
+          } else {
+            if (height > maxHeight) {
+              width = (width * maxHeight) / height;
+              height = maxHeight;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          
+          // Draw and compress for database storage
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.3); // 30% quality
+          
+          if (imageModalType === 'add') {
+            setNewProduct({ ...newProduct, image: compressedDataUrl });
+          } else if (imageModalType === 'edit') {
+            setProductToEdit({ ...productToEdit, image: compressedDataUrl });
+          }
+          setShowImageModal(false);
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
-  const handleAddProduct = (e) => {
+  const handleImageUrl = (url) => {
+    if (imageModalType === 'add') {
+      setNewProduct({ ...newProduct, image: url });
+    } else if (imageModalType === 'edit') {
+      setProductToEdit({ ...productToEdit, image: url });
+    }
+    setShowImageModal(false);
+  };
+
+  const handleAddProduct = async (e) => {
     e.preventDefault();
-    const product = {
-      id: products.length + 1,
-      ...newProduct,
-      price: parseFloat(newProduct.price),
-      stock: parseInt(newProduct.stock),
-      status: getStatus(parseInt(newProduct.stock)),
-      image: '/src/assets/catalog.jpeg' // Default image
-    };
-    setProducts([...products, product]);
-    setNewProduct({ name: '', category: 'Paints', price: '', stock: '', sku: '', rating: 4.0, sales: 0 });
-    setShowAddModal(false);
+
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      alert("You must be logged in to add a product.");
+      return;
+    }
+
+    try {
+      const productData = {
+        name: newProduct.name,
+        sku: newProduct.sku,
+        category: newProduct.category,
+        price: parseFloat(newProduct.price),
+        stock: parseInt(newProduct.stock),
+        status: getStatus(parseInt(newProduct.stock)),
+        image: newProduct.image || '/src/assets/catalog.jpeg'
+      };
+
+      const response = await fetch("http://localhost:8086/api/products/add", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(productData),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        alert(error.message || "Failed to add product");
+        return;
+      }
+
+      const result = await response.text();
+      alert(result || "Product added successfully!");
+
+      // Reset form and close modal
+      setNewProduct({
+        name: "",
+        sku: "",
+        category: "Paints",
+        price: "",
+        stock: "",
+        status: "in-stock",
+        image: "/src/assets/catalog.jpeg"
+      });
+
+      setShowAddModal(false);
+    } catch (err) {
+      console.error("Error while adding product:", err);
+      alert("Server error. Please try again later.");
+    }
   };
 
    const handleEditProduct = (e) => {
     e.preventDefault();
     const updatedProducts = products.map(p => 
       p.id === productToEdit.id 
-        ? { ...productToEdit, status: getStatus(productToEdit.stock) }
+        ? { 
+          ...productToEdit, 
+          price: parseFloat(productToEdit.price),
+          stock: parseInt(productToEdit.stock),
+          status: getStatus(parseInt(productToEdit.stock))
+        }
         : p
     );
     setProducts(updatedProducts);
@@ -191,9 +304,6 @@ const CatalogManagement = () => {
     setProductToDelete(product);
     setShowDeleteModal(true);
   };
-
-
-
 
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -236,7 +346,7 @@ const CatalogManagement = () => {
       </div>
       </div>
 
-       {/* Add Product Button */}
+      {/* Add Product Button */}
       <button 
         onClick={() => setShowAddModal(true)}
         className="bg-gradient-to-r from-[#D87C5A] to-[#5D3A00] text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300">
@@ -244,8 +354,6 @@ const CatalogManagement = () => {
         Add Product
       </button>
     </div>
-
-      
 
       {/* Products Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -306,7 +414,7 @@ const CatalogManagement = () => {
                 </button>
                 <button 
                   onClick={() => openEditModal(product)}
-                  className="w-fit bg-[#FFF5E1] text-[#5D3A00] py-1.5 px-2 rounded-lg hover:bg-[#FFE4D6]] text-xs font-semibold shadow hover:shadow-md transition-all duration-300 flex items-center space-x-1">
+                  className="w-fit bg-[#FFF5E1] text-[#5D3A00] py-1.5 px-2 rounded-lg hover:bg-[#FFE4D6] text-xs font-semibold shadow hover:shadow-md transition-all duration-300 flex items-center space-x-1">
                   <Edit3 className="w-3 h-3" />
                   <span>Edit</span>
                 </button>
@@ -315,9 +423,7 @@ const CatalogManagement = () => {
                   className="w-fit bg-red-100 text-red-600 py-1.5 px-2 rounded-lg hover:bg-red-200 text-xs font-semibold shadow hover:shadow-md transition-all duration-300 flex items-center space-x-1">
                   <Trash2 className="w-4 h-4" />       
                 </button>
-
               </div>
-
             </div>
           </div> 
         ))}
@@ -335,7 +441,7 @@ const CatalogManagement = () => {
         </div>
       )}
 
-      
+      {/* Product Details Modal */}
       {selectedProduct && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -404,7 +510,7 @@ const CatalogManagement = () => {
       {/* Add Product Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b border-[#FFE4D6] p-6">
               <h2 className="text-2xl font-bold text-[#5D3A00]">Add New Product</h2>
               <button 
@@ -416,6 +522,32 @@ const CatalogManagement = () => {
             </div>
             
             <form onSubmit={handleAddProduct} className="p-6 space-y-4">
+              {/* Product Image Section */}
+              <div>
+                <label className="block text-sm font-semibold text-[#5D3A00] mb-2">Product Image</label>
+                <div className="flex items-center gap-4">
+                  <div className="w-20 h-20 border-2 border-dashed border-[#FFE4D6] rounded-lg flex items-center justify-center overflow-hidden">
+                    {newProduct.image ? (
+                      <img 
+                        src={newProduct.image} 
+                        alt="Product preview" 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <Camera className="w-8 h-8 text-[#D87C5A]" />
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => openImageModal('add')}
+                    className="bg-[#FFE4D6] text-[#5D3A00] px-4 py-2 rounded-lg hover:bg-[#D87C5A] hover:text-white transition-colors flex items-center gap-2"
+                  >
+                    <Upload className="w-4 h-4" />
+                    Add Image
+                  </button>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-sm font-semibold text-[#5D3A00] mb-2">Product Name</label>
                 <input 
@@ -428,83 +560,82 @@ const CatalogManagement = () => {
                 />
               </div>
 
-        <div>
-          <label className="block text-sm font-semibold text-[#5D3A00] mb-2">SKU</label>
-          <input 
-            type="text"
-            value={newProduct.sku}
-            onChange={(e) => setNewProduct({ ...newProduct, sku: e.target.value })}
-            className="w-full border border-[#FFE4D6] px-3 py-2 rounded-lg focus:border-[#D87C5A] focus:ring-0 outline-none"
-            placeholder="Enter SKU"
-            required
-          />
-        </div>
+              <div>
+                <label className="block text-sm font-semibold text-[#5D3A00] mb-2">SKU</label>
+                <input 
+                  type="text"
+                  value={newProduct.sku}
+                  onChange={(e) => setNewProduct({ ...newProduct, sku: e.target.value })}
+                  className="w-full border border-[#FFE4D6] px-3 py-2 rounded-lg focus:border-[#D87C5A] focus:ring-0 outline-none"
+                  placeholder="Enter SKU"
+                  required
+                />
+              </div>
 
-        <div>
-          <label className="block text-sm font-semibold text-[#5D3A00] mb-2">Category</label>
-          <select 
-            value={newProduct.category}
-            onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
-            className="w-full border border-[#FFE4D6] px-3 py-2 rounded-lg focus:border-[#D87C5A] focus:ring-0 outline-none"
-          >
-            {categories.filter(cat => cat !== 'all').map(category => (
-              <option key={category} value={category}>{category}</option>
-            ))}
-          </select>
-        </div>
+              <div>
+                <label className="block text-sm font-semibold text-[#5D3A00] mb-2">Category</label>
+                <select 
+                  value={newProduct.category}
+                  onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
+                  className="w-full border border-[#FFE4D6] px-3 py-2 rounded-lg focus:border-[#D87C5A] focus:ring-0 outline-none"
+                >
+                  {categories.filter(cat => cat !== 'all').map(category => (
+                    <option key={category} value={category}>{category}</option>
+                  ))}
+                </select>
+              </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-semibold text-[#5D3A00] mb-2">Price</label>
-            <input 
-              type="number"
-              step="0.01"
-              value={newProduct.price}
-              onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
-              className="w-full border border-[#FFE4D6] px-3 py-2 rounded-lg focus:border-[#D87C5A] focus:ring-0 outline-none"
-              placeholder="0.00"
-              required
-            />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-[#5D3A00] mb-2">Price</label>
+                  <input 
+                    type="number"
+                    step="0.01"
+                    value={newProduct.price}
+                    onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
+                    className="w-full border border-[#FFE4D6] px-3 py-2 rounded-lg focus:border-[#D87C5A] focus:ring-0 outline-none"
+                    placeholder="0.00"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-[#5D3A00] mb-2">Stock</label>
+                  <input 
+                    type="number"
+                    value={newProduct.stock}
+                    onChange={(e) => setNewProduct({ ...newProduct, stock: e.target.value })}
+                    className="w-full border border-[#FFE4D6] px-3 py-2 rounded-lg focus:border-[#D87C5A] focus:ring-0 outline-none"
+                    placeholder="0"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button 
+                  type="button" 
+                  onClick={() => setShowAddModal(false)}
+                  className="flex-1 border border-[#FFE4D6] text-[#5D3A00] px-4 py-2 rounded-lg hover:bg-[#FFF5E1] transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  className="flex-1 bg-gradient-to-r from-[#D87C5A] to-[#5D3A00] text-white px-4 py-2 rounded-lg hover:shadow-lg transition-all"
+                >
+                  Add Product
+                </button>
+              </div>
+            </form>
           </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-[#5D3A00] mb-2">Stock</label>
-            <input 
-              type="number"
-              value={newProduct.stock}
-              onChange={(e) => setNewProduct({ ...newProduct, stock: e.target.value })}
-              className="w-full border border-[#FFE4D6] px-3 py-2 rounded-lg focus:border-[#D87C5A] focus:ring-0 outline-none"
-              placeholder="0"
-              required
-            />
-          </div>
         </div>
-
-            <div className="flex gap-3 pt-4">
-              <button 
-                type="button" 
-                onClick={() => setShowAddModal(false)}
-                className="flex-1 border border-[#FFE4D6] text-[#5D3A00] px-4 py-2 rounded-lg hover:bg-[#FFF5E1] transition-colors"
-              >
-                Cancel
-              </button>
-              <button 
-                type="submit"
-                className="flex-1 bg-gradient-to-r from-[#D87C5A] to-[#5D3A00] text-white px-4 py-2 rounded-lg hover:shadow-lg transition-all"
-              >
-                Add Product
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    )}
-
+      )}
 
       {/* Edit Product Modal */}
       {showEditModal && productToEdit && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b border-[#FFE4D6] p-6">
               <h2 className="text-2xl font-bold text-[#5D3A00]">Edit Product</h2>
               <button 
@@ -516,6 +647,32 @@ const CatalogManagement = () => {
             </div>
             
             <form onSubmit={handleEditProduct} className="p-6 space-y-4">
+              {/* Product Image Section */}
+              <div>
+                <label className="block text-sm font-semibold text-[#5D3A00] mb-2">Product Image</label>
+                <div className="flex items-center gap-4">
+                  <div className="w-20 h-20 border-2 border-dashed border-[#FFE4D6] rounded-lg flex items-center justify-center overflow-hidden">
+                    {productToEdit.image ? (
+                      <img 
+                        src={productToEdit.image} 
+                        alt="Product preview" 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <Camera className="w-8 h-8 text-[#D87C5A]" />
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => openImageModal('edit')}
+                    className="bg-[#FFE4D6] text-[#5D3A00] px-4 py-2 rounded-lg hover:bg-[#D87C5A] hover:text-white transition-colors flex items-center gap-2"
+                  >
+                    <Upload className="w-4 h-4" />
+                    Change Image
+                  </button>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-sm font-semibold text-[#5D3A00] mb-2">Product Name</label>
                 <input 
@@ -558,7 +715,7 @@ const CatalogManagement = () => {
                     type="number"
                     step="0.01"
                     value={productToEdit.price}
-                    onChange={(e) => setProductToEdit({...productToEdit, price: parseFloat(e.target.value)})}
+                    onChange={(e) => setProductToEdit({...productToEdit, price: e.target.value})}
                     className="w-full border border-[#FFE4D6] px-3 py-2 rounded-lg focus:border-[#D87C5A] focus:ring-0 outline-none"
                     required
                   />
@@ -569,9 +726,34 @@ const CatalogManagement = () => {
                   <input 
                     type="number"
                     value={productToEdit.stock}
-                    onChange={(e) => setProductToEdit({...productToEdit, stock: parseInt(e.target.value)})}
+                    onChange={(e) => setProductToEdit({...productToEdit, stock: e.target.value})}
                     className="w-full border border-[#FFE4D6] px-3 py-2 rounded-lg focus:border-[#D87C5A] focus:ring-0 outline-none"
                     required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-[#5D3A00] mb-2">Rating</label>
+                  <input 
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    max="5"
+                    value={productToEdit.rating}
+                    onChange={(e) => setProductToEdit({...productToEdit, rating: e.target.value})}
+                    className="w-full border border-[#FFE4D6] px-3 py-2 rounded-lg focus:border-[#D87C5A] focus:ring-0 outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-[#5D3A00] mb-2">Sales</label>
+                  <input 
+                    type="number"
+                    value={productToEdit.sales}
+                    onChange={(e) => setProductToEdit({...productToEdit, sales: e.target.value})}
+                    className="w-full border border-[#FFE4D6] px-3 py-2 rounded-lg focus:border-[#D87C5A] focus:ring-0 outline-none"
                   />
                 </div>
               </div>
@@ -592,6 +774,104 @@ const CatalogManagement = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Image Upload Modal */}
+      {showImageModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+            <div className="flex justify-between items-center border-b border-[#FFE4D6] p-6">
+              <h2 className="text-2xl font-bold text-[#5D3A00]">Add Product Image</h2>
+              <button 
+                onClick={() => setShowImageModal(false)} 
+                className="text-[#5D3A00] hover:text-[#D87C5A] transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              {/* Upload from Device */}
+              <div>
+                <h3 className="text-lg font-semibold text-[#5D3A00] mb-3">Upload from Device</h3>
+                <label className="block">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                  <div className="border-2 border-dashed border-[#FFE4D6] rounded-lg p-8 text-center hover:border-[#D87C5A] transition-colors cursor-pointer">
+                    <Upload className="w-12 h-12 text-[#D87C5A] mx-auto mb-4" />
+                    <p className="text-[#5D3A00] font-medium">Click to upload an image</p>
+                    <p className="text-sm text-[#5D3A00]/70 mt-1">PNG, JPG, GIF supported</p>
+                  </div>
+                </label>
+              </div>
+
+              {/* URL Input */}
+              <div>
+                <h3 className="text-lg font-semibold text-[#5D3A00] mb-3">Or Enter Image URL</h3>
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    placeholder="https://example.com/image.jpg"
+                    className="flex-1 border border-[#FFE4D6] px-3 py-2 rounded-lg focus:border-[#D87C5A] focus:ring-0 outline-none"
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        handleImageUrl(e.target.value);
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      const input = e.target.previousElementSibling;
+                      handleImageUrl(input.value);
+                    }}
+                    className="bg-[#D87C5A] text-white px-4 py-2 rounded-lg hover:bg-[#c06949] transition-colors"
+                  >
+                    Add
+                  </button>
+                </div>
+              </div>
+
+              {/* Default Images */}
+              <div>
+                <h3 className="text-lg font-semibold text-[#5D3A00] mb-3">Choose Default Image</h3>
+                <div className="grid grid-cols-3 gap-3">
+                  {/*
+                    Add your default image paths here
+                  */}
+                  {['/src/assets/catalog.jpeg', '/src/assets/catalog2.jpeg', '/src/assets/catalog3.png', '/src/assets/catalog4.jpg', '/src/assets/catalog5.jpg', '/src/assets/catalog6.jpeg'].map((imagePath, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => handleImageUrl(imagePath)}
+                      className="aspect-square border-2 border-[#FFE4D6] rounded-lg overflow-hidden hover:border-[#D87C5A] transition-colors"
+                    >
+                      <img
+                        src={imagePath}
+                        alt={`Default ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button 
+                  type="button" 
+                  onClick={() => setShowImageModal(false)}
+                  className="flex-1 border border-[#FFE4D6] text-[#5D3A00] px-4 py-2 rounded-lg hover:bg-[#FFF5E1] transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

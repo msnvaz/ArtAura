@@ -33,7 +33,8 @@ const RegisterPage = () => {
     nic: "",
   });
 
-  const { setUser } = useUser();
+  // const { setUser } = useUser();
+  useUser();
   const navigate = useNavigate();
 
   // Email validation function
@@ -66,7 +67,7 @@ const RegisterPage = () => {
     let endpoint = "";
     let payload = {};
     if (userType === "artist") {
-      endpoint = "http://localhost:8080/api/artist/signup";
+      endpoint = "http://localhost:8086/api/artist/signup";
       payload = {
         firstName: formData.firstName,
         lastName: formData.lastName,
@@ -78,7 +79,7 @@ const RegisterPage = () => {
         agreedTerms: true,
       };
     } else if (userType === "buyer") {
-      endpoint = "http://localhost:8080/api/buyer/signup";
+      endpoint = "http://localhost:8086/api/buyer/signup";
       payload = {
         firstName: formData.firstName,
         lastName: formData.lastName,
