@@ -399,10 +399,20 @@ public class AdminArtworkDAOImpl implements AdminArtworkDAO {
     @Override
     public boolean updateArtworkStatus(Long artworkId, String status) {
         try {
+            System.out.println("AdminArtworkDAOImpl: updateArtworkStatus called with artworkId=" + artworkId + ", status=" + status);
             String sql = "UPDATE artworks SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE artwork_id = ?";
+            System.out.println("AdminArtworkDAOImpl: Executing SQL: " + sql);
+            System.out.println("AdminArtworkDAOImpl: Parameters: status=" + status + ", artworkId=" + artworkId);
+            
             int rowsAffected = jdbc.update(sql, status, artworkId);
-            return rowsAffected > 0;
+            System.out.println("AdminArtworkDAOImpl: Rows affected: " + rowsAffected);
+            
+            boolean result = rowsAffected > 0;
+            System.out.println("AdminArtworkDAOImpl: Returning: " + result);
+            return result;
         } catch (Exception e) {
+            System.err.println("AdminArtworkDAOImpl: Error updating artwork status: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
     }

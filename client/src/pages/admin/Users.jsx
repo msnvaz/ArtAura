@@ -142,14 +142,6 @@ const UsersManagement = () => {
   // User Details Modal
   const UserModal = () => {
     if (!showUserModal || !selectedUser) return null;
-
-    // Handle different name fields for shops vs other users
-    const getUserDisplayName = (user) => {
-      if (user?.userType === 'shop') {
-        return `${user.firstName || ''} (${user.lastName || ''})`.trim();
-      }
-      return `${user?.firstName || ''} ${user?.lastName || ''}`.trim();
-    };
     
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -173,7 +165,7 @@ const UsersManagement = () => {
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="font-medium">Name:</span> 
-                    <span>{getUserDisplayName(selectedUser)}</span>
+                    <span>{selectedUser.firstName} {selectedUser.lastName}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="font-medium">Email:</span> 
@@ -185,7 +177,7 @@ const UsersManagement = () => {
                       backgroundColor: selectedUser.userType === 'artist' ? '#FFE4D6' : 
                                      selectedUser.userType === 'moderator' ? '#FFD95A' : 
                                      selectedUser.userType === 'buyer' ? '#E8F5E8' : 
-                                     selectedUser.userType === 'shop' ? '#E8F0FF' : '#FFF5E1',
+                                     selectedUser.userType === 'shop' ? '#E8E0FF' : '#FFF5E1',
                       color: '#5D3A00'
                     }}>
                       {selectedUser.userType}
@@ -280,21 +272,6 @@ const UsersManagement = () => {
     const actionColor = isBlocking ? '#E74C3C' : '#27AE60';
     const iconBgColor = isBlocking ? '#F1948A' : '#82E0AA';
 
-    // Handle different name fields for shops vs other users
-    const getUserDisplayName = (user) => {
-      if (user?.userType === 'shop') {
-        return `${user.firstName || ''} (${user.lastName || ''})`.trim();
-      }
-      return `${user?.firstName || ''} ${user?.lastName || ''}`.trim();
-    };
-
-    const getUserInitials = (user) => {
-      if (user?.userType === 'shop') {
-        return `${user.firstName?.charAt(0) || ''}${user.lastName?.charAt(0) || ''}`;
-      }
-      return `${user?.firstName?.charAt(0) || ''}${user?.lastName?.charAt(0) || ''}`;
-    };
-
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div className="bg-white rounded-lg shadow-lg max-w-md w-full mx-4 max-h-90vh overflow-y-auto">
@@ -316,7 +293,7 @@ const UsersManagement = () => {
             </div>
 
             {/* Header with Icon */}
-            <div className="flex items-center justify-center mb-4">
+            <div className="flex items-center justify-center mb-6">
               <div 
                 className="w-16 h-16 rounded-full flex items-center justify-center"
                 style={{ backgroundColor: iconBgColor }}
@@ -326,41 +303,6 @@ const UsersManagement = () => {
                 ) : (
                   <UserCheck size={32} style={{ color: actionColor }} />
                 )}
-              </div>
-            </div>
-
-            {/* User Info */}
-            <div 
-              className="rounded-lg p-3 mb-4"
-              style={{ backgroundColor: '#FFF5E1', border: '1px solid #FFE4D6' }}
-            >
-              <div className="flex items-center gap-3">
-                <div 
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold"
-                  style={{ backgroundColor: '#D87C5A' }}
-                >
-                  {getUserInitials(confirmAction.user)}
-                </div>
-                <div>
-                  <div className="font-medium" style={{ color: '#5D3A00' }}>
-                    {getUserDisplayName(confirmAction.user)}
-                  </div>
-                  <div className="text-sm" style={{ color: '#D87C5A' }}>
-                    {confirmAction.user?.email}
-                  </div>
-                  <span 
-                    className="inline-block px-2 py-1 text-xs font-medium rounded-full mt-1"
-                    style={{
-                      backgroundColor: confirmAction.user?.userType === 'artist' ? '#FFE4D6' : 
-                                     confirmAction.user?.userType === 'moderator' ? '#FFD95A' : 
-                                     confirmAction.user?.userType === 'buyer' ? '#E8F5E8' : 
-                                     confirmAction.user?.userType === 'shop' ? '#E8F0FF' : '#FFF5E1',
-                      color: '#5D3A00'
-                    }}
-                  >
-                    {confirmAction.user?.userType}
-                  </span>
-                </div>
               </div>
             </div>
 
@@ -616,7 +558,7 @@ const UsersManagement = () => {
                 backgroundColor: user.userType === 'artist' ? '#FFE4D6' : 
                                 user.userType === 'moderator' ? '#FFD95A' : 
                                 user.userType === 'buyer' ? '#E8F5E8' : 
-                                user.userType === 'shop' ? '#E8F0FF' : '#FFF5E1',
+                                user.userType === 'shop' ? '#E8E0FF' : '#FFF5E1',
                 color: '#5D3A00'
               }}>
                 {user.userType}
@@ -641,12 +583,10 @@ const UsersManagement = () => {
             <td className="px-6 py-4 text-sm" style={{color: '#5D3A00'}}>
                 <div>
             <div className="font-medium" style={{color: '#D87C5A'}}>
-              {user.userType === 'artist' ? formatPrice(user.revenue || 0, "LKR") : 
-               user.userType === 'buyer' ? formatPrice(user.spent || 0, "LKR") : '-'}
+              {formatPrice(user.userType === 'artist' ? (user.revenue || 0) : (user.spent || 0), "LKR")}
             </div>
             <div className="text-xs opacity-75">
-              {user.userType === 'artist' ? `${user.totalSales || 0} sales` : 
-               user.userType === 'buyer' ? `${user.totalPurchases || 0} purchases` : '-'}
+              {user.userType === 'artist' ? (user.totalSales || 0) : (user.totalPurchases || 0)} {user.userType === 'artist' ? "sales" : "purchases"}
             </div>
                 </div>
             </td>

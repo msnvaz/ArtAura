@@ -4,12 +4,12 @@ import image from "../../assets/artlover.jpeg";
 import Logo from "../../assets/navbar-logo.jpg";
 import NotificationsPopup from "./Notification";
 import ProfileDropdown from "./ProfileDropdown";
+import { useAuth } from "../../context/AuthContext";
 
 const Navbar = ({ onToggleSidebar }) => {
-  const [isSignedIn, setIsSignedIn] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  const handleAuthClick = () => setIsSignedIn(!isSignedIn);
+  const { token } = useAuth();
+  const isSignedIn = !!token;
 
   return (
     <>
@@ -65,9 +65,7 @@ const Navbar = ({ onToggleSidebar }) => {
 
             {/* Right Actions */}
             <div className="flex items-center space-x-4">
-              <button className="text-white hover:text-[#87CEEB] p-2.5 rounded-xl hover:bg-[#87CEEB]/10 transition-colors">
-                <NotificationsPopup />
-              </button>
+              <NotificationsPopup />
 
               {/* Profile Dropdown or Sign In Button */}
               {isSignedIn ? (
@@ -75,16 +73,15 @@ const Navbar = ({ onToggleSidebar }) => {
                   profileImage={image}
                   userName="John Doe"
                   isSignedIn={isSignedIn}
-                  onSignOut={handleAuthClick}
                 />
               ) : (
-                <button
-                  onClick={handleAuthClick}
+                <a
+                  href="/"
                   className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 bg-[#87CEEB] hover:bg-[#D87C5A] text-[#1C0E09]"
                 >
                   <LogIn className="h-4 w-4" />
                   Sign In
-                </button>
+                </a>
               )}
             </div>
           </div>
@@ -108,8 +105,8 @@ const Navbar = ({ onToggleSidebar }) => {
                 className="block w-full pl-10 pr-3 py-2.5 border border-slate-700 rounded-xl bg-slate-800 text-sm text-slate-200 placeholder-slate-400 focus:ring-2 focus:ring-blue-500"
               />
             </div>
-            <button
-              onClick={handleAuthClick}
+            <a
+              href="/login"
               className={`w-full flex justify-center items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl transition ${
                 isSignedIn
                   ? "bg-red-600 hover:bg-red-700"
@@ -122,7 +119,7 @@ const Navbar = ({ onToggleSidebar }) => {
                 <LogIn className="h-4 w-4" />
               )}
               {isSignedIn ? "Sign Out" : "Sign In"}
-            </button>
+            </a>
           </div>
         </div>
       )}
