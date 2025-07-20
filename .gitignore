@@ -12,6 +12,6 @@ server/.env
 package-lock.json
 package.json
 uploads
-
+.env
 server/.env
 server/autura/.env
