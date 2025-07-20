@@ -39,6 +39,9 @@ public class ArtistDAOImpl implements ArtistDAO {
         );
     }
 
+    public JdbcTemplate getJdbc() {
+        return jdbc;
+    }
 
     @Override
     public Optional<LoginUserDataDTO> findByEmail(String email) {

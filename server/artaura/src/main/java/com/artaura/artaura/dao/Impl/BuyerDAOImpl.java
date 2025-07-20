@@ -53,5 +53,9 @@ public class BuyerDAOImpl implements BuyerDAO {
             return Optional.empty();
         }
     }
+
+    public JdbcTemplate getJdbc() {
+        return jdbc;
+    }
 }
 
