@@ -110,8 +110,26 @@ public class AdminUserDAOImpl implements AdminUserDAO {
 
     @Override
     public AdminUserDTO getUserById(Long userId, String userType) {
-        // TODO: Implement get by id logic
-        return null;
+        try {
+            AdminUserDTO user = null;
+            if ("artist".equalsIgnoreCase(userType)) {
+                String sql = "SELECT a.*, COUNT(aw_all.artwork_id) AS total_artworks, COUNT(aw_sold.artwork_id) AS total_sales, IFNULL(SUM(aw_sold.price), 0) AS revenue FROM artists a LEFT JOIN artworks aw_all ON a.artist_id = aw_all.artist_id LEFT JOIN artworks aw_sold ON a.artist_id = aw_sold.artist_id AND aw_sold.status = 'Sold' WHERE a.artist_id = ? GROUP BY a.artist_id";
+                user = jdbc.queryForObject(sql, artistMapper, userId);
+            } else if ("buyer".equalsIgnoreCase(userType)) {
+                String sql = "SELECT b.*, COUNT(p.purchase_id) AS total_purchases, IFNULL(SUM(p.price), 0) AS spent FROM buyers b LEFT JOIN purchases p ON b.buyer_id = p.buyer_id WHERE b.buyer_id = ? GROUP BY b.buyer_id";
+                user = jdbc.queryForObject(sql, buyerMapper, userId);
+            } else if ("moderator".equalsIgnoreCase(userType)) {
+                String sql = "SELECT * FROM moderators WHERE moderator_id = ?";
+                user = jdbc.queryForObject(sql, moderatorMapper, userId);
+            } else if ("shop".equalsIgnoreCase(userType)) {
+                String sql = "SELECT * FROM shops WHERE shop_id = ?";
+                user = jdbc.queryForObject(sql, shopMapper, userId);
+            }
+            return user;
+        } catch (Exception e) {
+            System.err.println("Error fetching user by ID: " + e.getMessage());
+            return null;
+        }
     }
 
     @Override
