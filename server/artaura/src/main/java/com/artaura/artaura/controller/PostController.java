@@ -27,10 +27,10 @@ public class PostController {
 
     @Autowired
     private JwtUtil jwtUtil;
+
     @PostMapping("/create")
     public ResponseEntity<String> createPost(
-
-    @RequestParam("caption") String caption,
+            @RequestParam("caption") String caption,
             @RequestParam("location") String location,
             @RequestParam("image") MultipartFile image,
             HttpServletRequest request
@@ -67,8 +67,6 @@ public class PostController {
         }
     }
 
-
-
     // Delete post
     @DeleteMapping("/{postId}")
     public ResponseEntity<String> deletePost(@PathVariable Long postId) {
@@ -81,12 +79,14 @@ public class PostController {
     public ResponseEntity<String> updatePost(
             @PathVariable Long postId,
             @RequestPart("caption") String caption,
+            @RequestPart(value = "location", required = false) String location,
             @RequestPart(value = "image", required = false) MultipartFile image
     ) {
         try {
             PostUpdateDTO postUpdateDTO = new PostUpdateDTO();
             postUpdateDTO.setPostId(postId);
             postUpdateDTO.setCaption(caption);
+            postUpdateDTO.setLocation(location);
 
             postService.updatePost(postUpdateDTO, image);  // pass both DTO and MultipartFile
 
@@ -97,7 +97,6 @@ public class PostController {
         }
     }
 
-
     @GetMapping("/{role}/{userId}")
     public ResponseEntity<List<PostResponseDTO>> getPostsByUser(
             @PathVariable String role,
@@ -107,4 +106,3 @@ public class PostController {
         return ResponseEntity.ok(posts);
     }
 }
-
