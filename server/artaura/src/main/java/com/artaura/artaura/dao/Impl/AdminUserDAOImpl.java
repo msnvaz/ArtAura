@@ -77,12 +77,28 @@ public class AdminUserDAOImpl implements AdminUserDAO {
         return dto;
     };
 
+    private RowMapper<AdminUserDTO> shopMapper = (rs, rowNum) -> {
+        AdminUserDTO dto = new AdminUserDTO();
+        dto.setUserId(rs.getLong("shop_id"));
+        dto.setUserType("shop");
+        dto.setEmail(rs.getString("email"));
+        dto.setFirstName(rs.getString("shop_name"));
+        dto.setLastName(rs.getString("owner_name"));
+        dto.setPassword(rs.getString("password"));
+        dto.setStatus(rs.getString("status"));
+        dto.setCreatedAt(rs.getTimestamp("created_at") != null ? rs.getTimestamp("created_at").toLocalDateTime() : null);
+        dto.setAgreedTerms(rs.getBoolean("agreed_terms"));
+        dto.setContactNo(rs.getString("contact_no"));
+        return dto;
+    };
+
     @Override
     public List<AdminUserDTO> getAllUsers() {
         List<AdminUserDTO> users = new ArrayList<>();
         users.addAll(jdbc.query("SELECT a.*, COUNT(aw_all.artwork_id) AS total_artworks, COUNT(aw_sold.artwork_id) AS total_sales, IFNULL(SUM(aw_sold.price), 0) AS revenue FROM artists a LEFT JOIN artworks aw_all ON a.artist_id = aw_all.artist_id LEFT JOIN artworks aw_sold ON a.artist_id = aw_sold.artist_id AND aw_sold.status = 'Sold' GROUP BY a.artist_id", artistMapper));
         users.addAll(jdbc.query("SELECT b.*, COUNT(p.purchase_id) AS total_purchases, IFNULL(SUM(p.price), 0) AS spent FROM buyers b LEFT JOIN purchases p ON b.buyer_id = p.buyer_id GROUP BY b.buyer_id", buyerMapper));
         users.addAll(jdbc.query("SELECT * FROM moderators", moderatorMapper));
+        users.addAll(jdbc.query("SELECT * FROM shops", shopMapper));
         return users;
     }
 
@@ -107,6 +123,8 @@ public class AdminUserDAOImpl implements AdminUserDAO {
             updated = jdbc.update("UPDATE buyers SET status = ? WHERE buyer_id = ?", status, userId);
         } else if ("moderator".equalsIgnoreCase(userType)) {
             updated = jdbc.update("UPDATE moderators SET status = ? WHERE moderator_id = ?", status, userId);
+        } else if ("shop".equalsIgnoreCase(userType)) {
+            updated = jdbc.update("UPDATE shops SET status = ? WHERE shop_id = ?", status, userId);
         }
         return updated > 0;
     }
