@@ -1,10 +1,10 @@
 import {
-  AlertTriangle,
-  Calendar,
-  CheckCircle,
-  Eye,
+  Award,
+  BarChart3,
+  Clock,
   Plus,
-  ShieldCheck,
+  Shield,
+  Star,
   Trophy,
   User,
   Users,
@@ -14,7 +14,6 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 const ModeratorDashboard = () => {
-  const [activeTab, setActiveTab] = useState('overview');
   const navigate = useNavigate();
   const { token, logout } = useAuth();
   const isSignedIn = !!token;
@@ -206,30 +205,9 @@ const ModeratorDashboard = () => {
                 </div>
               </div>
             </div>
-            <div className="mt-4 md:mt-0 flex flex-wrap gap-3">
-              <button
-                className="border border-amber-800 text-amber-800 px-4 py-2 rounded-lg hover:bg-amber-800 hover:text-white transition-colors font-medium flex items-center space-x-2"
-                onClick={() => navigate('/CreateChallenge')}
-              >
-                <Plus className="h-4 w-4" />
-                <span>Create Challenge</span>
-              </button>
-              <button className="border border-amber-800 text-amber-800 px-4 py-2 rounded-lg hover:bg-amber-800 hover:text-white transition-colors font-medium flex items-center space-x-2"
-                onClick={() => navigate('/winnerSelection')}
-              >
-                <CheckCircle className="h-4 w-4" />
-                <span>Select Winners</span>
-              </button>
-              <button
-                className="border border-amber-800 text-amber-800 px-4 py-2 rounded-lg hover:bg-amber-800 hover:text-white transition-colors font-medium flex items-center space-x-2"
-                onClick={() => navigate('/verifyExhibitions')}
-              >
-                <Calendar className="h-4 w-4" />
-                <span>Verify Exhibitions</span>
-              </button>
-            </div>
           </div>
-        </div>
+        ))}
+      </div>
 
       {/* Quick Actions & Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -296,7 +274,7 @@ const ModeratorDashboard = () => {
                   <small style={{ color: "#5D3A00" }}>{action.desc}</small>
                 </button>
               ))}
-            </nav>
+            </div>
           </div>
         </div>
 
@@ -724,31 +702,6 @@ const ModeratorDashboard = () => {
                 )}
               </div>
             </div>
-            <div className="p-6">
-              <div className="space-y-4">
-                {challengesData.map((challenge, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 bg-amber-50 rounded-lg">
-                    <div className="flex-1">
-                      <h4 className="font-medium text-amber-900">{challenge.title}</h4>
-                      <p className="text-sm text-amber-700">{challenge.participants} participants</p>
-                      <p className="text-xs text-amber-600">Deadline: {challenge.deadline}</p>
-                    </div>
-                    <div className="flex items-center space-x-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        challenge.status === 'Active' ? 'bg-green-100 text-green-800'
-                          : challenge.status === 'Completed' ? 'bg-blue-100 text-blue-800'
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {challenge.status}
-                      </span>
-                      <button className="text-amber-800 hover:text-amber-600">
-                        <Eye className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
 
@@ -784,7 +737,7 @@ const ModeratorDashboard = () => {
                     {item.label}
                   </button>
                 ))}
-              </div>
+              </nav>
             </div>
           </div>
 
