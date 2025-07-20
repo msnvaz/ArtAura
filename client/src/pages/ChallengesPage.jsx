@@ -22,102 +22,98 @@ import {
   Zap,
 } from "lucide-react";
 import Navbar from "../components/common/Navbar";
+import CartSidebar from "../components/cart/CartSidebar";
 import { useAuth } from "../context/AuthContext"; // Import AuthContext
 
 const ChallengesPage = () => {
   const navigate = useNavigate();
-  const { role } = useAuth(); // Get user role from AuthContext
+  const { role } = useAuth();
   const [challenges, setChallenges] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [viewMode, setViewMode] = useState("grid");
 
-  // Mock data for active challenges
+  // Sri Lankan themed mock challenges
   const mockActiveChallenges = [
     {
       id: 1,
-      title: "Digital Art Showcase 2025",
+      title: "Kolam Mask Design Contest",
       description:
-        "Create stunning digital artwork using any medium and showcase your creativity",
-      category: "Digital Art",
+        "Design a traditional Kolam mask reflecting Sri Lankan folklore and cultural symbolism.",
+      category: "Traditional Art",
       startDate: "2025-07-01",
       endDate: "2025-07-31",
-      prize: "$1,500",
-      participants: 234,
-      submissions: 156,
+      prize: "Rs. 500,000",
+      participants: 120,
+      submissions: 80,
       difficulty: "Intermediate",
       status: "active",
       timeLeft: "13 days",
       rules: [
-        "Original artwork only",
-        "Maximum 3 submissions",
-        "Digital format required",
+        "Original designs only",
+        "Must reflect Sri Lankan traditions",
+        "Submit high-resolution artwork",
       ],
-      image:
-        "https://images.pexels.com/photos/1545743/pexels-photo-1545743.jpeg?auto=compress&cs=tinysrgb&w=600",
-      organizer: "ArtAura Team",
-      tags: ["digital", "creative", "showcase"],
+      image: "/mask.jpg", // public image
+      organizer: "Department of Cultural Affairs",
+      tags: ["kolam", "culture", "traditional"],
     },
     {
       id: 2,
-      title: "Abstract Expression Challenge",
+      title: "Rural Life Through the Lens",
       description:
-        "Express your emotions through abstract art forms and bold color combinations",
-      category: "Abstract Art",
+        "Capture the heart of rural Sri Lanka — farming, traditions, and everyday life.",
+      category: "Photography",
       startDate: "2025-07-15",
       endDate: "2025-08-15",
-      prize: "$1,000",
-      participants: 189,
-      submissions: 98,
-      difficulty: "Advanced",
+      prize: "Rs. 300,000",
+      participants: 98,
+      submissions: 64,
+      difficulty: "Beginner",
       status: "active",
       timeLeft: "28 days",
       rules: [
-        "Abstract style only",
-        "Any medium accepted",
-        "Artist statement required",
+        "Photos must be taken in Sri Lanka",
+        "No heavy editing",
+        "Submit in JPG or RAW format",
       ],
-      image:
-        "https://images.pexels.com/photos/1269968/pexels-photo-1269968.jpeg?auto=compress&cs=tinysrgb&w=600",
-      organizer: "Modern Art Society",
-      tags: ["abstract", "expression", "emotion"],
+      image: "/ruralLife.jpeg", // public image
+      organizer: "Lanka Art Collective",
+      tags: ["rural", "culture", "photography"],
     },
     {
       id: 3,
-      title: "Photography Masters",
+      title: "Temple Wall Mural Art",
       description:
-        "Capture the beauty of everyday moments through your unique perspective",
-      category: "Photography",
+        "Showcase your mural skills by reimagining Buddhist temple paintings with a modern twist.",
+      category: "Religious Art",
       startDate: "2025-07-10",
       endDate: "2025-08-10",
-      prize: "$800",
-      participants: 312,
-      submissions: 203,
-      difficulty: "Beginner",
+      prize: "Rs. 400,000",
+      participants: 74,
+      submissions: 45,
+      difficulty: "Advanced",
       status: "active",
       timeLeft: "23 days",
       rules: [
-        "Original photos only",
-        "No heavy editing",
-        "RAW format preferred",
+        "Themes must reflect Buddhist stories or Jataka tales",
+        "Wall-sized format sketches required",
+        "Include a concept note",
       ],
-      image:
-        "https://images.pexels.com/photos/1053924/pexels-photo-1053924.jpeg?auto=compress&cs=tinysrgb&w=600",
-      organizer: "Photo Guild",
-      tags: ["photography", "moments", "perspective"],
+      image: "/templeWall.jpeg", // public image
+      organizer: "Ministry of Heritage and Arts",
+      tags: ["mural", "temple", "heritage"],
     },
   ];
 
   const categories = [
     "All Categories",
-    "Digital Art",
-    "Abstract Art",
+    "Traditional Art",
     "Photography",
-    "Street Art",
-    "Portrait",
-    "Landscape",
+    "Religious Art",
     "Sculpture",
+    "Textile",
     "Mixed Media",
   ];
 
@@ -185,13 +181,6 @@ const ChallengesPage = () => {
           {getCategoryIcon(challenge.category)}
           <span className="text-sm text-[#7f5539]/70">
             {challenge.category}
-          </span>
-          <span
-            className={`text-xs px-2 py-1 rounded-full ${getDifficultyColor(
-              challenge.difficulty
-            )}`}
-          >
-            {challenge.difficulty}
           </span>
         </div>
 
@@ -267,6 +256,7 @@ const ChallengesPage = () => {
   return (
     <div className="min-h-screen bg-[#FFF5E1]">
       <Navbar />
+      <CartSidebar />
 
       <div className="pt-20 pb-10">
         <div className="max-w-7xl mx-auto px-4">
