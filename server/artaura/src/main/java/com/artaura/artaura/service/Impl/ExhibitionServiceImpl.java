@@ -1,4 +1,4 @@
-package com.artaura.artaura.service.impl;
+package com.artaura.artaura.service.Impl;
 
 import com.artaura.artaura.dao.ExhibitionDAO;
 import com.artaura.artaura.dto.CreateExhibitionDTO;
