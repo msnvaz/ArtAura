@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import {
   AlertCircle,
   Bell,
@@ -6,17 +5,17 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  Clock,
   DollarSign,
   Eye,
+  Filter,
   MapPin,
   Search,
-  User,
-  X,
-  ZoomIn,
   Shield,
-  Filter,
-  Clock
+  User,
+  X
 } from 'lucide-react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const VerifyExhibition = () => {

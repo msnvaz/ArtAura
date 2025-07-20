@@ -1,4 +1,4 @@
-import { Award, Calculator, Crown, Eye, Medal, Search, Settings, Shield, Trophy } from 'lucide-react';
+import { Award, Calculator, Clock, Crown, Eye, Medal, Search, Settings, Shield, Trophy, Users } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
