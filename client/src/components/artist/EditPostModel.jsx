@@ -59,8 +59,9 @@ function EditModal({ item, onClose, onSave }) {
       }
 
       // Make PUT request to backend
-      const response = await axios.put(
-        `http://localhost:8080/api/posts/${item.post_id}`, // confirm your ID key here
+      const API_URL = import.meta.env.VITE_API_URL;
+      await axios.put(
+        `${API_URL}/api/posts/${item.post_id}`,
         data,
         {
           headers: {
@@ -70,7 +71,13 @@ function EditModal({ item, onClose, onSave }) {
         }
       );
 
-      onSave(response.data); // pass updated post back to parent
+      // Construct updated post object for parent
+      const updatedPost = {
+        ...item,
+        caption: formData.caption,
+        image: formData.image ? URL.createObjectURL(formData.image) : item.image,
+      };
+      onSave(updatedPost); // pass updated post back to parent
       handleClose();
     } catch (err) {
       console.error(err);

@@ -1,5 +1,6 @@
-package com.artaura.artaura.dao;
+package com.artaura.artaura.dao.Impl;
 
+import com.artaura.artaura.dao.BuyerDAO;
 import com.artaura.artaura.dto.signup.BuyerSignupRequest;
 import com.artaura.artaura.dto.auth.LoginUserDataDTO;
 import org.springframework.beans.factory.annotation.Autowired;

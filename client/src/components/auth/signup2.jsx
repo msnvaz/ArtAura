@@ -65,8 +65,9 @@ const RegisterPage = () => {
 
     let endpoint = "";
     let payload = {};
+    const API_URL = import.meta.env.VITE_API_URL;
     if (userType === "artist") {
-      endpoint = "http://localhost:8081/api/artist/signup";
+      endpoint = `${API_URL}/api/artist/signup`;
       payload = {
         firstName: formData.firstName,
         lastName: formData.lastName,
@@ -78,7 +79,7 @@ const RegisterPage = () => {
         agreedTerms: true,
       };
     } else if (userType === "buyer") {
-      endpoint = "http://localhost:8081/api/buyer/signup";
+      endpoint = `${API_URL}/api/buyer/signup`;
       payload = {
         firstName: formData.firstName,
         lastName: formData.lastName,
