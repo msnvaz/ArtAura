@@ -1,7 +1,7 @@
 package com.artaura.artaura.config;
 
-import java.util.List;
-
+import com.artaura.artaura.util.EnvUtil;
+import com.artaura.artaura.security.JwtAuthFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -36,6 +36,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                         "/api/auth/login",
+                        "/api/auth/logout",
+                        "/api/auth/verify",
                         "/api/artist/signup",
                         "/api/buyer/signup",
                         "/api/shop/signup",
@@ -59,11 +61,13 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // ✅ This replaces the WebConfig CORS config completely
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
+        String clientPort = EnvUtil.getEnv("CLIENT_PORT", "5173"); // Default to 5173 if not set
+        String clientOrigin = "http://localhost:" + clientPort;
+
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:5174")); // Frontend domain - allow both ports
+        config.setAllowedOrigins(List.of(clientOrigin)); // Use the client-side port from .env
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS")); // Methods allowed
         config.setAllowedHeaders(List.of("Authorization", "Cache-Control", "Content-Type")); // JWT, etc.
         config.setAllowCredentials(true); // Allows sending cookies or Authorization headers

@@ -34,7 +34,8 @@ const Login = () => {
     setError('');
 
     try {
-      const response = await axios.post('http://localhost:8081/api/auth/login', formData);
+      const API_URL = import.meta.env.VITE_API_URL;
+      const response = await axios.post(`${API_URL}/api/auth/login`, formData);
       const { token, role, userId } = response.data;
 
       // 🌍 Use context + persist to localStorage
