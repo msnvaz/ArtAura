@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Plus, Upload, Save, X } from 'lucide-react';
+
+import axios from 'axios';
 
 const UploadPostModal = ({
     isOpen,
@@ -7,10 +9,79 @@ const UploadPostModal = ({
     newArtwork,
     onArtworkChange,
     onImageUpload,
-    onSave,
+    onSave, // will be replaced by internal handler
     onCancel
 }) => {
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+
     if (!isOpen) return null;
+
+    const handleSave = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError(null);
+
+        try {
+            const token = localStorage.getItem('token');
+            const userId = localStorage.getItem('userId');
+
+            if (!token || !userId) {
+                setError('Authentication required.');
+                setLoading(false);
+                window.location.href = '/login';
+                return;
+            }
+
+            // Validate required fields
+            if (!newArtwork.title || !newArtwork.medium || !newArtwork.price) {
+                setError('Please fill in all required fields (Title, Medium, Price).');
+                setLoading(false);
+                return;
+            }
+
+            // Create FormData for multipart upload
+            const formData = new FormData();
+            formData.append('title', newArtwork.title);
+            formData.append('medium', newArtwork.medium);
+            formData.append('size', newArtwork.size || '');
+            formData.append('year', newArtwork.year || new Date().getFullYear().toString());
+            formData.append('price', newArtwork.price.toString());
+            formData.append('description', newArtwork.description || '');
+            formData.append('category', newArtwork.category || '');
+            formData.append('tags', newArtwork.tags || '');
+
+            // Add image file if selected
+            if (newArtwork.imageFiles && newArtwork.imageFiles.length > 0) {
+                formData.append('image', newArtwork.imageFiles[0]);
+            }
+
+            console.log('Uploading artwork with FormData...');
+
+            const response = await axios.post(
+                `http://localhost:8081/api/artworks/artist/${userId}/upload`,
+                formData,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'multipart/form-data'
+                    }
+                }
+            );
+
+            console.log('Artwork added successfully:', response.data);
+            setLoading(false);
+
+            // Show success message
+            alert('Artwork added successfully!');
+
+            if (onClose) onClose();
+        } catch (err) {
+            console.error('Error adding artwork:', err.response || err);
+            setError(err?.response?.data?.message || err?.message || 'Failed to add artwork.');
+            setLoading(false);
+        }
+    };
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -31,7 +102,7 @@ const UploadPostModal = ({
 
                 {/* Modal Content */}
                 <div className="p-6">
-                    <form className="space-y-6">
+                    <form className="space-y-6" onSubmit={handleSave}>
                         {/* Image Upload Section */}
                         <div className="space-y-4">
                             <h3 className="text-lg font-semibold text-[#7f5539]">Artwork Images</h3>
@@ -237,24 +308,30 @@ const UploadPostModal = ({
                                 </div>
                             </div>
                         </div>
-                    </form>
-                </div>
 
-                {/* Modal Footer */}
-                <div className="flex items-center justify-end space-x-4 p-6 border-t border-[#fdf9f4]/50">
-                    <button
-                        onClick={onCancel}
-                        className="px-6 py-2 border border-[#7f5539]/30 text-[#7f5539] rounded-lg hover:bg-[#7f5539]/5 transition-colors font-medium"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        onClick={onSave}
-                        className="px-6 py-2 bg-[#7f5539] text-white rounded-lg hover:bg-[#6e4c34] transition-colors font-medium flex items-center space-x-2"
-                    >
-                        <Save size={16} />
-                        <span>Add Artwork</span>
-                    </button>
+                        {/* Form Buttons - Inside form for proper submission */}
+                        <div className="flex flex-col items-end space-y-2 pt-6 border-t border-[#fdf9f4]/50">
+                            {error && <div className="text-red-600 text-sm mb-2 w-full text-right">{error}</div>}
+                            <div className="flex items-center justify-end space-x-4 w-full">
+                                <button
+                                    type="button"
+                                    onClick={onCancel}
+                                    className="px-6 py-2 border border-[#7f5539]/30 text-[#7f5539] rounded-lg hover:bg-[#7f5539]/5 transition-colors font-medium"
+                                    disabled={loading}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="px-6 py-2 bg-[#7f5539] text-white rounded-lg hover:bg-[#6e4c34] transition-colors font-medium flex items-center space-x-2 disabled:opacity-60"
+                                    disabled={loading}
+                                >
+                                    <Save size={16} />
+                                    <span>{loading ? 'Adding...' : 'Add Artwork'}</span>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
