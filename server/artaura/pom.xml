@@ -8,7 +8,7 @@
 	<artifactId>artaura</artifactId>
 	<version>1.0.0</version>
 	<packaging>jar</packaging>
-	<name>artaura</name>
+		<name>artaura</name>
 
 	<parent>
 		<groupId>org.springframework.boot</groupId>

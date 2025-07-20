@@ -1,5 +1,6 @@
-package com.artaura.artaura.dao;
+package com.artaura.artaura.dao.Impl;
 
+import com.artaura.artaura.dao.ModeratorDAO;
 import com.artaura.artaura.dto.auth.LoginUserDataDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -28,5 +29,9 @@ public class ModeratorDAOImpl implements ModeratorDAO {
         } catch (Exception e) {
             return Optional.empty();
         }
+    }
+
+    public JdbcTemplate getJdbc() {
+        return jdbc;
     }
 }

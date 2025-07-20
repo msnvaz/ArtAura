@@ -326,19 +326,236 @@ const ModeratorDashboard = () => {
     switch (activeSection) {
       case "dashboard":
         return renderDashboard();
-      case "challenges":
+      case 'challenges':
+        // Art-related Challenge Details for Artists, including winner selection
         return (
-          <div className="p-6">Challenge Management content coming soon...</div>
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4" style={{color: '#5D3A00'}}>Art Challenges</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Currently Selected Active Challenge from WinnerSelection */}
+              {/* Drawing Competition */}
+              <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6">
+                <div className="flex items-center gap-2 mb-2">
+                  <Trophy className="h-5 w-5 text-amber-600" />
+                  <span className="text-sm font-medium text-amber-800">Drawing</span>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">National Drawing Competition</h3>
+                <p className="text-gray-600 text-sm mb-4">Showcase your drawing skills on the theme "Nature and Wildlife". Open to all artists.</p>
+                <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
+                  <Clock size={16} />
+                  <span>Deadline: 8/30/2025</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
+                  <Users size={16} />
+                  <span>210 participants • 120 submissions</span>
+                </div>
+                <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+              </div>
+              {/* Landscape Painting Challenge - Another Active Challenge */}
+              <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6">
+                <div className="flex items-center gap-2 mb-2">
+                  <Trophy className="h-5 w-5 text-amber-600" />
+                  <span className="text-sm font-medium text-amber-800">Painting</span>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Landscape Painting Challenge</h3>
+                <p className="text-gray-600 text-sm mb-4">Paint a beautiful landscape inspired by your favorite place. All painting styles and mediums are welcome.</p>
+                <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
+                  <Clock size={16} />
+                  <span>Deadline: 9/5/2025</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
+                  <Users size={16} />
+                  <span>160 participants • 80 submissions</span>
+                </div>
+                <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+              </div>
+              {/* Portrait Art Challenge */}
+              <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6">
+                <div className="flex items-center gap-2 mb-2">
+                  <Trophy className="h-5 w-5 text-amber-600" />
+                  <span className="text-sm font-medium text-amber-800">Portrait</span>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Portrait Art Challenge</h3>
+                <p className="text-gray-600 text-sm mb-4">Create a portrait artwork of a famous personality using any medium of your choice.</p>
+                <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
+                  <Clock size={16} />
+                  <span>Deadline: 9/10/2025</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
+                  <Users size={16} />
+                  <span>175 participants • 98 submissions</span>
+                </div>
+                <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Review</span>
+              </div>
+              {/* Abstract Art Contest */}
+              <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6">
+                <div className="flex items-center gap-2 mb-2">
+                  <Trophy className="h-5 w-5 text-amber-600" />
+                  <span className="text-sm font-medium text-amber-800">Abstract</span>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Abstract Art Contest</h3>
+                <p className="text-gray-600 text-sm mb-4">Express your creativity with abstract art. All styles and mediums are welcome.</p>
+                <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
+                  <Clock size={16} />
+                  <span>Deadline: 9/25/2025</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
+                  <Users size={16} />
+                  <span>132 participants • 70 submissions</span>
+                </div>
+                <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Completed</span>
+                {/* Winner Selection Example */}
+                <div className="mt-4 p-3 rounded bg-blue-50 border border-blue-200">
+                  <span className="block text-sm font-semibold text-blue-800 mb-1">Winner Selected</span>
+                  <span className="block text-xs text-blue-700">Winner: Priya Sharma (Artwork: "Dreamscape")</span>
+                </div>
+              </div>
+            </div>
+          </div>
         );
-      case "verification":
-        return <div className="p-6">Verification content coming soon...</div>;
-      case "scoring":
+      case 'verification':
+        // Inline Approved and Rejected Exhibitions
         return (
-          <div className="p-6">Scoring Criteria content coming soon...</div>
+          <div className="p-6">
+            <h2 className="text-2xl font-bold mb-4" style={{color: '#5D3A00'}}>Exhibition Verification</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Approved Exhibition Example */}
+              <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-400">
+                <div className="flex items-center gap-2 mb-2">
+                  <Shield className="h-5 w-5 text-green-600" />
+                  <span className="text-sm font-medium text-green-800">Approved</span>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Modern Art Showcase 2024</h3>
+                <p className="text-gray-600 text-sm mb-4">A contemporary art exhibition featuring local artists exploring themes of urban life and digital culture.</p>
+                <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
+                  <Clock size={16} />
+                  <span>Start: 8/15/2024</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
+                  <User size={16} />
+                  <span>Sarah Johnson</span>
+                </div>
+                <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Approved</span>
+              </div>
+              {/* Rejected Exhibition Example */}
+              <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-red-400">
+                <div className="flex items-center gap-2 mb-2">
+                  <Shield className="h-5 w-5 text-red-600" />
+                  <span className="text-sm font-medium text-red-800">Rejected</span>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Digital Art Festival</h3>
+                <p className="text-gray-600 text-sm mb-4">Interactive digital art installations and VR experiences that push the boundaries of technology and creativity.</p>
+                <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
+                  <Clock size={16} />
+                  <span>Start: 8/10/2024</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
+                  <User size={16} />
+                  <span>Alex Kim</span>
+                </div>
+                <span className="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Rejected</span>
+                <div className="mt-2 text-xs text-red-700">Reason: Insufficient venue safety documentation</div>
+              </div>
+            </div>
+          </div>
         );
-      case "winner":
+      case 'scoring':
+        return <div className="p-6">Scoring Criteria content coming soon...</div>;
+      case 'winner':
+        // Mock previous challenges data (should match WinnerSelection)
+        const previousChallenges = [
+          {
+            id: 'abstract-art-contest',
+            name: 'Abstract Art Contest',
+            description: 'A national web design challenge for creative portfolios and landing pages.',
+            deadline: '2025-07-30',
+            participants: 180,
+            submissions: 120,
+            winners: [
+              { position: 1, name: 'Alice Smith', title: 'Modern Web Portfolio' },
+              { position: 2, name: 'John Doe', title: 'Creative Landing Page' },
+              { position: 3, name: 'Priya Patel', title: 'Responsive Blog UI' }
+            ]
+          },
+          {
+            id: 'digital-art-2024',
+            name: 'Digital Art 2024',
+            description: 'A digital art contest for surreal and fantasy artworks.',
+            deadline: '2024-09-15',
+            participants: 140,
+            submissions: 90,
+            winners: [
+              { position: 1, name: 'Liam Wong', title: 'Neon Cityscape' },
+              { position: 2, name: 'Maria Garcia', title: 'Surreal Portrait' },
+              { position: 3, name: 'Chen Wei', title: 'Fantasy Forest' }
+            ]
+          }
+        ];
+        const getPositionIcon = (position) => {
+          switch (position) {
+            case 1:
+              return <Trophy className="h-5 w-5 text-yellow-500" />;
+            case 2:
+              return <Award className="h-5 w-5 text-gray-400" />;
+            case 3:
+              return <Award className="h-5 w-5 text-amber-600" />;
+            default:
+              return null;
+          }
+        };
         return (
-          <div className="p-6">Winner Selection content coming soon...</div>
+          <div className="p-6">
+            <button
+              onClick={() => navigate('/scoring-criteria')}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-lg transition-colors mb-8"
+              style={{backgroundColor: '#D87C5A', color: 'white'}}
+              onMouseOver={(e) => {
+                e.target.style.backgroundColor = '#B85A3A';
+              }}
+              onMouseOut={(e) => {
+                e.target.style.backgroundColor = '#D87C5A';
+              }}
+            >
+              <Star size={20} />
+              Set Scoring Criteria
+            </button>
+            <div className="rounded-lg shadow-sm border h-full relative overflow-hidden" style={{backgroundColor: '#FFF5E1'}}>
+              <div className="p-6">
+                <h2 className="text-xl font-semibold mb-4" style={{color: '#5D3A00'}}>Previous Challenges Winners</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {previousChallenges.map((challenge) => (
+                    <div key={challenge.id} className="rounded-lg border bg-white p-4" style={{borderColor: '#FFE4D6'}}>
+                      <h3 className="font-semibold mb-1" style={{color: '#D87C5A'}}>{challenge.name}</h3>
+                      <p className="text-sm text-gray-600 mb-2">{challenge.description}</p>
+                      <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
+                        <Clock size={14} />
+                        <span>Deadline: {challenge.deadline}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
+                        <Users size={14} />
+                        <span>{challenge.participants} participants • {challenge.submissions} submissions</span>
+                      </div>
+                      <div className="mt-2">
+                        <span className="block text-xs font-semibold text-green-700 mb-1">Winners:</span>
+                        <div className="space-y-1">
+                          {challenge.winners.map((winner) => (
+                            <div key={winner.position} className="flex items-center gap-2">
+                              {getPositionIcon(winner.position)}
+                              <span className="font-medium" style={{color: '#5D3A00'}}>
+                                {winner.position === 1 ? '1st Place' : winner.position === 2 ? '2nd Place' : '3rd Place'}:
+                              </span>
+                              <span>{winner.name}</span>
+                              <span className="text-gray-500">- {winner.title}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
         );
       default:
         return renderDashboard();
@@ -496,13 +713,7 @@ const ModeratorDashboard = () => {
                 {menuItems.map((item) => (
                   <button
                     key={item.id}
-                    onClick={() => {
-                      if (item.id === "challenges") {
-                        navigate("/challenges");
-                      } else {
-                        setActiveSection(item.id);
-                      }
-                    }}
+                    onClick={() => setActiveSection(item.id)}
                     className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors flex items-center gap-2`}
                     style={{
                       borderBottomColor:

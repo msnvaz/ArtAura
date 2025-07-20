@@ -179,10 +179,17 @@ export const adminArtworkApi = {
   // Update artwork status
   updateArtworkStatus: async (id, status) => {
     try {
+      console.log('API: updateArtworkStatus called with id:', id, 'status:', status);
+      console.log('API: Sending PUT request to:', `/${id}/status`);
+      console.log('API: Request body:', { status });
+      
       const response = await apiClient.put(`/${id}/status`, { status });
+      console.log('API: Response received:', response.data);
       return response.data;
     } catch (error) {
-      console.error('Error updating artwork status:', error);
+      console.error('API: Error updating artwork status:', error);
+      console.error('API: Error response:', error.response?.data);
+      console.error('API: Error status:', error.response?.status);
       throw error;
     }
   },
