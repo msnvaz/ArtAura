@@ -11,7 +11,7 @@ public interface PostDAO {
     void savePost(int userId, String role, PostCreateDTO postDTO);
 
     void deletePostById(Long postId);
-    public PostResponseDTO updatePost(PostUpdateDTO postUpdateDTO);
+    void updatePost(PostUpdateDTO postUpdateDTO);
 
     List<PostResponseDTO> getPostsByUser(String role, Long userId);
 

@@ -29,17 +29,10 @@ public class JwtAuthFilter extends OncePerRequestFilter { //runs once per reques
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
-        // Skip JWT processing for public endpoints
-        String requestPath = request.getRequestURI();
-        if (isPublicEndpoint(requestPath)) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
         final String authHeader = request.getHeader("Authorization");
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            System.out.println("No JWT token found in request headers for protected endpoint: " + requestPath);
+            System.out.println("No JWT token found in request headers.");
             filterChain.doFilter(request, response); // no token, proceed as anonymous
             return;
         }
@@ -79,27 +72,5 @@ public class JwtAuthFilter extends OncePerRequestFilter { //runs once per reques
         }
 
         filterChain.doFilter(request, response);
-    }
-
-    /**
-     * Check if the request path is a public endpoint that doesn't require JWT authentication
-     */
-    private boolean isPublicEndpoint(String requestPath) {
-        String[] publicPaths = {
-            "/api/auth/login",
-            "/api/auth/logout", 
-            "/api/auth/verify",
-            "/api/artist/signup",
-            "/api/buyer/signup",
-            "/api/shop/signup",
-            "/uploads/"
-        };
-        
-        for (String publicPath : publicPaths) {
-            if (requestPath.startsWith(publicPath)) {
-                return true;
-            }
-        }
-        return false;
     }
 }

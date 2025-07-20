@@ -25,52 +25,43 @@ const Navbar = ({ onToggleSidebar }) => {
 
   return (
     <>
-      <nav className="bg-[#1C0E09] border-b border-[#FFD95A] fixed top-0 w-full z-50 shadow-lg">
+      <nav className="bg-slate-900 border-b border-slate-800 fixed top-0 w-full z-50 shadow-lg">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex justify-between h-16 items-center">
-            {/* Left: Logo */}
+            {/* Left: Logo + Sidebar Toggle */}
             <div className="flex items-center space-x-4">
+              <button
+                onClick={onToggleSidebar}
+                className="hidden md:flex text-slate-300 hover:text-white p-2 rounded-xl hover:bg-slate-800"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="md:hidden text-slate-300 hover:text-white p-2 rounded-xl hover:bg-slate-800"
+              >
+                {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
+
+              {/* Logo next to hamburger (NOT rounded) */}
               <img
                 src={Logo}
-                alt="ArtAura Logo"
-                className="h-9 w-auto object-contain rounded-lg shadow"
+                alt="System Logo"
+                className="h-8 w-auto object-contain"
               />
             </div>
 
-            {/* Center: Navigation Links */}
-            <div className="hidden md:flex items-center space-x-6">
-              <a
-                href="/community"
-                className="text-white font-medium hover:text-[#87CEEB] transition-colors flex items-center gap-2"
-              >
-                <Home className="h-5 w-5" />
-              </a>
-              <a
-                href="/shop-products"
-                className="text-white font-medium hover:text-[#87CEEB] transition-colors"
-              >
-                Shop
-              </a>
-              <a
-                href="/artists"
-                className="text-white font-medium hover:text-[#87CEEB] transition-colors"
-              >
-                Artists
-              </a>
-              <a
-                href="/public-challenges"
-                className="text-white font-medium hover:text-[#87CEEB] transition-colors"
-              >
-                Challenges
-              </a>
-              <div className="relative w-80">
+            {/* Middle: Search (Desktop only) */}
+            <div className="hidden md:flex flex-1 max-w-md mx-6">
+              <div className="relative w-full">
                 <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                  <Search className="h-5 w-5 text-white" />
+                  <Search className="h-5 w-5 text-slate-400" />
                 </div>
                 <input
                   type="search"
-                  placeholder="Search artists..."
-                  className="pl-10 pr-3 py-2 w-full bg-[#1C0E09] text-white border border-[#FFF5E1] rounded-xl placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-[#FFF5E1] transition-all"
+                  placeholder="Search..."
+                  className="pl-10 pr-3 py-2.5 w-full bg-slate-800 text-sm text-slate-200 border border-slate-700 rounded-xl placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
                 />
               </div>
             </div>
@@ -138,11 +129,7 @@ const Navbar = ({ onToggleSidebar }) => {
                   : "bg-blue-600 hover:bg-blue-700"
               } text-white`}
             >
-              {isSignedIn ? (
-                <LogOut className="h-4 w-4" />
-              ) : (
-                <LogIn className="h-4 w-4" />
-              )}
+              {isSignedIn ? <LogOut className="h-4 w-4" /> : <LogIn className="h-4 w-4" />}
               {isSignedIn ? "Sign Out" : "Sign In"}
             </a>
           </div>

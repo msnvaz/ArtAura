@@ -18,6 +18,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import com.artaura.artaura.security.JwtAuthFilter;
+
 import java.util.List;
 
 @Configuration
@@ -34,21 +36,27 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable()) // ❌ CSRF disabled for JWT stateless
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 🚫 No session
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/api/auth/login",
-                                "/api/auth/logout",
-                                "/api/auth/verify",
-                                "/api/artist/signup",
-                                "/api/buyer/signup",
-                                "/api/shop/signup",
-                                "/uploads/**",   // <<< THIS ALLOWS IMAGE ACCESS
-                                "/api/admin/artworks/**"  // <<< TEMPORARY: Allow admin artwork endpoints for development
-                        ).permitAll() // ✅ Public endpoints
-
-                        .requestMatchers("/api/posts/create").authenticated()
-                        .requestMatchers("/api/posts/{role}/{userId}").authenticated()// ✅ allow this
-                        .anyRequest().authenticated() // 🔒 Everything else secured
-
+                .requestMatchers(
+                        "/api/auth/login",
+                        "/api/auth/logout",
+                        "/api/auth/verify",
+                        "/api/artist/signup",
+                        "/api/buyer/signup",
+                        "/api/shop/signup",
+                        "/uploads/**",
+                        "/api/artworks/create",
+                        "/api/achievements/artist/**",
+                        "/api/achievements/create",
+                        "/api/achievements/**",
+                        "/api/exhibitions/artist/**",
+                        "/api/exhibitions/create",
+                        "/api/exhibitions/**"
+                ).permitAll()
+                .requestMatchers("/api/posts/create").authenticated()
+                .requestMatchers("/api/posts/{role}/{userId}").authenticated()
+                .requestMatchers("/api/artworks/{role}/{userId}").authenticated() // ❌ You missed .authenticated() here
+                //                        .requestMatchers("").authenticated()
+                .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class); // 🔐 JWT Filter
 
