@@ -1,15 +1,27 @@
 import React, { useState } from "react";
-import { Search, Bell, LogIn, LogOut, Menu, X, Home } from "lucide-react";
+import {
+  Search,
+  Bell,
+  LogIn,
+  LogOut,
+  Menu,
+  X,
+  Home,
+  ShoppingCart,
+} from "lucide-react";
 import image from "../../assets/artlover.jpeg";
 import Logo from "../../assets/navbar-logo.jpg";
 import NotificationsPopup from "./Notification";
 import ProfileDropdown from "./ProfileDropdown";
 import { useAuth } from "../../context/AuthContext";
+import { useCart } from "../../context/CartContext";
 
 const Navbar = ({ onToggleSidebar }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { token } = useAuth();
+  const { toggleCart, getCartItemsCount } = useCart();
   const isSignedIn = !!token;
+  const cartItemsCount = getCartItemsCount();
 
   return (
     <>
@@ -65,13 +77,26 @@ const Navbar = ({ onToggleSidebar }) => {
 
             {/* Right Actions */}
             <div className="flex items-center space-x-4">
+              {/* Cart Icon */}
+              <button
+                onClick={toggleCart}
+                className="relative p-2 text-white hover:text-[#87CEEB] transition-colors"
+              >
+                <ShoppingCart className="h-6 w-6" />
+                {cartItemsCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-[#D87C5A] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+                    {cartItemsCount}
+                  </span>
+                )}
+              </button>
+
               <NotificationsPopup />
 
               {/* Profile Dropdown or Sign In Button */}
               {isSignedIn ? (
                 <ProfileDropdown
-                  profileImage={image}
-                  userName="John Doe"
+                  profileImage="https://randomuser.me/api/portraits/women/42.jpg"
+                  userName="Pawani Kumari"
                   isSignedIn={isSignedIn}
                 />
               ) : (

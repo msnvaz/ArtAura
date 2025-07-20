@@ -1,15 +1,9 @@
 import React, { useState } from "react";
-import {
-  Calendar,
-  MapPin,
-  Clock,
-  Users,
-  Upload,
-  X,
-  Image as ImageIcon,
-} from "lucide-react";
+import { Calendar, X } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
 
 const ExhibitionPostForm = () => {
+  const { auth } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
@@ -23,11 +17,9 @@ const ExhibitionPostForm = () => {
     category: "",
     entryFee: "",
     maxParticipants: "",
-    website: "",
     contactEmail: "",
     contactPhone: "",
     requirements: "",
-    image: null,
   });
 
   const categories = [
@@ -42,6 +34,10 @@ const ExhibitionPostForm = () => {
     "Landscape",
     "Street Art",
     "Installation Art",
+    "Sri Lankan Heritage Art",
+    "Batik Art",
+    "Traditional Masks",
+    "Temple Murals",
     "Other",
   ];
 
@@ -51,16 +47,6 @@ const ExhibitionPostForm = () => {
       ...prev,
       [name]: value,
     }));
-  };
-
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setFormData((prev) => ({
-        ...prev,
-        image: file,
-      }));
-    }
   };
 
   const handleSubmit = (e) => {
@@ -80,11 +66,9 @@ const ExhibitionPostForm = () => {
       category: "",
       entryFee: "",
       maxParticipants: "",
-      website: "",
       contactEmail: "",
       contactPhone: "",
       requirements: "",
-      image: null,
     });
     setShowForm(false);
   };
@@ -103,11 +87,9 @@ const ExhibitionPostForm = () => {
       category: "",
       entryFee: "",
       maxParticipants: "",
-      website: "",
       contactEmail: "",
       contactPhone: "",
       requirements: "",
-      image: null,
     });
   };
 
@@ -116,7 +98,7 @@ const ExhibitionPostForm = () => {
       <div className="mb-6">
         <div className="bg-white rounded-xl shadow-md border border-[#FFD95A] px-6 py-4 flex items-center gap-4">
           <img
-            src="/src/assets/artlover.jpeg"
+            src={"https://randomuser.me/api/portraits/women/42.jpg"}
             alt="Your avatar"
             className="w-10 h-10 rounded-full object-cover border-2 border-[#FFD95A]"
           />
@@ -199,7 +181,7 @@ const ExhibitionPostForm = () => {
                 onChange={handleInputChange}
                 required
                 className="w-full px-4 py-2 border border-[#FFD95A] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFD95A] text-[#7f5539]"
-                placeholder="Venue name and address"
+                placeholder="e.g. Colombo Art Gallery, Colombo, Sri Lanka"
               />
             </div>
             <div>
@@ -298,7 +280,7 @@ const ExhibitionPostForm = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-[#7f5539] mb-1">
-                Entry Fee
+                Entry Fee (LKR)
               </label>
               <input
                 type="text"
@@ -306,7 +288,7 @@ const ExhibitionPostForm = () => {
                 value={formData.entryFee}
                 onChange={handleInputChange}
                 className="w-full px-4 py-2 border border-[#FFD95A] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFD95A] text-[#7f5539]"
-                placeholder="Free, $10, etc."
+                placeholder="Free, 1000, etc. (in LKR)"
               />
             </div>
             <div>
@@ -336,7 +318,7 @@ const ExhibitionPostForm = () => {
                 value={formData.contactEmail}
                 onChange={handleInputChange}
                 className="w-full px-4 py-2 border border-[#FFD95A] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFD95A] text-[#7f5539]"
-                placeholder="contact@example.com"
+                placeholder="e.g. info@lankaart.lk"
               />
             </div>
             <div>
@@ -349,24 +331,9 @@ const ExhibitionPostForm = () => {
                 value={formData.contactPhone}
                 onChange={handleInputChange}
                 className="w-full px-4 py-2 border border-[#FFD95A] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFD95A] text-[#7f5539]"
-                placeholder="Phone number"
+                placeholder="e.g. 011-2345678"
               />
             </div>
-          </div>
-
-          {/* Website */}
-          <div>
-            <label className="block text-sm font-medium text-[#7f5539] mb-1">
-              Website
-            </label>
-            <input
-              type="url"
-              name="website"
-              value={formData.website}
-              onChange={handleInputChange}
-              className="w-full px-4 py-2 border border-[#FFD95A] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFD95A] text-[#7f5539]"
-              placeholder="https://example.com"
-            />
           </div>
 
           {/* Requirements */}
@@ -380,40 +347,8 @@ const ExhibitionPostForm = () => {
               onChange={handleInputChange}
               rows={2}
               className="w-full px-4 py-2 border border-[#FFD95A] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFD95A] text-[#7f5539] resize-none"
-              placeholder="Any special requirements, submission guidelines, etc."
+              placeholder="e.g. Only Sri Lankan artists, artworks inspired by local culture, etc."
             />
-          </div>
-
-          {/* Image Upload */}
-          <div>
-            <label className="block text-sm font-medium text-[#7f5539] mb-1">
-              Exhibition Image
-            </label>
-            <div className="flex items-center gap-4">
-              <label className="flex items-center gap-2 px-4 py-2 border border-[#FFD95A] rounded-lg cursor-pointer hover:bg-[#FFD95A]/20 transition-colors">
-                <Upload className="w-4 h-4 text-[#7f5539]" />
-                <span className="text-sm text-[#7f5539]">
-                  {formData.image ? formData.image.name : "Choose image"}
-                </span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="hidden"
-                />
-              </label>
-              {formData.image && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    setFormData((prev) => ({ ...prev, image: null }))
-                  }
-                  className="text-[#D87C5A] hover:text-[#7f5539] p-1 rounded-full hover:bg-[#FFD95A]/20 transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
           </div>
 
           {/* Submit Buttons */}

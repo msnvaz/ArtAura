@@ -1,18 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
-import {
-  User,
-  LogOut,
-  ShoppingBag,
-  Heart,
-  Star,
-  HelpCircle,
-} from "lucide-react";
+import { User, LogOut, ShoppingBag, HelpCircle } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
 const ProfileDropdown = ({
   profileImage,
-  userName = "John Doe",
+  userName = "Pawani Kumari",
   isSignedIn,
   onSignOut,
 }) => {
@@ -37,10 +30,14 @@ const ProfileDropdown = ({
   const menuItems = [
     { icon: User, label: "Profile", href: "/profile" },
     { icon: ShoppingBag, label: "Orders", href: "/orders" },
-    { icon: Heart, label: "Favorites", href: "/favorites" },
-    { icon: Star, label: "Reviews", href: "/reviews" },
     { icon: HelpCircle, label: "Help & Support", href: "/help" },
+    { icon: User, label: "Posts", href: "/my-posts" },
   ];
+
+  const handleMenuItemClick = (href) => {
+    setIsOpen(false);
+    navigate(href);
+  };
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -69,7 +66,7 @@ const ProfileDropdown = ({
               />
               <div>
                 <p className="text-white font-medium">{userName}</p>
-                <p className="text-white/60 text-sm">Artist</p>
+                <p className="text-white/60 text-sm">Art Lover</p>
               </div>
             </div>
           </div>
@@ -77,15 +74,14 @@ const ProfileDropdown = ({
           {/* Menu Items */}
           <div className="py-1">
             {menuItems.map((item, index) => (
-              <a
+              <button
                 key={index}
-                href={item.href}
-                className="flex items-center space-x-3 px-4 py-2 text-white hover:bg-white/10 transition-colors"
-                onClick={() => setIsOpen(false)}
+                onClick={() => handleMenuItemClick(item.href)}
+                className="flex items-center space-x-3 px-4 py-2 text-white hover:bg-white/10 transition-colors w-full text-left"
               >
                 <item.icon className="w-4 h-4" />
                 <span className="text-sm">{item.label}</span>
-              </a>
+              </button>
             ))}
           </div>
 
