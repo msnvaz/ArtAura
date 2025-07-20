@@ -31,20 +31,25 @@ public class PostService {
     }
 
 
-    public PostResponseDTO updatePost(PostUpdateDTO dto, MultipartFile imageFile) throws IOException {
+    public void updatePost(PostUpdateDTO dto, MultipartFile imageFile) throws IOException {
         if (imageFile != null && !imageFile.isEmpty()) {
-            String folder = "uploads";
+            // Use the same path logic as in createPost
+            String folder = "uploads";  // relative path, same as createPost
             String filename = System.currentTimeMillis() + "_" + imageFile.getOriginalFilename();
             Path uploadPath = Paths.get(folder);
-            Files.createDirectories(uploadPath);
+            Files.createDirectories(uploadPath);  // ensure folder exists
+
             Path filePath = uploadPath.resolve(filename);
             Files.copy(imageFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+            // Save relative path (for front-end to access via /uploads/)
             dto.setImage("/uploads/" + filename);
         }
 
         postDAO.updatePost(dto);
-        return postDAO.getPostById(dto.getPostId()); // ✅ return the updated post
     }
+
+
 
     public List<PostResponseDTO> getPostsByUser(String role, Long userId) {
         return postDAO.getPostsByUser(role, userId);

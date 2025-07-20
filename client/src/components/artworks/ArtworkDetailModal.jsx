@@ -88,7 +88,7 @@ const ArtworkDetailModal = ({
 
                             <div className="relative">
                                 <ImageZoomLens
-                                    src={artwork.image}
+                                    src={`http://localhost:8081${artwork.imageUrl}`}
                                     zoom={3}
                                     lensSize={150}
                                     className="w-full rounded-lg shadow-lg"

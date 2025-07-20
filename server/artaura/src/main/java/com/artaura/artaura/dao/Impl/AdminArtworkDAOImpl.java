@@ -82,11 +82,11 @@ public class AdminArtworkDAOImpl implements AdminArtworkDAO {
 
         // Get total count before pagination
         String countSql = sql.toString().replace(
-            "SELECT a.artwork_id, a.artist_id, CONCAT(ar.first_name, ' ', ar.last_name) as artist_name, " +
-            "a.title, a.medium, a.size, a.year, a.price, a.description, a.category, a.tags, " +
-            "a.status, a.image_url, a.likes_count, a.views_count, a.is_featured, " +
-            "a.created_at, a.updated_at ",
-            "SELECT COUNT(*) "
+                "SELECT a.artwork_id, a.artist_id, CONCAT(ar.first_name, ' ', ar.last_name) as artist_name, "
+                + "a.title, a.medium, a.size, a.year, a.price, a.description, a.category, a.tags, "
+                + "a.status, a.image_url, a.likes_count, a.views_count, a.is_featured, "
+                + "a.created_at, a.updated_at ",
+                "SELECT COUNT(*) "
         );
 
         Long totalElements = jdbc.queryForObject(countSql, Long.class, params.toArray());
@@ -116,7 +116,7 @@ public class AdminArtworkDAOImpl implements AdminArtworkDAO {
                 default:
                     sql.append("a.created_at ");
             }
-            
+
             if (filter.getSortOrder() != null && filter.getSortOrder().equalsIgnoreCase("ASC")) {
                 sql.append("ASC ");
             } else {
@@ -129,52 +129,13 @@ public class AdminArtworkDAOImpl implements AdminArtworkDAO {
         // Apply pagination
         int page = filter.getPage() != null ? filter.getPage() : 0;
         int size = filter.getSize() != null ? filter.getSize() : 10;
-        
+
         sql.append("LIMIT ? OFFSET ? ");
         params.add(size);
         params.add(page * size);
 
         List<AdminArtworkDTO> artworks = jdbc.query(sql.toString(), params.toArray(), (rs, rowNum) -> {
             return new AdminArtworkDTO(
-                rs.getLong("artwork_id"),
-                rs.getLong("artist_id"),
-                rs.getString("artist_name"),
-                rs.getString("title"),
-                rs.getString("medium"),
-                rs.getString("size"),
-                rs.getInt("year"),
-                rs.getDouble("price"),
-                rs.getString("description"),
-                rs.getString("category"),
-                rs.getString("tags"),
-                rs.getString("status"),
-                rs.getString("image_url"),
-                rs.getInt("likes_count"),
-                rs.getInt("views_count"),
-                rs.getBoolean("is_featured"),
-                rs.getTimestamp("created_at").toLocalDateTime(),
-                rs.getTimestamp("updated_at").toLocalDateTime()
-            );
-        });
-
-        int totalPages = (int) Math.ceil((double) totalElements / size);
-
-        return new AdminArtworkResponseDTO(artworks, page, totalPages, totalElements, size);
-    }
-
-    @Override
-    public Optional<AdminArtworkDTO> getArtworkById(Long artworkId) {
-        try {
-            String sql = "SELECT a.artwork_id, a.artist_id, CONCAT(ar.first_name, ' ', ar.last_name) as artist_name, " +
-                        "a.title, a.medium, a.size, a.year, a.price, a.description, a.category, a.tags, " +
-                        "a.status, a.image_url, a.likes_count, a.views_count, a.is_featured, " +
-                        "a.created_at, a.updated_at " +
-                        "FROM artworks a " +
-                        "LEFT JOIN artists ar ON a.artist_id = ar.artist_id " +
-                        "WHERE a.artwork_id = ?";
-
-            AdminArtworkDTO artwork = jdbc.queryForObject(sql, (rs, rowNum) -> {
-                return new AdminArtworkDTO(
                     rs.getLong("artwork_id"),
                     rs.getLong("artist_id"),
                     rs.getString("artist_name"),
@@ -193,6 +154,45 @@ public class AdminArtworkDAOImpl implements AdminArtworkDAO {
                     rs.getBoolean("is_featured"),
                     rs.getTimestamp("created_at").toLocalDateTime(),
                     rs.getTimestamp("updated_at").toLocalDateTime()
+            );
+        });
+
+        int totalPages = (int) Math.ceil((double) totalElements / size);
+
+        return new AdminArtworkResponseDTO(artworks, page, totalPages, totalElements, size);
+    }
+
+    @Override
+    public Optional<AdminArtworkDTO> getArtworkById(Long artworkId) {
+        try {
+            String sql = "SELECT a.artwork_id, a.artist_id, CONCAT(ar.first_name, ' ', ar.last_name) as artist_name, "
+                    + "a.title, a.medium, a.size, a.year, a.price, a.description, a.category, a.tags, "
+                    + "a.status, a.image_url, a.likes_count, a.views_count, a.is_featured, "
+                    + "a.created_at, a.updated_at "
+                    + "FROM artworks a "
+                    + "LEFT JOIN artists ar ON a.artist_id = ar.artist_id "
+                    + "WHERE a.artwork_id = ?";
+
+            AdminArtworkDTO artwork = jdbc.queryForObject(sql, (rs, rowNum) -> {
+                return new AdminArtworkDTO(
+                        rs.getLong("artwork_id"),
+                        rs.getLong("artist_id"),
+                        rs.getString("artist_name"),
+                        rs.getString("title"),
+                        rs.getString("medium"),
+                        rs.getString("size"),
+                        rs.getInt("year"),
+                        rs.getDouble("price"),
+                        rs.getString("description"),
+                        rs.getString("category"),
+                        rs.getString("tags"),
+                        rs.getString("status"),
+                        rs.getString("image_url"),
+                        rs.getInt("likes_count"),
+                        rs.getInt("views_count"),
+                        rs.getBoolean("is_featured"),
+                        rs.getTimestamp("created_at").toLocalDateTime(),
+                        rs.getTimestamp("updated_at").toLocalDateTime()
                 );
             }, artworkId);
 
@@ -204,176 +204,176 @@ public class AdminArtworkDAOImpl implements AdminArtworkDAO {
 
     @Override
     public List<AdminArtworkDTO> getArtworksByArtistId(Long artistId) {
-        String sql = "SELECT a.artwork_id, a.artist_id, CONCAT(ar.first_name, ' ', ar.last_name) as artist_name, " +
-                    "a.title, a.medium, a.size, a.year, a.price, a.description, a.category, a.tags, " +
-                    "a.status, a.image_url, a.likes_count, a.views_count, a.is_featured, " +
-                    "a.created_at, a.updated_at " +
-                    "FROM artworks a " +
-                    "LEFT JOIN artists ar ON a.artist_id = ar.artist_id " +
-                    "WHERE a.artist_id = ? " +
-                    "ORDER BY a.created_at DESC";
+        String sql = "SELECT a.artwork_id, a.artist_id, CONCAT(ar.first_name, ' ', ar.last_name) as artist_name, "
+                + "a.title, a.medium, a.size, a.year, a.price, a.description, a.category, a.tags, "
+                + "a.status, a.image_url, a.likes_count, a.views_count, a.is_featured, "
+                + "a.created_at, a.updated_at "
+                + "FROM artworks a "
+                + "LEFT JOIN artists ar ON a.artist_id = ar.artist_id "
+                + "WHERE a.artist_id = ? "
+                + "ORDER BY a.created_at DESC";
 
         return jdbc.query(sql, (rs, rowNum) -> {
             return new AdminArtworkDTO(
-                rs.getLong("artwork_id"),
-                rs.getLong("artist_id"),
-                rs.getString("artist_name"),
-                rs.getString("title"),
-                rs.getString("medium"),
-                rs.getString("size"),
-                rs.getInt("year"),
-                rs.getDouble("price"),
-                rs.getString("description"),
-                rs.getString("category"),
-                rs.getString("tags"),
-                rs.getString("status"),
-                rs.getString("image_url"),
-                rs.getInt("likes_count"),
-                rs.getInt("views_count"),
-                rs.getBoolean("is_featured"),
-                rs.getTimestamp("created_at").toLocalDateTime(),
-                rs.getTimestamp("updated_at").toLocalDateTime()
+                    rs.getLong("artwork_id"),
+                    rs.getLong("artist_id"),
+                    rs.getString("artist_name"),
+                    rs.getString("title"),
+                    rs.getString("medium"),
+                    rs.getString("size"),
+                    rs.getInt("year"),
+                    rs.getDouble("price"),
+                    rs.getString("description"),
+                    rs.getString("category"),
+                    rs.getString("tags"),
+                    rs.getString("status"),
+                    rs.getString("image_url"),
+                    rs.getInt("likes_count"),
+                    rs.getInt("views_count"),
+                    rs.getBoolean("is_featured"),
+                    rs.getTimestamp("created_at").toLocalDateTime(),
+                    rs.getTimestamp("updated_at").toLocalDateTime()
             );
         }, artistId);
     }
 
     @Override
     public List<AdminArtworkDTO> getArtworksByCategory(String category) {
-        String sql = "SELECT a.artwork_id, a.artist_id, CONCAT(ar.first_name, ' ', ar.last_name) as artist_name, " +
-                    "a.title, a.medium, a.size, a.year, a.price, a.description, a.category, a.tags, " +
-                    "a.status, a.image_url, a.likes_count, a.views_count, a.is_featured, " +
-                    "a.created_at, a.updated_at " +
-                    "FROM artworks a " +
-                    "LEFT JOIN artists ar ON a.artist_id = ar.artist_id " +
-                    "WHERE a.category = ? " +
-                    "ORDER BY a.created_at DESC";
+        String sql = "SELECT a.artwork_id, a.artist_id, CONCAT(ar.first_name, ' ', ar.last_name) as artist_name, "
+                + "a.title, a.medium, a.size, a.year, a.price, a.description, a.category, a.tags, "
+                + "a.status, a.image_url, a.likes_count, a.views_count, a.is_featured, "
+                + "a.created_at, a.updated_at "
+                + "FROM artworks a "
+                + "LEFT JOIN artists ar ON a.artist_id = ar.artist_id "
+                + "WHERE a.category = ? "
+                + "ORDER BY a.created_at DESC";
 
         return jdbc.query(sql, (rs, rowNum) -> {
             return new AdminArtworkDTO(
-                rs.getLong("artwork_id"),
-                rs.getLong("artist_id"),
-                rs.getString("artist_name"),
-                rs.getString("title"),
-                rs.getString("medium"),
-                rs.getString("size"),
-                rs.getInt("year"),
-                rs.getDouble("price"),
-                rs.getString("description"),
-                rs.getString("category"),
-                rs.getString("tags"),
-                rs.getString("status"),
-                rs.getString("image_url"),
-                rs.getInt("likes_count"),
-                rs.getInt("views_count"),
-                rs.getBoolean("is_featured"),
-                rs.getTimestamp("created_at").toLocalDateTime(),
-                rs.getTimestamp("updated_at").toLocalDateTime()
+                    rs.getLong("artwork_id"),
+                    rs.getLong("artist_id"),
+                    rs.getString("artist_name"),
+                    rs.getString("title"),
+                    rs.getString("medium"),
+                    rs.getString("size"),
+                    rs.getInt("year"),
+                    rs.getDouble("price"),
+                    rs.getString("description"),
+                    rs.getString("category"),
+                    rs.getString("tags"),
+                    rs.getString("status"),
+                    rs.getString("image_url"),
+                    rs.getInt("likes_count"),
+                    rs.getInt("views_count"),
+                    rs.getBoolean("is_featured"),
+                    rs.getTimestamp("created_at").toLocalDateTime(),
+                    rs.getTimestamp("updated_at").toLocalDateTime()
             );
         }, category);
     }
 
     @Override
     public List<AdminArtworkDTO> getArtworksByStatus(String status) {
-        String sql = "SELECT a.artwork_id, a.artist_id, CONCAT(ar.first_name, ' ', ar.last_name) as artist_name, " +
-                    "a.title, a.medium, a.size, a.year, a.price, a.description, a.category, a.tags, " +
-                    "a.status, a.image_url, a.likes_count, a.views_count, a.is_featured, " +
-                    "a.created_at, a.updated_at " +
-                    "FROM artworks a " +
-                    "LEFT JOIN artists ar ON a.artist_id = ar.artist_id " +
-                    "WHERE a.status = ? " +
-                    "ORDER BY a.created_at DESC";
+        String sql = "SELECT a.artwork_id, a.artist_id, CONCAT(ar.first_name, ' ', ar.last_name) as artist_name, "
+                + "a.title, a.medium, a.size, a.year, a.price, a.description, a.category, a.tags, "
+                + "a.status, a.image_url, a.likes_count, a.views_count, a.is_featured, "
+                + "a.created_at, a.updated_at "
+                + "FROM artworks a "
+                + "LEFT JOIN artists ar ON a.artist_id = ar.artist_id "
+                + "WHERE a.status = ? "
+                + "ORDER BY a.created_at DESC";
 
         return jdbc.query(sql, (rs, rowNum) -> {
             return new AdminArtworkDTO(
-                rs.getLong("artwork_id"),
-                rs.getLong("artist_id"),
-                rs.getString("artist_name"),
-                rs.getString("title"),
-                rs.getString("medium"),
-                rs.getString("size"),
-                rs.getInt("year"),
-                rs.getDouble("price"),
-                rs.getString("description"),
-                rs.getString("category"),
-                rs.getString("tags"),
-                rs.getString("status"),
-                rs.getString("image_url"),
-                rs.getInt("likes_count"),
-                rs.getInt("views_count"),
-                rs.getBoolean("is_featured"),
-                rs.getTimestamp("created_at").toLocalDateTime(),
-                rs.getTimestamp("updated_at").toLocalDateTime()
+                    rs.getLong("artwork_id"),
+                    rs.getLong("artist_id"),
+                    rs.getString("artist_name"),
+                    rs.getString("title"),
+                    rs.getString("medium"),
+                    rs.getString("size"),
+                    rs.getInt("year"),
+                    rs.getDouble("price"),
+                    rs.getString("description"),
+                    rs.getString("category"),
+                    rs.getString("tags"),
+                    rs.getString("status"),
+                    rs.getString("image_url"),
+                    rs.getInt("likes_count"),
+                    rs.getInt("views_count"),
+                    rs.getBoolean("is_featured"),
+                    rs.getTimestamp("created_at").toLocalDateTime(),
+                    rs.getTimestamp("updated_at").toLocalDateTime()
             );
         }, status);
     }
 
     @Override
     public List<AdminArtworkDTO> getFeaturedArtworks() {
-        String sql = "SELECT a.artwork_id, a.artist_id, CONCAT(ar.first_name, ' ', ar.last_name) as artist_name, " +
-                    "a.title, a.medium, a.size, a.year, a.price, a.description, a.category, a.tags, " +
-                    "a.status, a.image_url, a.likes_count, a.views_count, a.is_featured, " +
-                    "a.created_at, a.updated_at " +
-                    "FROM artworks a " +
-                    "LEFT JOIN artists ar ON a.artist_id = ar.artist_id " +
-                    "WHERE a.is_featured = true " +
-                    "ORDER BY a.created_at DESC";
+        String sql = "SELECT a.artwork_id, a.artist_id, CONCAT(ar.first_name, ' ', ar.last_name) as artist_name, "
+                + "a.title, a.medium, a.size, a.year, a.price, a.description, a.category, a.tags, "
+                + "a.status, a.image_url, a.likes_count, a.views_count, a.is_featured, "
+                + "a.created_at, a.updated_at "
+                + "FROM artworks a "
+                + "LEFT JOIN artists ar ON a.artist_id = ar.artist_id "
+                + "WHERE a.is_featured = true "
+                + "ORDER BY a.created_at DESC";
 
         return jdbc.query(sql, (rs, rowNum) -> {
             return new AdminArtworkDTO(
-                rs.getLong("artwork_id"),
-                rs.getLong("artist_id"),
-                rs.getString("artist_name"),
-                rs.getString("title"),
-                rs.getString("medium"),
-                rs.getString("size"),
-                rs.getInt("year"),
-                rs.getDouble("price"),
-                rs.getString("description"),
-                rs.getString("category"),
-                rs.getString("tags"),
-                rs.getString("status"),
-                rs.getString("image_url"),
-                rs.getInt("likes_count"),
-                rs.getInt("views_count"),
-                rs.getBoolean("is_featured"),
-                rs.getTimestamp("created_at").toLocalDateTime(),
-                rs.getTimestamp("updated_at").toLocalDateTime()
+                    rs.getLong("artwork_id"),
+                    rs.getLong("artist_id"),
+                    rs.getString("artist_name"),
+                    rs.getString("title"),
+                    rs.getString("medium"),
+                    rs.getString("size"),
+                    rs.getInt("year"),
+                    rs.getDouble("price"),
+                    rs.getString("description"),
+                    rs.getString("category"),
+                    rs.getString("tags"),
+                    rs.getString("status"),
+                    rs.getString("image_url"),
+                    rs.getInt("likes_count"),
+                    rs.getInt("views_count"),
+                    rs.getBoolean("is_featured"),
+                    rs.getTimestamp("created_at").toLocalDateTime(),
+                    rs.getTimestamp("updated_at").toLocalDateTime()
             );
         });
     }
 
     @Override
     public List<AdminArtworkDTO> searchArtworks(String searchTerm) {
-        String sql = "SELECT a.artwork_id, a.artist_id, CONCAT(ar.first_name, ' ', ar.last_name) as artist_name, " +
-                    "a.title, a.medium, a.size, a.year, a.price, a.description, a.category, a.tags, " +
-                    "a.status, a.image_url, a.likes_count, a.views_count, a.is_featured, " +
-                    "a.created_at, a.updated_at " +
-                    "FROM artworks a " +
-                    "LEFT JOIN artists ar ON a.artist_id = ar.artist_id " +
-                    "WHERE a.title LIKE ? OR a.description LIKE ? OR a.tags LIKE ? " +
-                    "ORDER BY a.created_at DESC";
+        String sql = "SELECT a.artwork_id, a.artist_id, CONCAT(ar.first_name, ' ', ar.last_name) as artist_name, "
+                + "a.title, a.medium, a.size, a.year, a.price, a.description, a.category, a.tags, "
+                + "a.status, a.image_url, a.likes_count, a.views_count, a.is_featured, "
+                + "a.created_at, a.updated_at "
+                + "FROM artworks a "
+                + "LEFT JOIN artists ar ON a.artist_id = ar.artist_id "
+                + "WHERE a.title LIKE ? OR a.description LIKE ? OR a.tags LIKE ? "
+                + "ORDER BY a.created_at DESC";
 
         String searchPattern = "%" + searchTerm + "%";
         return jdbc.query(sql, (rs, rowNum) -> {
             return new AdminArtworkDTO(
-                rs.getLong("artwork_id"),
-                rs.getLong("artist_id"),
-                rs.getString("artist_name"),
-                rs.getString("title"),
-                rs.getString("medium"),
-                rs.getString("size"),
-                rs.getInt("year"),
-                rs.getDouble("price"),
-                rs.getString("description"),
-                rs.getString("category"),
-                rs.getString("tags"),
-                rs.getString("status"),
-                rs.getString("image_url"),
-                rs.getInt("likes_count"),
-                rs.getInt("views_count"),
-                rs.getBoolean("is_featured"),
-                rs.getTimestamp("created_at").toLocalDateTime(),
-                rs.getTimestamp("updated_at").toLocalDateTime()
+                    rs.getLong("artwork_id"),
+                    rs.getLong("artist_id"),
+                    rs.getString("artist_name"),
+                    rs.getString("title"),
+                    rs.getString("medium"),
+                    rs.getString("size"),
+                    rs.getInt("year"),
+                    rs.getDouble("price"),
+                    rs.getString("description"),
+                    rs.getString("category"),
+                    rs.getString("tags"),
+                    rs.getString("status"),
+                    rs.getString("image_url"),
+                    rs.getInt("likes_count"),
+                    rs.getInt("views_count"),
+                    rs.getBoolean("is_featured"),
+                    rs.getTimestamp("created_at").toLocalDateTime(),
+                    rs.getTimestamp("updated_at").toLocalDateTime()
             );
         }, searchPattern, searchPattern, searchPattern);
     }
@@ -403,10 +403,10 @@ public class AdminArtworkDAOImpl implements AdminArtworkDAO {
             String sql = "UPDATE artworks SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE artwork_id = ?";
             System.out.println("AdminArtworkDAOImpl: Executing SQL: " + sql);
             System.out.println("AdminArtworkDAOImpl: Parameters: status=" + status + ", artworkId=" + artworkId);
-            
+
             int rowsAffected = jdbc.update(sql, status, artworkId);
             System.out.println("AdminArtworkDAOImpl: Rows affected: " + rowsAffected);
-            
+
             boolean result = rowsAffected > 0;
             System.out.println("AdminArtworkDAOImpl: Returning: " + result);
             return result;

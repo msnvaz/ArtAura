@@ -27,8 +27,6 @@ public class AuthService {
     public LoginResponse login(LoginRequest request) {
         var email = request.getEmail();
         var password = request.getPassword();
-        
-        System.out.println("🔍 AuthService: Processing login for email: " + email);
 
         Optional<LoginUserDataDTO> user; //user might have a LoginUserDataDTO object, or it might be empty
 
@@ -83,9 +81,7 @@ public class AuthService {
         // Check admin (no status restriction)
         user = adminDAO.findByEmail(email);
         if (user.isPresent() && encoder.matches(password, user.get().getPassword())) {
-            String token = jwtUtil.generateToken(user.get().getUserId(), "admin");
-            System.out.println("✅ Login successful for admin. Token generated: " + token.substring(0, 20) + "...");
-            return new LoginResponse(token, "admin", user.get().getUserId());
+            return new LoginResponse(jwtUtil.generateToken(user.get().getUserId(), "admin"), "admin", user.get().getUserId());
         }
 
         throw new RuntimeException("Invalid credentials");

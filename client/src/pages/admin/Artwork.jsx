@@ -16,8 +16,6 @@ import {
 } from 'lucide-react';
 import { useCurrency } from '../../context/CurrencyContext';
 import CurrencySelector from '../../components/common/CurrencySelector';
-import { adminArtworkApi } from '../../services/adminArtworkApi';
-import AdminArtworkTestComponent from '../../components/admin/AdminArtworkTestComponent';
 
 const ArtworkManagement = () => {
   const [artworkSearchTerm, setArtworkSearchTerm] = useState('');
@@ -26,41 +24,8 @@ const ArtworkManagement = () => {
   const [expandedArtworkId, setExpandedArtworkId] = useState(null);
   const { formatPrice } = useCurrency();
   const [isLoaded, setIsLoaded] = useState(false);
-  
-  // State for API data
-  const [artworks, setArtworks] = useState([]);
-  const [statistics, setStatistics] = useState({});
-  const [filterOptions, setFilterOptions] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [successMessage, setSuccessMessage] = useState(null);
-  const [pagination, setPagination] = useState({
-    page: 0,
-    size: 10,
-    totalElements: 0,
-    totalPages: 0
-  });
-
-  // Auto-clear messages after 5 seconds
-  useEffect(() => {
-    if (error) {
-      const timer = setTimeout(() => setError(null), 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [error]);
 
   useEffect(() => {
-    if (successMessage) {
-      const timer = setTimeout(() => setSuccessMessage(null), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [successMessage]);
-
-  // Load data on component mount
-  useEffect(() => {
-    loadArtworks();
-    loadStatistics();
-    loadFilterOptions();
     setIsLoaded(true);
   }, []);
 
@@ -208,14 +173,14 @@ const ArtworkManagement = () => {
     return matchesSearch && matchesStatus;
   });
 
-  // Artwork management stats - computed from statistics API or fallback to current data
+  // Artwork management stats
   const artworkStats = [
     { 
       label: 'Total Artworks', 
-      value: (statistics.totalArtworks || artworks.length).toLocaleString(), 
+      value: artworks.length.toLocaleString(), 
       icon: Image, 
       color: '#D87C5A',
-      change: statistics.totalArtworksChange || '+18%',
+      change: '+18%',
       changeType: 'positive'
     },
     { 
@@ -395,35 +360,6 @@ const ArtworkManagement = () => {
 
   return (
     <>
-      {/* Notifications */}
-      {error && (
-        <div className="fixed top-4 right-4 z-50 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-lg">
-          <div className="flex items-center justify-between">
-            <span>{error}</span>
-            <button
-              onClick={() => setError(null)}
-              className="ml-4 text-red-500 hover:text-red-700"
-            >
-              <X size={16} />
-            </button>
-          </div>
-        </div>
-      )}
-      
-      {successMessage && (
-        <div className="fixed top-4 right-4 z-50 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg shadow-lg">
-          <div className="flex items-center justify-between">
-            <span>{successMessage}</span>
-            <button
-              onClick={() => setSuccessMessage(null)}
-              className="ml-4 text-green-500 hover:text-green-700"
-            >
-              <X size={16} />
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Add smooth animations */}
       <style jsx>{`
         @keyframes smoothFadeIn {
@@ -488,9 +424,6 @@ const ArtworkManagement = () => {
       `}</style>
 
       <div className="space-y-4 artwork-container">
-        {/* Test Component - Remove this in production */}
-        <AdminArtworkTestComponent />
-        
         {/* Artwork Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 artwork-stats">
           {artworkStats.map((stat, index) => (
@@ -708,36 +641,11 @@ const ArtworkManagement = () => {
           )}
         </div>
 
-        {/* Pagination */}
-        {pagination.totalPages > 1 && (
-          <div className="flex justify-center items-center gap-4 mt-6">
-            <button
-              onClick={() => setPagination(prev => ({ ...prev, page: Math.max(0, prev.page - 1) }))}
-              disabled={pagination.page === 0}
-              className="px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{
-                backgroundColor: pagination.page === 0 ? '#f3f4f6' : '#FFE4D6',
-                color: pagination.page === 0 ? '#9ca3af' : '#5D3A00'
-              }}
-            >
-              Previous
-            </button>
-            
-            <span style={{color: '#5D3A00'}}>
-              Page {pagination.page + 1} of {pagination.totalPages}
-            </span>
-            
-            <button
-              onClick={() => setPagination(prev => ({ ...prev, page: Math.min(prev.totalPages - 1, prev.page + 1) }))}
-              disabled={pagination.page >= pagination.totalPages - 1}
-              className="px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{
-                backgroundColor: pagination.page >= pagination.totalPages - 1 ? '#f3f4f6' : '#FFE4D6',
-                color: pagination.page >= pagination.totalPages - 1 ? '#9ca3af' : '#5D3A00'
-              }}
-            >
-              Next
-            </button>
+        {filteredArtworks.length === 0 && (
+          <div className="bg-white rounded-lg shadow-sm p-8 text-center" style={{color: '#D87C5A'}}>
+            <Image size={48} className="mx-auto mb-4 opacity-50" />
+            <p className="text-lg font-medium mb-2">No artworks found</p>
+            <p className="text-sm">Try adjusting your search terms or filters</p>
           </div>
         )}
 

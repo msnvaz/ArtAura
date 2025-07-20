@@ -170,22 +170,26 @@ const CommunityPage = () => {
   const filteredPosts = getFilteredPosts();
 
   return (
-    <div className="min-h-screen bg-[#FFF5E1] overflow-x-hidden">
+    <div className="min-h-screen bg-slate-950 overflow-x-hidden">
       {/* Navbar */}
       <Navbar />
 
       {/* Cart Sidebar */}
       <CartSidebar />
 
-      {/* Main Container */}
-      <div className="flex justify-center pt-24 pb-10">
-        <div className="flex w-full max-w-7xl px-4">
-          {/* Left Sidebar - Hidden on mobile and tablet */}
-          <aside className="hidden lg:block w-80 mr-6">
-            <div className="sticky top-28">
-              <RecentChallenges />
-            </div>
-          </aside>
+      {/* Main Layout */}
+      <div className="flex pt-16">
+        {/* Left Sidebar */}
+        <div
+          className={`transition-all duration-300 shrink-0 ${
+            isSidebarCollapsed ? 'w-16' : 'w-64'
+          } min-h-screen fixed top-16 left-0`}
+        >
+          <Sidebar isCollapsed={isSidebarCollapsed} />
+        </div>
+
+        {/* Sidebar Spacer */}
+        <div className={`${isSidebarCollapsed ? 'w-16' : 'w-64'} shrink-0`} />
 
           {/* Center Feed */}
           <main className="flex-1 max-w-2xl mx-auto">
@@ -312,12 +316,10 @@ const CommunityPage = () => {
             </div>
           </main>
 
-          {/* Right Sidebar - Hidden on mobile and tablet */}
-          <aside className="hidden lg:block w-80 ml-6">
-            <div className="sticky top-28">
-              <TopArtists />
-            </div>
-          </aside>
+
+        {/* Right Sidebar */}
+        <div className="hidden xl:block w-72 min-h-screen fixed top-16 right-0 overflow-y-auto p-4">
+          <TopContributors />
         </div>
       </div>
     </div>
