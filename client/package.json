@@ -13,6 +13,8 @@
     "@hookform/resolvers": "^5.1.1",
     "axios": "^1.10.0",
     "bootstrap": "^5.3.7",
+    "daisyui": "^5.0.43",
+    "date-fns": "^4.1.0",
     "lucide-react": "^0.522.0",
     "react": "^19.1.0",
     "react-bootstrap": "^2.10.10",
@@ -21,6 +23,7 @@
     "react-hook-form": "^7.58.1",
     "react-router-dom": "^7.6.2",
     "react-toastify": "^11.0.5",
+    "run-parallel": "^1.2.0",
     "yup": "^1.6.1"
   },
   "devDependencies": {
