@@ -5,9 +5,13 @@ client/postcss.config.js
 client/src/App.jsx
 client/tailwind.config.js
 client/.env
+server/.env
 .vscode/
 
 # Ignored package files
 package-lock.json
 package.json
 uploads
+
+server/.env
+server/autura/.env

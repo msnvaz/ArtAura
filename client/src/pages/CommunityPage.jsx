@@ -3,6 +3,7 @@ import Navbar from "../components/common/Navbar";
 import Post from "../components/community/Posts";
 import TopArtists from "../components/community/TopArtists";
 import ExhibitionPostForm from "../components/community/ExhibitionPostForm";
+import RecentChallenges from "../components/community/RecentChallenges";
 import axios from "axios";
 
 const CommunityPage = () => {

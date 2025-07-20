@@ -7,6 +7,8 @@ import {
   Star,
   HelpCircle,
 } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const ProfileDropdown = ({
   profileImage,
@@ -15,7 +17,10 @@ const ProfileDropdown = ({
   onSignOut,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const dropdownRef = useRef(null);
+  const { logout } = useAuth();
+  const navigate = useNavigate();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -87,15 +92,46 @@ const ProfileDropdown = ({
           {/* Sign Out */}
           <div className="border-t border-white/20 pt-1">
             <button
-              onClick={() => {
-                onSignOut();
-                setIsOpen(false);
-              }}
+              onClick={() => setShowLogoutConfirm(true)}
               className="flex items-center space-x-3 w-full px-4 py-2 text-[#D87C5A] hover:bg-[#D87C5A]/10 transition-colors"
             >
               <LogOut className="w-4 h-4" />
               <span className="text-sm">Sign Out</span>
             </button>
+          </div>
+        </div>
+      )}
+      {/* Logout Confirmation Modal */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full mx-4">
+            <div className="text-center">
+              <h3 className="text-2xl font-bold text-[#362625] mb-2">
+                Confirm Logout
+              </h3>
+              <p className="text-gray-600 mb-8 text-lg">
+                Are you sure you want to log out of your account?
+              </p>
+              <div className="flex gap-4 justify-center">
+                <button
+                  onClick={() => setShowLogoutConfirm(false)}
+                  className="px-6 py-3 bg-gray-100 text-[#362625] rounded-xl hover:bg-gray-200 transition-all duration-200 font-medium border border-gray-200 hover:border-gray-300 min-w-[120px]"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    logout();
+                    setShowLogoutConfirm(false);
+                    setIsOpen(false);
+                    navigate("/");
+                  }}
+                  className="px-6 py-3 bg-gradient-to-r from-[#e74c3c] to-[#c0392b] text-white rounded-xl hover:from-[#c0392b] hover:to-[#a93226] transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105 min-w-[120px]"
+                >
+                  Log Out
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

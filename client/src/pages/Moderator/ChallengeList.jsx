@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Search, Filter, Plus, Eye, Edit, Trash2, Calendar, Users, Trophy } from 'lucide-react';
+import { Calendar, Edit, Eye, Filter, Plus, Search, Trash2, Trophy, Users } from 'lucide-react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 const ChallengeList = () => {

@@ -93,8 +93,9 @@ const ArtistPortfolio = () => {
       }
 
       try {
+        const API_URL = import.meta.env.VITE_API_URL;
         const response = await axios.get(
-          `http://localhost:8080/api/posts/${role}/${userId}`,
+          `${API_URL}/api/posts/${role}/${userId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
