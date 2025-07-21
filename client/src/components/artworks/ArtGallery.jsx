@@ -28,4 +28,3 @@ const ArtGallery = ({ artworks }) => {
 
 export default ArtGallery;
 
-

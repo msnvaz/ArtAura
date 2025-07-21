@@ -17,4 +17,3 @@ const ArtistDashboard = () => {
 };
 
 export default ArtistDashboard;
-

@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,19 +19,19 @@ public class PostDAOImpl implements PostDAO {
     private JdbcTemplate jdbcTemplate;
 
     @Override
-    public void savePost(int userId, String role, PostCreateDTO postDTO) {
-        String sql = "INSERT INTO post (user_id, role, caption, image, location) " +
-                "VALUES (?, ?, ?, ?, ?)";
+    public void savePost(Long userId, String role, PostCreateDTO postDTO) {
+        String sql = "INSERT INTO post (user_id, role, caption, image, location, created_at) "
+                + "VALUES (?, ?, ?, ?, ?, ?)";
 
         jdbcTemplate.update(sql,
-                userId,                          // ✅ passed separately
-                role,                            // ✅ passed separately
+                userId, // ✅ passed separately
+                role, // ✅ passed separately
                 postDTO.getCaption(),
-                postDTO.getImage(),              // ✅ should be image path like /uploads/image.jpg
-                postDTO.getLocation()// 🕐 sets the current date
+                postDTO.getImage(), // ✅ should be image path like /uploads/image.jpg
+                postDTO.getLocation(),
+                LocalDateTime.now() // 🕐 explicitly set current timestamp
         );
     }
-
 
     @Override
     public void deletePostById(Long postId) {
@@ -40,7 +40,7 @@ public class PostDAOImpl implements PostDAO {
     }
 
     @Override
-    public PostResponseDTO updatePost(PostUpdateDTO dto) {
+    public void updatePost(PostUpdateDTO dto) {
         StringBuilder sql = new StringBuilder("UPDATE post SET ");
         List<Object> params = new ArrayList<>();
         boolean first = true;
@@ -52,9 +52,20 @@ public class PostDAOImpl implements PostDAO {
         }
 
         if (dto.getImage() != null) {
-            if (!first) sql.append(", ");
+            if (!first) {
+                sql.append(", ");
+            }
             sql.append("image = ?");
             params.add(dto.getImage());
+            first = false;
+        }
+
+        if (dto.getLocation() != null) {
+            if (!first) {
+                sql.append(", ");
+            }
+            sql.append("location = ?");
+            params.add(dto.getLocation());
             first = false;
         }
 
@@ -62,12 +73,7 @@ public class PostDAOImpl implements PostDAO {
         params.add(dto.getPostId());
 
         jdbcTemplate.update(sql.toString(), params.toArray());
-
-        // ✅ return the updated post after applying changes
-        return getPostById(dto.getPostId());
     }
-
-
 
     public List<PostResponseDTO> getPostsByUser(String role, Long userId) {
         String sql = "SELECT * FROM post WHERE user_id = ? AND role = ?";
@@ -99,6 +105,4 @@ public class PostDAOImpl implements PostDAO {
         });
     }
 
-
 }
-
