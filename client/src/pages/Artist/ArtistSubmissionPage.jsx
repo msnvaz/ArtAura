@@ -31,7 +31,7 @@ const ArtistSubmissionPage = () => {
   const fetchChallengeDetails = async () => {
     try {
       const response = await fetch(
-        `http://localhost:8080/api/challenges/${challengeId}`
+        `http://localhost:8081/api/challenges/${challengeId}`
       );
       if (response.ok) {
         const data = await response.json();

@@ -7,7 +7,7 @@ import { useAuth } from '../../context/AuthContext'; // 🔥 Context Hook
 const roleDashboardMap = {
   admin: '/admin/dashboard',
   moderator: '/ModeratorDashboard',
-  artist: '/artist/artistdashboard',
+  artist: '/artist/artistportfolio',
   shop: '/shop/dashboard',
   buyer: '/community'
 };
