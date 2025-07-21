@@ -200,6 +200,25 @@ const WinnerSelection = () => {
 
   return (
     <>
+      {/* CSS styles for button animations */}
+      <style jsx>{`
+        .btn-animate {
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+          opacity: 1;
+          transform: translateY(0);
+        }
+
+        .btn-animate:hover {
+          transform: translateY(-1px) scale(1.02);
+        }
+
+        /* Ensure smooth rendering */
+        * {
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+        }
+      `}</style>
+
       {/* Bootstrap CSS */}
       <link 
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" 
@@ -230,19 +249,11 @@ const WinnerSelection = () => {
               </div>
               <div className="mt-4 md:mt-0 flex gap-2 items-center">
                 <button
-                  className="border px-3 py-2 rounded-lg font-medium flex items-center space-x-1 transition-colors whitespace-nowrap"
+                  className="border px-3 py-2 rounded-lg font-medium flex items-center space-x-1 whitespace-nowrap btn-animate"
                   style={{
                     borderColor: '#FFE4D6',
                     color: '#FFE4D6',
                     backgroundColor: 'rgba(255, 228, 214, 0.1)'
-                  }}
-                  onMouseOver={(e) => {
-                    e.target.style.backgroundColor = '#FFE4D6';
-                    e.target.style.color = '#5D3A00';
-                  }}
-                  onMouseOut={(e) => {
-                    e.target.style.backgroundColor = 'rgba(255, 228, 214, 0.1)';
-                    e.target.style.color = '#FFE4D6';
                   }}
                   onClick={handleManageCriteria}
                 >
@@ -251,19 +262,11 @@ const WinnerSelection = () => {
                   <span className="sm:hidden">Criteria</span>
                 </button>
                 <button
-                  className="border px-3 py-2 rounded-lg font-medium flex items-center space-x-1 transition-colors whitespace-nowrap"
+                  className="border px-3 py-2 rounded-lg font-medium flex items-center space-x-1 whitespace-nowrap btn-animate"
                   style={{
                     borderColor: '#FFE4D6',
                     color: '#FFE4D6',
                     backgroundColor: 'rgba(255, 228, 214, 0.1)'
-                  }}
-                  onMouseOver={(e) => {
-                    e.target.style.backgroundColor = '#FFE4D6';
-                    e.target.style.color = '#5D3A00';
-                  }}
-                  onMouseOut={(e) => {
-                    e.target.style.backgroundColor = 'rgba(255, 228, 214, 0.1)';
-                    e.target.style.color = '#FFE4D6';
                   }}
                   onClick={() => navigate('/moderatordashboard')}
                 >
