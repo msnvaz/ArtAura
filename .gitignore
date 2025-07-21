@@ -15,4 +15,4 @@ uploads
 .env
 server/.env
 server/autura/.env
-.env
+server/production/artaura/application.properties
