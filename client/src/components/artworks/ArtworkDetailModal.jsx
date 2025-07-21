@@ -88,7 +88,7 @@ const ArtworkDetailModal = ({
 
                             <div className="relative">
                                 <ImageZoomLens
-                                    src={`http://localhost:8081${artwork.imageUrl}`}
+                                    src={artwork.image?.startsWith('http') ? artwork.image : `http://localhost:8081${artwork.image || artwork.imageUrl}`}
                                     zoom={3}
                                     lensSize={150}
                                     className="w-full rounded-lg shadow-lg"
@@ -131,8 +131,8 @@ const ArtworkDetailModal = ({
 
                                     <div className="flex items-center space-x-2">
                                         <div className={`h-3 w-3 rounded-full ${artwork.status === 'Available' ? 'bg-green-500' :
-                                                artwork.status === 'Sold' ? 'bg-red-500' :
-                                                    'bg-yellow-500'
+                                            artwork.status === 'Sold' ? 'bg-red-500' :
+                                                'bg-yellow-500'
                                             }`}></div>
                                         <div>
                                             <p className="text-sm text-[#7f5539]/60">Status</p>
