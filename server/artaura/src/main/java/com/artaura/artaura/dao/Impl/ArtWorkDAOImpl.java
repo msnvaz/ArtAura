@@ -166,7 +166,7 @@ public class ArtWorkDAOImpl implements ArtWorkDAO {
 
     @Override
     public List<ArtWorkResponseDTO> getArtWorksByArtist(Long artistId) {
-        String sql = "SELECT * FROM artworks WHERE artist_id = ?";
+        String sql = "SELECT * FROM artworks WHERE artist_id = ? ORDER BY created_at DESC";
         return jdbcTemplate.query(sql, new Object[]{artistId}, (rs, rowNum) -> {
             ArtWorkResponseDTO dto = new ArtWorkResponseDTO();
             dto.setArtworkId(rs.getLong("artwork_id"));

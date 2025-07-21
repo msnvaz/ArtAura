@@ -10,7 +10,8 @@ const UploadPostModal = ({
     onArtworkChange,
     onImageUpload,
     onSave, // will be replaced by internal handler
-    onCancel
+    onCancel,
+    onSuccess // New callback for successful upload
 }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -74,6 +75,11 @@ const UploadPostModal = ({
 
             // Show success message
             alert('Artwork added successfully!');
+
+            // Call onSuccess callback with the new artwork data
+            if (onSuccess) {
+                onSuccess(response.data);
+            }
 
             if (onClose) onClose();
         } catch (err) {

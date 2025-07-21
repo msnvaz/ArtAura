@@ -31,9 +31,15 @@ const ArtworksGrid = ({
                 >
                     <div className="relative">
                         <img
-                            src={`http://localhost:8081${artwork.imageUrl}`}
+                            src={artwork.imageUrl?.startsWith('http') ? artwork.imageUrl : `http://localhost:8081${encodeURI(artwork.imageUrl || '')}`}
                             alt={artwork.title}
                             className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                            onError={(e) => {
+                                console.error('ArtworksGrid: Failed to load image:', artwork.imageUrl);
+                                console.error('ArtworksGrid: Constructed URL was:', e.target.src);
+                                e.target.src = 'https://images.pexels.com/photos/1070981/pexels-photo-1070981.jpeg?auto=compress&cs=tinysrgb&w=400';
+                                e.target.onerror = null;
+                            }}
                         />
                         {artwork.featured && (
                             <div className="absolute top-3 left-3 bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1">

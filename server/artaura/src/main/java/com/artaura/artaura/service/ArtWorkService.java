@@ -23,9 +23,15 @@ public class ArtWorkService {
 
     public void createArtWork(Long artistId, ArtWorkCreateDTO dto, MultipartFile imageFile) throws IOException {
         if (imageFile != null && !imageFile.isEmpty()) {
-            String folder = "uploads";
             String filename = System.currentTimeMillis() + "_" + imageFile.getOriginalFilename();
-            Path uploadPath = Paths.get(folder);
+
+            // Use same logic as WebConfig to find correct upload directory
+            String currentDir = System.getProperty("user.dir");
+            String serverDir = currentDir.endsWith("artaura")
+                    ? currentDir.substring(0, currentDir.lastIndexOf("artaura"))
+                    : currentDir + "/";
+            Path uploadPath = Paths.get(serverDir + "uploads");
+
             Files.createDirectories(uploadPath);
             Path filePath = uploadPath.resolve(filename);
             Files.copy(imageFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
@@ -40,9 +46,15 @@ public class ArtWorkService {
 
     public void updateArtWork(ArtWorkUpdateDTO dto, MultipartFile imageFile) throws IOException {
         if (imageFile != null && !imageFile.isEmpty()) {
-            String folder = "uploads";
             String filename = System.currentTimeMillis() + "_" + imageFile.getOriginalFilename();
-            Path uploadPath = Paths.get(folder);
+
+            // Use same logic as WebConfig to find correct upload directory
+            String currentDir = System.getProperty("user.dir");
+            String serverDir = currentDir.endsWith("artaura")
+                    ? currentDir.substring(0, currentDir.lastIndexOf("artaura"))
+                    : currentDir + "/";
+            Path uploadPath = Paths.get(serverDir + "uploads");
+
             Files.createDirectories(uploadPath);
             Path filePath = uploadPath.resolve(filename);
             Files.copy(imageFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);

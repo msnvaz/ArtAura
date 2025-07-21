@@ -33,7 +33,7 @@ public class ArtworkController {
     }
 
     @PostMapping("/artist/{artistId}/upload")
-    public ResponseEntity<String> addArtWorkWithImage(
+    public ResponseEntity<ArtWorkResponseDTO> addArtWorkWithImage(
             @PathVariable Long artistId,
             @RequestParam("title") String title,
             @RequestParam("medium") String medium,
@@ -72,7 +72,14 @@ public class ArtworkController {
             // 📂 Save image to /uploads/ if provided
             if (image != null && !image.isEmpty()) {
                 String fileName = System.currentTimeMillis() + "_" + image.getOriginalFilename();
-                Path uploadDir = Paths.get("C:/Users/Nima's TUF/Desktop/artaura/uploads/");
+
+                // Use same logic as WebConfig to find correct upload directory
+                String currentDir = System.getProperty("user.dir");
+                String serverDir = currentDir.endsWith("artaura")
+                        ? currentDir.substring(0, currentDir.lastIndexOf("artaura"))
+                        : currentDir + "/";
+                Path uploadDir = Paths.get(serverDir + "uploads");
+
                 Files.createDirectories(uploadDir); // Create folder if not exist
                 Path filePath = uploadDir.resolve(fileName);
                 Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
@@ -86,16 +93,28 @@ public class ArtworkController {
             // Save artwork
             artWorkDAO.saveArtWork(artistId, dto);
 
-            return ResponseEntity.ok("Artwork created successfully");
+            // Get the created artwork to return it
+            List<ArtWorkResponseDTO> artworks = artWorkDAO.getArtWorksByArtist(artistId);
+
+            // Return the most recently created artwork (should be the first one since we order by created_at DESC)
+            if (!artworks.isEmpty()) {
+                ArtWorkResponseDTO createdArtwork = artworks.get(0);
+                return ResponseEntity.ok(createdArtwork);
+            } else {
+                return ResponseEntity.status(500).build();
+            }
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(500).body("Error creating artwork: " + e.getMessage());
+            return ResponseEntity.status(500).build();
         }
     }
 
     @GetMapping("/artist/{artistId}")
     public List<ArtWorkResponseDTO> getArtWorksByArtist(@PathVariable Long artistId) {
-        return artWorkDAO.getArtWorksByArtist(artistId);
+        System.out.println("DEBUG: Getting artworks for artist " + artistId);
+        List<ArtWorkResponseDTO> artworks = artWorkDAO.getArtWorksByArtist(artistId);
+        System.out.println("DEBUG: Returned " + artworks.size() + " artworks");
+        return artworks;
     }
 
     @GetMapping("/{artworkId}")

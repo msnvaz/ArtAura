@@ -49,6 +49,8 @@ import {
   AlertTriangle
 } from 'lucide-react';
 
+import { useImageWithFallback } from '../../util/imageUtils';
+
 const ArtistPortfolio = () => {
   const navigate = useNavigate();
 
@@ -364,11 +366,38 @@ const ArtistPortfolio = () => {
         });
 
         console.log('Artworks API response:', response.data);
+        if (response.data && response.data.length > 0) {
+          console.log('First artwork data:', response.data[0]);
+          console.log('Sample imageUrl:', response.data[0]?.imageUrl);
+          console.log('Artworks order (by creation date):');
+          response.data.forEach((artwork, index) => {
+            console.log(`${index + 1}. ${artwork.title} - Created: ${artwork.createdAt} - ID: ${artwork.artworkId}`);
+          });
+        }
 
         // Ensure response.data is an array
         const artworksData = Array.isArray(response.data) ? response.data : [];
-        setArtworks(artworksData);
-        console.log('Set artworks state:', artworksData.length, 'artworks');
+
+        // Sort artworks by creation date (newest first) as a fallback
+        const sortedArtworks = artworksData.sort((a, b) => {
+          const dateA = new Date(a.createdAt);
+          const dateB = new Date(b.createdAt);
+          return dateB - dateA; // Descending order (newest first)
+        });
+
+        // Debug: Check for duplicate IDs
+        const ids = sortedArtworks.map(artwork => artwork.artworkId);
+        const uniqueIds = new Set(ids);
+        if (ids.length !== uniqueIds.size) {
+          console.error('DUPLICATE ARTWORK IDs DETECTED:', ids);
+          sortedArtworks.forEach((artwork, index) => {
+            console.log(`${index}: ID=${artwork.artworkId}, Title=${artwork.title}`);
+          });
+        }
+
+        console.log('After sorting - first artwork:', sortedArtworks[0]?.title);
+        setArtworks(sortedArtworks);
+        console.log('Set artworks state:', sortedArtworks.length, 'artworks');
 
       } catch (error) {
         console.error('Failed to fetch artworks:', error);
@@ -1664,9 +1693,15 @@ const ArtistPortfolio = () => {
                     {/* Post Image */}
                     <div className="relative">
                       <img
-                        src={`http://localhost:8081${post.image}`}
+                        src={post.image?.startsWith('http') ? post.image : `http://localhost:8081${encodeURI(post.image || '')}`}
                         alt={`Post ${post.post_id}`}
                         className="w-full h-[32rem] object-cover"
+                        onError={(e) => {
+                          console.error('Failed to load post feed image:', post.image);
+                          console.error('Post feed: Constructed URL was:', e.target.src);
+                          e.target.src = 'https://images.pexels.com/photos/1070981/pexels-photo-1070981.jpeg?auto=compress&cs=tinysrgb&w=400';
+                          e.target.onerror = null;
+                        }}
                       />
                     </div>
 
@@ -1739,11 +1774,17 @@ const ArtistPortfolio = () => {
                   </h3>
                   <div className="space-y-3">
                     {Array.isArray(artworks) && artworks.slice(0, 4).map((artwork, index) => (
-                      <div key={artwork.artwork_id || artwork.id || `featured-artwork-${index}`} className="flex items-center space-x-3">
+                      <div key={artwork.artworkId || `featured-${index}-${artwork.title || 'unknown'}`} className="flex items-center space-x-3">
                         <img
-                          src={`http://localhost:8081${artwork.imageUrl}`}
+                          src={artwork.imageUrl?.startsWith('http') ? artwork.imageUrl : `http://localhost:8081${encodeURI(artwork.imageUrl || '')}`}
                           alt={artwork.title}
                           className="w-12 h-12 rounded-lg object-cover"
+                          onError={(e) => {
+                            console.error('Failed to load sidebar image:', artwork.imageUrl);
+                            console.error('Sidebar: Constructed URL was:', e.target.src);
+                            e.target.src = 'https://images.pexels.com/photos/1070981/pexels-photo-1070981.jpeg?auto=compress&cs=tinysrgb&w=400';
+                            e.target.onerror = null;
+                          }}
                         />
                         <div className="flex-1">
                           <p className="text-sm font-medium text-[#7f5539]">{artwork.title}</p>
@@ -1905,14 +1946,16 @@ const ArtistPortfolio = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {artworks.map((artwork, index) => (
-                  <div key={artwork.artworkId || artwork.artwork_id || artwork.id || `artwork-${index}`} className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-lg transition-all duration-300 group">
+                  <div key={artwork.artworkId || `artwork-${index}-${artwork.title || 'unknown'}`} className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-lg transition-all duration-300 group">
                     <div className="relative">
                       <img
-                        src={artwork.imageUrl?.startsWith('http') ? artwork.imageUrl : `http://localhost:8081${artwork.imageUrl}`}
+                        src={artwork.imageUrl?.startsWith('http') ? artwork.imageUrl : `http://localhost:8081${encodeURI(artwork.imageUrl || '')}`}
                         alt={artwork.title}
                         className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                         onError={(e) => {
-                          e.target.src = '/api/placeholder/400/300';
+                          console.error('Failed to load image:', artwork.imageUrl);
+                          console.error('Constructed URL was:', e.target.src);
+                          e.target.src = 'https://images.pexels.com/photos/1070981/pexels-photo-1070981.jpeg?auto=compress&cs=tinysrgb&w=400';
                           e.target.onerror = null;
                         }}
                       />
@@ -2186,9 +2229,15 @@ const ArtistPortfolio = () => {
                               {index + 1}
                             </div>
                             <img
-                              src={artwork.image}
+                              src={artwork.imageUrl?.startsWith('http') ? artwork.imageUrl : `http://localhost:8081${encodeURI(artwork.imageUrl || '')}`}
                               alt={artwork.title}
                               className="w-12 h-12 rounded-lg object-cover"
+                              onError={(e) => {
+                                console.error('Failed to load top artwork image:', artwork.imageUrl);
+                                console.error('Top artwork: Constructed URL was:', e.target.src);
+                                e.target.src = 'https://images.pexels.com/photos/1070981/pexels-photo-1070981.jpeg?auto=compress&cs=tinysrgb&w=400';
+                                e.target.onerror = null;
+                              }}
                             />
                             <div>
                               <p className="font-medium text-[#7f5539] text-sm">{artwork.title}</p>
@@ -2221,9 +2270,15 @@ const ArtistPortfolio = () => {
                               {index + 1}
                             </div>
                             <img
-                              src={`http://localhost:8081${post.image}`}
+                              src={post.image?.startsWith('http') ? post.image : `http://localhost:8081${encodeURI(post.image || '')}`}
                               alt={`Post ${post.id}`}
                               className="w-12 h-12 rounded-lg object-cover"
+                              onError={(e) => {
+                                console.error('Failed to load post image:', post.image);
+                                console.error('Post thumbnail: Constructed URL was:', e.target.src);
+                                e.target.src = 'https://images.pexels.com/photos/1070981/pexels-photo-1070981.jpeg?auto=compress&cs=tinysrgb&w=400';
+                                e.target.onerror = null;
+                              }}
                             />
                             <div>
                               <p className="font-medium text-[#7f5539] text-sm">
@@ -2408,6 +2463,19 @@ const ArtistPortfolio = () => {
         onArtworkChange={handleArtworkChange}
         onImageUpload={handleImageUpload}
         onCancel={handleCancelAddArtwork}
+        onSuccess={(newArtworkData) => {
+          console.log('NEW ARTWORK RECEIVED:', newArtworkData);
+          console.log('NEW ARTWORK ID:', newArtworkData?.artworkId);
+          console.log('NEW ARTWORK TITLE:', newArtworkData?.title);
+
+          // Add the new artwork to the front of the artworks list
+          setArtworks(prevArtworks => {
+            console.log('PREVIOUS ARTWORKS COUNT:', prevArtworks.length);
+            const newList = [newArtworkData, ...prevArtworks];
+            console.log('NEW ARTWORKS COUNT:', newList.length);
+            return newList;
+          });
+        }}
       />
 
       {/* Artwork Detail Modal */}
