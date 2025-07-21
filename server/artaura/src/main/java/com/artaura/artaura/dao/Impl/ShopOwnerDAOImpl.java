@@ -30,8 +30,8 @@ public class ShopOwnerDAOImpl implements ShopOwnerDAO {
     public void save(ShopOwnerSignupRequest req, String hashedPassword) {
 
         // 2. Insert into shops table
-        String shopSql = "INSERT INTO shops (shop_name, owner_name, email, password, contact_no, business_type, description, business_license, tax_id, agreed_terms, created_at) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+        String shopSql = "INSERT INTO shops (shop_name, owner_name, email, password, contact_no, business_type, description, business_license, tax_id, agreed_terms, status, created_at) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
 
         // Use KeyHolder to retrieve generated shop_id
         KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -48,6 +48,7 @@ public class ShopOwnerDAOImpl implements ShopOwnerDAO {
             ps.setString(8, req.getBusinessLicense());
             ps.setString(9, req.getTaxId());
             ps.setBoolean(10, req.isAgreedTerms());
+            ps.setString(11, "Active");
             return ps;
         }, keyHolder);
 
