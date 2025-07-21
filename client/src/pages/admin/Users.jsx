@@ -10,20 +10,22 @@ import {
   ShieldAlert,
   MoreVertical,
   X,
-  Plus
+  Plus,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { useCurrency } from '../../context/CurrencyContext';
 import CurrencySelector from '../../components/common/CurrencySelector';
-import  adminUserApi  from '../../services/adminUserApi';
+import adminUserApi from '../../services/adminUserApi';
 
 const UsersManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [selectedUser, setSelectedUser] = useState(null);
-  const [showUserModal, setShowUserModal] = useState(false);
+  const [expandedRow, setExpandedRow] = useState(null);
+  const [expandType, setExpandType] = useState(null); // 'details' or 'confirm'
   const { formatPrice } = useCurrency();
   const [isLoaded, setIsLoaded] = useState(false);
-  const [showConfirmPopup, setShowConfirmPopup] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
 
   // API state
@@ -77,20 +79,37 @@ const UsersManagement = () => {
               setSelectedUser({ ...selectedUser, ...result.user, status: newStatus });
             }
           }
-          setShowConfirmPopup(false);
+          setExpandedRow(null);
+          setExpandType(null);
           setConfirmAction(null);
         } catch (err) {
           setError('Failed to update user status.');
-          setShowConfirmPopup(false);
+          setExpandedRow(null);
+          setExpandType(null);
           setConfirmAction(null);
         }
       },
       onCancel: () => {
-        setShowConfirmPopup(false);
+        setExpandedRow(null);
+        setExpandType(null);
         setConfirmAction(null);
       }
     });
-    setShowConfirmPopup(true);
+    setExpandedRow(userId);
+    setExpandType('confirm');
+    setSelectedUser(user);
+  };
+
+  const handleViewDetails = (user) => {
+    if (expandedRow === user.userId && expandType === 'details') {
+      setExpandedRow(null);
+      setExpandType(null);
+      setSelectedUser(null);
+    } else {
+      setExpandedRow(user.userId);
+      setExpandType('details');
+      setSelectedUser(user);
+    }
   };
 
   const filteredUsers = users.filter(user => {
@@ -139,220 +158,211 @@ const UsersManagement = () => {
     }
   ];
 
-  // User Details Modal
-  const UserModal = () => {
-    if (!showUserModal || !selectedUser) return null;
+  // User Details Row Component
+  const UserDetailsRow = ({ user }) => {
+    if (!user) return null;
     
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-90vh overflow-y-auto">
-          <div className="p-4">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-2xl font-bold" style={{color: '#5D3A00'}}>User Details</h3>
-              <button
-                onClick={() => setShowUserModal(false)}
-                className="p-2 rounded-lg transition-colors"
-                style={{backgroundColor: '#FFE4D6', color: '#5D3A00'}}
-                onMouseOver={(e) => e.target.style.backgroundColor = '#FFD95A'}
-                onMouseOut={(e) => e.target.style.backgroundColor = '#FFE4D6'}
-              >
-                <X size={20} />
-              </button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <h4 className="font-semibold mb-3" style={{color: '#5D3A00'}}>Personal Information</h4>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="font-medium">Name:</span> 
-                    <span>{selectedUser.firstName} {selectedUser.lastName}</span>
+      <tr>
+        <td colSpan="7" className="px-0 py-0">
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-400 mx-4 my-2 rounded-lg">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold flex items-center gap-2" style={{color: '#5D3A00'}}>
+                  <User size={20} />
+                  User Details
+                </h3>
+                <button
+                  onClick={() => {setExpandedRow(null); setExpandType(null); setSelectedUser(null);}}
+                  className="p-2 rounded-lg transition-colors"
+                  style={{backgroundColor: '#FFE4D6', color: '#5D3A00'}}
+                  onMouseOver={(e) => e.target.style.backgroundColor = '#FFD95A'}
+                  onMouseOut={(e) => e.target.style.backgroundColor = '#FFE4D6'}
+                >
+                  <ChevronUp size={16} />
+                </button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="font-semibold mb-3" style={{color: '#5D3A00'}}>Personal Information</h4>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="font-medium">Name:</span> 
+                      <span>{user.firstName} {user.lastName}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Email:</span> 
+                      <span>{user.email}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Type:</span> 
+                      <span className="px-2 py-1 text-xs font-medium rounded-full" style={{
+                        backgroundColor: user.userType === 'artist' ? '#FFE4D6' : user.userType === 'moderator' ? '#FFD95A' : user.userType === 'buyer' ? '#E8F5E8' : user.userType === 'shop' ? '#E3F2FD' : '#FFF5E1',
+                        color: '#5D3A00'
+                      }}>
+                        {user.userType}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Status:</span>
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                        user.status === 'Active' ? 'text-green-800 bg-green-100' :
+                        user.status === 'Pending' ? 'text-yellow-800 bg-yellow-100' :
+                        'text-red-800 bg-red-100'
+                      }`}>
+                        {user.status}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Email:</span> 
-                    <span>{selectedUser.email}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Type:</span> 
-                    <span className="px-2 py-1 text-xs font-medium rounded-full" style={{
-                      backgroundColor: selectedUser.userType === 'artist' ? '#FFE4D6' : selectedUser.userType === 'moderator' ? '#FFD95A' : selectedUser.userType === 'buyer' ? '#E8F5E8' : selectedUser.userType === 'shop' ? '#E3F2FD' : '#FFF5E1',
-                      color: '#5D3A00'
-                    }}>
-                      {selectedUser.userType}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Status:</span>
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                      selectedUser.status === 'Active' ? 'text-green-800 bg-green-100' :
-                      selectedUser.status === 'Pending' ? 'text-yellow-800 bg-yellow-100' :
-                      'text-red-800 bg-red-100'
-                    }`}>
-                      {selectedUser.status}
-                    </span>
+                </div>
+                <div>
+                  <h4 className="font-semibold mb-3" style={{color: '#5D3A00'}}>Activity & Stats</h4>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="font-medium">Join Date:</span> 
+                      <span>{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : ''}</span>
+                    </div>
+                    {user.userType === 'artist' && (
+                      <>
+                        <div className="flex justify-between">
+                          <span className="font-medium">Total Views:</span> 
+                          <span className="font-bold" style={{color: '#D87C5A'}}>{user.totalViews || 0}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium">Total Followers:</span> 
+                          <span className="font-bold" style={{color: '#D87C5A'}}>{user.totalFollowers || 0}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium">Total Sales:</span> 
+                          <span className="font-bold" style={{color: '#D87C5A'}}>{user.totalSales || 0}</span>
+                        </div>
+                      </>
+                    )}
+                    <div className="flex justify-between">
+                      <span className="font-medium">Account Status:</span> 
+                      <span className={user.status === 'Suspended' ? 'text-red-600 font-medium' : 'text-green-600 font-medium'}>
+                        {user.status === 'Suspended' ? 'Blocked' : 'Active'}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
-              <div>
-                <h4 className="font-semibold mb-3" style={{color: '#5D3A00'}}>Activity & Stats</h4>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="font-medium">Join Date:</span> 
-                    <span>{selectedUser.createdAt ? new Date(selectedUser.createdAt).toLocaleDateString() : ''}</span>
-                  </div>
-                  {selectedUser.userType === 'artist' && (
-                    <>
-                      <div className="flex justify-between">
-                        <span className="font-medium">Total Views:</span> 
-                        <span className="font-bold" style={{color: '#D87C5A'}}>{selectedUser.totalViews || 0}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium">Total Followers:</span> 
-                        <span className="font-bold" style={{color: '#D87C5A'}}>{selectedUser.totalFollowers || 0}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium">Total Sales:</span> 
-                        <span className="font-bold" style={{color: '#D87C5A'}}>{selectedUser.totalSales || 0}</span>
-                      </div>
-                    </>
-                  )}
-                  <div className="flex justify-between">
-                    <span className="font-medium">Account Status:</span> 
-                    <span className={selectedUser.status === 'Suspended' ? 'text-red-600 font-medium' : 'text-green-600 font-medium'}>
-                      {selectedUser.status === 'Suspended' ? 'Blocked' : 'Active'}
-                    </span>
-                  </div>
-                  
-                </div>
+              <div className="mt-6 flex gap-3">
+                <button
+                  onClick={() => {setExpandedRow(null); setExpandType(null); setSelectedUser(null);}}
+                  className="px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
+                  style={{backgroundColor: '#FFE4D6', color: '#5D3A00'}}
+                  onMouseOver={(e) => e.target.style.backgroundColor = '#FFD95A'}
+                  onMouseOut={(e) => e.target.style.backgroundColor = '#FFE4D6'}
+                >
+                  <ChevronUp size={16} />
+                  Collapse
+                </button>
+                <button
+                  className="px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
+                  style={{backgroundColor: '#FFE4D6', color: '#5D3A00'}}
+                  onMouseOver={(e) => e.target.style.backgroundColor = '#FFD95A'}
+                  onMouseOut={(e) => e.target.style.backgroundColor = '#FFE4D6'}
+                >
+                  <Eye size={16} />
+                  View Profile
+                </button>
+                <button
+                  className="px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
+                  style={{backgroundColor: '#D87C5A', color: 'white'}}
+                  onMouseOver={(e) => e.target.style.backgroundColor = '#B85A3A'}
+                  onMouseOut={(e) => e.target.style.backgroundColor = '#D87C5A'}
+                >
+                  <Plus size={16} />
+                  Send Message
+                </button>
               </div>
-            </div>
-            <div className="mt-8 flex gap-3">
-              <button
-                onClick={() => setShowUserModal(false)}
-                className="px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
-                style={{backgroundColor: '#FFE4D6', color: '#5D3A00'}}
-                onMouseOver={(e) => e.target.style.backgroundColor = '#FFD95A'}
-                onMouseOut={(e) => e.target.style.backgroundColor = '#FFE4D6'}
-              >
-                <X size={16} />
-                Back
-              </button>
-              <button
-                className="px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
-                style={{backgroundColor: '#FFE4D6', color: '#5D3A00'}}
-                onMouseOver={(e) => e.target.style.backgroundColor = '#FFD95A'}
-                onMouseOut={(e) => e.target.style.backgroundColor = '#FFE4D6'}
-              >
-                <Eye size={16} />
-                View Profile
-              </button>
-              <button
-                className="px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
-                style={{backgroundColor: '#D87C5A', color: 'white'}}
-                onMouseOver={(e) => e.target.style.backgroundColor = '#B85A3A'}
-                onMouseOut={(e) => e.target.style.backgroundColor = '#D87C5A'}
-              >
-                <Plus size={16} />
-                Send Message
-              </button>
             </div>
           </div>
-        </div>
-      </div>
+        </td>
+      </tr>
     );
   };
 
-  // Confirmation Popup Component
-  const ConfirmationPopup = () => {
-    if (!showConfirmPopup || !confirmAction) return null;
+  // Confirmation Row Component
+  const ConfirmationRow = ({ action }) => {
+    if (!action) return null;
 
-    const isBlocking = confirmAction.type === 'block';
+    const isBlocking = action.type === 'block';
     const actionColor = isBlocking ? '#E74C3C' : '#27AE60';
-    const iconBgColor = isBlocking ? '#F1948A' : '#82E0AA';
+    const bgColor = isBlocking ? 'from-red-50 to-pink-50' : 'from-green-50 to-emerald-50';
+    const borderColor = isBlocking ? 'border-red-400' : 'border-green-400';
 
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg shadow-lg max-w-md w-full mx-4 max-h-90vh overflow-y-auto">
-          <div className="p-6">
-            {/* Close Button */}
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-2xl font-bold" style={{color: '#5D3A00'}}>
-                {isBlocking ? 'Block User' : 'Unblock User'}
-              </h3>
-              <button
-                onClick={confirmAction.onCancel}
-                className="p-2 rounded-lg transition-colors"
-                style={{backgroundColor: '#FFE4D6', color: '#5D3A00'}}
-                onMouseOver={(e) => e.target.style.backgroundColor = '#FFD95A'}
-                onMouseOut={(e) => e.target.style.backgroundColor = '#FFE4D6'}
-              >
-                <X size={20} />
-              </button>
-            </div>
+      <tr>
+        <td colSpan="7" className="px-0 py-0">
+          <div className={`bg-gradient-to-r ${bgColor} border-l-4 ${borderColor} mx-4 my-2 rounded-lg`}>
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold flex items-center gap-2" style={{color: '#5D3A00'}}>
+                  {isBlocking ? <UserX size={20} /> : <UserCheck size={20} />}
+                  {isBlocking ? 'Block User' : 'Unblock User'}
+                </h3>
+                <button
+                  onClick={action.onCancel}
+                  className="p-2 rounded-lg transition-colors"
+                  style={{backgroundColor: '#FFE4D6', color: '#5D3A00'}}
+                  onMouseOver={(e) => e.target.style.backgroundColor = '#FFD95A'}
+                  onMouseOut={(e) => e.target.style.backgroundColor = '#FFE4D6'}
+                >
+                  <ChevronUp size={16} />
+                </button>
+              </div>
 
-            {/* Header with Icon */}
-            <div className="flex items-center justify-center mb-4">
-              <div 
-                className="w-16 h-16 rounded-full flex items-center justify-center"
-                style={{ backgroundColor: iconBgColor }}
-              >
-                {isBlocking ? (
-                  <UserX size={32} style={{ color: actionColor }} />
-                ) : (
-                  <UserCheck size={32} style={{ color: actionColor }} />
-                )}
+              <div className="mb-6">
+                <p className="mb-2" style={{ color: '#5D3A00' }}>
+                  Are you sure you want to{' '}
+                  <span className="font-semibold" style={{ color: actionColor }}>
+                    {action.type}
+                  </span>{' '}
+                  <span className="font-semibold">this user</span>?
+                </p>
+                <p className="text-sm" style={{ color: '#666' }}>
+                  {isBlocking 
+                    ? 'They will no longer be able to access their account.' 
+                    : 'They will regain access to their account.'}
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={action.onCancel}
+                  className="px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
+                  style={{backgroundColor: '#FFE4D6', color: '#5D3A00'}}
+                  onMouseOver={(e) => e.target.style.backgroundColor = '#FFD95A'}
+                  onMouseOut={(e) => e.target.style.backgroundColor = '#FFE4D6'}
+                >
+                  <X size={16} />
+                  Cancel
+                </button>
+                <button
+                  onClick={action.onConfirm}
+                  className="px-4 py-2 rounded-lg font-medium transition-colors text-white flex items-center gap-2"
+                  style={{ backgroundColor: actionColor }}
+                  onMouseOver={(e) => {
+                    e.target.style.backgroundColor = isBlocking ? '#C0392B' : '#229954';
+                    e.target.style.transform = 'translateY(-1px)';
+                    e.target.style.boxShadow = `0 4px 12px ${actionColor}40`;
+                  }}
+                  onMouseOut={(e) => {
+                    e.target.style.backgroundColor = actionColor;
+                    e.target.style.transform = 'translateY(0px)';
+                    e.target.style.boxShadow = 'none';
+                  }}
+                >
+                  {isBlocking ? <UserX size={16} /> : <UserCheck size={16} />}
+                  {isBlocking ? 'Block User' : 'Unblock User'}
+                </button>
               </div>
             </div>
-
-            {/* Confirmation Message */}
-            <div className="mb-6">
-              <p className="text-center mb-2" style={{ color: '#5D3A00' }}>
-                Are you sure you want to{' '}
-                <span className="font-semibold" style={{ color: actionColor }}>
-                  {confirmAction.type}
-                </span>{' '}
-                this user?
-              </p>
-              <p className="text-center text-sm" style={{ color: '#666' }}>
-                {isBlocking 
-                  ? 'They will no longer be able to access their account.' 
-                  : 'They will regain access to their account.'}
-              </p>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-3">
-              <button
-                onClick={confirmAction.onCancel}
-                className="flex-1 px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
-                style={{backgroundColor: '#FFE4D6', color: '#5D3A00'}}
-                onMouseOver={(e) => e.target.style.backgroundColor = '#FFD95A'}
-                onMouseOut={(e) => e.target.style.backgroundColor = '#FFE4D6'}
-              >
-                <X size={16} />
-                Cancel
-              </button>
-              <button
-                onClick={confirmAction.onConfirm}
-                className="flex-1 px-4 py-2 rounded-lg font-medium transition-colors text-white flex items-center gap-2"
-                style={{ backgroundColor: actionColor }}
-                onMouseOver={(e) => {
-                  e.target.style.backgroundColor = isBlocking ? '#C0392B' : '#229954';
-                  e.target.style.transform = 'translateY(-1px)';
-                  e.target.style.boxShadow = `0 4px 12px ${actionColor}40`;
-                }}
-                onMouseOut={(e) => {
-                  e.target.style.backgroundColor = actionColor;
-                  e.target.style.transform = 'translateY(0px)';
-                  e.target.style.boxShadow = 'none';
-                }}
-              >
-                {isBlocking ? <UserX size={16} /> : <UserCheck size={16} />}
-                {isBlocking ? 'Block User' : 'Unblock User'}
-              </button>
-            </div>
           </div>
-        </div>
-      </div>
+        </td>
+      </tr>
     );
   };
 
@@ -509,146 +519,148 @@ const UsersManagement = () => {
         </div>
 
         {/* Users Table */}
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden users-table">
-            <div className="overflow-x-auto">
-              {loading ? (
-                <div className="p-8 text-center" style={{ color: '#D87C5A' }}>
-            <Users size={48} className="mx-auto mb-4 opacity-50" />
-            <p className="text-lg font-medium mb-2">Loading users...</p>
-                </div>
-              ) : error ? (
-                <div className="p-8 text-center" style={{ color: '#D87C5A' }}>
-            <Users size={48} className="mx-auto mb-4 opacity-50" />
-            <p className="text-lg font-medium mb-2">{error}</p>
-            <p className="text-sm">Try again later</p>
-                </div>
-              ) : filteredUsers.length === 0 ? (
-                <div className="p-8 text-center" style={{ color: '#D87C5A' }}>
-            <Users size={48} className="mx-auto mb-4 opacity-50" />
-            <p className="text-lg font-medium mb-2">No users found</p>
-            <p className="text-sm">Try adjusting your search terms or filters</p>
-                </div>
-              ) : (
-                <table className="w-full">
-            <thead style={{ backgroundColor: '#FFF5E1' }}>
-              <tr>
-                <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>User</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Type</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Status</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Join Date</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Artworks</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Revenue/Spent</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredUsers.map((user, index) => (
-                <tr key={user.userId} className={`user-row ${index % 2 === 0 ? 'bg-white' : ''}`} style={{backgroundColor: index % 2 === 1 ? '#FFF5E1' : 'white'}}>
-            <td className="px-6 py-4">
-              <div>
-                <div className="font-medium" style={{color: '#5D3A00'}}>{user.firstName} {user.lastName}</div>
-                <div className="text-sm" style={{color: '#D87C5A'}}>{user.email}</div>
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden users-table">
+          <div className="overflow-x-auto">
+            {loading ? (
+              <div className="p-8 text-center" style={{ color: '#D87C5A' }}>
+                <Users size={48} className="mx-auto mb-4 opacity-50" />
+                <p className="text-lg font-medium mb-2">Loading users...</p>
               </div>
-            </td>
-            <td className="px-6 py-4 text-sm" style={{color: '#5D3A00'}}>
-              <span className="px-2 py-1 text-xs font-medium rounded-full" style={{
-                backgroundColor: user.userType === 'artist' ? '#FFE4D6' : user.userType === 'moderator' ? '#FFD95A' : user.userType === 'buyer' ? '#E8F5E8' : user.userType === 'shop' ? '#E3F2FD' : '#FFF5E1',
-                color: '#5D3A00'
-              }}>
-                {user.userType}
-              </span>
-            </td>
-            <td className="px-6 py-4">
-              <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                user.status === 'Active' ? 'text-green-800 bg-green-100' :
-                user.status === 'Pending' ? 'text-yellow-800 bg-yellow-100' :
-                'text-red-800 bg-red-100'
-              }`}>
-                {user.status}
-              </span>
-            </td>
-            <td className="px-6 py-4 text-sm" style={{color: '#5D3A00'}}>{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : ''}</td>
-            <td className="px-6 py-4 text-sm" style={{color: '#5D3A00'}}>
-            <span className="font-medium">
-              {user.userType === 'artist' ? (user.total_artworks || 0) : '-'}
-            </span>
-
-            </td>
-            <td className="px-6 py-4 text-sm" style={{color: '#5D3A00'}}>
-                <div>
-            <div className="font-medium" style={{color: '#D87C5A'}}>
-              {formatPrice(user.userType === 'artist' ? (user.revenue || 0) : (user.spent || 0), "LKR")}
-            </div>
-            <div className="text-xs opacity-75">
-              {user.userType === 'artist' ? (user.totalSales || 0) : (user.totalPurchases || 0)} {user.userType === 'artist' ? "sales" : "purchases"}
-            </div>
-                </div>
-            </td>
-            <td className="px-6 py-4">
-              <div className="flex items-center gap-2">
-                <button
-            onClick={() => {setSelectedUser(user); setShowUserModal(true);}}
-                            className="p-2 rounded-lg transition-colors"
-                            style={{backgroundColor: '#FFE4D6', color: '#5D3A00'}}
-                            onMouseOver={(e) => {
-                              e.target.style.backgroundColor = '#FFD95A';
-                              e.target.style.transform = 'scale(1.05)';
-                            }}
-                            onMouseOut={(e) => {
-                              e.target.style.backgroundColor = '#FFE4D6';
-                              e.target.style.transform = 'scale(1)';
-                            }}
-                            title="View Details"
-                          >
-                            <Eye size={16} />
-                          </button>
-                          <button
-                            onClick={() => handleBlockUser(user.userId, user.userType, user.status)}
-                            className={`p-2 rounded-lg transition-all ${
-                              user.status === 'Suspended' 
-                                ? 'bg-green-100 text-green-800 hover:bg-green-200' 
-                                : 'bg-red-100 text-red-800 hover:bg-red-200'
-                            }`}
-                            onMouseOver={(e) => {
-                              e.target.style.transform = 'scale(1.05)';
-                            }}
-                            onMouseOut={(e) => {
-                              e.target.style.transform = 'scale(1)';
-                            }}
-                            title={user.status === 'Suspended' ? 'Unblock User' : 'Block User'}
-                          >
-                            {user.status === 'Suspended' ? <UserCheck size={16} /> : <UserX size={16} />}
-                          </button>
-                          <button
-                            className="p-2 rounded-lg transition-colors"
-                            style={{backgroundColor: '#FFE4D6', color: '#5D3A00'}}
-                            onMouseOver={(e) => {
-                              e.target.style.backgroundColor = '#FFD95A';
-                              e.target.style.transform = 'scale(1.05)';
-                            }}
-                            onMouseOut={(e) => {
-                              e.target.style.backgroundColor = '#FFE4D6';
-                              e.target.style.transform = 'scale(1)';
-                            }}
-                            title="More Options"
-                          >
-                            <MoreVertical size={16} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
+            ) : error ? (
+              <div className="p-8 text-center" style={{ color: '#D87C5A' }}>
+                <Users size={48} className="mx-auto mb-4 opacity-50" />
+                <p className="text-lg font-medium mb-2">{error}</p>
+                <p className="text-sm">Try again later</p>
+              </div>
+            ) : filteredUsers.length === 0 ? (
+              <div className="p-8 text-center" style={{ color: '#D87C5A' }}>
+                <Users size={48} className="mx-auto mb-4 opacity-50" />
+                <p className="text-lg font-medium mb-2">No users found</p>
+                <p className="text-sm">Try adjusting your search terms or filters</p>
+              </div>
+            ) : (
+              <table className="w-full">
+                <thead style={{ backgroundColor: '#FFF5E1' }}>
+                  <tr>
+                    <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>User</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Type</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Status</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Join Date</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Artworks</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Revenue/Spent</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredUsers.map((user, index) => (
+                    <React.Fragment key={user.userId}>
+                      <tr className={`user-row ${index % 2 === 0 ? 'bg-white' : ''} ${expandedRow === user.userId ? 'border-b-0' : ''}`} style={{backgroundColor: index % 2 === 1 ? '#FFF5E1' : 'white'}}>
+                        <td className="px-6 py-4">
+                          <div>
+                            <div className="font-medium" style={{color: '#5D3A00'}}>{user.firstName} {user.lastName}</div>
+                            <div className="text-sm" style={{color: '#D87C5A'}}>{user.email}</div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm" style={{color: '#5D3A00'}}>
+                          <span className="px-2 py-1 text-xs font-medium rounded-full" style={{
+                            backgroundColor: user.userType === 'artist' ? '#FFE4D6' : user.userType === 'moderator' ? '#FFD95A' : user.userType === 'buyer' ? '#E8F5E8' : user.userType === 'shop' ? '#E3F2FD' : '#FFF5E1',
+                            color: '#5D3A00'
+                          }}>
+                            {user.userType}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                            user.status === 'Active' ? 'text-green-800 bg-green-100' :
+                            user.status === 'Pending' ? 'text-yellow-800 bg-yellow-100' :
+                            'text-red-800 bg-red-100'
+                          }`}>
+                            {user.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm" style={{color: '#5D3A00'}}>{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : ''}</td>
+                        <td className="px-6 py-4 text-sm" style={{color: '#5D3A00'}}>
+                          <span className="font-medium">
+                            {user.userType === 'artist' ? (user.total_artworks || 0) : '-'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm" style={{color: '#5D3A00'}}>
+                          <div>
+                            <div className="font-medium" style={{color: '#D87C5A'}}>
+                              {formatPrice(user.userType === 'artist' ? (user.revenue || 0) : (user.spent || 0), "LKR")}
+                            </div>
+                            <div className="text-xs opacity-75">
+                              {user.userType === 'artist' ? (user.totalSales || 0) : (user.totalPurchases || 0)} {user.userType === 'artist' ? "sales" : "purchases"}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleViewDetails(user)}
+                              className="p-2 rounded-lg transition-colors"
+                              style={{backgroundColor: expandedRow === user.userId && expandType === 'details' ? '#FFD95A' : '#FFE4D6', color: '#5D3A00'}}
+                              onMouseOver={(e) => {
+                                e.target.style.backgroundColor = '#FFD95A';
+                                e.target.style.transform = 'scale(1.05)';
+                              }}
+                              onMouseOut={(e) => {
+                                e.target.style.backgroundColor = expandedRow === user.userId && expandType === 'details' ? '#FFD95A' : '#FFE4D6';
+                                e.target.style.transform = 'scale(1)';
+                              }}
+                              title="View Details"
+                            >
+                              {expandedRow === user.userId && expandType === 'details' ? <ChevronUp size={16} /> : <Eye size={16} />}
+                            </button>
+                            <button
+                              onClick={() => handleBlockUser(user.userId, user.userType, user.status)}
+                              className={`p-2 rounded-lg transition-all ${
+                                user.status === 'Suspended' 
+                                  ? 'bg-green-100 text-green-800 hover:bg-green-200' 
+                                  : 'bg-red-100 text-red-800 hover:bg-red-200'
+                              }`}
+                              onMouseOver={(e) => {
+                                e.target.style.transform = 'scale(1.05)';
+                              }}
+                              onMouseOut={(e) => {
+                                e.target.style.transform = 'scale(1)';
+                              }}
+                              title={user.status === 'Suspended' ? 'Unblock User' : 'Block User'}
+                            >
+                              {user.status === 'Suspended' ? <UserCheck size={16} /> : <UserX size={16} />}
+                            </button>
+                            <button
+                              className="p-2 rounded-lg transition-colors"
+                              style={{backgroundColor: '#FFE4D6', color: '#5D3A00'}}
+                              onMouseOver={(e) => {
+                                e.target.style.backgroundColor = '#FFD95A';
+                                e.target.style.transform = 'scale(1.05)';
+                              }}
+                              onMouseOut={(e) => {
+                                e.target.style.backgroundColor = '#FFE4D6';
+                                e.target.style.transform = 'scale(1)';
+                              }}
+                              title="More Options"
+                            >
+                              <MoreVertical size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                      {/* Expanded Row Content */}
+                      {expandedRow === user.userId && expandType === 'details' && (
+                        <UserDetailsRow user={selectedUser} />
+                      )}
+                      {expandedRow === user.userId && expandType === 'confirm' && (
+                        <ConfirmationRow action={confirmAction} />
+                      )}
+                    </React.Fragment>
                   ))}
                 </tbody>
               </table>
             )}
           </div>
         </div>
-
-        {/* User Details Modal */}
-        <UserModal />
-
-        {/* Confirmation Popup */}
-        <ConfirmationPopup />
       </div>
     </>
   );

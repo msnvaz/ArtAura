@@ -386,6 +386,25 @@ const ModeratorDashboard = () => {
                   <span>175 participants • 98 submissions</span>
                 </div>
                 <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Review</span>
+                <button
+                  className="border px-3 py-2 rounded-lg font-medium flex items-center space-x-1 whitespace-nowrap btn-animate mt-4 transition-colors"
+                  style={{
+                    borderColor: "#FFE4D6",
+                    color: "#FFE4D6",
+                    backgroundColor: "rgba(255, 228, 214, 0.1)",
+                  }}
+                  onMouseOver={e => {
+                    e.target.style.backgroundColor = "#FFE4D6";
+                    e.target.style.color = "#5D3A00";
+                  }}
+                  onMouseOut={e => {
+                    e.target.style.backgroundColor = "rgba(255, 228, 214, 0.1)";
+                    e.target.style.color = "#FFE4D6";
+                  }}
+                >
+                  <Trophy size={14} />
+                  <span>View Details</span>
+                </button>
               </div>
               {/* Abstract Art Contest */}
               <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6">
@@ -405,6 +424,25 @@ const ModeratorDashboard = () => {
                 </div>
                 <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Completed</span>
                 {/* Winner Selection Example */}
+                <button
+                  className="border px-3 py-2 rounded-lg font-medium flex items-center space-x-1 whitespace-nowrap btn-animate mt-4 transition-colors"
+                  style={{
+                    borderColor: "#FFE4D6",
+                    color: "#FFE4D6",
+                    backgroundColor: "rgba(255, 228, 214, 0.1)",
+                  }}
+                  onMouseOver={e => {
+                    e.target.style.backgroundColor = "#FFE4D6";
+                    e.target.style.color = "#5D3A00";
+                  }}
+                  onMouseOut={e => {
+                    e.target.style.backgroundColor = "rgba(255, 228, 214, 0.1)";
+                    e.target.style.color = "#FFE4D6";
+                  }}
+                >
+                  <Trophy size={14} />
+                  <span>View Details</span>
+                </button>
                 <div className="mt-4 p-3 rounded bg-blue-50 border border-blue-200">
                   <span className="block text-sm font-semibold text-blue-800 mb-1">Winner Selected</span>
                   <span className="block text-xs text-blue-700">Winner: Priya Sharma (Artwork: "Dreamscape")</span>

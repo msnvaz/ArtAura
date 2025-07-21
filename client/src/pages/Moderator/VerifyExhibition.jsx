@@ -9,7 +9,9 @@ import {
   DollarSign,
   Eye,
   Filter,
+  Mail,
   MapPin,
+  Phone,
   Search,
   Shield,
   User,
@@ -45,6 +47,8 @@ const [exhibitionPosts, setExhibitionPosts] = useState([
     endTime: "18:00",
     createdBy: "Sarah Johnson",
     userHandle: "@artgallery_dt",
+    contactEmail: "sarah.johnson@example.com",
+    contactPhone: "+1-555-123-4567",
     status: "pending",
     feePaid: "$150",
     submittedAt: "2024-07-10T14:30:00Z",
@@ -68,6 +72,8 @@ const [exhibitionPosts, setExhibitionPosts] = useState([
     endTime: "17:00",
     createdBy: "Michael Chen",
     userHandle: "@vintage_lens",
+    contactEmail: "michael.chen@example.com",
+    contactPhone: "+1-555-987-6543",
     status: "pending",
     feePaid: "$200",
     submittedAt: "2024-07-12T16:45:00Z",
@@ -90,6 +96,8 @@ const [exhibitionPosts, setExhibitionPosts] = useState([
     endTime: "16:00",
     createdBy: "Emma Rodriguez",
     userHandle: "@citypark_art",
+    contactEmail: "emma.rodriguez@example.com",
+    contactPhone: "+1-555-222-3344",
     status: "approved",
     feePaid: "$100",
     submittedAt: "2024-07-01T09:15:00Z",
@@ -113,6 +121,8 @@ const [exhibitionPosts, setExhibitionPosts] = useState([
     endTime: "20:00",
     createdBy: "Alex Kim",
     userHandle: "@digital_futures",
+    contactEmail: "alex.kim@example.com",
+    contactPhone: "+1-555-555-7890",
     status: "rejected",
     feePaid: "$175",
     submittedAt: "2024-07-05T11:20:00Z",
@@ -429,6 +439,14 @@ return (
                             <Calendar className="w-4 h-4" />
                             <span>{formatDateTime(post.startDate, post.startTime)} - {formatDateTime(post.endDate, post.endTime)}</span>
                           </div>
+                          <div className="flex items-center gap-2 text-sm" style={{color: '#D87C5A'}}>
+                            <Mail size={16} style={{verticalAlign: 'middle'}} />
+                            <span>{post.contactEmail}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm" style={{color: '#D87C5A'}}>
+                             <Phone size={16} style={{verticalAlign: 'middle'}} />
+                            <span>{post.contactPhone}</span>
+                          </div>
                         </div>
                         
                         <p className="text-sm mb-4" style={{color: '#5D3A00'}}>
@@ -574,6 +592,19 @@ return (
                       <p className="text-sm leading-relaxed" style={{color: '#5D3A00'}}>
                         {selectedPost.description}
                       </p>
+                    </div>
+                    <div className="mb-6">
+                      <h3 className="text-lg font-semibold mb-2" style={{color: '#5D3A00'}}>Contact & Location Details</h3>
+                      <div className="flex flex-col gap-2">
+                        <span className="text-sm flex items-center gap-2" style={{color: '#D87C5A'}}>
+                          <Mail size={18} style={{verticalAlign: 'middle'}} />
+                          {selectedPost.contactEmail}
+                        </span>
+                        <span className="text-sm flex items-center gap-2" style={{color: '#D87C5A'}}>
+                          <Phone size={18} style={{verticalAlign: 'middle'}} />
+                          {selectedPost.contactPhone}
+                        </span>
+                      </div>
                     </div>
 
                     {selectedPost.images && selectedPost.images.length > 0 && (
