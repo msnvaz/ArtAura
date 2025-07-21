@@ -8,6 +8,7 @@ import ExhibitionPostForm from "../components/community/ExhibitionPostForm";
 import RecentChallenges from "../components/community/RecentChallenges";
 import CartSidebar from "../components/cart/CartSidebar";
 import { Filter, Calendar, Image, Users } from "lucide-react";
+import { formatDistanceToNow, isValid } from 'date-fns';
 import axios from "axios";
 
 const CommunityPage = () => {
@@ -16,6 +17,33 @@ const CommunityPage = () => {
   const [exhibitionPosts, setExhibitionPosts] = useState([]);
   const [activeFilter, setActiveFilter] = useState("all");
   const [loading, setLoading] = useState(true);
+
+  // Helper function to safely format time distance
+  const safeFormatDistanceToNow = (date) => {
+    if (!date) return "Unknown time";
+
+    let d;
+    if (typeof date === 'string') {
+      d = new Date(date);
+      if (!isValid(d)) {
+        const timestamp = parseInt(date);
+        if (!isNaN(timestamp)) {
+          d = new Date(timestamp);
+        }
+      }
+    } else if (typeof date === 'number') {
+      d = new Date(date);
+    } else {
+      d = new Date(date);
+    }
+
+    if (!isValid(d)) {
+      console.warn('Invalid date provided to safeFormatDistanceToNow:', date);
+      return "Unknown time";
+    }
+
+    return formatDistanceToNow(d, { addSuffix: true });
+  };
 
   // Mock regular posts
   const mockRegularPosts = [
@@ -28,7 +56,7 @@ const CommunityPage = () => {
       },
       caption: "My latest Sri Lankan style painting! 🇱🇰🎨✨",
       image: "/art1.jpeg", // public image
-      created_at: "2025-07-15T10:30:00Z",
+      created_at: new Date(Date.now() - 15 * 60 * 1000).toISOString(), // 15 minutes ago
       likes: 34,
       comments: 5,
     },
@@ -41,7 +69,7 @@ const CommunityPage = () => {
       },
       caption: "My new clay sculpture!",
       image: "/art2.jpeg", // public image
-      created_at: "2025-07-16T14:20:00Z",
+      created_at: new Date(Date.now() - 45 * 60 * 1000).toISOString(), // 45 minutes ago
       likes: 21,
       comments: 2,
     },
@@ -54,7 +82,7 @@ const CommunityPage = () => {
       },
       caption: "Throwback to my first exhibition! 🇱🇰 #tbt",
       image: "/art3.jpeg", // public image
-      created_at: "2025-07-14T09:00:00Z",
+      created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
       likes: 47,
       comments: 8,
     },
@@ -76,7 +104,7 @@ const CommunityPage = () => {
       organizer: "Sri Lanka Contemporary Arts Society",
       category: "Modern Art",
       entryFee: "LKR 1000",
-      created_at: "2025-07-18T09:00:00Z",
+      created_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30 minutes ago
       likes: 56,
       comments: 12,
       verification_status: "verified",
@@ -98,7 +126,7 @@ const CommunityPage = () => {
       organizer: "Photography Club Sri Lanka",
       category: "Photography",
       entryFee: "LKR 2500",
-      created_at: "2025-07-17T14:30:00Z",
+      created_at: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(), // 1 hour ago
       likes: 43,
       comments: 8,
       verification_status: "verified",
@@ -120,7 +148,7 @@ const CommunityPage = () => {
       organizer: "Youth Arts Foundation Sri Lanka",
       category: "Mixed Media",
       entryFee: "LKR 500",
-      created_at: "2025-07-16T11:20:00Z",
+      created_at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(), // 3 hours ago
       likes: 38,
       comments: 15,
       verification_status: "verified",
@@ -217,33 +245,30 @@ const CommunityPage = () => {
             <div className="flex space-x-4 mb-6">
               <button
                 onClick={() => handleFilterChange("all")}
-                className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-all flex items-center justify-center ${
-                  activeFilter === "all"
-                    ? "bg-[#7f5539] text-white shadow-md"
-                    : "bg-white text-[#7f5539]"
-                }`}
+                className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-all flex items-center justify-center ${activeFilter === "all"
+                  ? "bg-[#7f5539] text-white shadow-md"
+                  : "bg-white text-[#7f5539]"
+                  }`}
               >
                 <Users className="w-5 h-5 mr-2" />
                 All
               </button>
               <button
                 onClick={() => handleFilterChange("regular")}
-                className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-all flex items-center justify-center ${
-                  activeFilter === "regular"
-                    ? "bg-[#7f5539] text-white shadow-md"
-                    : "bg-white text-[#7f5539]"
-                }`}
+                className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-all flex items-center justify-center ${activeFilter === "regular"
+                  ? "bg-[#7f5539] text-white shadow-md"
+                  : "bg-white text-[#7f5539]"
+                  }`}
               >
                 <Image className="w-5 h-5 mr-2" />
                 Posts
               </button>
               <button
                 onClick={() => handleFilterChange("exhibition")}
-                className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-all flex items-center justify-center ${
-                  activeFilter === "exhibition"
-                    ? "bg-[#7f5539] text-white shadow-md"
-                    : "bg-white text-[#7f5539]"
-                }`}
+                className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-all flex items-center justify-center ${activeFilter === "exhibition"
+                  ? "bg-[#7f5539] text-white shadow-md"
+                  : "bg-white text-[#7f5539]"
+                  }`}
               >
                 <Calendar className="w-5 h-5 mr-2" />
                 Exhibitions
@@ -300,8 +325,8 @@ const CommunityPage = () => {
                         key={post.post_id}
                         username={post.artist.name}
                         avatar={post.artist.avatar}
-                        timeAgo={post.created_at}
-                        image={post.image}
+                        timeAgo={safeFormatDistanceToNow(post.created_at)}
+                        image={`http://localhost:8081${post.image}`}
                         likes={post.likes}
                         caption={post.caption}
                       />

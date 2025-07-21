@@ -104,4 +104,3 @@ const UploadArtwork = ({ onUpload }) => {
 };
 
 export default UploadArtwork;
-
