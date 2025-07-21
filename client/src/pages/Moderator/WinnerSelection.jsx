@@ -281,39 +281,10 @@ const WinnerSelection = () => {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
           <div className="space-y-6">
-            {/* Challenge Selection & Criteria Status */}
+            {/* Scoring Criteria Status - Removed Challenge Selection */}
             <div className="rounded-lg shadow-sm border h-full relative overflow-hidden" style={{backgroundColor: '#FFF5E1'}}>
               <div className="p-6">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{color: '#5D3A00'}}>Selected Challenge</label>
-                    <select
-                      value={selectedChallenge}
-                      onChange={(e) => setSelectedChallenge(e.target.value)}
-                      className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent"
-                      style={{borderColor: '#FFE4D6', backgroundColor: 'white'}}
-                    >
-                      {challenges.map(challenge => (
-                        <option key={challenge.id} value={challenge.id}>
-                          {challenge.name} ({challenge.status})
-                        </option>
-                      ))}
-                    </select>
-
-                    {/* More details for selected challenge */}
-                    {selectedChallengeData && (
-                      <div className="mt-4 p-4 rounded-lg border bg-white" style={{borderColor: '#FFE4D6'}}>
-                        <h4 className="font-semibold mb-2" style={{color: '#5D3A00'}}>{selectedChallengeData.name}</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                          <div><span className="font-medium" style={{color: '#D87C5A'}}>Status:</span> {selectedChallengeData.status}</div>
-                          <div><span className="font-medium" style={{color: '#D87C5A'}}>Start Date:</span> {selectedChallengeData.startDate || '2025-08-01'}</div>
-                          <div><span className="font-medium" style={{color: '#D87C5A'}}>Deadline:</span> {selectedChallengeData.deadline || '2025-08-30'}</div>
-                          <div><span className="font-medium" style={{color: '#D87C5A'}}>Participants:</span> {selectedChallengeData.participants || '210+'}</div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
+                <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
                   <div>
                     <label className="block text-sm font-medium mb-2" style={{color: '#5D3A00'}}>Scoring Criteria Status</label>
                     <div className={`p-3 rounded-lg border ${
