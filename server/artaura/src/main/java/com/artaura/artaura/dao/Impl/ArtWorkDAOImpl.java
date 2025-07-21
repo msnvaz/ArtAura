@@ -19,7 +19,7 @@ public class ArtWorkDAOImpl implements ArtWorkDAO {
 
     @Override
     public void saveArtWork(Long artistId, ArtWorkCreateDTO dto) {
-        String sql = "INSERT INTO artworks (artist_id, title, medium, size, year, price, description, category, tags, status, image_url, likes_count, views_count, featured, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO artworks (artist_id, title, medium, size, year, price, description, category, tags, status, image_url, likes_count, views_count, is_featured, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         jdbcTemplate.update(sql,
                 artistId,
                 dto.getTitle(),
@@ -148,7 +148,7 @@ public class ArtWorkDAOImpl implements ArtWorkDAO {
             if (!first) {
                 sql.append(", ");
             }
-            sql.append("featured = ?");
+            sql.append("is_featured = ?");
             params.add(dto.isFeatured());
             first = false;
         }
@@ -183,7 +183,7 @@ public class ArtWorkDAOImpl implements ArtWorkDAO {
             dto.setCategory(rs.getString("category"));
             dto.setTags(rs.getString("tags"));
             dto.setStatus(rs.getString("status"));
-            dto.setFeatured(rs.getBoolean("featured"));
+            dto.setFeatured(rs.getBoolean("is_featured"));
             dto.setUpdatedAt(rs.getTimestamp("updated_at").toLocalDateTime());
             dto.setArtistId(rs.getLong("artist_id"));
             return dto;
@@ -209,7 +209,7 @@ public class ArtWorkDAOImpl implements ArtWorkDAO {
             dto.setCategory(rs.getString("category"));
             dto.setTags(rs.getString("tags"));
             dto.setStatus(rs.getString("status"));
-            dto.setFeatured(rs.getBoolean("featured"));
+            dto.setFeatured(rs.getBoolean("is_featured"));
             dto.setUpdatedAt(rs.getTimestamp("updated_at").toLocalDateTime());
             dto.setArtistId(rs.getLong("artist_id"));
             return dto;

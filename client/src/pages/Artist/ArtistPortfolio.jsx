@@ -45,7 +45,8 @@ import {
   Globe,
   ArrowLeft,
   FileText,
-  Shield
+  Shield,
+  AlertTriangle
 } from 'lucide-react';
 
 const ArtistPortfolio = () => {
@@ -124,6 +125,13 @@ const ArtistPortfolio = () => {
   const [topAchievements, setTopAchievements] = useState([]);
   const [exhibitionsCount, setExhibitionsCount] = useState(0);
   const [loading, setLoading] = useState(true);
+
+  // Debug effect to track achievementsCount changes
+  useEffect(() => {
+    if (achievementsCount > 0) {
+      console.log('AchievementsCount updated to:', achievementsCount);
+    }
+  }, [achievementsCount]);
 
   // Fetch artist profile data
   useEffect(() => {
@@ -206,8 +214,20 @@ const ArtistPortfolio = () => {
     }
 
     try {
-      const response = await axios.get(`http://localhost:8081/api/achievements/artist/${userId}`);
+      console.log('Fetching achievements for userId:', userId);
+
+      // Add headers if token is available
+      const config = {};
+      if (token) {
+        config.headers = {
+          'Authorization': `Bearer ${token}`
+        };
+      }
+
+      const response = await axios.get(`http://localhost:8081/api/achievements/artist/${userId}`, config);
+
       const achievements = response.data || [];
+      console.log('Achievements loaded:', achievements.length);
 
       // Set the total count for navigation tab
       setAchievementsCount(achievements.length);
@@ -243,6 +263,12 @@ const ArtistPortfolio = () => {
       setTopAchievements(topForDisplay);
     } catch (error) {
       console.error("Error fetching recent achievements:", error);
+      console.error("Error details:", {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: error.message
+      });
       setRecentAchievements([]);
       setTopAchievements([]);
       setAchievementsCount(0);
@@ -251,8 +277,10 @@ const ArtistPortfolio = () => {
 
   // Fetch recent achievements
   useEffect(() => {
-    fetchAchievementsData();
-  }, [userId]);
+    if (userId && token) {
+      fetchAchievementsData();
+    }
+  }, [userId, token]);
 
   // Fetch exhibitions count function (reusable)
   const fetchExhibitionsCount = async () => {
@@ -310,32 +338,49 @@ const ArtistPortfolio = () => {
   }, [role, userId, token]); // 👈 Add these so it re-runs when context loads
 
   const [artworks, setArtworks] = useState([]);
+  const [artworksLoading, setArtworksLoading] = useState(false);
+  const [artworksError, setArtworksError] = useState(null);
 
   useEffect(() => {
     const fetchArtworks = async () => {
       if (!userId) {
-        // Don't fetch if userId is null/undefined
+        console.log('No userId available, skipping artwork fetch');
         setArtworks([]);
         return;
       }
+
+      console.log('Fetching artworks for userId:', userId);
+      setArtworksLoading(true);
+      setArtworksError(null);
+
       try {
-        const token = localStorage.getItem('token'); // Assuming JWT is stored in localStorage
+        const token = localStorage.getItem('token');
+        console.log('Token available:', !!token);
+
         const response = await axios.get(`http://localhost:8081/api/artworks/artist/${userId}`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
         });
+
+        console.log('Artworks API response:', response.data);
+
         // Ensure response.data is an array
-        setArtworks(Array.isArray(response.data) ? response.data : []);
+        const artworksData = Array.isArray(response.data) ? response.data : [];
+        setArtworks(artworksData);
+        console.log('Set artworks state:', artworksData.length, 'artworks');
+
       } catch (error) {
         console.error('Failed to fetch artworks:', error);
-        // Ensure artworks stays as an empty array on error
+        setArtworksError(error.response?.data?.message || error.message || 'Failed to load artworks');
         setArtworks([]);
+      } finally {
+        setArtworksLoading(false);
       }
     };
 
     fetchArtworks();
-  }, [userId]);
+  }, [userId, token]); // Add token to dependencies
 
   // Winner badges data
   const badges = [
@@ -1363,23 +1408,31 @@ const ArtistPortfolio = () => {
                 { id: 'exhibitions', label: 'Exhibitions', count: exhibitionsCount },
                 { id: 'achievements', label: 'Achievements', count: achievementsCount },
                 { id: 'analytics', label: 'Analytics' }
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors ${activeTab === tab.id
-                    ? 'border-[#7f5539] text-[#7f5539]'
-                    : 'border-transparent text-[#7f5539]/60 hover:text-[#7f5539] hover:border-[#7f5539]/30'
-                    }`}
-                >
-                  {tab.label}
-                  {tab.count && (
-                    <span className="ml-2 bg-[#7f5539]/10 text-[#7f5539] px-2 py-1 rounded-full text-xs">
-                      {tab.count}
-                    </span>
-                  )}
-                </button>
-              ))}
+              ].map((tab) => {
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => {
+                      setActiveTab(tab.id);
+                      // Refresh achievements data when achievements tab is clicked
+                      if (tab.id === 'achievements' && userId && token) {
+                        fetchAchievementsData();
+                      }
+                    }}
+                    className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors ${activeTab === tab.id
+                      ? 'border-[#7f5539] text-[#7f5539]'
+                      : 'border-transparent text-[#7f5539]/60 hover:text-[#7f5539] hover:border-[#7f5539]/30'
+                      }`}
+                  >
+                    {tab.label}
+                    {(tab.count !== undefined && tab.count !== null) && (
+                      <span className="ml-2 bg-[#7f5539]/10 text-[#7f5539] px-2 py-1 rounded-full text-xs">
+                        {tab.count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </nav>
           </div>
         </div>
@@ -1769,79 +1822,129 @@ const ArtistPortfolio = () => {
             </div>
 
             {/* Artworks Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {Array.isArray(artworks) && artworks.map((artwork, index) => (
-                <div key={artwork.artwork_id || artwork.id || `artwork-${index}`} className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-lg transition-all duration-300 group">
-                  <div className="relative">
-                    <img
-                      src={`http://localhost:8081${artwork.imageUrl}`}
-                      alt={artwork.title}
-                      className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    {artwork.featured && (
-                      <div className="absolute top-3 left-3 bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1">
-                        <Star className="h-3 w-3" />
-                        <span>Featured</span>
-                      </div>
-                    )}
-                    <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex space-x-2">
-                      <button
-                        onClick={() => handleViewArtworkDetail(artwork)}
-                        className="bg-white/90 text-[#7f5539] p-2 rounded-full hover:bg-white transition-colors"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleEditArtwork(artwork)}
-                        className="bg-white/90 text-[#7f5539] p-2 rounded-full hover:bg-white transition-colors"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteArtwork(artwork)}
-                        className="bg-white/90 text-red-500 p-2 rounded-full hover:bg-white transition-colors"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                    <div className={`absolute bottom-3 right-3 px-2 py-1 rounded-full text-xs font-medium ${artwork.status === 'Available' ? 'bg-green-100 text-green-800' :
-                      artwork.status === 'Sold' ? 'bg-red-100 text-red-800' :
-                        'bg-yellow-100 text-yellow-800'
-                      }`}>
-                      {artwork.status}
-                    </div>
-                  </div>
-
-                  <div className="p-4">
-                    <h4 className="font-semibold text-[#7f5539] mb-1">{artwork.title}</h4>
-                    <p className="text-sm text-[#7f5539]/70 mb-2">{artwork.medium} • {artwork.size}</p>
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-lg font-bold text-[#7f5539]">{artwork.price}</span>
-                      <span className="text-sm text-[#7f5539]/60">{artwork.year}</span>
-                    </div>
-
-                    <div className="flex items-center justify-between text-sm text-[#7f5539]/60">
-                      <div className="flex items-center space-x-3">
-                        <div className="flex items-center space-x-1">
-                          <Heart className="h-4 w-4" />
-                          <span>{artwork.likes}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <Eye className="h-4 w-4" />
-                          <span>{artwork.views}</span>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => handleViewArtworkDetail(artwork)}
-                        className="text-[#7f5539] hover:text-[#6e4c34] transition-colors font-medium"
-                      >
-                        View Details
-                      </button>
-                    </div>
-                  </div>
+            {artworksLoading ? (
+              <div className="flex justify-center items-center py-12">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7f5539] mx-auto mb-4"></div>
+                  <p className="text-[#7f5539]/60">Loading artworks...</p>
                 </div>
-              ))}
-            </div>
+              </div>
+            ) : artworksError ? (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+                <div className="text-center">
+                  <div className="text-red-600 mb-2">
+                    <AlertTriangle className="h-12 w-12 mx-auto mb-2" />
+                    <h3 className="text-lg font-semibold">Error Loading Artworks</h3>
+                  </div>
+                  <p className="text-red-600 mb-4">{artworksError}</p>
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="bg-red-100 text-red-700 px-4 py-2 rounded-lg hover:bg-red-200 transition-colors"
+                  >
+                    Retry
+                  </button>
+                </div>
+              </div>
+            ) : artworks.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="text-[#7f5539]/60 mb-4">
+                  <Palette className="h-16 w-16 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No Artworks Yet</h3>
+                  <p>Upload your first artwork to get started!</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setNewArtwork({
+                      ...newArtwork,
+                      category: 'to sell',
+                    });
+                    setIsAddingArtwork(true);
+                  }}
+                  className="bg-[#7f5539] text-[#fdf9f4] px-6 py-2 rounded-lg hover:bg-[#6e4c34] transition-colors font-medium flex items-center space-x-2 mx-auto"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Add Your First Artwork</span>
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {artworks.map((artwork, index) => (
+                  <div key={artwork.artworkId || artwork.artwork_id || artwork.id || `artwork-${index}`} className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-lg transition-all duration-300 group">
+                    <div className="relative">
+                      <img
+                        src={artwork.imageUrl?.startsWith('http') ? artwork.imageUrl : `http://localhost:8081${artwork.imageUrl}`}
+                        alt={artwork.title}
+                        className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => {
+                          e.target.src = '/api/placeholder/400/300';
+                          e.target.onerror = null;
+                        }}
+                      />
+                      {artwork.featured && (
+                        <div className="absolute top-3 left-3 bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1">
+                          <Star className="h-3 w-3" />
+                          <span>Featured</span>
+                        </div>
+                      )}
+                      <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex space-x-2">
+                        <button
+                          onClick={() => handleViewArtworkDetail(artwork)}
+                          className="bg-white/90 text-[#7f5539] p-2 rounded-full hover:bg-white transition-colors"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleEditArtwork(artwork)}
+                          className="bg-white/90 text-[#7f5539] p-2 rounded-full hover:bg-white transition-colors"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteArtwork(artwork)}
+                          className="bg-white/90 text-red-500 p-2 rounded-full hover:bg-white transition-colors"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                      <div className={`absolute bottom-3 right-3 px-2 py-1 rounded-full text-xs font-medium ${artwork.status === 'Available' ? 'bg-green-100 text-green-800' :
+                        artwork.status === 'Sold' ? 'bg-red-100 text-red-800' :
+                          'bg-yellow-100 text-yellow-800'
+                        }`}>
+                        {artwork.status}
+                      </div>
+                    </div>
+
+                    <div className="p-4">
+                      <h4 className="font-semibold text-[#7f5539] mb-1">{artwork.title}</h4>
+                      <p className="text-sm text-[#7f5539]/70 mb-2">{artwork.medium} • {artwork.size}</p>
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-lg font-bold text-[#7f5539]">${artwork.price}</span>
+                        <span className="text-sm text-[#7f5539]/60">{artwork.year}</span>
+                      </div>
+
+                      <div className="flex items-center justify-between text-sm text-[#7f5539]/60">
+                        <div className="flex items-center space-x-3">
+                          <div className="flex items-center space-x-1">
+                            <Heart className="h-4 w-4" />
+                            <span>{artwork.likesCount || artwork.likes || 0}</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <Eye className="h-4 w-4" />
+                            <span>{artwork.viewsCount || artwork.views || 0}</span>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleViewArtworkDetail(artwork)}
+                          className="text-[#7f5539] hover:text-[#6e4c34] transition-colors font-medium"
+                        >
+                          View Details
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
