@@ -2397,6 +2397,7 @@ const ArtistPortfolio = () => {
         onSave={handleSaveProfile}
         artistProfile={artistProfile}
         onAvatarUpload={handleAvatarUpload}
+        onCoverUpload={handleSaveCover}
       />
 
       {/* Upload Post Modal */}
