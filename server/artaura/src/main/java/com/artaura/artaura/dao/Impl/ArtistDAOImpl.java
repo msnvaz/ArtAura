@@ -27,8 +27,8 @@ public class ArtistDAOImpl implements ArtistDAO {
     @Override
     public void save(ArtistSignupRequest req, String hashedPassword) {
 
-        String sql = "INSERT INTO artists (first_name, last_name, email, contactNo, password, nic, agreed_terms, specialization) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO artists (first_name, last_name, email, contactNo, password, nic, agreed_terms, specialization, status) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         jdbc.update(sql,
                 req.getFirstName(),
@@ -38,7 +38,8 @@ public class ArtistDAOImpl implements ArtistDAO {
                 hashedPassword,
                 req.getNic(),
                 req.isAgreedTerms(),
-                req.getSpecialization() // assuming this is your specialization field
+                req.getSpecialization(),
+                "Pending"  // Add the status parameter
         );
     }
 
