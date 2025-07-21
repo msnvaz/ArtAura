@@ -52,96 +52,96 @@ const SalesAnalytics = () => {
 }, []);
 
   const salesData = [
-    { month: 'Jan', revenue: 15500, orders: 125, customers: 98 },
-    { month: 'Feb', revenue: 17200, orders: 142, customers: 112 },
-    { month: 'Mar', revenue: 20700, orders: 167, customers: 134 },
-    { month: 'Apr', revenue: 18400, orders: 156, customers: 128 },
-    { month: 'May', revenue: 25300, orders: 189, customers: 145 },
-    { month: 'Jun', revenue: 19800, orders: 178, customers: 139 }
-  ];
+  { month: 'Jan', revenue: 485000, orders: 125, customers: 98 },
+  { month: 'Feb', revenue: 532000, orders: 142, customers: 112 },
+  { month: 'Mar', revenue: 647000, orders: 167, customers: 134 },
+  { month: 'Apr', revenue: 581000, orders: 156, customers: 128 },
+  { month: 'May', revenue: 789000, orders: 189, customers: 145 },
+  { month: 'Jun', revenue: 625000, orders: 178, customers: 139 }
+];
 
-  const topProducts = [
-    {
-      id: 1,
-      name: 'Watercolor Paint Set Professional',
-      sales: 89,
-      revenue: 8010,
-      growth: 15.2,
-      category: 'Paints',
-      icon: Package
-    },
-    {
-      id: 2,
-      name: 'Professional Brush Set',
-      sales: 67,
-      revenue: 8374,
-      growth: 8.7,
-      category: 'Brushes',
-      icon: Package
-    },
-    {
-      id: 3,
-      name: 'Canvas Stretched Pack',
-      sales: 156,
-      revenue: 5382,
-      growth: -3.2,
-      category: 'Canvas',
-      icon: Package
-    },
-    {
-      id: 4,
-      name: 'Acrylic Paint Tubes',
-      sales: 43,
-      revenue: 2923,
-      growth: 22.1,
-      category: 'Paints',
-      icon: Package
-    },
-    {
-      id: 5,
-      name: 'Easel Desktop Adjustable',
-      sales: 28,
-      revenue: 4368,
-      growth: 12.5,
-      category: 'Equipment',
-      icon: Package
-    }
-  ];
+const topProducts = [
+  {
+    id: 1,
+    name: 'Watercolor Paint Set Professional',
+    sales: 89,
+    revenue: 253650,
+    growth: 15.2,
+    category: 'Paints',
+    icon: Package
+  },
+  {
+    id: 2,
+    name: 'Professional Brush Set',
+    sales: 67,
+    revenue: 214400,
+    growth: 8.7,
+    category: 'Brushes',
+    icon: Package
+  },
+  {
+    id: 3,
+    name: 'Canvas Stretched Pack',
+    sales: 156,
+    revenue: 195000,
+    growth: -3.2,
+    category: 'Canvas',
+    icon: Package
+  },
+  {
+    id: 4,
+    name: 'Acrylic Paint Tubes',
+    sales: 43,
+    revenue: 81270,
+    growth: 22.1,
+    category: 'Paints',
+    icon: Package
+  },
+  {
+    id: 5,
+    name: 'Easel Desktop Adjustable',
+    sales: 28,
+    revenue: 135800,
+    growth: 12.5,
+    category: 'Equipment',
+    icon: Package
+  }
+];
 
-  const recentOrders = [
-    {
-      id: '#ORD-001',
-      customer: 'Sarah Johnson',
-      amount: 156.50,
-      status: 'shipped',
-      date: '2024-03-15',
-      items: 3
-    },
-    {
-      id: '#ORD-002',
-      customer: 'Mike Chen',
-      amount: 89.99,
-      status: 'processing',
-      date: '2024-03-15',
-      items: 2
-    },
-    {
-      id: '#ORD-003',
-      customer: 'Emma Davis',
-      amount: 234.75,
-      status: 'pending',
-      date: '2024-03-14',
-      items: 5
-    },
-    {
-      id: '#ORD-004',
-      customer: 'John Smith',
-      amount: 67.25,
-      status: 'delivered',
-      date: '2024-03-14',
-      items: 1
-    }
-  ];
+const recentOrders = [
+  {
+    id: '#ORD-2025-135',
+    customer: 'Kasun Wijesinghe',
+    amount: 4850.00,
+    status: 'shipped',
+    date: '2025-07-22',
+    items: 3
+  },
+  {
+    id: '#ORD-2025-136',
+    customer: 'Nayani Fernando',
+    amount: 2890.00,
+    status: 'processing',
+    date: '2025-07-22',
+    items: 2
+  },
+  {
+    id: '#ORD-2025-137',
+    customer: 'Rajith Perera',
+    amount: 7250.00,
+    status: 'pending',
+    date: '2025-07-21',
+    items: 5
+  },
+  {
+    id: '#ORD-2025-138',
+    customer: 'Sanduni Rajapakse',
+    amount: 1890.00,
+    status: 'delivered',
+    date: '2025-07-21',
+    items: 1
+  }
+];
 
   const getOrderStatusBadge = (status) => {
     switch (status) {
@@ -214,7 +214,7 @@ const SalesAnalytics = () => {
           { 
             icon: DollarSign, 
             title: 'Total Revenue', 
-            value: `$${totalRevenue.toLocaleString()}`, 
+            value: `Rs. ${totalRevenue.toLocaleString()}`, 
             change: '+12.5%', 
             trend: 'up',
             iconBg: 'bg-[#D87C5A]',
@@ -242,7 +242,7 @@ const SalesAnalytics = () => {
           { 
             icon: TrendingUp, 
             title: 'Avg. Order Value', 
-            value: `$${avgOrderValue.toFixed(2)}`, 
+            value: `Rs. ${avgOrderValue.toFixed(0)}`, 
             change: '-2.1%', 
             trend: 'down',
             iconBg: 'bg-[#ffb74d]',
@@ -326,7 +326,7 @@ const SalesAnalytics = () => {
                             boxShadow: `0 0 5px ${barColor}`,
                           }}
                         >
-                        {selectedMetric === 'revenue' ? `$${value.toLocaleString()}` : value}
+                        {selectedMetric === 'revenue' ? `Rs. ${value.toLocaleString()}` : value}
                       </div>
                     </div>
                   </div>
@@ -368,7 +368,7 @@ const SalesAnalytics = () => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-[#5D3A00] text-sm">${product.revenue.toLocaleString()}</p>
+                    <p className="font-bold text-[#5D3A00] text-sm">Rs. {product.revenue.toLocaleString()}</p>
                     <div className={`flex items-center text-xs font-semibold ${
                       product.growth > 0 ? 'text-[#388e3c] bg-[#e8f5e9]' : 'text-red-700 bg-red-100'
                     }`}>
@@ -426,7 +426,7 @@ const SalesAnalytics = () => {
                     <div className="text-sm text-[#5D3A00]">{order.items} items</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-bold text-[#D87C5A]">${order.amount}</div>
+                    <div className="text-sm font-bold text-[#D87C5A]">Rs. {order.amount.toLocaleString()}</div>
                   </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${getStatusBadgeClass(order.status)}`}>
