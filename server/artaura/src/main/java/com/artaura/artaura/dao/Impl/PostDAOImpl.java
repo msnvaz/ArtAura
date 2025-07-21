@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,15 +20,16 @@ public class PostDAOImpl implements PostDAO {
 
     @Override
     public void savePost(Long userId, String role, PostCreateDTO postDTO) {
-        String sql = "INSERT INTO post (user_id, role, caption, image, location) "
-                + "VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO post (user_id, role, caption, image, location, created_at) "
+                + "VALUES (?, ?, ?, ?, ?, ?)";
 
         jdbcTemplate.update(sql,
                 userId, // ✅ passed separately
                 role, // ✅ passed separately
                 postDTO.getCaption(),
                 postDTO.getImage(), // ✅ should be image path like /uploads/image.jpg
-                postDTO.getLocation()// 🕐 sets the current date
+                postDTO.getLocation(),
+                LocalDateTime.now() // 🕐 explicitly set current timestamp
         );
     }
 

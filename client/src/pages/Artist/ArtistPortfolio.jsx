@@ -783,10 +783,7 @@ const ArtistPortfolio = () => {
 
       console.log('Post created:', response.data);
 
-      // Add the new post to the portfolioPosts array
-      setPortfolioPosts(prevPosts => [response.data, ...prevPosts]);
-
-      // Reset post state
+      // Reset post state first
       setIsCreatingPost(false);
       setNewPost({
         caption: '',
@@ -795,6 +792,23 @@ const ArtistPortfolio = () => {
 
       // Show success message
       alert('Post created successfully!');
+
+      // Refresh posts from the server to get the latest data
+      try {
+        const postsResponse = await axios.get(
+          `http://localhost:8081/api/posts/${role}/${userId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setPortfolioPosts(postsResponse.data);
+      } catch (fetchError) {
+        console.error('Error fetching updated posts:', fetchError);
+        // Fallback to adding the new post to existing posts
+        setPortfolioPosts(prevPosts => [response.data, ...prevPosts]);
+      }
 
     } catch (error) {
       console.error('Error uploading post:', error);
@@ -1040,12 +1054,34 @@ const ArtistPortfolio = () => {
   };
 
   const safeFormatDistanceToNow = (date) => {
-    const d = new Date(date);
-    if (!isValid(d)) return "Invalid date";
-    return formatDistanceToNow(d, { addSuffix: true });
-  };
+    if (!date) return "Unknown time";
 
-  // Handler to close the artwork detail modal
+    // Handle different date formats that might come from the backend
+    let d;
+    if (typeof date === 'string') {
+      // Try parsing as ISO string first
+      d = new Date(date);
+
+      // If that fails, try parsing as timestamp
+      if (!isValid(d)) {
+        const timestamp = parseInt(date);
+        if (!isNaN(timestamp)) {
+          d = new Date(timestamp);
+        }
+      }
+    } else if (typeof date === 'number') {
+      d = new Date(date);
+    } else {
+      d = new Date(date);
+    }
+
+    if (!isValid(d)) {
+      console.warn('Invalid date provided to safeFormatDistanceToNow:', date);
+      return "Unknown time";
+    }
+
+    return formatDistanceToNow(d, { addSuffix: true });
+  };  // Handler to close the artwork detail modal
   const handleCloseArtworkView = () => {
     setIsViewingArtwork(false);
     setSelectedArtwork(null);
@@ -2185,7 +2221,7 @@ const ArtistPortfolio = () => {
                               {index + 1}
                             </div>
                             <img
-                              src={post.image}
+                              src={`http://localhost:8081${post.image}`}
                               alt={`Post ${post.id}`}
                               className="w-12 h-12 rounded-lg object-cover"
                             />

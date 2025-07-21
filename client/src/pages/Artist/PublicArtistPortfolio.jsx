@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import ArtworkDetailModal from '../../components/artworks/ArtworkDetailModal';
 import CustomArtworkOrderModal from '../../components/orders/CustomArtworkOrderModal';
 import ArtworkOrderModal from '../../components/orders/ArtworkOrderModal';
+import { formatDistanceToNow, isValid } from 'date-fns';
 import {
     Heart,
     Star,
@@ -36,6 +37,33 @@ const PublicArtistPortfolio = () => {
     const [isOrderingArtwork, setIsOrderingArtwork] = useState(false);
     const [isOrderingCustom, setIsOrderingCustom] = useState(false);
     const [isFollowing, setIsFollowing] = useState(false);
+
+    // Helper function to safely format time distance
+    const safeFormatDistanceToNow = (date) => {
+        if (!date) return "Unknown time";
+
+        let d;
+        if (typeof date === 'string') {
+            d = new Date(date);
+            if (!isValid(d)) {
+                const timestamp = parseInt(date);
+                if (!isNaN(timestamp)) {
+                    d = new Date(timestamp);
+                }
+            }
+        } else if (typeof date === 'number') {
+            d = new Date(date);
+        } else {
+            d = new Date(date);
+        }
+
+        if (!isValid(d)) {
+            console.warn('Invalid date provided to safeFormatDistanceToNow:', date);
+            return "Unknown time";
+        }
+
+        return formatDistanceToNow(d, { addSuffix: true });
+    };
 
     // Mock artist data (in real app, fetch based on artistId)
     const artistProfile = {
@@ -199,7 +227,7 @@ const PublicArtistPortfolio = () => {
             caption: 'Working on my latest piece! The creative process is always so fulfilling. #artistlife #workinprogress',
             likes: 89,
             comments: 12,
-            timestamp: '2024-06-28',
+            timestamp: new Date(Date.now() - 20 * 60 * 1000).toISOString(), // 20 minutes ago
             type: 'image'
         },
         {
@@ -208,7 +236,7 @@ const PublicArtistPortfolio = () => {
             caption: 'Just finished "Sunset Dreams"! This piece took me 3 weeks to complete. What do you think? 🎨',
             likes: 156,
             comments: 24,
-            timestamp: '2024-06-25',
+            timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(), // 1 hour ago
             type: 'image'
         },
         {
@@ -217,7 +245,7 @@ const PublicArtistPortfolio = () => {
             caption: 'Behind the scenes of my studio setup. Organization is key to creativity! ✨',
             likes: 67,
             comments: 8,
-            timestamp: '2024-06-22',
+            timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(), // 4 hours ago
             type: 'image'
         },
         {
@@ -226,7 +254,7 @@ const PublicArtistPortfolio = () => {
             caption: 'Experimenting with digital art techniques. Technology opens so many new possibilities! 💻🎨',
             likes: 94,
             comments: 16,
-            timestamp: '2024-06-20',
+            timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(), // 6 hours ago
             type: 'image'
         }
     ];
@@ -382,8 +410,8 @@ const PublicArtistPortfolio = () => {
                                     <button
                                         onClick={handleToggleFollow}
                                         className={`px-6 py-2 rounded-lg font-medium transition-colors ${isFollowing
-                                                ? 'bg-gray-200 text-[#7f5539] hover:bg-gray-300'
-                                                : 'bg-[#7f5539] text-[#fdf9f4] hover:bg-[#6e4c34]'
+                                            ? 'bg-gray-200 text-[#7f5539] hover:bg-gray-300'
+                                            : 'bg-[#7f5539] text-[#fdf9f4] hover:bg-[#6e4c34]'
                                             }`}
                                     >
                                         {isFollowing ? 'Following' : 'Follow'}
@@ -514,8 +542,8 @@ const PublicArtistPortfolio = () => {
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
                                     className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors ${activeTab === tab.id
-                                            ? 'border-[#7f5539] text-[#7f5539]'
-                                            : 'border-transparent text-[#7f5539]/60 hover:text-[#7f5539] hover:border-[#7f5539]/30'
+                                        ? 'border-[#7f5539] text-[#7f5539]'
+                                        : 'border-transparent text-[#7f5539]/60 hover:text-[#7f5539] hover:border-[#7f5539]/30'
                                         }`}
                                 >
                                     {tab.label}
@@ -631,7 +659,7 @@ const PublicArtistPortfolio = () => {
                                                 />
                                                 <div>
                                                     <h4 className="font-semibold text-[#7f5539]">{artistProfile.name}</h4>
-                                                    <p className="text-xs text-[#7f5539]/60">{post.timestamp}</p>
+                                                    <p className="text-xs text-[#7f5539]/60">{safeFormatDistanceToNow(post.timestamp)}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -644,7 +672,7 @@ const PublicArtistPortfolio = () => {
                                         {/* Post Image */}
                                         <div className="relative">
                                             <img
-                                                src={post.image}
+                                                src={`http://localhost:8081${post.image}`}
                                                 alt={`Post ${post.id}`}
                                                 className="w-full h-[32rem] object-cover"
                                             />
