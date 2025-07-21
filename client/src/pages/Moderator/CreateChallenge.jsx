@@ -227,19 +227,11 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
               </div>
               <div className="mt-4 md:mt-0 flex gap-2 items-center">
                 <button
-                  className="border px-3 py-2 rounded-lg font-medium flex items-center space-x-1 transition-colors whitespace-nowrap"
+                  className="border px-3 py-2 rounded-lg font-medium flex items-center space-x-1 whitespace-nowrap"
                   style={{
                     borderColor: "#FFE4D6",
                     color: "#FFE4D6",
                     backgroundColor: "rgba(255, 228, 214, 0.1)",
-                  }}
-                  onMouseOver={(e) => {
-                    e.target.style.backgroundColor = "#FFE4D6";
-                    e.target.style.color = "#5D3A00";
-                  }}
-                  onMouseOut={(e) => {
-                    e.target.style.backgroundColor = "rgba(255, 228, 214, 0.1)";
-                    e.target.style.color = "#FFE4D6";
                   }}
                   onClick={() => navigate("/challenges")}
                 >
@@ -248,19 +240,11 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
                   <span className="sm:hidden">Challenges</span>
                 </button>
                 <button
-                  className="border px-3 py-2 rounded-lg font-medium flex items-center space-x-1 transition-colors whitespace-nowrap"
+                  className="border px-3 py-2 rounded-lg font-medium flex items-center space-x-1 whitespace-nowrap"
                   style={{
                     borderColor: "#FFE4D6",
                     color: "#FFE4D6",
                     backgroundColor: "rgba(255, 228, 214, 0.1)",
-                  }}
-                  onMouseOver={(e) => {
-                    e.target.style.backgroundColor = "#FFE4D6";
-                    e.target.style.color = "#5D3A00";
-                  }}
-                  onMouseOut={(e) => {
-                    e.target.style.backgroundColor = "rgba(255, 228, 214, 0.1)";
-                    e.target.style.color = "#FFE4D6";
                   }}
                   onClick={() => navigate("/moderatordashboard")}
                 >
@@ -709,7 +693,7 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className={`flex items-center gap-2 px-8 py-3 rounded-lg font-medium transition-colors ${
+                    className={`flex items-center gap-2 px-8 py-3 rounded-lg font-medium ${
                       isSubmitting
                         ? "opacity-50 cursor-not-allowed"
                         : "focus:ring-2 focus:ring-offset-2"
@@ -717,16 +701,6 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
                     style={{
                       backgroundColor: "#D87C5A",
                       color: "white",
-                    }}
-                    onMouseOver={(e) => {
-                      if (!isSubmitting) {
-                        e.target.style.backgroundColor = "#B85A3A";
-                      }
-                    }}
-                    onMouseOut={(e) => {
-                      if (!isSubmitting) {
-                        e.target.style.backgroundColor = "#D87C5A";
-                      }
                     }}
                   >
                     <Send size={18} />

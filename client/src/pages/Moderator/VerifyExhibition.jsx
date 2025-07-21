@@ -257,6 +257,25 @@ const navigateImage = (direction) => {
 
 return (
   <>
+    {/* CSS styles for button animations */}
+    <style jsx>{`
+      .btn-animate {
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .btn-animate:hover {
+        transform: translateY(-1px) scale(1.02);
+      }
+
+      /* Ensure smooth rendering */
+      * {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+    `}</style>
+
     {/* Bootstrap CSS */}
     <link 
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" 
@@ -274,7 +293,7 @@ return (
           backgroundRepeat: 'no-repeat'
         }}
       >
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
             <div className="flex items-center space-x-4">
               <div className="p-3 rounded-full" style={{backgroundColor: '#FFD95A'}}>
@@ -286,7 +305,7 @@ return (
               </div>
             </div>
             <div className="mt-4 md:mt-0 flex gap-2 items-center">
-              <div className="relative">
+              <div className="relative mr-3">
                 <Bell className="w-6 h-6 text-white" />
                 {totalNotifications > 0 && (
                   <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
@@ -295,19 +314,11 @@ return (
                 )}
               </div>
               <button
-                className="border px-3 py-2 rounded-lg font-medium flex items-center space-x-1 transition-colors whitespace-nowrap"
+                className="border px-3 py-2 rounded-lg font-medium flex items-center space-x-1 whitespace-nowrap btn-animate"
                 style={{
                   borderColor: '#FFE4D6',
                   color: '#FFE4D6',
                   backgroundColor: 'rgba(255, 228, 214, 0.1)'
-                }}
-                onMouseOver={(e) => {
-                  e.target.style.backgroundColor = '#FFE4D6';
-                  e.target.style.color = '#5D3A00';
-                }}
-                onMouseOut={(e) => {
-                  e.target.style.backgroundColor = 'rgba(255, 228, 214, 0.1)';
-                  e.target.style.color = '#FFE4D6';
                 }}
                 onClick={() => navigate('/moderatordashboard')}
               >
@@ -507,14 +518,14 @@ return (
                           <div className="flex gap-2">
                             <button
                               onClick={() => handleApprove(post.id)}
-                              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg"
                             >
                               <Check className="w-4 h-4" />
                               Approve
                             </button>
                             <button
                               onClick={() => openRejectModal(post.id)}
-                              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg"
                             >
                               <X className="w-4 h-4" />
                               Reject
