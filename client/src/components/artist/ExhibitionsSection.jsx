@@ -300,7 +300,7 @@ const ExhibitionsSection = ({ onExhibitionsCountChange, onRefresh }) => {
                 <h3 className="text-xl font-semibold">Exhibitions</h3>
                 <button
                     onClick={() => setShowAddModal(true)}
-                    className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center gap-2"
+                    className="bg-[#7f5539] text-[#fdf9f4] px-6 py-2 rounded-lg hover:bg-[#6e4c34] transition-colors font-medium flex items-center gap-2"
                 >
                     <Plus className="h-4 w-4" />
                     Add Exhibition Details

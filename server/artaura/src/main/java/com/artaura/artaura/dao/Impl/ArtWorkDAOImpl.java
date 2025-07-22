@@ -144,12 +144,12 @@ public class ArtWorkDAOImpl implements ArtWorkDAO {
             params.add(dto.getViewsCount());
             first = false;
         }
-        if (dto.isFeatured()) {
+        if (dto.getFeatured() != null) {
             if (!first) {
                 sql.append(", ");
             }
             sql.append("is_featured = ?");
-            params.add(dto.isFeatured());
+            params.add(dto.getFeatured());
             first = false;
         }
         if (dto.getUpdatedAt() != null) {

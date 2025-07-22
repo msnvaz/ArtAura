@@ -46,10 +46,13 @@ import {
   ArrowLeft,
   FileText,
   Shield,
-  AlertTriangle
+  AlertTriangle,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 
 import { useImageWithFallback } from '../../util/imageUtils';
+import { formatLKR } from '../../util/currency';
 
 const ArtistPortfolio = () => {
   const navigate = useNavigate();
@@ -121,6 +124,7 @@ const ArtistPortfolio = () => {
 
   const { token, role, userId } = useAuth();
   const [portfolioPosts, setPortfolioPosts] = useState([]);
+  const [postImageIndex, setPostImageIndex] = useState({}); // Track current image index for each post
   const [artistProfile, setArtistProfile] = useState(null);
   const [achievementsCount, setAchievementsCount] = useState(0);
   const [recentAchievements, setRecentAchievements] = useState([]);
@@ -330,7 +334,17 @@ const ArtistPortfolio = () => {
           }
         );
 
-        setPortfolioPosts(response.data);
+        console.log('Posts API response:', response.data);
+
+        // Sort posts by creation date (newest first) as a fallback
+        const sortedPosts = Array.isArray(response.data) ? response.data.sort((a, b) => {
+          const dateA = new Date(a.created_at);
+          const dateB = new Date(b.created_at);
+          return dateB - dateA; // Descending order (newest first)
+        }) : [];
+
+        setPortfolioPosts(sortedPosts);
+        console.log('Set posts state:', sortedPosts.length, 'posts');
       } catch (error) {
         console.error("Error fetching posts:", error);
       }
@@ -574,8 +588,6 @@ const ArtistPortfolio = () => {
 
   const handleSaveArtwork = async (updatedArtworkData) => {
     try {
-      const formData = new FormData();
-
       // Get the artwork ID - try different possible property names
       const artworkId = updatedArtworkData.artworkId ||
         updatedArtworkData.artwork_id ||
@@ -590,34 +602,47 @@ const ArtistPortfolio = () => {
         return;
       }
 
-      // Append all artwork data to FormData (excluding ID and image file temporarily)
-      Object.keys(updatedArtworkData).forEach(key => {
-        if (key !== 'imageFile' && key !== 'artworkId' && key !== 'artwork_id' && key !== 'id') {
-          const value = updatedArtworkData[key];
-          if (value !== null && value !== undefined) {
-            formData.append(key, value);
-          }
-        }
-      });
-
-      // Append image file if provided
-      if (updatedArtworkData.imageFile) {
-        formData.append('image', updatedArtworkData.imageFile);
-      }
-
       const token = localStorage.getItem('token');
-
       if (!token) {
         alert('Authentication error. Please log in again.');
         return;
       }
 
       console.log('Updating artwork with ID:', artworkId);
-      console.log('FormData contents:', Object.fromEntries(formData.entries()));
+      console.log('Updated data being sent:', updatedArtworkData);
+      console.log('Original artwork data:', selectedArtwork);
 
-      // Try without multipart/form-data first - send as JSON if no file
-      if (!updatedArtworkData.imageFile) {
-        // If no image file, send as JSON
+      let response;
+
+      if (updatedArtworkData.imageFile) {
+        // If there's an image file, use the upload endpoint with FormData
+        const formData = new FormData();
+
+        // Append all fields to FormData
+        Object.keys(updatedArtworkData).forEach(key => {
+          if (key !== 'imageFile' && key !== 'artworkId' && key !== 'artwork_id' && key !== 'id') {
+            const value = updatedArtworkData[key];
+            if (value !== null && value !== undefined) {
+              formData.append(key, value);
+            }
+          }
+        });
+
+        // Append image file
+        formData.append('image', updatedArtworkData.imageFile);
+
+        response = await axios.put(
+          `http://localhost:8081/api/artworks/${artworkId}/upload`,
+          formData,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`
+              // Don't set Content-Type - let axios handle it automatically for multipart
+            }
+          }
+        );
+      } else {
+        // If no image file, send as JSON to regular endpoint
         const jsonData = {};
         Object.keys(updatedArtworkData).forEach(key => {
           if (key !== 'imageFile' && key !== 'artworkId' && key !== 'artwork_id' && key !== 'id') {
@@ -628,7 +653,7 @@ const ArtistPortfolio = () => {
           }
         });
 
-        const response = await axios.put(
+        response = await axios.put(
           `http://localhost:8081/api/artworks/${artworkId}`,
           jsonData,
           {
@@ -638,98 +663,46 @@ const ArtistPortfolio = () => {
             }
           }
         );
-
-        console.log('Update response:', response.data);
-
-        // Update the artworks list with the updated artwork (use local data for immediate UI)
-        setArtworks(prevArtworks =>
-          prevArtworks.map(artwork => {
-            const currentId = artwork.artworkId || artwork.artwork_id || artwork.id;
-            return currentId === artworkId ? { ...artwork, ...updatedArtworkData } : artwork;
-          })
-        );
-
-        setIsEditingArtwork(false);
-        setSelectedArtwork(null);
-
-        // Show success message
-        alert('Artwork updated successfully!');
-      } else {
-        // If there's an image file, use FormData but don't set Content-Type header
-        const response = await axios.put(
-          `http://localhost:8081/api/artworks/${artworkId}`,
-          formData,
-          {
-            headers: {
-              'Authorization': `Bearer ${token}`
-              // Don't set Content-Type - let axios handle it automatically
-            }
-          }
-        );
-
-        console.log('Update response:', response.data);
-
-        // Update the artworks list with the updated artwork (use local data for immediate UI)
-        setArtworks(prevArtworks =>
-          prevArtworks.map(artwork => {
-            const currentId = artwork.artworkId || artwork.artwork_id || artwork.id;
-            return currentId === artworkId ? { ...artwork, ...updatedArtworkData } : artwork;
-          })
-        );
-
-        setIsEditingArtwork(false);
-        setSelectedArtwork(null);
-
-        // Show success message
-        alert('Artwork updated successfully!');
       }
+
+      console.log('Update response:', response.data);
+
+      // Update the artworks list with the updated artwork from server response
+      setArtworks(prevArtworks =>
+        prevArtworks.map(artwork => {
+          const currentId = artwork.artworkId || artwork.artwork_id || artwork.id;
+          if (currentId === artworkId) {
+            // Use the server response data which includes updated imageUrl
+            const serverData = response.data;
+            return {
+              ...artwork,
+              ...serverData,
+              // Ensure consistent ID field naming
+              artworkId: serverData.artworkId || serverData.artwork_id || serverData.id || artworkId,
+              // Update all possible image field variations
+              imageUrl: serverData.imageUrl || serverData.image_url,
+              image: serverData.imageUrl || serverData.image_url || serverData.image,
+            };
+          }
+          return artwork;
+        })
+      );
+
+      setIsEditingArtwork(false);
+      setSelectedArtwork(null);
+
+      // Show success message
+      alert('Artwork updated successfully!');
 
     } catch (error) {
       console.error('Error updating artwork:', error);
 
-      // Always update locally as fallback and close modal
-      const artworkId = updatedArtworkData.artworkId ||
-        updatedArtworkData.artwork_id ||
-        updatedArtworkData.id ||
-        selectedArtwork?.artworkId ||
-        selectedArtwork?.artwork_id ||
-        selectedArtwork?.id;
-
-      if (artworkId) {
-        setArtworks(prevArtworks =>
-          prevArtworks.map(artwork => {
-            const currentId = artwork.artworkId || artwork.artwork_id || artwork.id;
-            return currentId === artworkId ? { ...artwork, ...updatedArtworkData } : artwork;
-          })
-        );
-
-        setIsEditingArtwork(false);
-        setSelectedArtwork(null);
-        alert('Artwork updated successfully!');
+      if (error.response) {
+        console.error('Response data:', error.response.data);
+        console.error('Response status:', error.response.status);
+        alert(`Failed to update artwork: ${error.response.data || error.message}`);
       } else {
-        // More detailed error handling only if we can't update locally
-        if (error.response) {
-          console.error('Server response:', error.response.data);
-          console.error('Status code:', error.response.status);
-
-          if (error.response.status === 401) {
-            alert('Authentication failed. Please log in again.');
-          } else if (error.response.status === 403) {
-            alert('You do not have permission to update this artwork.');
-          } else if (error.response.status === 404) {
-            alert('Artwork not found. It may have been deleted.');
-          } else if (error.response.status === 415) {
-            alert('Server does not support the file format. Please try a different image format.');
-          } else {
-            alert(`Failed to update artwork: ${error.response.data.message || error.response.data || 'Server error'}`);
-          }
-        } else if (error.request) {
-          console.error('No response received:', error.request);
-          alert('Network error. Please check your connection and try again.');
-        } else {
-          console.error('Request setup error:', error.message);
-          alert('Failed to update artwork. Please try again.');
-        }
+        alert('Failed to update artwork. Please try again.');
       }
     }
   };
@@ -786,11 +759,43 @@ const ArtistPortfolio = () => {
     }));
   };
 
+  // Navigation functions for post images
+  const navigatePostImage = (postId, direction) => {
+    const post = portfolioPosts.find(p => p.post_id === postId);
+    if (!post || !post.images || post.images.length <= 1) return;
+
+    setPostImageIndex(prev => {
+      const currentIndex = prev[postId] || 0;
+      let newIndex;
+
+      if (direction === 'next') {
+        newIndex = (currentIndex + 1) % post.images.length;
+      } else {
+        newIndex = currentIndex === 0 ? post.images.length - 1 : currentIndex - 1;
+      }
+
+      return {
+        ...prev,
+        [postId]: newIndex
+      };
+    });
+  };
+
+  const getCurrentImageIndex = (postId) => {
+    return postImageIndex[postId] || 0;
+  };
+
   const handleSavePost = async () => {
     const formData = new FormData();
     formData.append('caption', newPost.caption);
     formData.append('location', 'Colombo'); // optional: make dynamic
-    formData.append('image', newPost.imageFiles[0]);
+
+    // ✅ Add all images to FormData
+    if (newPost.imageFiles && newPost.imageFiles.length > 0) {
+      newPost.imageFiles.forEach((file, index) => {
+        formData.append('images', file); // Use 'images' to match backend parameter
+      });
+    }
 
     // 👇 Check before making request
     if (!token || !role || !userId) {
@@ -832,7 +837,15 @@ const ArtistPortfolio = () => {
             },
           }
         );
-        setPortfolioPosts(postsResponse.data);
+
+        // Sort posts by creation date (newest first) as a fallback
+        const sortedPosts = Array.isArray(postsResponse.data) ? postsResponse.data.sort((a, b) => {
+          const dateA = new Date(a.created_at);
+          const dateB = new Date(b.created_at);
+          return dateB - dateA; // Descending order (newest first)
+        }) : [];
+
+        setPortfolioPosts(sortedPosts);
       } catch (fetchError) {
         console.error('Error fetching updated posts:', fetchError);
         // Fallback to adding the new post to existing posts
@@ -1690,19 +1703,84 @@ const ArtistPortfolio = () => {
                       <p className="text-[#7f5539] leading-relaxed">{post.caption}</p>
                     </div>
 
-                    {/* Post Image */}
+                    {/* Post Images */}
                     <div className="relative">
-                      <img
-                        src={post.image?.startsWith('http') ? post.image : `http://localhost:8081${encodeURI(post.image || '')}`}
-                        alt={`Post ${post.post_id}`}
-                        className="w-full h-[32rem] object-cover"
-                        onError={(e) => {
-                          console.error('Failed to load post feed image:', post.image);
-                          console.error('Post feed: Constructed URL was:', e.target.src);
-                          e.target.src = 'https://images.pexels.com/photos/1070981/pexels-photo-1070981.jpeg?auto=compress&cs=tinysrgb&w=400';
-                          e.target.onerror = null;
-                        }}
-                      />
+                      {post.images && post.images.length > 0 ? (
+                        <div className="relative group">
+                          {/* Main Image Display */}
+                          <img
+                            src={post.images[getCurrentImageIndex(post.post_id)]?.startsWith('http')
+                              ? post.images[getCurrentImageIndex(post.post_id)]
+                              : `http://localhost:8081${encodeURI(post.images[getCurrentImageIndex(post.post_id)] || '')}`}
+                            alt={`Post ${post.post_id} - Image ${getCurrentImageIndex(post.post_id) + 1}`}
+                            className="w-full h-[32rem] object-cover"
+                            onError={(e) => {
+                              console.error('Failed to load post feed image:', post.images[getCurrentImageIndex(post.post_id)]);
+                              console.error('Post feed: Constructed URL was:', e.target.src);
+                              e.target.src = 'https://images.pexels.com/photos/1070981/pexels-photo-1070981.jpeg?auto=compress&cs=tinysrgb&w=400';
+                              e.target.onerror = null;
+                            }}
+                          />
+
+                          {/* Navigation Arrows (show only if multiple images) */}
+                          {post.images.length > 1 && (
+                            <>
+                              {/* Previous Button */}
+                              <button
+                                onClick={() => navigatePostImage(post.post_id, 'prev')}
+                                className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10"
+                              >
+                                <ChevronLeft size={20} />
+                              </button>
+
+                              {/* Next Button */}
+                              <button
+                                onClick={() => navigatePostImage(post.post_id, 'next')}
+                                className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10"
+                              >
+                                <ChevronRight size={20} />
+                              </button>
+
+                              {/* Image Counter */}
+                              <div className="absolute bottom-4 right-4 bg-black/60 text-white text-sm px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                {getCurrentImageIndex(post.post_id) + 1} / {post.images.length}
+                              </div>
+
+                              {/* Dots Indicator */}
+                              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                {post.images.map((_, index) => (
+                                  <button
+                                    key={index}
+                                    onClick={() => setPostImageIndex(prev => ({
+                                      ...prev,
+                                      [post.post_id]: index
+                                    }))}
+                                    className={`w-2 h-2 rounded-full transition-all duration-200 ${index === getCurrentImageIndex(post.post_id)
+                                      ? 'bg-white scale-125'
+                                      : 'bg-white/50 hover:bg-white/80'
+                                      }`}
+                                  />
+                                ))}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      ) : (
+                        // Fallback: Show single image if images array is empty but image field exists
+                        post.image && (
+                          <img
+                            src={post.image?.startsWith('http') ? post.image : `http://localhost:8081${encodeURI(post.image || '')}`}
+                            alt={`Post ${post.post_id}`}
+                            className="w-full h-[32rem] object-cover"
+                            onError={(e) => {
+                              console.error('Failed to load post feed image:', post.image);
+                              console.error('Post feed: Constructed URL was:', e.target.src);
+                              e.target.src = 'https://images.pexels.com/photos/1070981/pexels-photo-1070981.jpeg?auto=compress&cs=tinysrgb&w=400';
+                              e.target.onerror = null;
+                            }}
+                          />
+                        )
+                      )}
                     </div>
 
                     {/* Post Actions */}
@@ -1997,7 +2075,7 @@ const ArtistPortfolio = () => {
                       <h4 className="font-semibold text-[#7f5539] mb-1">{artwork.title}</h4>
                       <p className="text-sm text-[#7f5539]/70 mb-2">{artwork.medium} • {artwork.size}</p>
                       <div className="flex items-center justify-between mb-3">
-                        <span className="text-lg font-bold text-[#7f5539]">${artwork.price}</span>
+                        <span className="text-lg font-bold text-[#7f5539]">{formatLKR(artwork.price)}</span>
                         <span className="text-sm text-[#7f5539]/60">{artwork.year}</span>
                       </div>
 
@@ -2270,11 +2348,13 @@ const ArtistPortfolio = () => {
                               {index + 1}
                             </div>
                             <img
-                              src={post.image?.startsWith('http') ? post.image : `http://localhost:8081${encodeURI(post.image || '')}`}
+                              src={post.images && post.images.length > 0 ?
+                                (post.images[0]?.startsWith('http') ? post.images[0] : `http://localhost:8081${encodeURI(post.images[0] || '')}`) :
+                                (post.image?.startsWith('http') ? post.image : `http://localhost:8081${encodeURI(post.image || '')}`)}
                               alt={`Post ${post.id}`}
                               className="w-12 h-12 rounded-lg object-cover"
                               onError={(e) => {
-                                console.error('Failed to load post image:', post.image);
+                                console.error('Failed to load post image:', post.images?.[0] || post.image);
                                 console.error('Post thumbnail: Constructed URL was:', e.target.src);
                                 e.target.src = 'https://images.pexels.com/photos/1070981/pexels-photo-1070981.jpeg?auto=compress&cs=tinysrgb&w=400';
                                 e.target.onerror = null;

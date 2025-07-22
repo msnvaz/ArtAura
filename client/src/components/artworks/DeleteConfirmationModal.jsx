@@ -1,5 +1,6 @@
 import React from 'react';
 import { AlertTriangle, Trash2, X } from 'lucide-react';
+import { formatLKR } from '../../util/currency';
 
 const DeleteConfirmationModal = ({
     isOpen,
@@ -56,7 +57,7 @@ const DeleteConfirmationModal = ({
                                     <div className="text-left">
                                         <h4 className="font-semibold text-gray-900">{artwork.title}</h4>
                                         <p className="text-sm text-gray-600">{artwork.medium}</p>
-                                        <p className="text-sm text-gray-600">${artwork.price}</p>
+                                        <p className="text-sm text-gray-600">{formatLKR(artwork.price)}</p>
                                     </div>
                                 </div>
                             </div>

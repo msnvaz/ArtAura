@@ -200,7 +200,7 @@ const AchievementsSection = ({ artistId, isOwnProfile = false, onAchievementsCou
                 {isOwnProfile && (
                     <button
                         onClick={() => setIsAddingAchievement(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                        className="flex items-center gap-2 px-6 py-2 bg-[#7f5539] text-[#fdf9f4] rounded-lg hover:bg-[#6e4c34] transition-colors font-medium"
                     >
                         <Plus className="h-4 w-4" />
                         Add Achievement

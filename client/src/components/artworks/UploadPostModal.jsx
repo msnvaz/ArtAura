@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Plus, Upload, Save, X } from 'lucide-react';
-
+import { Plus, Upload, Save, X, Edit3 } from 'lucide-react';
+import ImageEditorModal from '../modals/ImageEditorModal';
 import axios from 'axios';
 
 const UploadPostModal = ({
@@ -15,6 +15,32 @@ const UploadPostModal = ({
 }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [isEditingImage, setIsEditingImage] = useState(false);
+    const [currentEditingImage, setCurrentEditingImage] = useState(null);
+    const [currentEditingIndex, setCurrentEditingIndex] = useState(null);
+
+    const handleEditImage = (imageFile, index) => {
+        setCurrentEditingImage(imageFile);
+        setCurrentEditingIndex(index);
+        setIsEditingImage(true);
+    };
+
+    const handleSaveEditedImage = (editedFile) => {
+        if (currentEditingIndex !== null && newArtwork.imageFiles) {
+            const updatedFiles = [...newArtwork.imageFiles];
+            updatedFiles[currentEditingIndex] = editedFile;
+            onArtworkChange('imageFiles', updatedFiles);
+        }
+        setIsEditingImage(false);
+        setCurrentEditingImage(null);
+        setCurrentEditingIndex(null);
+    };
+
+    const handleCloseEditor = () => {
+        setIsEditingImage(false);
+        setCurrentEditingImage(null);
+        setCurrentEditingIndex(null);
+    };
 
     if (!isOpen) return null;
 
@@ -145,6 +171,61 @@ const UploadPostModal = ({
                                     )}
                                 </div>
                             </div>
+
+                            {/* Image Preview Section */}
+                            {newArtwork.imageFiles && newArtwork.imageFiles.length > 0 && (
+                                <div className="mt-4">
+                                    <h4 className="text-md font-medium text-[#7f5539] mb-3">Selected Images</h4>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                                        {Array.from(newArtwork.imageFiles).map((file, index) => (
+                                            <div key={index} className="relative group">
+                                                <img
+                                                    src={URL.createObjectURL(file)}
+                                                    alt={`Artwork preview ${index + 1}`}
+                                                    className="w-full h-32 object-cover rounded-lg border border-[#7f5539]/20"
+                                                />
+
+                                                {/* Image Controls */}
+                                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-200 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                                    <div className="flex space-x-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleEditImage(file, index)}
+                                                            className="bg-[#7f5539] text-white p-2 rounded-full hover:bg-[#6e4c34] transition-colors"
+                                                            title="Edit Image"
+                                                        >
+                                                            <Edit3 size={14} />
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const updatedFiles = Array.from(newArtwork.imageFiles).filter((_, i) => i !== index);
+                                                                onArtworkChange('imageFiles', updatedFiles);
+                                                            }}
+                                                            className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors"
+                                                            title="Remove Image"
+                                                        >
+                                                            <X size={14} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                {/* Always visible remove button for mobile */}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const updatedFiles = Array.from(newArtwork.imageFiles).filter((_, i) => i !== index);
+                                                        onArtworkChange('imageFiles', updatedFiles);
+                                                    }}
+                                                    className="absolute top-1 right-1 bg-black/50 text-white p-1 rounded-full hover:bg-black/70 transition-colors md:hidden"
+                                                >
+                                                    <X size={12} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* Basic Information */}
@@ -213,12 +294,12 @@ const UploadPostModal = ({
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-[#7f5539]">Price *</label>
                                     <div className="relative">
-                                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#7f5539]/60">$</span>
+                                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#7f5539]/60 font-medium">LKR</span>
                                         <input
                                             type="number"
                                             value={newArtwork.price}
                                             onChange={(e) => onArtworkChange('price', e.target.value)}
-                                            className="w-full pl-8 pr-3 py-2 border border-[#7f5539]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7f5539]/20 focus:border-[#7f5539] transition-colors"
+                                            className="w-full pl-12 pr-3 py-2 border border-[#7f5539]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7f5539]/20 focus:border-[#7f5539] transition-colors"
                                             placeholder="0.00"
                                             min="0"
                                             step="0.01"
@@ -340,6 +421,14 @@ const UploadPostModal = ({
                     </form>
                 </div>
             </div>
+
+            {/* Image Editor Modal */}
+            <ImageEditorModal
+                isOpen={isEditingImage}
+                onClose={handleCloseEditor}
+                imageFile={currentEditingImage}
+                onSave={handleSaveEditedImage}
+            />
         </div>
     );
 };

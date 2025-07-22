@@ -123,9 +123,114 @@ public class ArtworkController {
     }
 
     @PutMapping("/{artworkId}")
-    public void updateArtWork(@PathVariable Long artworkId, @RequestBody ArtWorkUpdateDTO dto) {
-        dto.setArtworkId(artworkId);
-        artWorkDAO.updateArtWork(dto);
+    public ResponseEntity<ArtWorkResponseDTO> updateArtWork(@PathVariable Long artworkId, @RequestBody ArtWorkUpdateDTO dto) {
+        try {
+            dto.setArtworkId(artworkId);
+
+            // Debug logging
+            System.out.println("=== JSON UPDATE ENDPOINT ===");
+            System.out.println("Artwork ID: " + artworkId);
+            System.out.println("Price received: " + dto.getPrice());
+            System.out.println("Title received: " + dto.getTitle());
+
+            artWorkDAO.updateArtWork(dto);
+
+            // Return updated artwork data
+            ArtWorkResponseDTO updatedArtwork = artWorkDAO.getArtWorkById(artworkId);
+            System.out.println("Price after update: " + updatedArtwork.getPrice());
+
+            return ResponseEntity.ok(updatedArtwork);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(null);
+        }
+    }
+
+    @PutMapping("/{artworkId}/upload")
+    public ResponseEntity<ArtWorkResponseDTO> updateArtWorkWithImage(
+            @PathVariable Long artworkId,
+            @RequestParam(value = "title", required = false) String title,
+            @RequestParam(value = "medium", required = false) String medium,
+            @RequestParam(value = "size", required = false) String size,
+            @RequestParam(value = "year", required = false) String year,
+            @RequestParam(value = "price", required = false) String price,
+            @RequestParam(value = "description", required = false) String description,
+            @RequestParam(value = "category", required = false) String category,
+            @RequestParam(value = "tags", required = false) String tags,
+            @RequestParam(value = "status", required = false) String status,
+            @RequestParam(value = "featured", required = false) Boolean featured,
+            @RequestParam(value = "image", required = false) MultipartFile image,
+            HttpServletRequest request
+    ) {
+        try {
+            // Create the DTO with all provided fields
+            ArtWorkUpdateDTO dto = new ArtWorkUpdateDTO();
+            dto.setArtworkId(artworkId);
+
+            if (title != null) {
+                dto.setTitle(title);
+            }
+            if (medium != null) {
+                dto.setMedium(medium);
+            }
+            if (size != null) {
+                dto.setSize(size);
+            }
+            if (year != null) {
+                dto.setYear(year);
+            }
+            if (price != null) {
+                System.out.println("=== MULTIPART UPDATE ENDPOINT ===");
+                System.out.println("Artwork ID: " + artworkId);
+                System.out.println("Price string received: " + price);
+
+                Double priceValue = Double.parseDouble(price);
+                System.out.println("Price parsed as Double: " + priceValue);
+                dto.setPrice(priceValue);
+            }
+            if (description != null) {
+                dto.setDescription(description);
+            }
+            if (category != null) {
+                dto.setCategory(category);
+            }
+            if (tags != null) {
+                dto.setTags(tags);
+            }
+            if (status != null) {
+                dto.setStatus(status);
+            }
+            if (featured != null) {
+                dto.setFeatured(featured);
+            }
+
+            // Handle image upload if provided
+            if (image != null && !image.isEmpty()) {
+                String uploadDir = "uploads/";
+                Path uploadPath = Paths.get(uploadDir);
+                if (!Files.exists(uploadPath)) {
+                    Files.createDirectories(uploadPath);
+                }
+
+                // Generate unique filename
+                String filename = System.currentTimeMillis() + "_" + image.getOriginalFilename();
+                Path filePath = uploadPath.resolve(filename);
+                Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+                dto.setImageUrl("/" + uploadDir + filename);
+            }
+
+            // Update artwork
+            artWorkDAO.updateArtWork(dto);
+
+            // Return updated artwork data
+            ArtWorkResponseDTO updatedArtwork = artWorkDAO.getArtWorkById(artworkId);
+            return ResponseEntity.ok(updatedArtwork);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(null);
+        }
     }
 
     @DeleteMapping("/{artworkId}")
