@@ -26,7 +26,7 @@ const WinnerSelection = () => {
     {
       id: 1,
       title: 'Modern E-commerce Dashboard',
-      participant: 'Sarah Johnson',
+      participant: 'Nadeesha Perera',
       submissionDate: '2024-02-10',
       imageUrl: 'https://images.pexels.com/photos/196644/pexels-photo-196644.jpeg?auto=compress&cs=tinysrgb&w=400',
       description: 'A sleek and intuitive e-commerce dashboard with advanced analytics.',
@@ -47,7 +47,7 @@ const WinnerSelection = () => {
     {
       id: 2,
       title: 'Creative Portfolio Website',
-      participant: 'Michael Chen',
+      participant: 'Kasun Fernando',
       submissionDate: '2024-02-08',
       imageUrl: 'https://images.pexels.com/photos/267350/pexels-photo-267350.jpeg?auto=compress&cs=tinysrgb&w=400',
       description: 'Innovative portfolio design with stunning animations.',
@@ -66,7 +66,7 @@ const WinnerSelection = () => {
     {
       id: 3,
       title: 'Healthcare App Interface',
-      participant: 'Emma Rodriguez',
+      participant: 'Tharushi Silva',
       submissionDate: '2024-02-05',
       imageUrl: 'https://images.pexels.com/photos/1194420/pexels-photo-1194420.jpeg?auto=compress&cs=tinysrgb&w=400',
       description: 'Clean and accessible healthcare application interface.',
@@ -85,7 +85,7 @@ const WinnerSelection = () => {
     {
       id: 4,
       title: 'Financial Dashboard',
-      participant: 'David Kim',
+      participant: 'Amila Jayawardena',
       submissionDate: '2024-02-12',
       imageUrl: 'https://images.pexels.com/photos/1108572/pexels-photo-1108572.jpeg?auto=compress&cs=tinysrgb&w=400',
       description: 'Comprehensive financial dashboard with data visualization.',
@@ -173,9 +173,9 @@ const WinnerSelection = () => {
       participants: 180,
       submissions: 120,
       winners: [
-        { position: 1, name: 'Alice Smith', title: 'Modern Web Portfolio' },
-        { position: 2, name: 'John Doe', title: 'Creative Landing Page' },
-        { position: 3, name: 'Priya Patel', title: 'Responsive Blog UI' }
+        { position: 1, name: 'Ishara Rajapaksa', title: 'Modern Web Portfolio' },
+        { position: 2, name: 'Prabath Wijesekara', title: 'Creative Landing Page' },
+        { position: 3, name: 'Kavitha Bandara', title: 'Responsive Blog UI' }
       ]
     },
     {
@@ -186,9 +186,9 @@ const WinnerSelection = () => {
       participants: 140,
       submissions: 90,
       winners: [
-        { position: 1, name: 'Liam Wong', title: 'Neon Cityscape' },
-        { position: 2, name: 'Maria Garcia', title: 'Surreal Portrait' },
-        { position: 3, name: 'Chen Wei', title: 'Fantasy Forest' }
+        { position: 1, name: 'Malith Gunasekara', title: 'Neon Cityscape' },
+        { position: 2, name: 'Sanduni Dias', title: 'Surreal Portrait' },
+        { position: 3, name: 'Dinesh Karunaratne', title: 'Fantasy Forest' }
       ]
     }
   ];

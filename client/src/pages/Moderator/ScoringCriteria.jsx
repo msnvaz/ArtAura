@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Trophy, Settings, Heart, MessageCircle, ShoppingCart, Star, Shield, Plus, User, BarChart3, Award } from 'lucide-react';
+import { ArrowLeft, Award, BarChart3, Heart, MessageCircle, Settings, ShoppingCart, Star, Trophy } from 'lucide-react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const ScoringCriteria = () => {
@@ -63,7 +63,7 @@ const ScoringCriteria = () => {
     const baseContestants = [
       {
         id: 1,
-        name: 'Sarah Johnson',
+        name: 'Nadeesha Perera',
         artworkTitle: 'Digital Dreams',
         submissionDate: '2025-07-15',
         likes: 234,
@@ -74,7 +74,7 @@ const ScoringCriteria = () => {
       },
       {
         id: 2,
-        name: 'Michael Chen',
+        name: 'Kasun Fernando',
         artworkTitle: 'Abstract Fusion',
         submissionDate: '2025-07-16',
         likes: 189,
@@ -85,7 +85,7 @@ const ScoringCriteria = () => {
       },
       {
         id: 3,
-        name: 'Emma Rodriguez',
+        name: 'Tharushi Silva',
         artworkTitle: 'Vibrant Expressions',
         submissionDate: '2025-07-17',
         likes: 156,
@@ -96,7 +96,7 @@ const ScoringCriteria = () => {
       },
       {
         id: 4,
-        name: 'David Kim',
+        name: 'Amila Jayawardena',
         artworkTitle: 'Cosmic Journey',
         submissionDate: '2025-07-18',
         likes: 201,
@@ -107,7 +107,7 @@ const ScoringCriteria = () => {
       },
       {
         id: 5,
-        name: 'Lisa Park',
+        name: 'Sanduni Wijesekara',
         artworkTitle: 'Nature\'s Symphony',
         submissionDate: '2025-07-19',
         likes: 178,
@@ -199,13 +199,13 @@ const ScoringCriteria = () => {
   const getStepColor = (step) => {
     if (step === currentStep) {
       switch (step) {
-        case 1: return 'bg-emerald-500 text-white';
-        case 2: return 'bg-blue-500 text-white';
-        case 3: return 'bg-purple-500 text-white';
-        default: return 'bg-gray-500 text-white';
+        case 1: return 'bg-[#7f5539] text-[#fdf9f4]';
+        case 2: return 'bg-[#7f5539] text-[#fdf9f4]';
+        case 3: return 'bg-[#7f5539] text-[#fdf9f4]';
+        default: return 'bg-[#7f5539] text-[#fdf9f4]';
       }
     } else if (step < currentStep) {
-      return 'bg-green-200 text-green-800';
+      return 'bg-[#d87c5a] text-[#fdf9f4]';
     } else {
       return 'bg-gray-200 text-gray-600';
     }
@@ -234,7 +234,7 @@ const ScoringCriteria = () => {
           className={`px-4 py-2 rounded-lg transition-all duration-200 ${
             currentStep === 1 
               ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
-              : 'bg-gray-500 text-white hover:bg-gray-600 btn-animate'
+              : 'bg-[#7f5539] text-[#fdf9f4] hover:bg-[#6e4c34] btn-animate'
           }`}
         >
           Previous
@@ -246,7 +246,7 @@ const ScoringCriteria = () => {
           className={`px-4 py-2 rounded-lg transition-all duration-200 ${
             currentStep === 3 || !selectedChallenge
               ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
-              : 'bg-blue-500 text-white hover:bg-blue-600 btn-animate'
+              : 'bg-[#7f5539] text-[#fdf9f4] hover:bg-[#6e4c34] btn-animate'
           }`}
         >
           Next
@@ -276,8 +276,14 @@ const ScoringCriteria = () => {
       alert('Please ensure all weights are greater than 0 and total equals 100%');
       return;
     }
-    setIsSubmitted(true);
-    console.log('Scoring criteria submitted:', criteria);
+    
+    // Show confirmation dialog
+    const confirmMessage = `The scoring criteria for "${selectedChallengeData?.name}" will be saved and cannot be modified. Winners will be calculated based on these weights.\n\nAre you sure you want to proceed?`;
+    
+    if (window.confirm(confirmMessage)) {
+      setIsSubmitted(true);
+      console.log('Scoring criteria submitted:', criteria);
+    }
   };
 
   const totalPercentage = getTotalWeight();
@@ -396,20 +402,20 @@ const ScoringCriteria = () => {
                 {/* Challenge Selection Section */}
                 <div className="mb-8">
                   <div className="flex items-center gap-3 mb-6">
-                    <Trophy className="h-6 w-6 text-amber-600" />
-                    <h2 className="text-2xl font-semibold text-amber-900">Select Challenge & Set Scoring Criteria</h2>
+                    <Trophy className="h-6 w-6 text-[#7f5539]" />
+                    <h2 className="text-2xl font-semibold text-[#362625]">Select Challenge & Set Scoring Criteria</h2>
                   </div>
 
               {/* Challenge Selection */}
-              <div className="bg-white rounded-lg border border-amber-200 p-6 mb-6">
-                <label className="block text-sm font-medium mb-3" style={{color: '#5D3A00'}}>
+              <div className="bg-white rounded-lg border border-[#d87c5a] p-6 mb-6">
+                <label className="block text-sm font-medium mb-3" style={{color: '#362625'}}>
                   Choose a Challenge to Define Scoring Criteria
                 </label>
                 <select
                   value={selectedChallenge}
                   onChange={(e) => setSelectedChallenge(e.target.value)}
                   className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent text-lg"
-                  style={{borderColor: '#FFE4D6', backgroundColor: 'white', color: '#5D3A00'}}
+                  style={{borderColor: '#d87c5a', backgroundColor: 'white', color: '#362625'}}
                   disabled={isSubmitted}
                 >
                   <option value="">Select a challenge...</option>
@@ -422,12 +428,12 @@ const ScoringCriteria = () => {
 
                 {/* Challenge Details */}
                 {selectedChallengeData && (
-                  <div className="mt-4 p-4 rounded-lg" style={{backgroundColor: '#FFE4D6'}}>
-                    <h4 className="font-semibold mb-2" style={{color: '#5D3A00'}}>{selectedChallengeData.name}</h4>
-                    <p className="text-sm mb-3" style={{color: '#D87C5A'}}>{selectedChallengeData.description}</p>
+                  <div className="mt-4 p-4 rounded-lg" style={{backgroundColor: '#f4e8dc'}}>
+                    <h4 className="font-semibold mb-2" style={{color: '#362625'}}>{selectedChallengeData.name}</h4>
+                    <p className="text-sm mb-3" style={{color: '#7f5539'}}>{selectedChallengeData.description}</p>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                       <div>
-                        <span className="font-medium" style={{color: '#5D3A00'}}>Status:</span>
+                        <span className="font-medium" style={{color: '#362625'}}>Status:</span>
                         <span className={`ml-1 px-2 py-1 rounded text-xs ${
                           selectedChallengeData.status === 'active' ? 'bg-green-100 text-green-800' : 
                           selectedChallengeData.status === 'draft' ? 'bg-gray-100 text-gray-800' : 'bg-blue-100 text-blue-800'
@@ -435,13 +441,13 @@ const ScoringCriteria = () => {
                           {selectedChallengeData.status}
                         </span>
                       </div>
-                      <div><span className="font-medium" style={{color: '#5D3A00'}}>Participants:</span> <span style={{color: '#D87C5A'}}>{selectedChallengeData.participants}</span></div>
-                      <div><span className="font-medium" style={{color: '#5D3A00'}}>Submissions:</span> <span style={{color: '#D87C5A'}}>{selectedChallengeData.submissions}</span></div>
-                      <div><span className="font-medium" style={{color: '#5D3A00'}}>Deadline:</span> <span style={{color: '#D87C5A'}}>{selectedChallengeData.deadline}</span></div>
+                      <div><span className="font-medium" style={{color: '#362625'}}>Participants:</span> <span style={{color: '#7f5539'}}>{selectedChallengeData.participants}</span></div>
+                      <div><span className="font-medium" style={{color: '#362625'}}>Submissions:</span> <span style={{color: '#7f5539'}}>{selectedChallengeData.submissions}</span></div>
+                      <div><span className="font-medium" style={{color: '#362625'}}>Deadline:</span> <span style={{color: '#7f5539'}}>{selectedChallengeData.deadline}</span></div>
                     </div>
                     
                     {/* Criteria Status */}
-                    <div className="mt-3 pt-3 border-t" style={{borderColor: '#D87C5A'}}>
+                    <div className="mt-3 pt-3 border-t" style={{borderColor: '#d87c5a'}}>
                       <div className={`flex items-center gap-2 text-sm ${
                         selectedChallengeData.hasCriteria ? 'text-green-700' : 'text-orange-700'
                       }`}>
@@ -454,8 +460,8 @@ const ScoringCriteria = () => {
 
                     {/* Current Contestants Preview */}
                     {contestants.length > 0 && (
-                      <div className="mt-4 pt-3 border-t" style={{borderColor: '#D87C5A'}}>
-                        <h5 className="font-medium mb-2" style={{color: '#5D3A00'}}>Current Contestants ({contestants.length})</h5>
+                      <div className="mt-4 pt-3 border-t" style={{borderColor: '#d87c5a'}}>
+                        <h5 className="font-medium mb-2" style={{color: '#362625'}}>Current Contestants ({contestants.length})</h5>
                         <div className="flex -space-x-2">
                           {contestants.slice(0, 5).map(contestant => (
                             <img
@@ -467,7 +473,7 @@ const ScoringCriteria = () => {
                             />
                           ))}
                           {contestants.length > 5 && (
-                            <div className="w-8 h-8 rounded-full border-2 border-white bg-gray-200 flex items-center justify-center text-xs font-medium" style={{color: '#5D3A00'}}>
+                            <div className="w-8 h-8 rounded-full border-2 border-white bg-gray-200 flex items-center justify-center text-xs font-medium" style={{color: '#362625'}}>
                               +{contestants.length - 5}
                             </div>
                           )}
@@ -483,13 +489,13 @@ const ScoringCriteria = () => {
             {selectedChallenge && (
               <>
                 <div className="flex items-center gap-3 mb-6">
-                  <Settings className="h-6 w-6 text-amber-600" />
-                  <h3 className="text-xl font-semibold text-amber-900">Define Scoring Criteria</h3>
+                  <Settings className="h-6 w-6 text-[#7f5539]" />
+                  <h3 className="text-xl font-semibold text-[#362625]">Define Scoring Criteria</h3>
                 </div>
 
             {/* Important Notice */}
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-8">
-              <p className="text-amber-800">
+              <p className="text-[#7f5539]">
                 <span className="font-semibold">Important:</span> Once you lock these criteria, they cannot be changed. Make sure the total percentage equals 100% before proceeding.
               </p>
             </div>
@@ -498,7 +504,7 @@ const ScoringCriteria = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             {/* Likes & Engagement Weight */}
             <div className="space-y-4">
-              <div className="flex items-center gap-2 text-amber-800">
+              <div className="flex items-center gap-2 text-[#362625]">
                 <Heart className="h-5 w-5 text-red-500" />
                 <h3 className="text-lg font-semibold">Likes & Engagement Weight</h3>
               </div>
@@ -513,20 +519,20 @@ const ScoringCriteria = () => {
                   disabled={isSubmitted}
                   className="w-full h-2 bg-yellow-200 rounded-lg appearance-none cursor-pointer slider"
                   style={{
-                    background: `linear-gradient(to right, #f59e0b 0%, #f59e0b ${criteria.likesWeight}%, #fef3c7 ${criteria.likesWeight}%, #fef3c7 100%)`
+                    background: `linear-gradient(to right, #7f5539 0%, #7f5539 ${criteria.likesWeight}%, #f4e8dc ${criteria.likesWeight}%, #f4e8dc 100%)`
                   }}
                 />
                 <div className="flex justify-end mt-2">
-                  <span className="text-2xl font-bold text-amber-900">{criteria.likesWeight}%</span>
+                  <span className="text-2xl font-bold text-[#362625]">{criteria.likesWeight}%</span>
                 </div>
               </div>
               
-              <p className="text-sm text-amber-700">Based on the number of likes received</p>
+              <p className="text-sm text-[#7f5539]">Based on the number of likes received</p>
             </div>
 
             {/* Comments & Interaction Weight */}
             <div className="space-y-4">
-              <div className="flex items-center gap-2 text-amber-800">
+              <div className="flex items-center gap-2 text-[#362625]">
                 <MessageCircle className="h-5 w-5 text-blue-500" />
                 <h3 className="text-lg font-semibold">Comments & Interaction Weight</h3>
               </div>
@@ -541,20 +547,20 @@ const ScoringCriteria = () => {
                   disabled={isSubmitted}
                   className="w-full h-2 bg-yellow-200 rounded-lg appearance-none cursor-pointer slider"
                   style={{
-                    background: `linear-gradient(to right, #f59e0b 0%, #f59e0b ${criteria.commentsWeight}%, #fef3c7 ${criteria.commentsWeight}%, #fef3c7 100%)`
+                    background: `linear-gradient(to right, #7f5539 0%, #7f5539 ${criteria.commentsWeight}%, #f4e8dc ${criteria.commentsWeight}%, #f4e8dc 100%)`
                   }}
                 />
                 <div className="flex justify-end mt-2">
-                  <span className="text-2xl font-bold text-amber-900">{criteria.commentsWeight}%</span>
+                  <span className="text-2xl font-bold text-[#362625]">{criteria.commentsWeight}%</span>
                 </div>
               </div>
               
-              <p className="text-sm text-amber-700">Based on the number of comments received</p>
+              <p className="text-sm text-[#7f5539]">Based on the number of comments received</p>
             </div>
 
             {/* Buyer Interest Weight */}
             <div className="space-y-4">
-              <div className="flex items-center gap-2 text-amber-800">
+              <div className="flex items-center gap-2 text-[#362625]">
                 <ShoppingCart className="h-5 w-5 text-green-500" />
                 <h3 className="text-lg font-semibold">Buyer Interest Weight</h3>
               </div>
@@ -569,20 +575,20 @@ const ScoringCriteria = () => {
                   disabled={isSubmitted}
                   className="w-full h-2 bg-yellow-200 rounded-lg appearance-none cursor-pointer slider"
                   style={{
-                    background: `linear-gradient(to right, #f59e0b 0%, #f59e0b ${criteria.buyerInterestWeight}%, #fef3c7 ${criteria.buyerInterestWeight}%, #fef3c7 100%)`
+                    background: `linear-gradient(to right, #7f5539 0%, #7f5539 ${criteria.buyerInterestWeight}%, #f4e8dc ${criteria.buyerInterestWeight}%, #f4e8dc 100%)`
                   }}
                 />
                 <div className="flex justify-end mt-2">
-                  <span className="text-2xl font-bold text-amber-900">{criteria.buyerInterestWeight}%</span>
+                  <span className="text-2xl font-bold text-[#362625]">{criteria.buyerInterestWeight}%</span>
                 </div>
               </div>
               
-              <p className="text-sm text-amber-700">Based on buyer interest and purchase inquiries</p>
+              <p className="text-sm text-[#7f5539]">Based on buyer interest and purchase inquiries</p>
             </div>
 
             {/* Expert Evaluation Weight */}
             <div className="space-y-4">
-              <div className="flex items-center gap-2 text-amber-800">
+              <div className="flex items-center gap-2 text-[#362625]">
                 <Star className="h-5 w-5 text-yellow-500" />
                 <h3 className="text-lg font-semibold">Expert Evaluation Weight</h3>
               </div>
@@ -597,15 +603,15 @@ const ScoringCriteria = () => {
                   disabled={isSubmitted}
                   className="w-full h-2 bg-yellow-200 rounded-lg appearance-none cursor-pointer slider"
                   style={{
-                    background: `linear-gradient(to right, #f59e0b 0%, #f59e0b ${criteria.expertEvaluationWeight}%, #fef3c7 ${criteria.expertEvaluationWeight}%, #fef3c7 100%)`
+                    background: `linear-gradient(to right, #7f5539 0%, #7f5539 ${criteria.expertEvaluationWeight}%, #f4e8dc ${criteria.expertEvaluationWeight}%, #f4e8dc 100%)`
                   }}
                 />
                 <div className="flex justify-end mt-2">
-                  <span className="text-2xl font-bold text-amber-900">{criteria.expertEvaluationWeight}%</span>
+                  <span className="text-2xl font-bold text-[#362625]">{criteria.expertEvaluationWeight}%</span>
                 </div>
               </div>
               
-              <p className="text-sm text-amber-700">Based on scores from expert artist evaluators</p>
+              <p className="text-sm text-[#7f5539]">Based on scores from expert artist evaluators</p>
             </div>
           </div>
 
@@ -625,13 +631,13 @@ const ScoringCriteria = () => {
                 <button
                   onClick={handleSubmit}
                   disabled={!isValidCriteria() || !selectedChallenge}
-                  className={`px-8 py-4 rounded-lg font-semibold text-lg transition-colors btn-animate ${
+                  className={`px-8 py-4 rounded-lg font-medium text-lg transition-colors btn-animate flex items-center space-x-2 ${
                     isValidCriteria() && selectedChallenge
-                      ? 'bg-amber-600 text-white hover:bg-amber-700'
+                      ? 'bg-[#7f5539] text-[#fdf9f4] hover:bg-[#6e4c34]'
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   }`}
                 >
-                  🔒 Lock Criteria & Calculate Scores
+                  <span>🔒 Lock Criteria & Calculate Scores</span>
                 </button>
               </div>
             ) : (
@@ -645,14 +651,6 @@ const ScoringCriteria = () => {
                     The scoring criteria for "{selectedChallengeData?.name}" has been saved and cannot be modified. 
                     Winners will be calculated based on these weights.
                   </p>
-                  <div className="mt-4">
-                    <button
-                      onClick={() => navigate('/winner-selection')}
-                      className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors btn-animate"
-                    >
-                      View Results & Winners
-                    </button>
-                  </div>
                 </div>
               </div>
             )}
@@ -676,34 +674,34 @@ const ScoringCriteria = () => {
             <div className="rounded-lg shadow-sm border h-full relative overflow-hidden" style={{backgroundColor: '#FFF5E1'}}>
               <div className="p-8">
                 <div className="flex items-center gap-3 mb-6">
-                  <BarChart3 className="h-6 w-6 text-blue-600" />
-                  <h2 className="text-2xl font-semibold text-blue-900">Scoring & Evaluation</h2>
+                  <BarChart3 className="h-6 w-6 text-[#7f5539]" />
+                  <h2 className="text-2xl font-semibold text-[#362625]">Scoring & Evaluation</h2>
                 </div>
                 
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
-                  <h3 className="text-lg font-medium text-blue-900 mb-4">
+                <div className="bg-[#f4e8dc] border border-[#d87c5a] rounded-lg p-6 mb-8">
+                  <h3 className="text-lg font-medium text-[#362625] mb-4">
                     Challenge: {selectedChallengeData?.name}
                   </h3>
-                  <p className="text-blue-700 mb-4">
+                  <p className="text-[#7f5539] mb-4">
                     Review current scoring criteria and contestant performance metrics
                   </p>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="bg-white rounded-lg p-4 text-center border border-blue-200">
-                      <div className="text-2xl font-bold text-blue-600">{criteria.likesWeight}%</div>
-                      <div className="text-sm text-blue-800">Social Engagement</div>
+                    <div className="bg-white rounded-lg p-4 text-center border border-[#d87c5a]">
+                      <div className="text-2xl font-bold text-[#7f5539]">{criteria.likesWeight}%</div>
+                      <div className="text-sm text-[#362625]">Social Engagement</div>
                     </div>
-                    <div className="bg-white rounded-lg p-4 text-center border border-blue-200">
-                      <div className="text-2xl font-bold text-blue-600">{criteria.commentsWeight}%</div>
-                      <div className="text-sm text-blue-800">Community Interaction</div>
+                    <div className="bg-white rounded-lg p-4 text-center border border-[#d87c5a]">
+                      <div className="text-2xl font-bold text-[#7f5539]">{criteria.commentsWeight}%</div>
+                      <div className="text-sm text-[#362625]">Community Interaction</div>
                     </div>
-                    <div className="bg-white rounded-lg p-4 text-center border border-blue-200">
-                      <div className="text-2xl font-bold text-blue-600">{criteria.buyerInterestWeight}%</div>
-                      <div className="text-sm text-blue-800">Market Appeal</div>
+                    <div className="bg-white rounded-lg p-4 text-center border border-[#d87c5a]">
+                      <div className="text-2xl font-bold text-[#7f5539]">{criteria.buyerInterestWeight}%</div>
+                      <div className="text-sm text-[#362625]">Market Appeal</div>
                     </div>
-                    <div className="bg-white rounded-lg p-4 text-center border border-blue-200">
-                      <div className="text-2xl font-bold text-blue-600">{criteria.expertEvaluationWeight}%</div>
-                      <div className="text-sm text-blue-800">Expert Assessment</div>
+                    <div className="bg-white rounded-lg p-4 text-center border border-[#d87c5a]">
+                      <div className="text-2xl font-bold text-[#7f5539]">{criteria.expertEvaluationWeight}%</div>
+                      <div className="text-sm text-[#362625]">Expert Assessment</div>
                     </div>
                   </div>
                 </div>
@@ -719,7 +717,7 @@ const ScoringCriteria = () => {
                             <p className="text-sm text-gray-500">Artwork: {contestant.artwork}</p>
                           </div>
                           <div className="text-right">
-                            <div className="text-2xl font-bold text-blue-600">
+                            <div className="text-2xl font-bold text-[#7f5539]">
                               {scoringResults[index]?.scores.total}
                             </div>
                             <div className="text-sm text-gray-500">Projected Score</div>
@@ -756,18 +754,18 @@ const ScoringCriteria = () => {
             <div className="rounded-lg shadow-sm border h-full relative overflow-hidden" style={{backgroundColor: '#FFF5E1'}}>
               <div className="p-8">
                 <div className="flex items-center gap-3 mb-6">
-                  <Award className="h-6 w-6 text-purple-600" />
-                  <h2 className="text-2xl font-semibold text-purple-900">Results & Final Scoring</h2>
+                  <Award className="h-6 w-6 text-[#7f5539]" />
+                  <h2 className="text-2xl font-semibold text-[#362625]">Results & Final Scoring</h2>
                 </div>
                 
-                <div className="bg-purple-50 border border-purple-200 rounded-lg p-6 mb-8">
-                  <h3 className="text-lg font-medium text-purple-900 mb-2">
+                <div className="bg-[#f4e8dc] border border-[#d87c5a] rounded-lg p-6 mb-8">
+                  <h3 className="text-lg font-medium text-[#362625] mb-2">
                     Final Results: {selectedChallengeData?.name}
                   </h3>
-                  <p className="text-purple-700 mb-4">
+                  <p className="text-[#7f5539] mb-4">
                     Complete scoring breakdown and final rankings
                   </p>
-                  <div className="text-sm text-purple-600">
+                  <div className="text-sm text-[#7f5539]">
                     Total Participants: {contestants.length} • Evaluation Complete
                   </div>
                 </div>
@@ -805,7 +803,7 @@ const ScoringCriteria = () => {
                             </div>
                           </div>
                           <div className="text-right">
-                            <div className="text-3xl font-bold text-purple-600">
+                            <div className="text-3xl font-bold text-[#7f5539]">
                               {result.scores.total}
                             </div>
                             <div className="text-sm text-gray-500">Total Score</div>
