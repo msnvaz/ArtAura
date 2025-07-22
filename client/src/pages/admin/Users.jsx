@@ -512,7 +512,7 @@ const UsersManagement = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-2 users-header">
           <h2 className="text-2xl font-bold flex items-center gap-2" style={{color: '#5D3A00'}}>
             <Users size={24} />
-            User Management ({filteredUsers.length} users)
+            Users ({filteredUsers.length} users)
           </h2>
           <CurrencySelector className="flex-shrink-0" />
         </div>
