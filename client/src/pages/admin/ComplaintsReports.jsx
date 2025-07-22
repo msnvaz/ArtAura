@@ -354,7 +354,7 @@ const ComplaintsReports = () => {
         {/* Complaints & Reports Management Heading */}
         <h2 className="text-2xl font-bold flex items-center gap-2 mb-2 complaints-header" style={{color: '#5D3A00'}}>
           <AlertTriangle size={24} />
-          Complaints & Reports ({complaints.filter(complaint => complaint.status === activeTab).length} {activeTab} reports)
+          Complaints & Reports Management ({complaints.filter(complaint => complaint.status === activeTab).length} {activeTab} reports)
         </h2>
 
         {/* Tabs */}
