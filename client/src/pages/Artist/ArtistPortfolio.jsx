@@ -53,9 +53,11 @@ import {
 
 import { useImageWithFallback } from '../../util/imageUtils';
 import { formatLKR } from '../../util/currency';
+import { useNotification } from '../../context/NotificationContext';
 
 const ArtistPortfolio = () => {
   const navigate = useNavigate();
+  const { showSuccess, showError, showInfo } = useNotification();
 
   // Helper functions for achievement display
   const getAchievementIcon = (iconType) => {
@@ -490,7 +492,7 @@ const ArtistPortfolio = () => {
 
   const handleSaveProfile = async () => {
     if (!userId || !token) {
-      alert('Authentication error. Please log in again.');
+      showError('Authentication error. Please log in again.');
       return;
     }
 
@@ -538,20 +540,20 @@ const ArtistPortfolio = () => {
       }));
 
       setIsEditingProfile(false);
-      alert('Profile updated successfully!');
+      showSuccess('Profile updated successfully!');
 
     } catch (error) {
       console.error('Error updating profile:', error);
       if (error.response) {
         if (error.response.status === 401) {
-          alert('Authentication failed. Please log in again.');
+          showError('Authentication failed. Please log in again.');
         } else if (error.response.status === 404) {
-          alert('Artist profile not found.');
+          showError('Artist profile not found.');
         } else {
-          alert(`Failed to update profile: ${error.response.data || error.response.statusText}`);
+          showError(`Failed to update profile: ${error.response.data || error.response.statusText}`);
         }
       } else {
-        alert('Network error. Please check your connection and try again.');
+        showError('Network error. Please check your connection and try again.');
       }
     }
   };
@@ -598,13 +600,13 @@ const ArtistPortfolio = () => {
 
       if (!artworkId) {
         console.error('No artwork ID found in:', updatedArtworkData, selectedArtwork);
-        alert('Error: Artwork ID not found. Please try again.');
+        showError('Error: Artwork ID not found. Please try again.');
         return;
       }
 
       const token = localStorage.getItem('token');
       if (!token) {
-        alert('Authentication error. Please log in again.');
+        showError('Authentication error. Please log in again.');
         return;
       }
 
@@ -692,7 +694,7 @@ const ArtistPortfolio = () => {
       setSelectedArtwork(null);
 
       // Show success message
-      alert('Artwork updated successfully!');
+      showSuccess('Artwork updated successfully!');
 
     } catch (error) {
       console.error('Error updating artwork:', error);
@@ -700,9 +702,9 @@ const ArtistPortfolio = () => {
       if (error.response) {
         console.error('Response data:', error.response.data);
         console.error('Response status:', error.response.status);
-        alert(`Failed to update artwork: ${error.response.data || error.message}`);
+        showError(`Failed to update artwork: ${error.response.data || error.message}`);
       } else {
-        alert('Failed to update artwork. Please try again.');
+        showError('Failed to update artwork. Please try again.');
       }
     }
   };
@@ -735,11 +737,11 @@ const ArtistPortfolio = () => {
       setSelectedArtwork(null);
 
       // Show success message
-      alert('Artwork deleted successfully!');
+      showSuccess('Artwork deleted successfully!');
 
     } catch (error) {
       console.error('Error deleting artwork:', error);
-      alert('Failed to delete artwork. Please try again.');
+      showError('Failed to delete artwork. Please try again.');
     }
   };
 
@@ -825,7 +827,7 @@ const ArtistPortfolio = () => {
       });
 
       // Show success message
-      alert('Post created successfully!');
+      showSuccess('Post created successfully!');
 
       // Refresh posts from the server to get the latest data
       try {
@@ -854,7 +856,7 @@ const ArtistPortfolio = () => {
 
     } catch (error) {
       console.error('Error uploading post:', error);
-      alert('Failed to create post. Please try again.');
+      showError('Failed to create post. Please try again.');
     }
   };
 
@@ -893,7 +895,7 @@ const ArtistPortfolio = () => {
       const userId = localStorage.getItem('userId');
 
       if (!token || !userId) {
-        alert('Authentication required. Please log in again.');
+        showError('Authentication required. Please log in again.');
         return;
       }
 
@@ -948,21 +950,21 @@ const ArtistPortfolio = () => {
       });
 
       // Show success message
-      alert('Artwork uploaded successfully!');
+      showSuccess('Artwork uploaded successfully!');
 
     } catch (error) {
       console.error('Error creating artwork:', error);
 
       if (error.response) {
         if (error.response.status === 401) {
-          alert('Authentication failed. Please log in again.');
+          showError('Authentication failed. Please log in again.');
         } else if (error.response.status === 400) {
-          alert(`Invalid data: ${error.response.data.message || 'Please check your input.'}`);
+          showError(`Invalid data: ${error.response.data.message || 'Please check your input.'}`);
         } else {
-          alert(`Failed to upload artwork: ${error.response.data.message || 'Server error'}`);
+          showError(`Failed to upload artwork: ${error.response.data.message || 'Server error'}`);
         }
       } else {
-        alert('Network error. Please check your connection and try again.');
+        showError('Network error. Please check your connection and try again.');
       }
     }
   };
@@ -994,7 +996,7 @@ const ArtistPortfolio = () => {
       const token = localStorage.getItem('token'); // or from useAuth()
 
       if (!token) {
-        alert("You must be logged in to delete posts.");
+        showError("You must be logged in to delete posts.");
         return;
       }
 
@@ -1008,10 +1010,10 @@ const ArtistPortfolio = () => {
       // Update UI after successful deletion - use post_id instead of id
       setPortfolioPosts((prevPosts) => prevPosts.filter(post => post.post_id !== postId));
 
-      alert("Post deleted successfully!");
+      showSuccess("Post deleted successfully!");
     } catch (error) {
       console.error("Error deleting post:", error);
-      alert("Failed to delete the post. Try again.");
+      showError("Failed to delete the post. Try again.");
     }
   };
 
@@ -1028,7 +1030,7 @@ const ArtistPortfolio = () => {
       const token = localStorage.getItem('token');
 
       if (!token) {
-        alert("You must be logged in to edit posts.");
+        showError("You must be logged in to edit posts.");
         return;
       }
 
@@ -1068,7 +1070,7 @@ const ArtistPortfolio = () => {
       setShowEditModal(false);
       setEditingItem(null);
 
-      alert('Post updated successfully!');
+      showSuccess('Post updated successfully!');
 
     } catch (error) {
       console.error('Error updating post:', error);
@@ -1078,20 +1080,20 @@ const ArtistPortfolio = () => {
         console.error('Status code:', error.response.status);
 
         if (error.response.status === 401) {
-          alert('Authentication failed. Please log in again.');
+          showError('Authentication failed. Please log in again.');
         } else if (error.response.status === 403) {
-          alert('You are not authorized to edit this post.');
+          showError('You are not authorized to edit this post.');
         } else if (error.response.status === 404) {
-          alert('Post not found.');
+          showError('Post not found.');
         } else {
-          alert(`Failed to update post: ${error.response.data || error.response.statusText}`);
+          showError(`Failed to update post: ${error.response.data || error.response.statusText}`);
         }
       } else if (error.request) {
         console.error('No response received:', error.request);
-        alert('Network error. Please check your connection and try again.');
+        showError('Network error. Please check your connection and try again.');
       } else {
         console.error('Request setup error:', error.message);
-        alert('Failed to update post. Please try again.');
+        showError('Failed to update post. Please try again.');
       }
     }
   };
@@ -1163,7 +1165,7 @@ const ArtistPortfolio = () => {
       const token = localStorage.getItem('token');
 
       if (!token) {
-        alert('You must be logged in to update artwork.');
+        showError('You must be logged in to update artwork.');
         return;
       }
 
@@ -1192,10 +1194,10 @@ const ArtistPortfolio = () => {
       );
 
       setSelectedArtwork(updatedArtwork);
-      alert(`Artwork ${updatedArtwork.featured ? 'featured' : 'unfeatured'} successfully!`);
+      showSuccess(`Artwork ${updatedArtwork.featured ? 'featured' : 'unfeatured'} successfully!`);
     } catch (error) {
       console.error('Error toggling feature status:', error);
-      alert('Failed to update feature status');
+      showError('Failed to update feature status');
     }
   };
 
@@ -1205,7 +1207,7 @@ const ArtistPortfolio = () => {
       const token = localStorage.getItem('token');
 
       if (!token) {
-        alert('You must be logged in to update artwork.');
+        showError('You must be logged in to update artwork.');
         return;
       }
 
@@ -1234,10 +1236,10 @@ const ArtistPortfolio = () => {
       );
 
       setSelectedArtwork(updatedArtwork);
-      alert('Artwork marked as sold!');
+      showSuccess('Artwork marked as sold!');
     } catch (error) {
       console.error('Error marking artwork as sold:', error);
-      alert('Failed to mark artwork as sold');
+      showError('Failed to mark artwork as sold');
     }
   };
 
@@ -1248,7 +1250,7 @@ const ArtistPortfolio = () => {
   const handleSaveCover = async (newCoverImage) => {
     try {
       if (!userId || !token) {
-        alert('Authentication error. Please log in again.');
+        showError('Authentication error. Please log in again.');
         return;
       }
 
@@ -1282,18 +1284,18 @@ const ArtistPortfolio = () => {
       }));
 
       setIsChangingCover(false);
-      alert('Cover image updated successfully!');
+      showSuccess('Cover image updated successfully!');
 
     } catch (error) {
       console.error('Error uploading cover image:', error);
-      alert('Failed to update cover image. Please try again.');
+      showError('Failed to update cover image. Please try again.');
     }
   };
 
   const handleAvatarUpload = async (avatarFile) => {
     try {
       if (!userId || !token) {
-        alert('Authentication error. Please log in again.');
+        showError('Authentication error. Please log in again.');
         return;
       }
 

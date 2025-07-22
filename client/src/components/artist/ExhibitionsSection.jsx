@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
+import { useNotification } from '../../context/NotificationContext';
 import {
     Plus,
     Calendar,
@@ -20,6 +21,7 @@ import {
 
 const ExhibitionsSection = ({ onExhibitionsCountChange, onRefresh }) => {
     const { token, userId } = useAuth();
+    const { showSuccess, showError } = useNotification();
     const [exhibitions, setExhibitions] = useState([]);
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
@@ -137,7 +139,7 @@ const ExhibitionsSection = ({ onExhibitionsCountChange, onRefresh }) => {
             resetForm();
             setShowAddModal(false);
 
-            alert('Exhibition created successfully!');
+            showSuccess('Exhibition created successfully!');
 
             // Call refresh callback if provided
             if (onRefresh) {
@@ -145,7 +147,7 @@ const ExhibitionsSection = ({ onExhibitionsCountChange, onRefresh }) => {
             }
         } catch (error) {
             console.error('Error creating exhibition:', error);
-            alert('Failed to create exhibition. Please try again.');
+            showError('Failed to create exhibition. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -202,7 +204,7 @@ const ExhibitionsSection = ({ onExhibitionsCountChange, onRefresh }) => {
             setShowEditModal(false);
             setEditingExhibition(null);
 
-            alert('Exhibition updated successfully!');
+            showSuccess('Exhibition updated successfully!');
 
             // Call refresh callback if provided
             if (onRefresh) {
@@ -210,7 +212,7 @@ const ExhibitionsSection = ({ onExhibitionsCountChange, onRefresh }) => {
             }
         } catch (error) {
             console.error('Error updating exhibition:', error);
-            alert('Failed to update exhibition. Please try again.');
+            showError('Failed to update exhibition. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -246,7 +248,7 @@ const ExhibitionsSection = ({ onExhibitionsCountChange, onRefresh }) => {
             setShowDeleteModal(false);
             setEditingExhibition(null);
 
-            alert('Exhibition deleted successfully!');
+            showSuccess('Exhibition deleted successfully!');
 
             // Call refresh callback if provided
             if (onRefresh) {
@@ -254,7 +256,7 @@ const ExhibitionsSection = ({ onExhibitionsCountChange, onRefresh }) => {
             }
         } catch (error) {
             console.error('Error deleting exhibition:', error);
-            alert('Failed to delete exhibition. Please try again.');
+            showError('Failed to delete exhibition. Please try again.');
         } finally {
             setLoading(false);
         }

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Upload, Save, X, Edit3 } from 'lucide-react';
 import ImageEditorModal from '../modals/ImageEditorModal';
+import { useNotification } from '../../context/NotificationContext';
 import axios from 'axios';
 
 const UploadPostModal = ({
@@ -13,6 +14,7 @@ const UploadPostModal = ({
     onCancel,
     onSuccess // New callback for successful upload
 }) => {
+    const { showSuccess, showError } = useNotification();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [isEditingImage, setIsEditingImage] = useState(false);
@@ -101,7 +103,7 @@ const UploadPostModal = ({
             setLoading(false);
 
             // Show success message
-            alert('Artwork added successfully!');
+            showSuccess('Artwork added successfully!');
 
             // Call onSuccess callback with the new artwork data
             if (onSuccess) {

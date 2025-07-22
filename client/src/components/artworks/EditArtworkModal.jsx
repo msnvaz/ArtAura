@@ -10,6 +10,7 @@ import {
     Ruler,
     Star
 } from 'lucide-react';
+import { useNotification } from '../../context/NotificationContext';
 
 const EditArtworkModal = ({
     isOpen,
@@ -18,6 +19,7 @@ const EditArtworkModal = ({
     onSave,
     onCancel
 }) => {
+    const { showError } = useNotification();
     const [formData, setFormData] = useState({
         title: '',
         medium: '',
@@ -97,7 +99,7 @@ const EditArtworkModal = ({
             onClose();
         } catch (error) {
             console.error('Error updating artwork:', error);
-            alert('Failed to update artwork. Please try again.');
+            showError('Failed to update artwork. Please try again.');
         } finally {
             setIsLoading(false);
         }

@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Trophy, Star, Medal, Award, FileText, Shield, Plus, Edit, Trash2 } from 'lucide-react';
 import axiosInstance from '../../util/axiosInstance';
 import { useAuth } from '../../context/AuthContext';
+import { useNotification } from '../../context/NotificationContext';
 
 const AchievementsSection = ({ artistId, isOwnProfile = false, onAchievementsCountChange, onAchievementsRefresh }) => {
+    const { showSuccess, showError } = useNotification();
     const [achievements, setAchievements] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isAddingAchievement, setIsAddingAchievement] = useState(false);
@@ -94,11 +96,11 @@ const AchievementsSection = ({ artistId, isOwnProfile = false, onAchievementsCou
                 }
                 setIsAddingAchievement(false);
                 resetForm();
-                alert('Achievement added successfully!');
+                showSuccess('Achievement added successfully!');
             }
         } catch (error) {
             console.error('Error adding achievement:', error);
-            alert('Failed to add achievement. Please try again.');
+            showError('Failed to add achievement. Please try again.');
         }
     };
 
@@ -126,11 +128,11 @@ const AchievementsSection = ({ artistId, isOwnProfile = false, onAchievementsCou
                     onAchievementsRefresh();
                 }
                 setEditingAchievement(null);
-                alert('Achievement updated successfully!');
+                showSuccess('Achievement updated successfully!');
             }
         } catch (error) {
             console.error('Error updating achievement:', error);
-            alert('Failed to update achievement. Please try again.');
+            showError('Failed to update achievement. Please try again.');
         }
     };
 
@@ -150,11 +152,11 @@ const AchievementsSection = ({ artistId, isOwnProfile = false, onAchievementsCou
                 if (onAchievementsRefresh) {
                     onAchievementsRefresh();
                 }
-                alert('Achievement deleted successfully!');
+                showSuccess('Achievement deleted successfully!');
             }
         } catch (error) {
             console.error('Error deleting achievement:', error);
-            alert('Failed to delete achievement. Please try again.');
+            showError('Failed to delete achievement. Please try again.');
         }
     };
 
