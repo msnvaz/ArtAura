@@ -384,7 +384,7 @@ const UserVerification = () => {
         {/* User Verification Management Heading */}
         <h2 className="text-2xl font-bold flex items-center gap-2 mb-2 verification-header" style={{color: '#5D3A00'}}>
           <Shield size={24} />
-          User Verification Management ({verificationRequests.filter(req => req.status === activeTab).length} {activeTab} requests)
+          User Verification ({verificationRequests.filter(req => req.status === activeTab).length} {activeTab} requests)
         </h2>
 
         {/* Tabs */}
