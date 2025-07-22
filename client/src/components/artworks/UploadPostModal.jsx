@@ -73,7 +73,8 @@ const UploadPostModal = ({
             formData.append('medium', newArtwork.medium);
             formData.append('size', newArtwork.size || '');
             formData.append('year', newArtwork.year || new Date().getFullYear().toString());
-            formData.append('price', newArtwork.price.toString());
+            // Ensure price is properly formatted as a number string
+            formData.append('price', (parseFloat(newArtwork.price) || 0).toString());
             formData.append('description', newArtwork.description || '');
             formData.append('category', newArtwork.category || '');
             formData.append('tags', newArtwork.tags || '');

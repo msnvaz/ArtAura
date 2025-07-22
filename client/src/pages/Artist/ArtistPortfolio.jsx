@@ -903,7 +903,8 @@ const ArtistPortfolio = () => {
       formData.append('medium', artworkData.medium);
       formData.append('size', artworkData.size || '');
       formData.append('year', artworkData.year || new Date().getFullYear().toString());
-      formData.append('price', artworkData.price.toString());
+      // Ensure price is properly formatted as a number string
+      formData.append('price', (parseFloat(artworkData.price) || 0).toString());
       formData.append('description', artworkData.description || '');
       formData.append('category', artworkData.category || '');
       formData.append('tags', artworkData.tags || '');
