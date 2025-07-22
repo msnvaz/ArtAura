@@ -7,8 +7,11 @@ import com.artaura.artaura.dto.post.PostUpdateDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,20 +21,32 @@ public class PostDAOImpl implements PostDAO {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     @Override
-    public void savePost(int userId, String role, PostCreateDTO postDTO) {
-        String sql = "INSERT INTO post (user_id, role, caption, image, location) " +
-                "VALUES (?, ?, ?, ?, ?)";
+    public void savePost(Long userId, String role, PostCreateDTO postDTO) {
+        String sql = "INSERT INTO post (user_id, role, caption, image, location, created_at) "
+                + "VALUES (?, ?, ?, ?, ?, ?)";
+
+        // Convert images list to JSON string for database storage
+        String imagesJson = null;
+        try {
+            if (postDTO.getImages() != null && !postDTO.getImages().isEmpty()) {
+                imagesJson = objectMapper.writeValueAsString(postDTO.getImages());
+            }
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Error converting images to JSON", e);
+        }
 
         jdbcTemplate.update(sql,
-                userId,                          // ✅ passed separately
-                role,                            // ✅ passed separately
+                userId, // ✅ passed separately
+                role, // ✅ passed separately
                 postDTO.getCaption(),
-                postDTO.getImage(),              // ✅ should be image path like /uploads/image.jpg
-                postDTO.getLocation()// 🕐 sets the current date
+                imagesJson, // ✅ stored as JSON array string
+                postDTO.getLocation(),
+                LocalDateTime.now() // 🕐 explicitly set current timestamp
         );
     }
-
 
     @Override
     public void deletePostById(Long postId) {
@@ -51,11 +66,28 @@ public class PostDAOImpl implements PostDAO {
             first = false;
         }
 
-        if (dto.getImage() != null) {
-            if (!first) sql.append(", ");
+        if (dto.getImages() != null && !dto.getImages().isEmpty()) {
+            if (!first) {
+                sql.append(", ");
+            }
             sql.append("image = ?");
-            params.add(dto.getImage());
+
+            // Convert images list to JSON string
+            try {
+                String imagesJson = objectMapper.writeValueAsString(dto.getImages());
+                params.add(imagesJson);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException("Error converting images to JSON", e);
+            }
             first = false;
+        }
+
+        if (dto.getLocation() != null) {
+            if (!first) {
+                sql.append(", ");
+            }
+            sql.append("location = ?");
+            params.add(dto.getLocation());
         }
 
         sql.append(" WHERE post_id = ?");
@@ -64,16 +96,30 @@ public class PostDAOImpl implements PostDAO {
         jdbcTemplate.update(sql.toString(), params.toArray());
     }
 
-
-
+    @Override
     public List<PostResponseDTO> getPostsByUser(String role, Long userId) {
-        String sql = "SELECT * FROM post WHERE user_id = ? AND role = ?";
+        String sql = "SELECT * FROM post WHERE user_id = ? AND role = ? ORDER BY created_at DESC";
 
         return jdbcTemplate.query(sql, new Object[]{userId, role}, (rs, rowNum) -> {
             PostResponseDTO post = new PostResponseDTO();
             post.setPost_id(rs.getLong("post_id"));
             post.setCaption(rs.getString("caption"));
-            post.setImage(rs.getString("image"));
+
+            // Convert JSON string back to List<String>
+            String imagesJson = rs.getString("image");
+            List<String> imagesList = null;
+            if (imagesJson != null && !imagesJson.trim().isEmpty()) {
+                try {
+                    imagesList = objectMapper.readValue(imagesJson, new TypeReference<List<String>>() {
+                    });
+                } catch (JsonProcessingException e) {
+                    // If JSON parsing fails, treat as single image (backward compatibility)
+                    imagesList = new ArrayList<>();
+                    imagesList.add(imagesJson);
+                }
+            }
+            post.setImages(imagesList != null ? imagesList : new ArrayList<>());
+
             post.setLocation(rs.getString("location"));
             post.setCreated_at(rs.getTimestamp("created_at").toLocalDateTime());
             post.setLikes(rs.getInt("likes"));
@@ -88,7 +134,22 @@ public class PostDAOImpl implements PostDAO {
             PostResponseDTO post = new PostResponseDTO();
             post.setPost_id(rs.getLong("post_id"));
             post.setCaption(rs.getString("caption"));
-            post.setImage(rs.getString("image"));
+
+            // Convert JSON string back to List<String>
+            String imagesJson = rs.getString("image");
+            List<String> imagesList = null;
+            if (imagesJson != null && !imagesJson.trim().isEmpty()) {
+                try {
+                    imagesList = objectMapper.readValue(imagesJson, new TypeReference<List<String>>() {
+                    });
+                } catch (JsonProcessingException e) {
+                    // If JSON parsing fails, treat as single image (backward compatibility)
+                    imagesList = new ArrayList<>();
+                    imagesList.add(imagesJson);
+                }
+            }
+            post.setImages(imagesList != null ? imagesList : new ArrayList<>());
+
             post.setLocation(rs.getString("location"));
             post.setCreated_at(rs.getTimestamp("created_at").toLocalDateTime());
             post.setLikes(rs.getInt("likes"));
@@ -96,6 +157,4 @@ public class PostDAOImpl implements PostDAO {
         });
     }
 
-
 }
-

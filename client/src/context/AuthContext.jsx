@@ -33,6 +33,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem("role");
     localStorage.removeItem("userId");
     setAuth({ token: null, role: null, userId: null });
+    console.log("User has been logged out.");
   };
 
   return (

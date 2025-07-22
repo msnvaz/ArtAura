@@ -1,6 +1,6 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import ImageZoomLens from './ImageZoomLense';
+import { formatLKR } from '../../util/currency';
 import {
     Eye,
     Star,
@@ -8,11 +8,9 @@ import {
     Palette,
     Calendar,
     Heart,
-    DollarSign,
     Share2,
     Download,
-    Trash2,
-    ArrowLeft
+    Trash2
 } from 'lucide-react';
 
 const ArtworkDetailModal = ({
@@ -24,14 +22,7 @@ const ArtworkDetailModal = ({
     onToggleFeature,
     onMarkAsSold
 }) => {
-    const navigate = useNavigate();
-
     if (!isOpen || !artwork) return null;
-
-    const handleOpenFullView = () => {
-        navigate(`/artwork/${artwork.id}`, { state: { artwork } });
-        onClose();
-    };
 
     const handleToggleFeature = () => {
         if (onToggleFeature) {
@@ -88,9 +79,9 @@ const ArtworkDetailModal = ({
 
                             <div className="relative">
                                 <ImageZoomLens
-                                    src={artwork.image}
-                                    zoom={3}
-                                    lensSize={150}
+                                    src={artwork.imageUrl?.startsWith('http') ? artwork.imageUrl : `http://localhost:8081${encodeURI(artwork.imageUrl || artwork.image || '')}`}
+                                    zoom={5}
+                                    lensSize={180}
                                     className="w-full rounded-lg shadow-lg"
                                 />
                             </div>
@@ -131,8 +122,8 @@ const ArtworkDetailModal = ({
 
                                     <div className="flex items-center space-x-2">
                                         <div className={`h-3 w-3 rounded-full ${artwork.status === 'Available' ? 'bg-green-500' :
-                                                artwork.status === 'Sold' ? 'bg-red-500' :
-                                                    'bg-yellow-500'
+                                            artwork.status === 'Sold' ? 'bg-red-500' :
+                                                'bg-yellow-500'
                                             }`}></div>
                                         <div>
                                             <p className="text-sm text-[#7f5539]/60">Status</p>
@@ -156,8 +147,8 @@ const ArtworkDetailModal = ({
                                 {/* Price */}
                                 <div className="mb-6">
                                     <div className="flex items-center space-x-2 mb-4">
-                                        <DollarSign className="h-6 w-6 text-green-600" />
-                                        <span className="text-3xl font-bold text-green-600">{artwork.price}</span>
+                                        <span className="text-sm font-medium text-green-600 bg-green-100 px-2 py-1 rounded">LKR</span>
+                                        <span className="text-3xl font-bold text-green-600">{formatLKR(artwork.price)}</span>
                                     </div>
                                     <div className="flex space-x-3">
                                         {artwork.status === 'Available' && (
@@ -226,13 +217,6 @@ const ArtworkDetailModal = ({
                         className="px-6 py-2 border border-[#7f5539]/30 text-[#7f5539] rounded-lg hover:bg-[#7f5539]/5 transition-colors font-medium"
                     >
                         Close
-                    </button>
-                    <button
-                        onClick={handleOpenFullView}
-                        className="px-6 py-2 bg-[#7f5539] text-white rounded-lg hover:bg-[#6e4c34] transition-colors font-medium flex items-center space-x-2"
-                    >
-                        <ArrowLeft className="h-4 w-4 rotate-180" />
-                        <span>Open Full View</span>
                     </button>
                 </div>
             </div>

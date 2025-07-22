@@ -9,6 +9,7 @@ import {
   Brush,
   ArrowRight,
   Check,
+  Upload,
 } from "lucide-react";
 import { useUser } from "../../context/UserContext";
 import axios from "axios";
@@ -31,6 +32,7 @@ const RegisterPage = () => {
     role: "buyer",
     artistType: "",
     nic: "",
+    nicImage: null,
   });
 
   // const { setUser } = useUser();
@@ -66,8 +68,9 @@ const RegisterPage = () => {
 
     let endpoint = "";
     let payload = {};
+    const API_URL = import.meta.env.VITE_API_URL;
     if (userType === "artist") {
-      endpoint = "http://localhost:8086/api/artist/signup";
+      endpoint = `${API_URL}/api/artist/signup`;
       payload = {
         firstName: formData.firstName,
         lastName: formData.lastName,
@@ -76,10 +79,11 @@ const RegisterPage = () => {
         password: formData.password,
         specialization: formData.specialization,
         nic: formData.nic,
+        status: "Pending",
         agreedTerms: true,
       };
     } else if (userType === "buyer") {
-      endpoint = "http://localhost:8086/api/buyer/signup";
+      endpoint = `${API_URL}/api/buyer/signup`;
       payload = {
         firstName: formData.firstName,
         lastName: formData.lastName,
@@ -117,6 +121,14 @@ const RegisterPage = () => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    setFormData({
+      ...formData,
+      nicImage: file,
     });
   };
 
@@ -402,6 +414,43 @@ const RegisterPage = () => {
                       className="w-full px-4 py-3 border border-[#362625]/20 text-[#362625] rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#362625] focus:border-transparent placeholder-[#362625]/40 transition-all"
                       placeholder="Enter your NIC number"
                     />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="nicImage"
+                      className="block text-sm font-bold text-[#362625] mb-2"
+                    >
+                      NIC Image <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="nicImage"
+                        name="nicImage"
+                        type="file"
+                        accept="image/*"
+                        required
+                        onChange={handleFileChange}
+                        className="hidden"
+                      />
+                      <label
+                        htmlFor="nicImage"
+                        className="w-full px-4 py-3 border border-[#362625]/20 text-[#362625] rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#362625] focus:border-transparent transition-all cursor-pointer flex items-center justify-center space-x-3 hover:bg-[#362625]/5"
+                      >
+                        <Upload className="h-5 w-5 text-[#362625]/60" />
+                        <span className="text-[#362625]/70">
+                          {formData.nicImage ? formData.nicImage.name : "Upload NIC Image"}
+                        </span>
+                      </label>
+                      {formData.nicImage && (
+                        <p className="text-xs text-[#362625]/60 mt-2">
+                          Selected: {formData.nicImage.name}
+                        </p>
+                      )}
+                    </div>
+                    <p className="text-xs text-[#362625]/50 mt-1">
+                      Upload a clear image of your National Identity Card for verification purposes
+                    </p>
                   </div>
                 </div>
               )}

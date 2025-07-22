@@ -24,8 +24,8 @@ public class BuyerDAOImpl implements BuyerDAO {
     @Override
     public void save(BuyerSignupRequest req, String hashedPassword) {
 
-        String sql = "INSERT INTO buyers (first_name, last_name, email, contactNo, password, agreed_terms) " +
-                "VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO buyers (first_name, last_name, email, contactNo, password, agreed_terms,status) " +
+                "VALUES (?, ?, ?, ?, ?, ?,?)";
 
         jdbc.update(sql,
                 req.getFirstName(),
@@ -33,7 +33,8 @@ public class BuyerDAOImpl implements BuyerDAO {
                 req.getEmail(),
                 req.getContactNo(),
                 hashedPassword,                      // use hashedPassword, not raw password
-                req.isAgreedTerms()                 // assuming it's a boolean
+                req.isAgreedTerms(),                // assuming it's a boolean
+                "Active"                            // Add the status parameter
         );
     }
 
@@ -52,6 +53,10 @@ public class BuyerDAOImpl implements BuyerDAO {
         } catch (Exception e) {
             return Optional.empty();
         }
+    }
+
+    public JdbcTemplate getJdbc() {
+        return jdbc;
     }
 }
 

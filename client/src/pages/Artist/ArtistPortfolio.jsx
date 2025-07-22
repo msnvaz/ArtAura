@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { formatDistanceToNow,  isValid } from 'date-fns';
+import { formatDistanceToNow, isValid } from 'date-fns';
 import ArtworkDetailModal from '../../components/artworks/ArtworkDetailModal';
 import EditProfileModal from '../../components/artist/EditProfileModal';
 import UploadPostModal from '../../components/artworks/UploadPostModal';
 import PostUploadModal from '../../components/social/PostUploadModal';
 import ChangeCoverModal from '../../components/profile/ChangeCoverModal';
 import EditPostModel from '../../components/artist/EditPostModel';
-import { useAuth } from "../../context/AuthContext"; 
+import ExhibitionsSection from '../../components/artist/ExhibitionsSection';
+import AchievementsSection from '../../components/artist/AchievementsSection';
+import EditArtworkModal from '../../components/artworks/EditArtworkModal';
+import DeleteConfirmationModal from '../../components/artworks/DeleteConfirmationModal';
+import { useAuth } from "../../context/AuthContext";
 import {
   Plus,
   Edit,
@@ -30,6 +34,7 @@ import {
   TrendingUp,
   TrendingDown,
   Users,
+  User,
   DollarSign,
   Share2,
   Download,
@@ -39,11 +44,48 @@ import {
   Clock,
   Target,
   Globe,
-  ArrowLeft
+  ArrowLeft,
+  FileText,
+  Shield,
+  AlertTriangle,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
+
+import { useImageWithFallback } from '../../util/imageUtils';
+import { formatLKR } from '../../util/currency';
+import { useNotification } from '../../context/NotificationContext';
 
 const ArtistPortfolio = () => {
   const navigate = useNavigate();
+  const { showSuccess, showError, showInfo } = useNotification();
+
+  // Helper functions for achievement display
+  const getAchievementIcon = (iconType) => {
+    const iconMap = {
+      trophy: <Trophy className="h-4 w-4" />,
+      star: <Star className="h-4 w-4" />,
+      medal: <Medal className="h-4 w-4" />,
+      award: <Award className="h-4 w-4" />,
+      certificate: <FileText className="h-4 w-4" />,
+      badge: <Shield className="h-4 w-4" />
+    };
+    return iconMap[iconType] || <Trophy className="h-4 w-4" />;
+  };
+
+  const getAchievementColor = (colorScheme) => {
+    const colorMap = {
+      gold: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      silver: 'bg-gray-100 text-gray-800 border-gray-200',
+      bronze: 'bg-orange-100 text-orange-800 border-orange-200',
+      blue: 'bg-blue-100 text-blue-800 border-blue-200',
+      purple: 'bg-purple-100 text-purple-800 border-purple-200',
+      green: 'bg-green-100 text-green-800 border-green-200',
+      red: 'bg-red-100 text-red-800 border-red-200'
+    };
+    return colorMap[colorScheme] || 'bg-yellow-100 text-yellow-800 border-yellow-200';
+  };
+
   const [activeTab, setActiveTab] = useState('portfolio');
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isAddingArtwork, setIsAddingArtwork] = useState(false);
@@ -51,6 +93,8 @@ const ArtistPortfolio = () => {
   const [isChangingCover, setIsChangingCover] = useState(false);
   const [isViewingArtwork, setIsViewingArtwork] = useState(false);
   const [selectedArtwork, setSelectedArtwork] = useState(null);
+  const [isEditingArtwork, setIsEditingArtwork] = useState(false);
+  const [isDeletingArtwork, setIsDeletingArtwork] = useState(false);
 
   const [editedProfile, setEditedProfile] = useState({
     name: '',
@@ -81,55 +125,309 @@ const ArtistPortfolio = () => {
     // allowSharing: true
   });
 
-  const { token, role, userId} = useAuth();
+  const { token, role, userId, logout } = useAuth();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [portfolioPosts, setPortfolioPosts] = useState([]);
+  const [postImageIndex, setPostImageIndex] = useState({}); // Track current image index for each post
+  const [artistProfile, setArtistProfile] = useState(null);
+  const [achievementsCount, setAchievementsCount] = useState(0);
+  const [recentAchievements, setRecentAchievements] = useState([]);
+  const [topAchievements, setTopAchievements] = useState([]);
+  const [exhibitionsCount, setExhibitionsCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  // Debug effect to track achievementsCount changes
   useEffect(() => {
-    const fetchPosts = async () => {
-      if (!role || !userId || !token) {
-        console.warn("Missing role, userId, or token. Skipping fetch.");
+    if (achievementsCount > 0) {
+      console.log('AchievementsCount updated to:', achievementsCount);
+    }
+  }, [achievementsCount]);
+
+  // Fetch artist profile data
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!userId || !token) {
+        console.warn("Missing userId or token. Skipping profile fetch.");
         return;
       }
-  
+
       try {
+        setLoading(true);
         const response = await axios.get(
-          `http://localhost:8080/api/posts/${role}/${userId}`,
+          `http://localhost:8081/api/artist/profile/${userId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
             },
           }
         );
-  
-        setPortfolioPosts(response.data);
+
+        // Transform the response to match the expected structure
+        const profileData = response.data;
+        console.log('Profile data received:', profileData);
+
+        const avatarUrl = profileData.avatarUrl ? `http://localhost:8081${profileData.avatarUrl}?t=${Date.now()}` : 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=200';
+        const coverUrl = profileData.coverImageUrl ? `http://localhost:8081${profileData.coverImageUrl}?t=${Date.now()}` : 'https://images.pexels.com/photos/1070981/pexels-photo-1070981.jpeg?auto=compress&cs=tinysrgb&w=800';
+
+        console.log('Avatar URL:', avatarUrl);
+        console.log('Cover URL:', coverUrl);
+
+        setArtistProfile({
+          ...profileData,
+          name: `${profileData.firstName} ${profileData.lastName}`,
+          avatar: avatarUrl,
+          coverImage: coverUrl,
+          joinDate: profileData.joinDate ? new Date(profileData.joinDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : 'Recently joined',
+          phone: profileData.contactNo,
+          stats: {
+            artworks: profileData.artworksCount || 0,
+            sales: profileData.totalSales || 0,
+            followers: profileData.totalFollowers || 0,
+            views: profileData.totalViews || 0
+          }
+        });
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+        // Fallback to default profile if fetch fails
+        setArtistProfile({
+          name: 'Artist Profile',
+          bio: 'No bio available',
+          location: 'Not specified',
+          joinDate: 'Recently joined',
+          website: '',
+          instagram: '',
+          twitter: '',
+          phone: '',
+          email: '',
+          avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=200',
+          coverImage: 'https://images.pexels.com/photos/1070981/pexels-photo-1070981.jpeg?auto=compress&cs=tinysrgb&w=800',
+          stats: {
+            artworks: 0,
+            sales: 0,
+            followers: 0,
+            views: 0
+          }
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [userId, token]);
+
+  // Fetch recent achievements function (reusable)
+  const fetchAchievementsData = async () => {
+    if (!userId) {
+      console.warn("Missing userId. Skipping achievements fetch.");
+      return;
+    }
+
+    try {
+      console.log('Fetching achievements for userId:', userId);
+
+      // Add headers if token is available
+      const config = {};
+      if (token) {
+        config.headers = {
+          'Authorization': `Bearer ${token}`
+        };
+      }
+
+      const response = await axios.get(`http://localhost:8081/api/achievements/artist/${userId}`, config);
+
+      const achievements = response.data || [];
+      console.log('Achievements loaded:', achievements.length);
+
+      // Set the total count for navigation tab
+      setAchievementsCount(achievements.length);
+
+      // Transform achievements data to match the display format
+      const sortedAchievements = achievements.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+      // Get the 3 most recent for sidebar
+      const recentForSidebar = sortedAchievements
+        .slice(0, 3)
+        .map(achievement => ({
+          id: achievement.achievementId,
+          title: achievement.title,
+          prize: achievement.prize || achievement.type,
+          icon: getAchievementIcon(achievement.iconType),
+          color: getAchievementColor(achievement.colorScheme)
+        }));
+
+      // Get up to 8 achievements for top section, with additional info
+      const topForDisplay = sortedAchievements
+        .slice(0, 8)
+        .map(achievement => ({
+          id: achievement.achievementId,
+          title: achievement.title,
+          prize: achievement.prize || achievement.type,
+          type: achievement.type,
+          date: new Date(achievement.achievementDate).toLocaleDateString(),
+          icon: getAchievementIcon(achievement.iconType),
+          color: getAchievementColor(achievement.colorScheme)
+        }));
+
+      setRecentAchievements(recentForSidebar);
+      setTopAchievements(topForDisplay);
+    } catch (error) {
+      console.error("Error fetching recent achievements:", error);
+      console.error("Error details:", {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: error.message
+      });
+      setRecentAchievements([]);
+      setTopAchievements([]);
+      setAchievementsCount(0);
+    }
+  };
+
+  // Fetch recent achievements
+  useEffect(() => {
+    if (userId && token) {
+      fetchAchievementsData();
+    }
+  }, [userId, token]);
+
+  // Fetch exhibitions count function (reusable)
+  const fetchExhibitionsCount = async () => {
+    if (!userId || !token) {
+      console.warn("Missing userId or token. Skipping exhibitions count fetch.");
+      return;
+    }
+
+    try {
+      const response = await axios.get(`http://localhost:8081/api/exhibitions/artist/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      const exhibitions = response.data || [];
+      setExhibitionsCount(exhibitions.length);
+      console.log('Initial exhibitions count loaded:', exhibitions.length);
+    } catch (error) {
+      console.error("Error fetching exhibitions count:", error);
+      setExhibitionsCount(0);
+    }
+  };
+
+  // Fetch initial exhibitions count
+  useEffect(() => {
+    fetchExhibitionsCount();
+  }, [userId, token]);
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      if (!role || !userId || !token) {
+        console.warn("Missing role, userId, or token. Skipping fetch.");
+        return;
+      }
+
+      try {
+        const API_URL = import.meta.env.VITE_API_URL;
+        const response = await axios.get(
+          `http://localhost:8081/api/posts/${role}/${userId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        console.log('Posts API response:', response.data);
+
+        // Sort posts by creation date (newest first) as a fallback
+        const sortedPosts = Array.isArray(response.data) ? response.data.sort((a, b) => {
+          const dateA = new Date(a.created_at);
+          const dateB = new Date(b.created_at);
+          return dateB - dateA; // Descending order (newest first)
+        }) : [];
+
+        setPortfolioPosts(sortedPosts);
+        console.log('Set posts state:', sortedPosts.length, 'posts');
       } catch (error) {
         console.error("Error fetching posts:", error);
       }
     };
-  
+
     fetchPosts();
   }, [role, userId, token]); // 👈 Add these so it re-runs when context loads
-  
-  
-  // Mock artist data
-  const artistProfile = {
-    name: 'Sarah Martinez',
-    bio: 'Contemporary artist specializing in abstract expressionism and digital art. My work explores the intersection of emotion and color, creating pieces that speak to the human experience.',
-    location: 'New York, NY',
-    joinDate: 'January 2023',
-    website: 'www.sarahmartinez.art',
-    instagram: '@sarahmartinez_art',
-    twitter: '@sarah_art',
-    phone: '+1 (555) 123-4567',
-    email: 'sarah@sarahmartinez.art',
-    avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=200',
-    coverImage: 'https://images.pexels.com/photos/1070981/pexels-photo-1070981.jpeg?auto=compress&cs=tinysrgb&w=800',
-    stats: {
-      artworks: 24,
-      sales: 18,
-      followers: 342,
-      views: 12847
-    }
-  };
+
+  const [artworks, setArtworks] = useState([]);
+  const [artworksLoading, setArtworksLoading] = useState(false);
+  const [artworksError, setArtworksError] = useState(null);
+
+  useEffect(() => {
+    const fetchArtworks = async () => {
+      if (!userId) {
+        console.log('No userId available, skipping artwork fetch');
+        setArtworks([]);
+        return;
+      }
+
+      console.log('Fetching artworks for userId:', userId);
+      setArtworksLoading(true);
+      setArtworksError(null);
+
+      try {
+        const token = localStorage.getItem('token');
+        console.log('Token available:', !!token);
+
+        const response = await axios.get(`http://localhost:8081/api/artworks/artist/${userId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        console.log('Artworks API response:', response.data);
+        if (response.data && response.data.length > 0) {
+          console.log('First artwork data:', response.data[0]);
+          console.log('Sample imageUrl:', response.data[0]?.imageUrl);
+          console.log('Artworks order (by creation date):');
+          response.data.forEach((artwork, index) => {
+            console.log(`${index + 1}. ${artwork.title} - Created: ${artwork.createdAt} - ID: ${artwork.artworkId}`);
+          });
+        }
+
+        // Ensure response.data is an array
+        const artworksData = Array.isArray(response.data) ? response.data : [];
+
+        // Sort artworks by creation date (newest first) as a fallback
+        const sortedArtworks = artworksData.sort((a, b) => {
+          const dateA = new Date(a.createdAt);
+          const dateB = new Date(b.createdAt);
+          return dateB - dateA; // Descending order (newest first)
+        });
+
+        // Debug: Check for duplicate IDs
+        const ids = sortedArtworks.map(artwork => artwork.artworkId);
+        const uniqueIds = new Set(ids);
+        if (ids.length !== uniqueIds.size) {
+          console.error('DUPLICATE ARTWORK IDs DETECTED:', ids);
+          sortedArtworks.forEach((artwork, index) => {
+            console.log(`${index}: ID=${artwork.artworkId}, Title=${artwork.title}`);
+          });
+        }
+
+        console.log('After sorting - first artwork:', sortedArtworks[0]?.title);
+        setArtworks(sortedArtworks);
+        console.log('Set artworks state:', sortedArtworks.length, 'artworks');
+
+      } catch (error) {
+        console.error('Failed to fetch artworks:', error);
+        setArtworksError(error.response?.data?.message || error.message || 'Failed to load artworks');
+        setArtworks([]);
+      } finally {
+        setArtworksLoading(false);
+      }
+    };
+
+    fetchArtworks();
+  }, [userId, token]); // Add token to dependencies
 
   // Winner badges data
   const badges = [
@@ -173,19 +471,19 @@ const ArtistPortfolio = () => {
 
   // Initialize edited profile when component mounts or when editing starts
   React.useEffect(() => {
-    if (isEditingProfile) {
+    if (isEditingProfile && artistProfile) {
       setEditedProfile({
-        name: artistProfile.name,
-        bio: artistProfile.bio,
-        location: artistProfile.location,
-        website: artistProfile.website,
-        instagram: artistProfile.instagram,
-        twitter: artistProfile.twitter,
-        phone: artistProfile.phone,
-        email: artistProfile.email
+        name: artistProfile.name || '',
+        bio: artistProfile.bio || '',
+        location: artistProfile.location || '',
+        website: artistProfile.website || '',
+        instagram: artistProfile.instagram || '',
+        twitter: artistProfile.twitter || '',
+        phone: artistProfile.phone || artistProfile.contactNo || '',
+        email: artistProfile.email || ''
       });
     }
-  }, [isEditingProfile]);
+  }, [isEditingProfile, artistProfile]);
 
   const handleProfileChange = (field, value) => {
     setEditedProfile(prev => ({
@@ -194,11 +492,72 @@ const ArtistPortfolio = () => {
     }));
   };
 
-  const handleSaveProfile = () => {
-    // Here you would typically save to backend
-    console.log('Saving profile:', editedProfile);
-    setIsEditingProfile(false);
-    // Show success notification
+  const handleSaveProfile = async () => {
+    if (!userId || !token) {
+      showError('Authentication error. Please log in again.');
+      return;
+    }
+
+    try {
+      // Prepare the update data
+      const updateData = {
+        firstName: editedProfile.name ? editedProfile.name.split(' ')[0] : artistProfile?.firstName || '',
+        lastName: editedProfile.name ? editedProfile.name.split(' ').slice(1).join(' ') : artistProfile?.lastName || '',
+        bio: editedProfile.bio,
+        location: editedProfile.location,
+        website: editedProfile.website,
+        instagram: editedProfile.instagram,
+        twitter: editedProfile.twitter,
+        contactNo: editedProfile.phone
+      };
+
+      console.log('Updating profile:', updateData);
+
+      const response = await axios.put(
+        `http://localhost:8081/api/artist/profile/${userId}`,
+        updateData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      console.log('Profile update response:', response.data);
+
+      // Update the local artist profile state
+      setArtistProfile(prevProfile => ({
+        ...prevProfile,
+        name: `${updateData.firstName} ${updateData.lastName}`,
+        firstName: updateData.firstName,
+        lastName: updateData.lastName,
+        bio: updateData.bio,
+        location: updateData.location,
+        website: updateData.website,
+        instagram: updateData.instagram,
+        twitter: updateData.twitter,
+        phone: updateData.contactNo,
+        contactNo: updateData.contactNo
+      }));
+
+      setIsEditingProfile(false);
+      showSuccess('Profile updated successfully!');
+
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      if (error.response) {
+        if (error.response.status === 401) {
+          showError('Authentication failed. Please log in again.');
+        } else if (error.response.status === 404) {
+          showError('Artist profile not found.');
+        } else {
+          showError(`Failed to update profile: ${error.response.data || error.response.statusText}`);
+        }
+      } else {
+        showError('Network error. Please check your connection and try again.');
+      }
+    }
   };
 
   const handleCancelEdit = () => {
@@ -231,39 +590,161 @@ const ArtistPortfolio = () => {
     }));
   };
 
-  const handleSaveArtwork = () => {
-    // Here you would typically save to backend
-    console.log('Saving artwork:', newArtwork);
-    setIsAddingArtwork(false);
-    // Reset form
-    setNewArtwork({
-      title: '',
-      medium: '',
-      size: '',
-      year: '',
-      price: '',
-      description: '',
-      category: '',
-      tags: '',
-      imageFiles: []
-    });
-    // Show success notification
+  const handleSaveArtwork = async (updatedArtworkData) => {
+    try {
+      // Get the artwork ID - try different possible property names
+      const artworkId = updatedArtworkData.artworkId ||
+        updatedArtworkData.artwork_id ||
+        updatedArtworkData.id ||
+        selectedArtwork?.artworkId ||
+        selectedArtwork?.artwork_id ||
+        selectedArtwork?.id;
+
+      if (!artworkId) {
+        console.error('No artwork ID found in:', updatedArtworkData, selectedArtwork);
+        showError('Error: Artwork ID not found. Please try again.');
+        return;
+      }
+
+      const token = localStorage.getItem('token');
+      if (!token) {
+        showError('Authentication error. Please log in again.');
+        return;
+      }
+
+      console.log('Updating artwork with ID:', artworkId);
+      console.log('Updated data being sent:', updatedArtworkData);
+      console.log('Original artwork data:', selectedArtwork);
+
+      let response;
+
+      if (updatedArtworkData.imageFile) {
+        // If there's an image file, use the upload endpoint with FormData
+        const formData = new FormData();
+
+        // Append all fields to FormData
+        Object.keys(updatedArtworkData).forEach(key => {
+          if (key !== 'imageFile' && key !== 'artworkId' && key !== 'artwork_id' && key !== 'id') {
+            const value = updatedArtworkData[key];
+            if (value !== null && value !== undefined) {
+              formData.append(key, value);
+            }
+          }
+        });
+
+        // Append image file
+        formData.append('image', updatedArtworkData.imageFile);
+
+        response = await axios.put(
+          `http://localhost:8081/api/artworks/${artworkId}/upload`,
+          formData,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`
+              // Don't set Content-Type - let axios handle it automatically for multipart
+            }
+          }
+        );
+      } else {
+        // If no image file, send as JSON to regular endpoint
+        const jsonData = {};
+        Object.keys(updatedArtworkData).forEach(key => {
+          if (key !== 'imageFile' && key !== 'artworkId' && key !== 'artwork_id' && key !== 'id') {
+            const value = updatedArtworkData[key];
+            if (value !== null && value !== undefined) {
+              jsonData[key] = value;
+            }
+          }
+        });
+
+        response = await axios.put(
+          `http://localhost:8081/api/artworks/${artworkId}`,
+          jsonData,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+      }
+
+      console.log('Update response:', response.data);
+
+      // Update the artworks list with the updated artwork from server response
+      setArtworks(prevArtworks =>
+        prevArtworks.map(artwork => {
+          const currentId = artwork.artworkId || artwork.artwork_id || artwork.id;
+          if (currentId === artworkId) {
+            // Use the server response data which includes updated imageUrl
+            const serverData = response.data;
+            return {
+              ...artwork,
+              ...serverData,
+              // Ensure consistent ID field naming
+              artworkId: serverData.artworkId || serverData.artwork_id || serverData.id || artworkId,
+              // Update all possible image field variations
+              imageUrl: serverData.imageUrl || serverData.image_url,
+              image: serverData.imageUrl || serverData.image_url || serverData.image,
+            };
+          }
+          return artwork;
+        })
+      );
+
+      setIsEditingArtwork(false);
+      setSelectedArtwork(null);
+
+      // Show success message
+      showSuccess('Artwork updated successfully!');
+
+    } catch (error) {
+      console.error('Error updating artwork:', error);
+
+      if (error.response) {
+        console.error('Response data:', error.response.data);
+        console.error('Response status:', error.response.status);
+        showError(`Failed to update artwork: ${error.response.data || error.message}`);
+      } else {
+        showError('Failed to update artwork. Please try again.');
+      }
+    }
   };
 
-  const handleCancelAddArtwork = () => {
-    setIsAddingArtwork(false);
-    // Reset form
-    setNewArtwork({
-      title: '',
-      medium: '',
-      size: '',
-      year: '',
-      price: '',
-      description: '',
-      category: '',
-      tags: '',
-      imageFiles: []
-    });
+  const handleConfirmDeleteArtwork = async () => {
+    if (!selectedArtwork) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const artworkId = selectedArtwork.artwork_id || selectedArtwork.artworkId || selectedArtwork.id;
+
+      await axios.delete(
+        `http://localhost:8081/api/artworks/${artworkId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
+
+      // Remove the artwork from the artworks list
+      setArtworks(prevArtworks =>
+        prevArtworks.filter(artwork => {
+          const currentId = artwork.artwork_id || artwork.artworkId || artwork.id;
+          return currentId !== artworkId;
+        })
+      );
+
+      setIsDeletingArtwork(false);
+      setSelectedArtwork(null);
+
+      // Show success message
+      showSuccess('Artwork deleted successfully!');
+
+    } catch (error) {
+      console.error('Error deleting artwork:', error);
+      showError('Failed to delete artwork. Please try again.');
+    }
   };
 
   // Post Upload Handlers
@@ -282,11 +763,43 @@ const ArtistPortfolio = () => {
     }));
   };
 
+  // Navigation functions for post images
+  const navigatePostImage = (postId, direction) => {
+    const post = portfolioPosts.find(p => p.post_id === postId);
+    if (!post || !post.images || post.images.length <= 1) return;
+
+    setPostImageIndex(prev => {
+      const currentIndex = prev[postId] || 0;
+      let newIndex;
+
+      if (direction === 'next') {
+        newIndex = (currentIndex + 1) % post.images.length;
+      } else {
+        newIndex = currentIndex === 0 ? post.images.length - 1 : currentIndex - 1;
+      }
+
+      return {
+        ...prev,
+        [postId]: newIndex
+      };
+    });
+  };
+
+  const getCurrentImageIndex = (postId) => {
+    return postImageIndex[postId] || 0;
+  };
+
   const handleSavePost = async () => {
     const formData = new FormData();
     formData.append('caption', newPost.caption);
     formData.append('location', 'Colombo'); // optional: make dynamic
-    formData.append('image', newPost.imageFiles[0]);
+
+    // ✅ Add all images to FormData
+    if (newPost.imageFiles && newPost.imageFiles.length > 0) {
+      newPost.imageFiles.forEach((file, index) => {
+        formData.append('images', file); // Use 'images' to match backend parameter
+      });
+    }
 
     // 👇 Check before making request
     if (!token || !role || !userId) {
@@ -296,7 +809,7 @@ const ArtistPortfolio = () => {
 
     try {
       const response = await axios.post(
-        'http://localhost:8080/api/posts/create',
+        'http://localhost:8081/api/posts/create',
         formData,
         {
           headers: {
@@ -308,15 +821,44 @@ const ArtistPortfolio = () => {
 
       console.log('Post created:', response.data);
 
-      // Reset post state
+      // Reset post state first
       setIsCreatingPost(false);
       setNewPost({
         caption: '',
         imageFiles: [],
       });
 
+      // Show success message
+      showSuccess('Post created successfully!');
+
+      // Refresh posts from the server to get the latest data
+      try {
+        const postsResponse = await axios.get(
+          `http://localhost:8081/api/posts/${role}/${userId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        // Sort posts by creation date (newest first) as a fallback
+        const sortedPosts = Array.isArray(postsResponse.data) ? postsResponse.data.sort((a, b) => {
+          const dateA = new Date(a.created_at);
+          const dateB = new Date(b.created_at);
+          return dateB - dateA; // Descending order (newest first)
+        }) : [];
+
+        setPortfolioPosts(sortedPosts);
+      } catch (fetchError) {
+        console.error('Error fetching updated posts:', fetchError);
+        // Fallback to adding the new post to existing posts
+        setPortfolioPosts(prevPosts => [response.data, ...prevPosts]);
+      }
+
     } catch (error) {
       console.error('Error uploading post:', error);
+      showError('Failed to create post. Please try again.');
     }
   };
 
@@ -333,142 +875,103 @@ const ArtistPortfolio = () => {
     });
   };
 
-  // Cover Change Handlers
-  const handleSaveCover = (newCoverFile) => {
-    // Here you would typically upload to backend and update the profile
-    console.log('Saving new cover image:', newCoverFile);
-
-    // For now, create a local URL to show the new image
-    const newCoverUrl = URL.createObjectURL(newCoverFile);
-
-    // Update the artist profile (in a real app, this would come from backend)
-    // You might need to update a global state or refetch the profile
-
-    setIsChangingCover(false);
-    // Show success notification
-    alert('Cover photo updated successfully!');
+  const handleCancelAddArtwork = () => {
+    setIsAddingArtwork(false);
+    // Reset form
+    setNewArtwork({
+      title: '',
+      medium: '',
+      size: '',
+      year: '',
+      price: '',
+      description: '',
+      category: '',
+      tags: '',
+      imageFiles: []
+    });
   };
 
-  const handleCancelCoverChange = () => {
-    setIsChangingCover(false);
-  };
+  const handleSaveNewArtwork = async (artworkData) => {
+    try {
+      const token = localStorage.getItem('token');
+      const userId = localStorage.getItem('userId');
 
-  const handleViewArtworkDetail = (artwork) => {
-    setSelectedArtwork(artwork);
-    setIsViewingArtwork(true);
-  };
+      if (!token || !userId) {
+        showError('Authentication required. Please log in again.');
+        return;
+      }
 
-  const handleCloseArtworkView = () => {
-    setIsViewingArtwork(false);
-    setSelectedArtwork(null);
-  };
+      // Create FormData for multipart upload
+      const formData = new FormData();
+      formData.append('title', artworkData.title);
+      formData.append('medium', artworkData.medium);
+      formData.append('size', artworkData.size || '');
+      formData.append('year', artworkData.year || new Date().getFullYear().toString());
+      // Ensure price is properly formatted as a number string
+      formData.append('price', (parseFloat(artworkData.price) || 0).toString());
+      formData.append('description', artworkData.description || '');
+      formData.append('category', artworkData.category || '');
+      formData.append('tags', artworkData.tags || '');
+      formData.append('status', 'Available'); // Default status
+      formData.append('featured', 'false'); // Default not featured
+      formData.append('artistId', userId);
 
-  const handleEditArtwork = (artwork) => {
-    console.log('Edit artwork:', artwork);
-    // Here you would typically open an edit modal or navigate to edit page
-    setIsViewingArtwork(false);
-  };
+      // Add image file if provided
+      if (artworkData.imageFiles && artworkData.imageFiles.length > 0) {
+        formData.append('image', artworkData.imageFiles[0]);
+      }
 
-  const handleDeleteArtwork = (artwork) => {
-    console.log('Delete artwork:', artwork);
-    // Here you would typically show a confirmation dialog and delete the artwork
-    setIsViewingArtwork(false);
-  };
+      const response = await axios.post(
+        'http://localhost:8081/api/artworks/create',
+        formData,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`
+            // Don't set Content-Type - let axios handle it automatically
+          }
+        }
+      );
 
-  const handleToggleFeature = (artwork) => {
-    console.log('Toggle feature for artwork:', artwork);
-    // Here you would typically update the artwork's featured status
-  };
+      console.log('Artwork created:', response.data);
 
-  const handleMarkAsSold = (artwork) => {
-    console.log('Mark as sold:', artwork);
-    // Here you would typically update the artwork's status to 'Sold'
-  };
+      // Add the new artwork to the artworks array
+      setArtworks(prevArtworks => [response.data, ...prevArtworks]);
 
-  // Portfolio artworks
-  const artworks = [
-    {
-      id: 1,
-      title: 'Sunset Dreams',
-      medium: 'Oil on Canvas',
-      size: '24" x 36"',
-      year: '2024',
-      price: '$1,200',
-      status: 'Available',
-      image: 'https://images.pexels.com/photos/1545743/pexels-photo-1545743.jpeg?auto=compress&cs=tinysrgb&w=400',
-      likes: 45,
-      views: 234,
-      featured: true
-    },
-    {
-      id: 2,
-      title: 'Urban Reflection',
-      medium: 'Digital Art',
-      size: 'Digital Print',
-      year: '2024',
-      price: '$450',
-      status: 'Sold',
-      image: 'https://images.pexels.com/photos/1053924/pexels-photo-1053924.jpeg?auto=compress&cs=tinysrgb&w=400',
-      likes: 32,
-      views: 189,
-      featured: false
-    },
-    {
-      id: 3,
-      title: 'Abstract Flow',
-      medium: 'Acrylic on Canvas',
-      size: '18" x 24"',
-      year: '2023',
-      price: '$800',
-      status: 'Available',
-      image: 'https://images.pexels.com/photos/1269968/pexels-photo-1269968.jpeg?auto=compress&cs=tinysrgb&w=400',
-      likes: 67,
-      views: 345,
-      featured: true
-    },
-    {
-      id: 4,
-      title: 'Mountain Serenity',
-      medium: 'Watercolor',
-      size: '16" x 20"',
-      year: '2023',
-      price: '$600',
-      status: 'Available',
-      image: 'https://images.pexels.com/photos/1266808/pexels-photo-1266808.jpeg?auto=compress&cs=tinysrgb&w=400',
-      likes: 28,
-      views: 156,
-      featured: false
-    },
-    {
-      id: 5,
-      title: 'Digital Dreams',
-      medium: 'Digital Art',
-      size: 'Digital Print',
-      year: '2023',
-      price: '$350',
-      status: 'Available',
-      image: 'https://images.pexels.com/photos/1546009/pexels-photo-1546009.jpeg?auto=compress&cs=tinysrgb&w=400',
-      likes: 41,
-      views: 198,
-      featured: false
-    },
-    {
-      id: 6,
-      title: 'Portrait Study',
-      medium: 'Charcoal on Paper',
-      size: '12" x 16"',
-      year: '2023',
-      price: '$400',
-      status: 'Available',
-      image: 'https://images.pexels.com/photos/1742370/pexels-photo-1742370.jpeg?auto=compress&cs=tinysrgb&w=400',
-      likes: 35,
-      views: 167,
-      featured: false
+      // Close modal and reset form
+      setIsAddingArtwork(false);
+      setNewArtwork({
+        title: '',
+        medium: '',
+        size: '',
+        year: '',
+        price: '',
+        description: '',
+        category: '',
+        tags: '',
+        imageFiles: []
+      });
+
+      // Show success message
+      showSuccess('Artwork uploaded successfully!');
+
+    } catch (error) {
+      console.error('Error creating artwork:', error);
+
+      if (error.response) {
+        if (error.response.status === 401) {
+          showError('Authentication failed. Please log in again.');
+        } else if (error.response.status === 400) {
+          showError(`Invalid data: ${error.response.data.message || 'Please check your input.'}`);
+        } else {
+          showError(`Failed to upload artwork: ${error.response.data.message || 'Server error'}`);
+        }
+      } else {
+        showError('Network error. Please check your connection and try again.');
+      }
     }
-  ];
+  };
 
-  // Portfolio posts (Instagram-like posts)
-  
+  // ...existing code...
 
   const exhibitions = [
     {
@@ -493,26 +996,26 @@ const ArtistPortfolio = () => {
     try {
       // Get token (adjust based on your actual auth setup)
       const token = localStorage.getItem('token'); // or from useAuth()
-  
+
       if (!token) {
-        alert("You must be logged in to delete posts.");
+        showError("You must be logged in to delete posts.");
         return;
       }
-  
+
       // Call backend delete API with Authorization header
-      await axios.delete(`http://localhost:8080/api/posts/${postId}`, {
+      await axios.delete(`http://localhost:8081/api/posts/${postId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-  
-      // Update UI after successful deletion
-      setPortfolioPosts((prevPosts) => prevPosts.filter(post => post.id !== postId));
-      
-      alert("Post deleted successfully!");
+
+      // Update UI after successful deletion - use post_id instead of id
+      setPortfolioPosts((prevPosts) => prevPosts.filter(post => post.post_id !== postId));
+
+      showSuccess("Post deleted successfully!");
     } catch (error) {
       console.error("Error deleting post:", error);
-      alert("Failed to delete the post. Try again.");
+      showError("Failed to delete the post. Try again.");
     }
   };
 
@@ -523,22 +1026,351 @@ const ArtistPortfolio = () => {
     setEditingItem(post);
     setShowEditModal(true);
   };
-  
-  const handleEditSavePost = (updatedPost) => {
-    const updatedList = portfolioPosts.map((post) =>
-      post.id === updatedPost.id ? updatedPost : post
-    );
-    setPortfolioPosts(updatedList);
-    setShowEditModal(false);
+
+  const handleEditSavePost = async (updatedPost) => {
+    try {
+      const token = localStorage.getItem('token');
+
+      if (!token) {
+        showError("You must be logged in to edit posts.");
+        return;
+      }
+
+      console.log('Updating post:', updatedPost);
+
+      // Create FormData for multipart request as expected by backend
+      const formData = new FormData();
+      formData.append('caption', updatedPost.caption);
+
+      // Add location if it exists
+      if (updatedPost.location) {
+        formData.append('location', updatedPost.location);
+      }
+
+      // The backend expects @RequestPart, so send as multipart/form-data
+      const response = await axios.put(
+        `http://localhost:8081/api/posts/${updatedPost.post_id}`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            // Don't set Content-Type - let axios handle multipart/form-data
+          }
+        }
+      );
+
+      console.log('Update response:', response.data);
+
+      // Update the local state with the updated data
+      setPortfolioPosts(prevPosts =>
+        prevPosts.map(post =>
+          post.post_id === updatedPost.post_id ? { ...post, caption: updatedPost.caption, location: updatedPost.location } : post
+        )
+      );
+
+      // Close the edit modal
+      setShowEditModal(false);
+      setEditingItem(null);
+
+      showSuccess('Post updated successfully!');
+
+    } catch (error) {
+      console.error('Error updating post:', error);
+
+      if (error.response) {
+        console.error('Server response:', error.response.data);
+        console.error('Status code:', error.response.status);
+
+        if (error.response.status === 401) {
+          showError('Authentication failed. Please log in again.');
+        } else if (error.response.status === 403) {
+          showError('You are not authorized to edit this post.');
+        } else if (error.response.status === 404) {
+          showError('Post not found.');
+        } else {
+          showError(`Failed to update post: ${error.response.data || error.response.statusText}`);
+        }
+      } else if (error.request) {
+        console.error('No response received:', error.request);
+        showError('Network error. Please check your connection and try again.');
+      } else {
+        console.error('Request setup error:', error.message);
+        showError('Failed to update post. Please try again.');
+      }
+    }
   };
 
   const safeFormatDistanceToNow = (date) => {
-    const d = new Date(date);
-    if (!isValid(d)) return "Invalid date";
+    if (!date) return "Unknown time";
+
+    // Handle different date formats that might come from the backend
+    let d;
+    if (typeof date === 'string') {
+      // Try parsing as ISO string first
+      d = new Date(date);
+
+      // If that fails, try parsing as timestamp
+      if (!isValid(d)) {
+        const timestamp = parseInt(date);
+        if (!isNaN(timestamp)) {
+          d = new Date(timestamp);
+        }
+      }
+    } else if (typeof date === 'number') {
+      d = new Date(date);
+    } else {
+      d = new Date(date);
+    }
+
+    if (!isValid(d)) {
+      console.warn('Invalid date provided to safeFormatDistanceToNow:', date);
+      return "Unknown time";
+    }
+
     return formatDistanceToNow(d, { addSuffix: true });
+  };  // Handler to close the artwork detail modal
+  const handleCloseArtworkView = () => {
+    setIsViewingArtwork(false);
+    setSelectedArtwork(null);
   };
-  
-   
+
+  // Missing handler functions
+  const handleViewArtworkDetail = (artwork) => {
+    setSelectedArtwork(artwork);
+    setIsViewingArtwork(true);
+  };
+
+  const handleEditArtwork = (artwork) => {
+    console.log('Opening edit modal for artwork:', artwork);
+    setSelectedArtwork(artwork);
+    setIsEditingArtwork(true);
+  };
+
+  const handleDeleteArtwork = (artwork) => {
+    setSelectedArtwork(artwork);
+    setIsDeletingArtwork(true);
+  };
+
+  const handleCancelEditArtwork = () => {
+    setIsEditingArtwork(false);
+    setSelectedArtwork(null);
+  };
+
+  const handleCancelDeleteArtwork = () => {
+    setIsDeletingArtwork(false);
+    setSelectedArtwork(null);
+  };
+
+  // Logout functionality
+  const handleLogoutClick = () => {
+    setShowLogoutConfirm(true);
+  };
+
+  const confirmLogout = () => {
+    logout();
+    setShowLogoutConfirm(false);
+    navigate("/");
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutConfirm(false);
+  };
+
+  const handleToggleFeature = async (artwork) => {
+    try {
+      const artworkId = artwork.artwork_id || artwork.artworkId || artwork.id;
+      const token = localStorage.getItem('token');
+
+      if (!token) {
+        showError('You must be logged in to update artwork.');
+        return;
+      }
+
+      // Toggle the featured status
+      const updatedData = { featured: !artwork.featured };
+
+      // Make API call to update the backend
+      const response = await axios.put(
+        `http://localhost:8081/api/artworks/${artworkId}`,
+        updatedData,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      // Update local state
+      const updatedArtwork = { ...artwork, ...response.data };
+      setArtworks(prevArtworks =>
+        prevArtworks.map(art => {
+          const currentId = art.artwork_id || art.artworkId || art.id;
+          return currentId === artworkId ? updatedArtwork : art;
+        })
+      );
+
+      setSelectedArtwork(updatedArtwork);
+      showSuccess(`Artwork ${updatedArtwork.featured ? 'featured' : 'unfeatured'} successfully!`);
+    } catch (error) {
+      console.error('Error toggling feature status:', error);
+      showError('Failed to update feature status');
+    }
+  };
+
+  const handleMarkAsSold = async (artwork) => {
+    try {
+      const artworkId = artwork.artwork_id || artwork.artworkId || artwork.id;
+      const token = localStorage.getItem('token');
+
+      if (!token) {
+        showError('You must be logged in to update artwork.');
+        return;
+      }
+
+      // Mark the artwork as sold
+      const updatedData = { status: 'Sold' };
+
+      // Make API call to update the backend
+      const response = await axios.put(
+        `http://localhost:8081/api/artworks/${artworkId}`,
+        updatedData,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      // Update local state
+      const updatedArtwork = { ...artwork, ...response.data };
+      setArtworks(prevArtworks =>
+        prevArtworks.map(art => {
+          const currentId = art.artwork_id || art.artworkId || art.id;
+          return currentId === artworkId ? updatedArtwork : art;
+        })
+      );
+
+      setSelectedArtwork(updatedArtwork);
+      showSuccess('Artwork marked as sold!');
+    } catch (error) {
+      console.error('Error marking artwork as sold:', error);
+      showError('Failed to mark artwork as sold');
+    }
+  };
+
+  const handleCancelCoverChange = () => {
+    setIsChangingCover(false);
+  };
+
+  const handleSaveCover = async (newCoverImage) => {
+    try {
+      if (!userId || !token) {
+        showError('Authentication error. Please log in again.');
+        return;
+      }
+
+      console.log('Uploading new cover image:', newCoverImage);
+
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append('image', newCoverImage);
+
+      const response = await axios.post(
+        `http://localhost:8081/api/artist/profile/${userId}/cover`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      );
+
+      console.log('Cover upload response:', response.data);
+
+      // Update the local artist profile state with new cover image
+      const newImageUrl = response.data.imageUrl;
+      const fullImageUrl = `http://localhost:8081${newImageUrl}?t=${Date.now()}`;
+
+      setArtistProfile(prevProfile => ({
+        ...prevProfile,
+        coverImage: fullImageUrl,
+        coverImageUrl: newImageUrl
+      }));
+
+      setIsChangingCover(false);
+      showSuccess('Cover image updated successfully!');
+
+    } catch (error) {
+      console.error('Error uploading cover image:', error);
+      showError('Failed to update cover image. Please try again.');
+    }
+  };
+
+  const handleAvatarUpload = async (avatarFile) => {
+    try {
+      if (!userId || !token) {
+        showError('Authentication error. Please log in again.');
+        return;
+      }
+
+      console.log('Uploading new avatar:', avatarFile);
+
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append('image', avatarFile);
+
+      const response = await axios.post(
+        `http://localhost:8081/api/artist/profile/${userId}/avatar`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      );
+
+      console.log('Avatar upload response:', response.data);
+
+      // Update the local artist profile state with new avatar
+      const newImageUrl = response.data.imageUrl;
+      const fullImageUrl = `http://localhost:8081${newImageUrl}?t=${Date.now()}`;
+
+      console.log('New avatar URL:', fullImageUrl);
+
+      setArtistProfile(prevProfile => {
+        console.log('Previous profile:', prevProfile);
+        const updatedProfile = {
+          ...prevProfile,
+          avatar: fullImageUrl,
+          avatarUrl: newImageUrl
+        };
+        console.log('Updated profile:', updatedProfile);
+        return updatedProfile;
+      });
+
+      alert('Profile picture updated successfully!');
+
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      alert('Failed to update profile picture. Please try again.');
+    }
+  };
+
+  // Loading state
+  if (loading || !artistProfile) {
+    return (
+      <div className="min-h-screen bg-[#fdf9f4] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-[#7f5539] mx-auto"></div>
+          <p className="mt-4 text-[#7f5539] text-lg">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#fdf9f4] py-8">
@@ -615,13 +1447,22 @@ const ArtistPortfolio = () => {
                     </div>
                   </div>
                 </div>
-                <button
-                  onClick={() => setIsEditingProfile(!isEditingProfile)}
-                  className="mt-4 md:mt-0 bg-[#7f5539] text-[#fdf9f4] px-6 py-2 rounded-lg hover:bg-[#6e4c34] transition-colors font-medium flex items-center space-x-2"
-                >
-                  <Edit className="h-4 w-4" />
-                  <span>Edit Profile</span>
-                </button>
+                <div className="mt-4 md:mt-0 flex space-x-3">
+                  <button
+                    onClick={() => setIsEditingProfile(!isEditingProfile)}
+                    className="bg-[#7f5539] text-[#fdf9f4] px-6 py-2 rounded-lg hover:bg-[#6e4c34] transition-colors font-medium flex items-center space-x-2"
+                  >
+                    <Edit className="h-4 w-4" />
+                    <span>Edit Profile</span>
+                  </button>
+                  <button
+                    onClick={handleLogoutClick}
+                    className="bg-[#D87C5A] text-white px-6 py-2 rounded-lg hover:bg-[#c5704f] transition-colors font-medium flex items-center space-x-2"
+                  >
+                    <User className="h-4 w-4" />
+                    <span>Logout</span>
+                  </button>
+                </div>
               </div>
 
               {/* Bio */}
@@ -636,21 +1477,28 @@ const ArtistPortfolio = () => {
                   <span>Achievements & Awards</span>
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                  {badges.map((badge) => (
-                    <div
-                      key={badge.id}
-                      className={`p-3 rounded-lg border-2 ${badge.color} hover:scale-105 transition-transform cursor-pointer`}
-
-                    >
-                      <div className="flex items-center space-x-2 mb-1">
-                        {badge.icon}
-                        <span className="font-medium text-sm">{badge.type.charAt(0).toUpperCase() + badge.type.slice(1)}</span>
+                  {topAchievements.length > 0 ? (
+                    topAchievements.map((achievement, index) => (
+                      <div
+                        key={achievement.id || `top-achievement-${index}`}
+                        className={`p-3 rounded-lg border-2 ${achievement.color} hover:scale-105 transition-transform cursor-pointer`}
+                      >
+                        <div className="flex items-center space-x-2 mb-1">
+                          {achievement.icon}
+                          <span className="font-medium text-sm">{achievement.type ? achievement.type.charAt(0).toUpperCase() + achievement.type.slice(1) : 'Achievement'}</span>
+                        </div>
+                        <div className="text-xs font-medium mb-1">{achievement.title}</div>
+                        <div className="text-xs opacity-75">{achievement.prize}</div>
+                        <div className="text-xs opacity-60 mt-1">{achievement.date}</div>
                       </div>
-                      <div className="text-xs font-medium mb-1">{badge.title}</div>
-                      <div className="text-xs opacity-75">{badge.prize}</div>
-                      <div className="text-xs opacity-60 mt-1">{badge.date}</div>
+                    ))
+                  ) : (
+                    <div className="col-span-full text-center py-8">
+                      <Trophy className="h-12 w-12 text-[#7f5539]/30 mx-auto mb-3" />
+                      <p className="text-[#7f5539]/60 mb-2">No achievements yet</p>
+                      <p className="text-sm text-[#7f5539]/40">Start creating and winning competitions to earn achievements!</p>
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             </div>
@@ -663,27 +1511,35 @@ const ArtistPortfolio = () => {
             <nav className="flex space-x-8 px-6">
               {[
                 { id: 'portfolio', label: 'Portfolio', count: portfolioPosts.length },
-                { id: 'tosell', label: 'To sell', count: artworks.length },
-                { id: 'exhibitions', label: 'Exhibitions', count: exhibitions.length },
-                { id: 'achievements', label: 'Achievements', count: badges.length },
+                { id: 'tosell', label: 'To sell', count: Array.isArray(artworks) ? artworks.length : 0 },
+                { id: 'exhibitions', label: 'Exhibitions', count: exhibitionsCount },
+                { id: 'achievements', label: 'Achievements', count: achievementsCount },
                 { id: 'analytics', label: 'Analytics' }
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors ${activeTab === tab.id
-                    ? 'border-[#7f5539] text-[#7f5539]'
-                    : 'border-transparent text-[#7f5539]/60 hover:text-[#7f5539] hover:border-[#7f5539]/30'
-                    }`}
-                >
-                  {tab.label}
-                  {tab.count && (
-                    <span className="ml-2 bg-[#7f5539]/10 text-[#7f5539] px-2 py-1 rounded-full text-xs">
-                      {tab.count}
-                    </span>
-                  )}
-                </button>
-              ))}
+              ].map((tab) => {
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => {
+                      setActiveTab(tab.id);
+                      // Refresh achievements data when achievements tab is clicked
+                      if (tab.id === 'achievements' && userId && token) {
+                        fetchAchievementsData();
+                      }
+                    }}
+                    className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors ${activeTab === tab.id
+                      ? 'border-[#7f5539] text-[#7f5539]'
+                      : 'border-transparent text-[#7f5539]/60 hover:text-[#7f5539] hover:border-[#7f5539]/30'
+                      }`}
+                  >
+                    {tab.label}
+                    {(tab.count !== undefined && tab.count !== null) && (
+                      <span className="ml-2 bg-[#7f5539]/10 text-[#7f5539] px-2 py-1 rounded-full text-xs">
+                        {tab.count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </nav>
           </div>
         </div>
@@ -705,16 +1561,18 @@ const ArtistPortfolio = () => {
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-[#7f5539]/70">Total Likes</span>
-                      <span className="font-semibold text-[#7f5539]">{portfolioPosts.reduce((sum, post) => sum + post.likes, 0)}</span>
+                      <span className="font-semibold text-[#7f5539]">{portfolioPosts.reduce((sum, post) => sum + (post.likes || 0), 0)}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-[#7f5539]/70">Total Comments</span>
-                      <span className="font-semibold text-[#7f5539]">{portfolioPosts.reduce((sum, post) => sum + post.comments, 0)}</span>
+                      <span className="font-semibold text-[#7f5539]">{portfolioPosts.reduce((sum, post) => sum + (post.comments || 0), 0)}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-[#7f5539]/70">Avg. Engagement</span>
                       <span className="font-semibold text-[#7f5539]">
-                        {Math.round((portfolioPosts.reduce((sum, post) => sum + post.likes + post.comments, 0)) / portfolioPosts.length)}
+                        {portfolioPosts.length > 0
+                          ? Math.round((portfolioPosts.reduce((sum, post) => sum + (post.likes || 0) + (post.comments || 0), 0)) / portfolioPosts.length)
+                          : 0}
                       </span>
                     </div>
                   </div>
@@ -727,19 +1585,30 @@ const ArtistPortfolio = () => {
                     <span>Recent Achievements</span>
                   </h3>
                   <div className="space-y-3">
-                    {badges.slice(0, 3).map((badge) => (
-                      <div key={badge.id} className="flex items-center space-x-3">
-                        <div className={`p-2 rounded-lg ${badge.color}`}>
-                          {React.cloneElement(badge.icon, { className: "h-4 w-4" })}
+                    {recentAchievements.length > 0 ? (
+                      recentAchievements.map((achievement, index) => (
+                        <div key={achievement.id || `recent-achievement-${index}`} className="flex items-center space-x-3">
+                          <div className={`p-2 rounded-lg ${achievement.color}`}>
+                            {achievement.icon}
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-[#7f5539]">{achievement.title}</p>
+                            <p className="text-xs text-[#7f5539]/60">{achievement.prize}</p>
+                          </div>
                         </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-[#7f5539]">{badge.title}</p>
-                          <p className="text-xs text-[#7f5539]/60">{badge.prize}</p>
-                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-4">
+                        <Trophy className="h-8 w-8 text-[#7f5539]/30 mx-auto mb-2" />
+                        <p className="text-sm text-[#7f5539]/60">No achievements yet</p>
+                        <p className="text-xs text-[#7f5539]/40">Start creating to earn achievements!</p>
                       </div>
-                    ))}
+                    )}
                   </div>
-                  <button className="w-full mt-4 text-[#7f5539] hover:text-[#6e4c34] text-sm font-medium transition-colors">
+                  <button
+                    onClick={() => setActiveTab('achievements')}
+                    className="w-full mt-4 text-[#7f5539] hover:text-[#6e4c34] text-sm font-medium transition-colors"
+                  >
                     View All Achievements
                   </button>
                 </div>
@@ -756,7 +1625,13 @@ const ArtistPortfolio = () => {
                       <span className="text-[#7f5539]">Create Post</span>
                     </button>
                     <button
-                      onClick={() => setIsAddingArtwork(true)}
+                      onClick={() => {
+                        setNewArtwork({
+                          ...newArtwork,
+                          category: 'to sell',
+                        });
+                        setIsAddingArtwork(true);
+                      }}
                       className="w-full flex items-center space-x-3 p-3 hover:bg-[#fdf9f4]/30 rounded-lg transition-colors text-left"
                     >
                       <Plus className="h-5 w-5 text-[#7f5539]" />
@@ -813,9 +1688,9 @@ const ArtistPortfolio = () => {
                 </div>
 
                 {/* Feed Posts */}
-                {portfolioPosts.map((post) => (
+                {portfolioPosts.map((post, index) => (
                   <div
-                    key={post.post_id}
+                    key={post.post_id || `post-${index}`}
                     className="bg-white rounded-xl shadow-sm border border-[#fdf9f4]/20 overflow-hidden"
                   >
                     {/* Post Header */}
@@ -836,10 +1711,10 @@ const ArtistPortfolio = () => {
                       </div>
                       <div className="flex space-x-3">  {/* Flex container with horizontal spacing */}
                         <button
-                        onClick={() => handleEditPost(post)}
-                        className="text-[#7f5539]/60 hover:text-[#7f5539] transition-colors"
->                         
-                        <Edit className="h-5 w-5" />
+                          onClick={() => handleEditPost(post)}
+                          className="text-[#7f5539]/60 hover:text-[#7f5539] transition-colors"
+                        >
+                          <Edit className="h-5 w-5" />
                         </button>
 
                         <button
@@ -857,13 +1732,84 @@ const ArtistPortfolio = () => {
                       <p className="text-[#7f5539] leading-relaxed">{post.caption}</p>
                     </div>
 
-                    {/* Post Image */}
+                    {/* Post Images */}
                     <div className="relative">
-                      <img
-                        src={`http://localhost:8080${post.image}`}
-                        alt={`Post ${post.post_id}`}
-                        className="w-full h-[32rem] object-cover"
-                      />
+                      {post.images && post.images.length > 0 ? (
+                        <div className="relative group">
+                          {/* Main Image Display */}
+                          <img
+                            src={post.images[getCurrentImageIndex(post.post_id)]?.startsWith('http')
+                              ? post.images[getCurrentImageIndex(post.post_id)]
+                              : `http://localhost:8081${encodeURI(post.images[getCurrentImageIndex(post.post_id)] || '')}`}
+                            alt={`Post ${post.post_id} - Image ${getCurrentImageIndex(post.post_id) + 1}`}
+                            className="w-full h-[32rem] object-cover"
+                            onError={(e) => {
+                              console.error('Failed to load post feed image:', post.images[getCurrentImageIndex(post.post_id)]);
+                              console.error('Post feed: Constructed URL was:', e.target.src);
+                              e.target.src = 'https://images.pexels.com/photos/1070981/pexels-photo-1070981.jpeg?auto=compress&cs=tinysrgb&w=400';
+                              e.target.onerror = null;
+                            }}
+                          />
+
+                          {/* Navigation Arrows (show only if multiple images) */}
+                          {post.images.length > 1 && (
+                            <>
+                              {/* Previous Button */}
+                              <button
+                                onClick={() => navigatePostImage(post.post_id, 'prev')}
+                                className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10"
+                              >
+                                <ChevronLeft size={20} />
+                              </button>
+
+                              {/* Next Button */}
+                              <button
+                                onClick={() => navigatePostImage(post.post_id, 'next')}
+                                className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10"
+                              >
+                                <ChevronRight size={20} />
+                              </button>
+
+                              {/* Image Counter */}
+                              <div className="absolute bottom-4 right-4 bg-black/60 text-white text-sm px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                {getCurrentImageIndex(post.post_id) + 1} / {post.images.length}
+                              </div>
+
+                              {/* Dots Indicator */}
+                              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                {post.images.map((_, index) => (
+                                  <button
+                                    key={index}
+                                    onClick={() => setPostImageIndex(prev => ({
+                                      ...prev,
+                                      [post.post_id]: index
+                                    }))}
+                                    className={`w-2 h-2 rounded-full transition-all duration-200 ${index === getCurrentImageIndex(post.post_id)
+                                      ? 'bg-white scale-125'
+                                      : 'bg-white/50 hover:bg-white/80'
+                                      }`}
+                                  />
+                                ))}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      ) : (
+                        // Fallback: Show single image if images array is empty but image field exists
+                        post.image && (
+                          <img
+                            src={post.image?.startsWith('http') ? post.image : `http://localhost:8081${encodeURI(post.image || '')}`}
+                            alt={`Post ${post.post_id}`}
+                            className="w-full h-[32rem] object-cover"
+                            onError={(e) => {
+                              console.error('Failed to load post feed image:', post.image);
+                              console.error('Post feed: Constructed URL was:', e.target.src);
+                              e.target.src = 'https://images.pexels.com/photos/1070981/pexels-photo-1070981.jpeg?auto=compress&cs=tinysrgb&w=400';
+                              e.target.onerror = null;
+                            }}
+                          />
+                        )
+                      )}
                     </div>
 
                     {/* Post Actions */}
@@ -887,13 +1833,13 @@ const ArtistPortfolio = () => {
 
                       {/* Like Count */}
                       <div className="mb-3">
-                        <p className="font-semibold text-[#7f5539] text-base">{post.likes} likes</p>
+                        <p className="font-semibold text-[#7f5539] text-base">{post.likes || 0} likes</p>
                       </div>
 
                       {/* Comments Preview */}
                       <div className="space-y-2">
                         <button className="text-[#7f5539]/60 hover:text-[#7f5539] text-sm transition-colors">
-                          View all {post.comments} comments
+                          View all {post.comments || 0} comments
                         </button>
                       </div>
 
@@ -934,17 +1880,23 @@ const ArtistPortfolio = () => {
                     <span>Top Artworks</span>
                   </h3>
                   <div className="space-y-3">
-                    {artworks.slice(0, 4).map((artwork) => (
-                      <div key={artwork.id} className="flex items-center space-x-3">
+                    {Array.isArray(artworks) && artworks.slice(0, 4).map((artwork, index) => (
+                      <div key={artwork.artworkId || `featured-${index}-${artwork.title || 'unknown'}`} className="flex items-center space-x-3">
                         <img
-                          src={artwork.image}
+                          src={artwork.imageUrl?.startsWith('http') ? artwork.imageUrl : `http://localhost:8081${encodeURI(artwork.imageUrl || '')}`}
                           alt={artwork.title}
                           className="w-12 h-12 rounded-lg object-cover"
+                          onError={(e) => {
+                            console.error('Failed to load sidebar image:', artwork.imageUrl);
+                            console.error('Sidebar: Constructed URL was:', e.target.src);
+                            e.target.src = 'https://images.pexels.com/photos/1070981/pexels-photo-1070981.jpeg?auto=compress&cs=tinysrgb&w=400';
+                            e.target.onerror = null;
+                          }}
                         />
                         <div className="flex-1">
                           <p className="text-sm font-medium text-[#7f5539]">{artwork.title}</p>
                           <div className="flex items-center space-x-2 text-xs text-[#7f5539]/60">
-                            <span>{artwork.likes} likes</span>
+                            <span>{artwork.likes_count || artwork.likes} likes</span>
                             <span>•</span>
                             <span>{artwork.price}</span>
                           </div>
@@ -1010,8 +1962,8 @@ const ArtistPortfolio = () => {
                     <span>Upcoming Events</span>
                   </h3>
                   <div className="space-y-3">
-                    {exhibitions.map((exhibition) => (
-                      <div key={exhibition.id} className="p-3 bg-[#fdf9f4]/30 rounded-lg">
+                    {exhibitions.map((exhibition, index) => (
+                      <div key={exhibition.id || `exhibition-${index}`} className="p-3 bg-[#fdf9f4]/30 rounded-lg">
                         <p className="text-sm font-medium text-[#7f5539]">{exhibition.title}</p>
                         <p className="text-xs text-[#7f5539]/60">{exhibition.location}</p>
                         <p className="text-xs text-[#7f5539]/60">{exhibition.date}</p>
@@ -1038,7 +1990,13 @@ const ArtistPortfolio = () => {
                   <p className="text-[#7f5539]/70">Manage your portfolio and showcase your best work</p>
                 </div>
                 <button
-                  onClick={() => setIsAddingArtwork(true)}
+                  onClick={() => {
+                    setNewArtwork({
+                      ...newArtwork,
+                      category: 'to sell',
+                    });
+                    setIsAddingArtwork(true);
+                  }}
                   className="mt-4 md:mt-0 bg-[#7f5539] text-[#fdf9f4] px-6 py-2 rounded-lg hover:bg-[#6e4c34] transition-colors font-medium flex items-center space-x-2"
                 >
                   <Plus className="h-4 w-4" />
@@ -1048,141 +2006,149 @@ const ArtistPortfolio = () => {
             </div>
 
             {/* Artworks Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {artworks.map((artwork) => (
-                <div
-                  key={artwork.id}
-                  className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-lg transition-all duration-300 group"
-                >
-                  <div className="relative">
-                    <img
-                      src={artwork.image}
-                      alt={artwork.title}
-                      className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    {artwork.featured && (
-                      <div className="absolute top-3 left-3 bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1">
-                        <Star className="h-3 w-3" />
-                        <span>Featured</span>
-                      </div>
-                    )}
-                    <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex space-x-2">
-                      <button
-                        onClick={() => handleViewArtworkDetail(artwork)}
-                        className="bg-white/90 text-[#7f5539] p-2 rounded-full hover:bg-white transition-colors"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </button>
-                      <button className="bg-white/90 text-[#7f5539] p-2 rounded-full hover:bg-white transition-colors">
-                        <Edit className="h-4 w-4" />
-                      </button>
-                      <button className="bg-white/90 text-red-500 p-2 rounded-full hover:bg-white transition-colors">
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                    <div className={`absolute bottom-3 right-3 px-2 py-1 rounded-full text-xs font-medium ${artwork.status === 'Available' ? 'bg-green-100 text-green-800' :
-                      artwork.status === 'Sold' ? 'bg-red-100 text-red-800' :
-                        'bg-yellow-100 text-yellow-800'
-                      }`}>
-                      {artwork.status}
-                    </div>
-                  </div>
-
-                  <div className="p-4">
-                    <h4 className="font-semibold text-[#7f5539] mb-1">{artwork.title}</h4>
-                    <p className="text-sm text-[#7f5539]/70 mb-2">{artwork.medium} • {artwork.size}</p>
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-lg font-bold text-[#7f5539]">{artwork.price}</span>
-                      <span className="text-sm text-[#7f5539]/60">{artwork.year}</span>
-                    </div>
-
-                    <div className="flex items-center justify-between text-sm text-[#7f5539]/60">
-                      <div className="flex items-center space-x-3">
-                        <div className="flex items-center space-x-1">
-                          <Heart className="h-4 w-4" />
-                          <span>{artwork.likes}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <Eye className="h-4 w-4" />
-                          <span>{artwork.views}</span>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => handleViewArtworkDetail(artwork)}
-                        className="text-[#7f5539] hover:text-[#6e4c34] transition-colors font-medium"
-                      >
-                        View Details
-                      </button>
-                    </div>
-                  </div>
+            {artworksLoading ? (
+              <div className="flex justify-center items-center py-12">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7f5539] mx-auto mb-4"></div>
+                  <p className="text-[#7f5539]/60">Loading artworks...</p>
                 </div>
-              ))}
-            </div>
+              </div>
+            ) : artworksError ? (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+                <div className="text-center">
+                  <div className="text-red-600 mb-2">
+                    <AlertTriangle className="h-12 w-12 mx-auto mb-2" />
+                    <h3 className="text-lg font-semibold">Error Loading Artworks</h3>
+                  </div>
+                  <p className="text-red-600 mb-4">{artworksError}</p>
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="bg-red-100 text-red-700 px-4 py-2 rounded-lg hover:bg-red-200 transition-colors"
+                  >
+                    Retry
+                  </button>
+                </div>
+              </div>
+            ) : artworks.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="text-[#7f5539]/60 mb-4">
+                  <Palette className="h-16 w-16 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No Artworks Yet</h3>
+                  <p>Upload your first artwork to get started!</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setNewArtwork({
+                      ...newArtwork,
+                      category: 'to sell',
+                    });
+                    setIsAddingArtwork(true);
+                  }}
+                  className="bg-[#7f5539] text-[#fdf9f4] px-6 py-2 rounded-lg hover:bg-[#6e4c34] transition-colors font-medium flex items-center space-x-2 mx-auto"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Add Your First Artwork</span>
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {artworks.map((artwork, index) => (
+                  <div key={artwork.artworkId || `artwork-${index}-${artwork.title || 'unknown'}`} className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-lg transition-all duration-300 group">
+                    <div className="relative">
+                      <img
+                        src={artwork.imageUrl?.startsWith('http') ? artwork.imageUrl : `http://localhost:8081${encodeURI(artwork.imageUrl || '')}`}
+                        alt={artwork.title}
+                        className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => {
+                          console.error('Failed to load image:', artwork.imageUrl);
+                          console.error('Constructed URL was:', e.target.src);
+                          e.target.src = 'https://images.pexels.com/photos/1070981/pexels-photo-1070981.jpeg?auto=compress&cs=tinysrgb&w=400';
+                          e.target.onerror = null;
+                        }}
+                      />
+                      {artwork.featured && (
+                        <div className="absolute top-3 left-3 bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1">
+                          <Star className="h-3 w-3" />
+                          <span>Featured</span>
+                        </div>
+                      )}
+                      <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex space-x-2">
+                        <button
+                          onClick={() => handleViewArtworkDetail(artwork)}
+                          className="bg-white/90 text-[#7f5539] p-2 rounded-full hover:bg-white transition-colors"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleEditArtwork(artwork)}
+                          className="bg-white/90 text-[#7f5539] p-2 rounded-full hover:bg-white transition-colors"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteArtwork(artwork)}
+                          className="bg-white/90 text-red-500 p-2 rounded-full hover:bg-white transition-colors"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                      <div className={`absolute bottom-3 right-3 px-2 py-1 rounded-full text-xs font-medium ${artwork.status === 'Available' ? 'bg-green-100 text-green-800' :
+                        artwork.status === 'Sold' ? 'bg-red-100 text-red-800' :
+                          'bg-yellow-100 text-yellow-800'
+                        }`}>
+                        {artwork.status}
+                      </div>
+                    </div>
+
+                    <div className="p-4">
+                      <h4 className="font-semibold text-[#7f5539] mb-1">{artwork.title}</h4>
+                      <p className="text-sm text-[#7f5539]/70 mb-2">{artwork.medium} • {artwork.size}</p>
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-lg font-bold text-[#7f5539]">{formatLKR(artwork.price)}</span>
+                        <span className="text-sm text-[#7f5539]/60">{artwork.year}</span>
+                      </div>
+
+                      <div className="flex items-center justify-between text-sm text-[#7f5539]/60">
+                        <div className="flex items-center space-x-3">
+                          <div className="flex items-center space-x-1">
+                            <Heart className="h-4 w-4" />
+                            <span>{artwork.likesCount || artwork.likes || 0}</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <Eye className="h-4 w-4" />
+                            <span>{artwork.viewsCount || artwork.views || 0}</span>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleViewArtworkDetail(artwork)}
+                          className="text-[#7f5539] hover:text-[#6e4c34] transition-colors font-medium"
+                        >
+                          View Details
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
         {/* Exhibitions Tab */}
         {activeTab === 'exhibitions' && (
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-[#7f5539]">My Exhibitions</h3>
-              <button className="bg-[#7f5539] text-[#fdf9f4] px-4 py-2 rounded-lg hover:bg-[#6e4c34] transition-colors font-medium">
-                Apply for Exhibition
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              {exhibitions.map((exhibition) => (
-                <div key={exhibition.id} className="p-4 bg-[#fdf9f4]/30 rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-medium text-[#7f5539]">{exhibition.title}</h4>
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${exhibition.status === 'Upcoming' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
-                      }`}>
-                      {exhibition.status}
-                    </span>
-                  </div>
-                  <div className="text-sm text-[#7f5539]/70 space-y-1">
-                    <p>Location: {exhibition.location}</p>
-                    <p>Date: {exhibition.date}</p>
-                    <p>Artworks: {exhibition.artworks} pieces</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <ExhibitionsSection
+            onExhibitionsCountChange={setExhibitionsCount}
+          />
         )}
 
         {/* Achievements Tab */}
         {activeTab === 'achievements' && (
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h3 className="text-lg font-semibold text-[#7f5539] mb-6">Awards & Recognition</h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {badges.map((badge) => (
-                <div
-                  key={badge.id}
-                  className={`p-6 rounded-lg border-2 ${badge.color} hover:shadow-lg transition-shadow`}
-
-                >
-                  <div className="flex items-start space-x-4">
-                    <div className="p-3 bg-white rounded-full">
-                      {badge.icon}
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-semibold mb-1">{badge.title}</h4>
-                      <p className="text-sm opacity-75 mb-2">{badge.prize}</p>
-                      <p className="text-xs opacity-60">{badge.date}</p>
-                      <div className="mt-3">
-                        <span className="inline-block px-3 py-1 bg-white/50 rounded-full text-xs font-medium">
-                          {badge.type.charAt(0).toUpperCase() + badge.type.slice(1)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <AchievementsSection
+            artistId={userId}
+            isOwnProfile={true}
+            onAchievementsCountChange={setAchievementsCount}
+            onAchievementsRefresh={fetchAchievementsData}
+          />
         )}
 
         {/* Analytics Tab */}
@@ -1214,8 +2180,8 @@ const ArtistPortfolio = () => {
                     <div>
                       <p className="text-green-600 text-sm font-medium">Total Engagement</p>
                       <p className="text-2xl font-bold text-green-800">
-                        {(portfolioPosts.reduce((sum, post) => sum + post.likes + post.comments, 0) +
-                          artworks.reduce((sum, art) => sum + art.likes, 0)).toLocaleString()}
+                        {(portfolioPosts.reduce((sum, post) => sum + (post.likes || 0) + (post.comments || 0), 0) +
+                          (Array.isArray(artworks) ? artworks.reduce((sum, art) => sum + (art.likes || 0), 0) : 0)).toLocaleString()}
                       </p>
                       <div className="flex items-center mt-1">
                         <TrendingUp className="text-green-500 mr-1" size={16} />
@@ -1271,7 +2237,9 @@ const ArtistPortfolio = () => {
                       <span className="text-sm font-medium">Avg. Views per Artwork</span>
                     </div>
                     <span className="text-[#7f5539] font-semibold">
-                      {Math.round(artworks.reduce((sum, art) => sum + art.views, 0) / artworks.length)}
+                      {Array.isArray(artworks) && artworks.length > 0
+                        ? Math.round(artworks.reduce((sum, art) => sum + (art.views || 0), 0) / artworks.length)
+                        : 0}
                     </span>
                   </div>
                   <div className="flex items-center justify-between p-3 bg-[#fdf9f4]/50 rounded-lg">
@@ -1280,7 +2248,9 @@ const ArtistPortfolio = () => {
                       <span className="text-sm font-medium">Avg. Likes per Artwork</span>
                     </div>
                     <span className="text-[#7f5539] font-semibold">
-                      {Math.round(artworks.reduce((sum, art) => sum + art.likes, 0) / artworks.length)}
+                      {Array.isArray(artworks) && artworks.length > 0
+                        ? Math.round(artworks.reduce((sum, art) => sum + (art.likes || 0), 0) / artworks.length)
+                        : 0}
                     </span>
                   </div>
                   <div className="flex items-center justify-between p-3 bg-[#fdf9f4]/50 rounded-lg">
@@ -1289,7 +2259,9 @@ const ArtistPortfolio = () => {
                       <span className="text-sm font-medium">Conversion Rate</span>
                     </div>
                     <span className="text-[#7f5539] font-semibold">
-                      {((artistProfile.stats.sales / artistProfile.stats.artworks) * 100).toFixed(1)}%
+                      {artistProfile.stats.artworks > 0
+                        ? ((artistProfile.stats.sales / artistProfile.stats.artworks) * 100).toFixed(1)
+                        : '0.0'}%
                     </span>
                   </div>
                   <div className="flex items-center justify-between p-3 bg-[#fdf9f4]/50 rounded-lg">
@@ -1298,7 +2270,7 @@ const ArtistPortfolio = () => {
                       <span className="text-sm font-medium">Featured Artworks</span>
                     </div>
                     <span className="text-[#7f5539] font-semibold">
-                      {artworks.filter(art => art.featured).length}
+                      {Array.isArray(artworks) ? artworks.filter(art => art.featured).length : 0}
                     </span>
                   </div>
                 </div>
@@ -1364,9 +2336,15 @@ const ArtistPortfolio = () => {
                               {index + 1}
                             </div>
                             <img
-                              src={artwork.image}
+                              src={artwork.imageUrl?.startsWith('http') ? artwork.imageUrl : `http://localhost:8081${encodeURI(artwork.imageUrl || '')}`}
                               alt={artwork.title}
                               className="w-12 h-12 rounded-lg object-cover"
+                              onError={(e) => {
+                                console.error('Failed to load top artwork image:', artwork.imageUrl);
+                                console.error('Top artwork: Constructed URL was:', e.target.src);
+                                e.target.src = 'https://images.pexels.com/photos/1070981/pexels-photo-1070981.jpeg?auto=compress&cs=tinysrgb&w=400';
+                                e.target.onerror = null;
+                              }}
                             />
                             <div>
                               <p className="font-medium text-[#7f5539] text-sm">{artwork.title}</p>
@@ -1399,20 +2377,28 @@ const ArtistPortfolio = () => {
                               {index + 1}
                             </div>
                             <img
-                              src={post.image}
+                              src={post.images && post.images.length > 0 ?
+                                (post.images[0]?.startsWith('http') ? post.images[0] : `http://localhost:8081${encodeURI(post.images[0] || '')}`) :
+                                (post.image?.startsWith('http') ? post.image : `http://localhost:8081${encodeURI(post.image || '')}`)}
                               alt={`Post ${post.id}`}
                               className="w-12 h-12 rounded-lg object-cover"
+                              onError={(e) => {
+                                console.error('Failed to load post image:', post.images?.[0] || post.image);
+                                console.error('Post thumbnail: Constructed URL was:', e.target.src);
+                                e.target.src = 'https://images.pexels.com/photos/1070981/pexels-photo-1070981.jpeg?auto=compress&cs=tinysrgb&w=400';
+                                e.target.onerror = null;
+                              }}
                             />
                             <div>
                               <p className="font-medium text-[#7f5539] text-sm">
                                 {post.caption.substring(0, 30)}...
                               </p>
-                              <p className="text-xs text-[#7f5539]/60">{post.likes} likes • {post.comments} comments</p>
+                              <p className="text-xs text-[#7f5539]/60">{post.likes || 0} likes • {post.comments || 0} comments</p>
                             </div>
                           </div>
                           <div className="text-right">
                             <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
-                              {((post.likes + post.comments) / 10).toFixed(1)}% engagement
+                              {(((post.likes || 0) + (post.comments || 0)) / 10).toFixed(1)}% engagement
                             </span>
                           </div>
                         </div>
@@ -1432,8 +2418,8 @@ const ArtistPortfolio = () => {
                 <div className="text-center p-4 bg-gradient-to-br from-red-50 to-red-100 rounded-lg">
                   <Heart className="mx-auto text-red-500 mb-2" size={24} />
                   <p className="text-2xl font-bold text-[#7f5539]">
-                    {(portfolioPosts.reduce((sum, post) => sum + post.likes, 0) +
-                      artworks.reduce((sum, art) => sum + art.likes, 0)).toLocaleString()}
+                    {(portfolioPosts.reduce((sum, post) => sum + (post.likes || 0), 0) +
+                      (Array.isArray(artworks) ? artworks.reduce((sum, art) => sum + (art.likes || 0), 0) : 0)).toLocaleString()}
                   </p>
                   <p className="text-sm text-gray-600">Total Likes</p>
                   <div className="flex items-center justify-center mt-1">
@@ -1445,7 +2431,7 @@ const ArtistPortfolio = () => {
                 <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg">
                   <MessageCircle className="mx-auto text-blue-500 mb-2" size={24} />
                   <p className="text-2xl font-bold text-[#7f5539]">
-                    {portfolioPosts.reduce((sum, post) => sum + post.comments, 0)}
+                    {portfolioPosts.reduce((sum, post) => sum + (post.comments || 0), 0)}
                   </p>
                   <p className="text-sm text-gray-600">Comments</p>
                   <div className="flex items-center justify-center mt-1">
@@ -1495,7 +2481,9 @@ const ArtistPortfolio = () => {
                 <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4">
                   <h5 className="text-blue-700 font-medium mb-2">Average Sale Price</h5>
                   <p className="text-2xl font-bold text-blue-800">
-                    ${Math.round(15400 / artistProfile.stats.sales).toLocaleString()}
+                    ${artistProfile.stats.sales > 0
+                      ? Math.round(15400 / artistProfile.stats.sales).toLocaleString()
+                      : '0'}
                   </p>
                   <p className="text-sm text-blue-600 mt-1">+12.8% from last month</p>
                   <div className="mt-3 text-xs text-blue-700">
@@ -1572,6 +2560,8 @@ const ArtistPortfolio = () => {
         onProfileChange={handleProfileChange}
         onSave={handleSaveProfile}
         artistProfile={artistProfile}
+        onAvatarUpload={handleAvatarUpload}
+        onCoverUpload={handleSaveCover}
       />
 
       {/* Upload Post Modal */}
@@ -1581,8 +2571,20 @@ const ArtistPortfolio = () => {
         newArtwork={newArtwork}
         onArtworkChange={handleArtworkChange}
         onImageUpload={handleImageUpload}
-        onSave={handleSaveArtwork}
         onCancel={handleCancelAddArtwork}
+        onSuccess={(newArtworkData) => {
+          console.log('NEW ARTWORK RECEIVED:', newArtworkData);
+          console.log('NEW ARTWORK ID:', newArtworkData?.artworkId);
+          console.log('NEW ARTWORK TITLE:', newArtworkData?.title);
+
+          // Add the new artwork to the front of the artworks list
+          setArtworks(prevArtworks => {
+            console.log('PREVIOUS ARTWORKS COUNT:', prevArtworks.length);
+            const newList = [newArtworkData, ...prevArtworks];
+            console.log('NEW ARTWORKS COUNT:', newList.length);
+            return newList;
+          });
+        }}
       />
 
       {/* Artwork Detail Modal */}
@@ -1624,6 +2626,59 @@ const ArtistPortfolio = () => {
           onClose={() => setShowEditModal(false)}
           onSave={handleEditSavePost}
         />
+      )}
+
+      {/* Edit Artwork Modal */}
+      <EditArtworkModal
+        isOpen={isEditingArtwork}
+        artwork={selectedArtwork}
+        onClose={handleCancelEditArtwork}
+        onSave={handleSaveArtwork}
+        onCancel={handleCancelEditArtwork}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={isDeletingArtwork}
+        artwork={selectedArtwork}
+        onConfirm={handleConfirmDeleteArtwork}
+        onCancel={handleCancelDeleteArtwork}
+        isLoading={false}
+      />
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full mx-4 transform transition-all duration-300 ease-out scale-100">
+            <div className="text-center">
+              {/* Title */}
+              <h3 className="text-2xl font-bold text-[#362625] mb-2">
+                Confirm Logout
+              </h3>
+
+              {/* Message */}
+              <p className="text-gray-600 mb-8 text-lg">
+                Are you sure you want to log out of your account?
+              </p>
+
+              {/* Buttons */}
+              <div className="flex gap-4 justify-center">
+                <button
+                  onClick={cancelLogout}
+                  className="px-6 py-3 bg-gray-100 text-[#362625] rounded-xl hover:bg-gray-200 transition-all duration-200 font-medium border border-gray-200 hover:border-gray-300 min-w-[120px]"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmLogout}
+                  className="px-6 py-3 bg-gradient-to-r from-[#e74c3c] to-[#c0392b] text-white rounded-xl hover:from-[#c0392b] hover:to-[#a93226] transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105 min-w-[120px]"
+                >
+                  Log Out
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

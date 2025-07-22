@@ -4,9 +4,17 @@ client/package.json
 client/postcss.config.js
 client/src/App.jsx
 client/tailwind.config.js
+client/.env
+server/.env
 .vscode/
 
 # Ignored package files
 package-lock.json
 package.json
 uploads
+.env
+server/.env
+server/autura/.env
+server/production/artaura/application.properties
+server/artaura/src/main/resources/application.properties
+**/application.properties
