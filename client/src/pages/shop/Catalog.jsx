@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Sidebar from '../../components/Sidebar';
+import { formatLKR } from '../../util/currency';
 
 import { 
   Search, 
@@ -7,6 +8,7 @@ import {
   Filter, 
   Edit3, 
   Trash2, 
+
   Eye,
   Package,
   AlertTriangle,
@@ -117,6 +119,7 @@ const CatalogManagement = () => {
     'Tools & Accessories'
   ];
 
+
   const getStatusBadge = (status) => {
     switch (status) {
       case 'in-stock':
@@ -176,10 +179,10 @@ const CatalogManagement = () => {
     setShowAddModal(false);
   };
 
-   const handleEditProduct = (e) => {
+  const handleEditProduct = (e) => {
     e.preventDefault();
-    const updatedProducts = products.map(p => 
-      p.id === productToEdit.id 
+    const updatedProducts = products.map(p =>
+      p.id === productToEdit.id
         ? { ...productToEdit, status: getStatus(productToEdit.stock) }
         : p
     );
@@ -206,7 +209,7 @@ const CatalogManagement = () => {
 
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.sku.toLowerCase().includes(searchTerm.toLowerCase());
+      product.sku.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
@@ -214,53 +217,54 @@ const CatalogManagement = () => {
   return (
     <div className="flex">
       <Sidebar />
-    <div className="ml-20 md:ml-64 flex-1 space-y-6 bg-white min-h-screen p-6 animate-fade-in">
-    <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-4">
-      <div className="flex items-center gap-3 w-full max-w-md">
-      <div className="relative flex-1 ">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#D87C5A] w-4 h-4" />
-        <input
-          type="text"
-          placeholder="Search..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 border border-[#FFE4D6] hover:border-[#D87C5A] focus:border-[#D87C5A]  focus:ring-0 outline-none   rounded-lg text-sm"
-        />
-      </div>
+      <div className="ml-20 md:ml-64 flex-1 space-y-6 bg-white min-h-screen p-6 animate-fade-in">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-4">
+          <div className="flex items-center gap-3 w-full max-w-md">
+            <div className="relative flex-1 ">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#D87C5A] w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-[#FFE4D6] hover:border-[#D87C5A] focus:border-[#D87C5A]  focus:ring-0 outline-none   rounded-lg text-sm"
+              />
+            </div>
 
-      {/* Category Filter */}
-      <div className="relative w-36">
-         <Filter className="absolute left-2 top-1/2 -translate-y-1/2 text-[#D87C5A] w-4 h-4 pointer-events-none" />
-        <select
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-          className="w-full pl-8 pr-2 py-2 border border-[#FFE4D6]  hover:border-[#D87C5A] focus:border-[#D87C5A] focus:ring-0 outline-none   rounded-lg text-sm appearance-none"
-        >
-          {categories.map(category => (
-            <option key={category} value={category}>
-              {category === 'all' ? 'All Categories' : category}
-            </option>
-          ))}
-        </select>
-      </div>
-      </div>
+            {/* Category Filter */}
+            <div className="relative w-36">
+              <Filter className="absolute left-2 top-1/2 -translate-y-1/2 text-[#D87C5A] w-4 h-4 pointer-events-none" />
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="w-full pl-8 pr-2 py-2 border border-[#FFE4D6]  hover:border-[#D87C5A] focus:border-[#D87C5A] focus:ring-0 outline-none   rounded-lg text-sm appearance-none"
+              >
+                {categories.map(category => (
+                  <option key={category} value={category}>
+                    {category === 'all' ? 'All Categories' : category}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
 
-       {/* Add Product Button */}
-      <button 
-        onClick={() => setShowAddModal(true)}
-        className="bg-gradient-to-r from-[#D87C5A] to-[#5D3A00] text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300">
-        <Plus className="w-4 h-4 inline mr-2" />
-        Add Product
-      </button>
-    </div>
+          {/* Add Product Button */}
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="bg-gradient-to-r from-[#D87C5A] to-[#5D3A00] text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300">
+            <Plus className="w-4 h-4 inline mr-2" />
+            Add Product
+          </button>
+        </div>
 
-      
 
         {/* Products Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredProducts.map((product, index) => (
+
             <div 
               key={product.id} 
+
               className="bg-white rounded-xl shadow-lg border border-[#FFE4D6] overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105 group animate-fade-in"
               style={{ animationDelay: `${index * 0.1}s`, animationFillMode: 'both' }}
             >
@@ -275,7 +279,7 @@ const CatalogManagement = () => {
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </div>
-              
+
               <div className="p-3">
                 <h3 className="font-bold text-[#5D3A00] text-base mb-1 line-clamp-2 group-hover:text-[#D87C5A] transition-colors duration-300">
                   {product.name}
@@ -283,9 +287,11 @@ const CatalogManagement = () => {
                 <div className="flex items-center space-x-1 mb-1">
                   <div className="flex items-center">
                     {[...Array(5)].map((_, i) => (
+
                       <Star 
                         key={i} 
                         className={`w-3 h-3 ${i < Math.floor(product.rating) ? 'text-[#FFD95A] fill-current' : 'text-gray-300'}`} 
+
                       />
                     ))}
                   </div>
@@ -299,7 +305,9 @@ const CatalogManagement = () => {
 
                 <div className="flex items-center justify-between mt-3 mb-2">
                   <span className="text-lg font-bold text-[#D87C5A]">
+
                     Rs. {product.price.toLocaleString()}
+
                   </span>
                   <span className="text-xs text-[#5D3A00]/70 bg-[#FFE4D6] px-2 py-0.5 rounded-full font-semibold">
                     Stock: {product.stock}
@@ -307,12 +315,15 @@ const CatalogManagement = () => {
                 </div>
 
                 <div className="flex justify-start items-center gap-2 mt-3">
+
                   <button 
                     onClick={() => setSelectedProduct(product)} 
+
                     className="w-fit bg-[#D87C5A] text-white py-1.5 px-2 rounded-lg hover:bg-[#c06949] text-xs font-semibold shadow hover:shadow-md transition-all duration-300 flex items-center space-x-1">
                     <Eye className="w-3 h-3" />
                     <span>View</span>
                   </button>
+
                   <button 
                     onClick={() => openEditModal(product)}
                     className="w-fit bg-[#FFF5E1] text-[#5D3A00] py-1.5 px-2 rounded-lg hover:bg-[#FFE4D6] text-xs font-semibold shadow hover:shadow-md transition-all duration-300 flex items-center space-x-1">
@@ -327,6 +338,7 @@ const CatalogManagement = () => {
                 </div>
               </div>
             </div> 
+
           ))}
         </div>
 
@@ -336,42 +348,48 @@ const CatalogManagement = () => {
               <div className="w-16 h-16 bg-[#FFE4D6] rounded-full flex items-center justify-center mb-4">
                 <Package className="w-8 h-8 text-[#D87C5A]" />
               </div>
+
               <h3 className="text-xl font-bold text-[#5D3A00] mb-2">No art supplies found</h3>
+
               <p className="text-[#5D3A00]/70 text-sm">Try adjusting your search terms or filters</p>
             </div>
           </div>
         )}
 
-        
+
         {selectedProduct && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center border-b border-[#FFE4D6] p-6">
                 <h2 className="text-2xl font-bold text-[#5D3A00]">Product Details</h2>
+
                 <button 
                   onClick={() => setSelectedProduct(null)} 
+
                   className="text-[#5D3A00] hover:text-[#D87C5A] transition-colors"
                 >
                   <X className="w-6 h-6" />
                 </button>
               </div>
+
               
               <div className="p-6">
                 <div className="flex flex-col md:flex-row gap-6">
                   <div className="flex-shrink-0">
                     <img 
                       src={selectedProduct.image} 
+
                       alt={selectedProduct.name}
                       className="w-full md:w-48 h-48 object-cover rounded-xl border border-[#FFE4D6]"
                     />
                   </div>
-                  
+
                   <div className="flex-1 space-y-4">
                     <div>
                       <h3 className="text-xl font-bold text-[#5D3A00] mb-2">{selectedProduct.name}</h3>
                       <div className="mb-3">{getStatusBadge(selectedProduct.status)}</div>
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
                         <p className="text-[#5D3A00]/70 font-semibold">SKU</p>
@@ -383,7 +401,9 @@ const CatalogManagement = () => {
                       </div>
                       <div>
                         <p className="text-[#5D3A00]/70 font-semibold">Price</p>
+
                         <p className="text-[#D87C5A] font-bold text-lg">Rs. {selectedProduct.price.toLocaleString()}</p>
+
                       </div>
                       <div>
                         <p className="text-[#5D3A00]/70 font-semibold">Stock</p>
@@ -413,9 +433,11 @@ const CatalogManagement = () => {
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
               <div className="flex justify-between items-center border-b border-[#FFE4D6] p-6">
+
                 <h2 className="text-2xl font-bold text-[#5D3A00]">Add New Art Supply</h2>
                 <button 
                   onClick={() => setShowAddModal(false)} 
+
                   className="text-[#5D3A00] hover:text-[#D87C5A] transition-colors"
                 >
                   <X className="w-6 h-6" />
@@ -435,6 +457,7 @@ const CatalogManagement = () => {
                   />
                 </div>
 
+
                 <div>
                   <label className="block text-sm font-semibold text-[#5D3A00] mb-2">SKU</label>
                   <input 
@@ -443,11 +466,13 @@ const CatalogManagement = () => {
                     onChange={(e) => setNewProduct({ ...newProduct, sku: e.target.value })}
                     className="w-full border border-[#FFE4D6] px-3 py-2 rounded-lg focus:border-[#D87C5A] focus:ring-0 outline-none"
                     placeholder="Enter SKU code"
+
                     required
                   />
                 </div>
 
                 <div>
+
                   <label className="block text-sm font-semibold text-[#5D3A00] mb-2">Category</label>
                   <select 
                     value={newProduct.category}
@@ -490,12 +515,15 @@ const CatalogManagement = () => {
                 <div className="flex gap-3 pt-4">
                   <button 
                     type="button" 
+
                     onClick={() => setShowAddModal(false)}
                     className="flex-1 border border-[#FFE4D6] text-[#5D3A00] px-4 py-2 rounded-lg hover:bg-[#FFF5E1] transition-colors"
                   >
                     Cancel
                   </button>
+
                   <button 
+
                     type="submit"
                     className="flex-1 bg-gradient-to-r from-[#D87C5A] to-[#5D3A00] text-white px-4 py-2 rounded-lg hover:shadow-lg transition-all"
                   >
@@ -507,19 +535,23 @@ const CatalogManagement = () => {
           </div>
         )}
 
+
         {/* Edit Product Modal */}
         {showEditModal && productToEdit && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
               <div className="flex justify-between items-center border-b border-[#FFE4D6] p-6">
+
                 <h2 className="text-2xl font-bold text-[#5D3A00]">Edit Art Supply</h2>
                 <button 
                   onClick={() => setShowEditModal(false)} 
+
                   className="text-[#5D3A00] hover:text-[#D87C5A] transition-colors"
                 >
                   <X className="w-6 h-6" />
                 </button>
               </div>
+
               
               <form onSubmit={handleEditProduct} className="p-6 space-y-4">
                 <div>
@@ -528,27 +560,32 @@ const CatalogManagement = () => {
                     type="text"
                     value={productToEdit.name}
                     onChange={(e) => setProductToEdit({...productToEdit, name: e.target.value})}
+
                     className="w-full border border-[#FFE4D6] px-3 py-2 rounded-lg focus:border-[#D87C5A] focus:ring-0 outline-none"
                     required
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-semibold text-[#5D3A00] mb-2">SKU</label>
+
                   <input 
                     type="text"
                     value={productToEdit.sku}
                     onChange={(e) => setProductToEdit({...productToEdit, sku: e.target.value})}
+
                     className="w-full border border-[#FFE4D6] px-3 py-2 rounded-lg focus:border-[#D87C5A] focus:ring-0 outline-none"
                     required
                   />
                 </div>
+
                 
                 <div>
                   <label className="block text-sm font-semibold text-[#5D3A00] mb-2">Category</label>
                   <select 
                     value={productToEdit.category}
                     onChange={(e) => setProductToEdit({...productToEdit, category: e.target.value})}
+
                     className="w-full border border-[#FFE4D6] px-3 py-2 rounded-lg focus:border-[#D87C5A] focus:ring-0 outline-none"
                   >
                     {categories.filter(cat => cat !== 'all').map(category => (
@@ -556,6 +593,7 @@ const CatalogManagement = () => {
                     ))}
                   </select>
                 </div>
+
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -565,10 +603,12 @@ const CatalogManagement = () => {
                       step="0.01"
                       value={productToEdit.price}
                       onChange={(e) => setProductToEdit({...productToEdit, price: parseFloat(e.target.value)})}
+
                       className="w-full border border-[#FFE4D6] px-3 py-2 rounded-lg focus:border-[#D87C5A] focus:ring-0 outline-none"
                       required
                     />
                   </div>
+
                   
                   <div>
                     <label className="block text-sm font-semibold text-[#5D3A00] mb-2">Stock</label>
@@ -576,21 +616,26 @@ const CatalogManagement = () => {
                       type="number"
                       value={productToEdit.stock}
                       onChange={(e) => setProductToEdit({...productToEdit, stock: parseInt(e.target.value)})}
+
                       className="w-full border border-[#FFE4D6] px-3 py-2 rounded-lg focus:border-[#D87C5A] focus:ring-0 outline-none"
                       required
                     />
                   </div>
                 </div>
+
                 
                 <div className="flex gap-3 pt-4">
                   <button 
                     type="button" 
+
                     onClick={() => setShowEditModal(false)}
                     className="flex-1 border border-[#FFE4D6] text-[#5D3A00] px-4 py-2 rounded-lg hover:bg-[#FFF5E1] transition-colors"
                   >
                     Cancel
                   </button>
+
                   <button 
+
                     type="submit"
                     className="flex-1 bg-gradient-to-r from-[#D87C5A] to-[#5D3A00] text-white px-4 py-2 rounded-lg hover:shadow-lg transition-all"
                   >
@@ -610,6 +655,7 @@ const CatalogManagement = () => {
                 <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Trash2 className="w-8 h-8 text-red-600" />
                 </div>
+
                 
                 <h2 className="text-2xl font-bold text-[#5D3A00] mb-2">Delete Art Supply</h2>
                 <p className="text-[#5D3A00]/70 mb-6">
@@ -618,12 +664,15 @@ const CatalogManagement = () => {
                 
                 <div className="flex gap-3">
                   <button 
+
                     onClick={() => setShowDeleteModal(false)}
                     className="flex-1 border border-[#FFE4D6] text-[#5D3A00] px-4 py-2 rounded-lg hover:bg-[#FFF5E1] transition-colors"
                   >
                     Cancel
                   </button>
+
                   <button 
+
                     onClick={handleDeleteProduct}
                     className="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
                   >
@@ -636,6 +685,7 @@ const CatalogManagement = () => {
         )}
 
         <style jsx>{`
+
           .line-clamp-2 {
             display: -webkit-box;
             -webkit-line-clamp: 2;
@@ -643,6 +693,7 @@ const CatalogManagement = () => {
             overflow: hidden;
           }
         `}</style>
+
       </div>
     </div>
   );

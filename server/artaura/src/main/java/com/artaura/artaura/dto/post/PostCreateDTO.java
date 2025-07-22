@@ -1,6 +1,7 @@
 package com.artaura.artaura.dto.post;
 
 import lombok.Data;
+import java.util.List;
 
 @Data
 public class PostCreateDTO {
@@ -8,7 +9,7 @@ public class PostCreateDTO {
     private Long userId;  // ✅ Changed from int to Long
     private String role;
     private String caption;
-    private String image;
+    private List<String> images; // ✅ Changed from single image to multiple images
     private String location;
 
     // Manual getters and setters (in case Lombok fails)
@@ -36,12 +37,12 @@ public class PostCreateDTO {
         this.caption = caption;
     }
 
-    public String getImage() {
-        return image;
+    public List<String> getImages() {
+        return images;
     }
 
-    public void setImage(String image) {
-        this.image = image;
+    public void setImages(List<String> images) {
+        this.images = images;
     }
 
     public String getLocation() {

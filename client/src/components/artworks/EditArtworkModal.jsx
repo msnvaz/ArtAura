@@ -5,12 +5,12 @@ import {
     Upload,
     Palette,
     Calendar,
-    DollarSign,
     FileText,
     Tag,
     Ruler,
     Star
 } from 'lucide-react';
+import { useNotification } from '../../context/NotificationContext';
 
 const EditArtworkModal = ({
     isOpen,
@@ -19,6 +19,7 @@ const EditArtworkModal = ({
     onSave,
     onCancel
 }) => {
+    const { showError } = useNotification();
     const [formData, setFormData] = useState({
         title: '',
         medium: '',
@@ -43,7 +44,7 @@ const EditArtworkModal = ({
                 medium: artwork.medium || '',
                 size: artwork.size || '',
                 year: artwork.year || '',
-                price: artwork.price || '',
+                price: artwork.price || '',  // Keep as is for now
                 description: artwork.description || '',
                 category: artwork.category || '',
                 tags: artwork.tags || '',
@@ -51,8 +52,17 @@ const EditArtworkModal = ({
                 featured: artwork.featured || false
             });
             setImagePreview(artwork.imageUrl ? `http://localhost:8081${artwork.imageUrl}` : '');
+
+            // IMPORTANT: Clear any previously selected image file when switching artworks
+            setImageFile(null);
         }
-    }, [artwork, isOpen]);
+    }, [artwork, isOpen]);    // Clear image file state when modal is closed
+    useEffect(() => {
+        if (!isOpen) {
+            setImageFile(null);
+            setImagePreview('');
+        }
+    }, [isOpen]);
 
     const handleInputChange = (field, value) => {
         setFormData(prev => ({
@@ -78,15 +88,18 @@ const EditArtworkModal = ({
         setIsLoading(true);
 
         try {
-            await onSave({
+            const submissionData = {
                 ...formData,
+                price: parseFloat(formData.price) || 0, // Ensure price is a number
                 artworkId: artwork.artworkId || artwork.id,
                 imageFile: imageFile
-            });
+            };
+
+            await onSave(submissionData);
             onClose();
         } catch (error) {
             console.error('Error updating artwork:', error);
-            alert('Failed to update artwork. Please try again.');
+            showError('Failed to update artwork. Please try again.');
         } finally {
             setIsLoading(false);
         }
@@ -242,7 +255,7 @@ const EditArtworkModal = ({
                             {/* Price */}
                             <div>
                                 <label className="block text-sm font-medium text-[#7f5539] mb-2">
-                                    <DollarSign className="inline mr-1" size={16} />
+                                    <span className="inline-block bg-green-100 text-green-600 text-xs px-2 py-1 rounded mr-1">LKR</span>
                                     Price *
                                 </label>
                                 <input
@@ -250,7 +263,7 @@ const EditArtworkModal = ({
                                     value={formData.price}
                                     onChange={(e) => handleInputChange('price', e.target.value)}
                                     className="w-full p-3 border border-[#7f5539]/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7f5539] focus:border-transparent"
-                                    placeholder="Enter price in USD"
+                                    placeholder="Enter price in LKR"
                                     min="0"
                                     step="0.01"
                                     required

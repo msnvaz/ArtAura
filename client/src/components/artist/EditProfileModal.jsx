@@ -9,7 +9,8 @@ const EditProfileModal = ({
     onProfileChange,
     onSave,
     artistProfile,
-    onAvatarUpload
+    onAvatarUpload,
+    onCoverUpload
 }) => {
     if (!isOpen) return null;
 
@@ -20,6 +21,13 @@ const EditProfileModal = ({
         const file = e.target.files[0];
         if (file) {
             onAvatarUpload(file);
+        }
+    };
+
+    const handleCoverChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            onCoverUpload(file);
         }
     };
 
@@ -56,12 +64,24 @@ const EditProfileModal = ({
                                     className="w-full h-full object-cover"
                                 />
                                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity cursor-pointer">
-                                    <button className="bg-[#7f5539] text-white px-4 py-2 rounded-lg flex items-center space-x-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => document.getElementById('cover-upload').click()}
+                                        className="bg-[#7f5539] text-white px-4 py-2 rounded-lg flex items-center space-x-2"
+                                    >
                                         <Camera size={16} />
                                         <span>Change Cover</span>
                                     </button>
                                 </div>
                             </div>
+                            <input
+                                id="cover-upload"
+                                type="file"
+                                accept="image/*"
+                                onChange={handleCoverChange}
+                                className="hidden"
+                            />
+                            <p className="text-xs text-[#7f5539]/60">JPG, PNG or GIF. Max size 5MB. Recommended: 1200x400px</p>
                         </div>
 
                         {/* Avatar */}

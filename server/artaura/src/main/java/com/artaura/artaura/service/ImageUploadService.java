@@ -19,11 +19,12 @@ public class ImageUploadService {
         String currentDir = System.getProperty("user.dir");
         System.out.println("Current working directory: " + currentDir);
 
-        // Use absolute path from project root
-        String projectRoot = currentDir.endsWith("artaura")
-                ? currentDir.substring(0, currentDir.lastIndexOf("artaura")) : currentDir;
+        // Calculate the correct path to server/uploads
+        String serverDir = currentDir.endsWith("artaura")
+                ? currentDir.substring(0, currentDir.lastIndexOf("artaura"))
+                : currentDir + File.separator;
 
-        String uploadDirPath = projectRoot + "uploads" + File.separator + "profiles" + File.separator;
+        String uploadDirPath = serverDir + "uploads" + File.separator + "profiles" + File.separator;
         System.out.println("Upload directory path: " + uploadDirPath);
 
         // Create upload directory if it doesn't exist
@@ -58,11 +59,12 @@ public class ImageUploadService {
         try {
             if (imagePath != null && !imagePath.isEmpty()) {
                 String currentDir = System.getProperty("user.dir");
-                String projectRoot = currentDir.endsWith("artaura")
-                        ? currentDir.substring(0, currentDir.lastIndexOf("artaura")) : currentDir;
+                String serverDir = currentDir.endsWith("artaura")
+                        ? currentDir.substring(0, currentDir.lastIndexOf("artaura"))
+                        : currentDir + File.separator;
 
                 // Convert URL path back to file path
-                String filePath = imagePath.replace("/uploads/", projectRoot + "uploads" + File.separator);
+                String filePath = imagePath.replace("/uploads/", serverDir + "uploads" + File.separator);
                 Path path = Paths.get(filePath);
                 boolean deleted = Files.deleteIfExists(path);
                 System.out.println("Deleted file: " + deleted + " at " + path.toAbsolutePath());

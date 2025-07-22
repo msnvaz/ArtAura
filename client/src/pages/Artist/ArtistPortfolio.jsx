@@ -34,6 +34,7 @@ import {
   TrendingUp,
   TrendingDown,
   Users,
+  User,
   DollarSign,
   Share2,
   Download,
@@ -46,11 +47,18 @@ import {
   ArrowLeft,
   FileText,
   Shield,
-  AlertTriangle
+  AlertTriangle,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
+
+import { useImageWithFallback } from '../../util/imageUtils';
+import { formatLKR } from '../../util/currency';
+import { useNotification } from '../../context/NotificationContext';
 
 const ArtistPortfolio = () => {
   const navigate = useNavigate();
+  const { showSuccess, showError, showInfo } = useNotification();
 
   // Helper functions for achievement display
   const getAchievementIcon = (iconType) => {
@@ -117,8 +125,10 @@ const ArtistPortfolio = () => {
     // allowSharing: true
   });
 
-  const { token, role, userId } = useAuth();
+  const { token, role, userId, logout } = useAuth();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [portfolioPosts, setPortfolioPosts] = useState([]);
+  const [postImageIndex, setPostImageIndex] = useState({}); // Track current image index for each post
   const [artistProfile, setArtistProfile] = useState(null);
   const [achievementsCount, setAchievementsCount] = useState(0);
   const [recentAchievements, setRecentAchievements] = useState([]);
@@ -328,7 +338,17 @@ const ArtistPortfolio = () => {
           }
         );
 
-        setPortfolioPosts(response.data);
+        console.log('Posts API response:', response.data);
+
+        // Sort posts by creation date (newest first) as a fallback
+        const sortedPosts = Array.isArray(response.data) ? response.data.sort((a, b) => {
+          const dateA = new Date(a.created_at);
+          const dateB = new Date(b.created_at);
+          return dateB - dateA; // Descending order (newest first)
+        }) : [];
+
+        setPortfolioPosts(sortedPosts);
+        console.log('Set posts state:', sortedPosts.length, 'posts');
       } catch (error) {
         console.error("Error fetching posts:", error);
       }
@@ -364,11 +384,38 @@ const ArtistPortfolio = () => {
         });
 
         console.log('Artworks API response:', response.data);
+        if (response.data && response.data.length > 0) {
+          console.log('First artwork data:', response.data[0]);
+          console.log('Sample imageUrl:', response.data[0]?.imageUrl);
+          console.log('Artworks order (by creation date):');
+          response.data.forEach((artwork, index) => {
+            console.log(`${index + 1}. ${artwork.title} - Created: ${artwork.createdAt} - ID: ${artwork.artworkId}`);
+          });
+        }
 
         // Ensure response.data is an array
         const artworksData = Array.isArray(response.data) ? response.data : [];
-        setArtworks(artworksData);
-        console.log('Set artworks state:', artworksData.length, 'artworks');
+
+        // Sort artworks by creation date (newest first) as a fallback
+        const sortedArtworks = artworksData.sort((a, b) => {
+          const dateA = new Date(a.createdAt);
+          const dateB = new Date(b.createdAt);
+          return dateB - dateA; // Descending order (newest first)
+        });
+
+        // Debug: Check for duplicate IDs
+        const ids = sortedArtworks.map(artwork => artwork.artworkId);
+        const uniqueIds = new Set(ids);
+        if (ids.length !== uniqueIds.size) {
+          console.error('DUPLICATE ARTWORK IDs DETECTED:', ids);
+          sortedArtworks.forEach((artwork, index) => {
+            console.log(`${index}: ID=${artwork.artworkId}, Title=${artwork.title}`);
+          });
+        }
+
+        console.log('After sorting - first artwork:', sortedArtworks[0]?.title);
+        setArtworks(sortedArtworks);
+        console.log('Set artworks state:', sortedArtworks.length, 'artworks');
 
       } catch (error) {
         console.error('Failed to fetch artworks:', error);
@@ -447,7 +494,7 @@ const ArtistPortfolio = () => {
 
   const handleSaveProfile = async () => {
     if (!userId || !token) {
-      alert('Authentication error. Please log in again.');
+      showError('Authentication error. Please log in again.');
       return;
     }
 
@@ -495,20 +542,20 @@ const ArtistPortfolio = () => {
       }));
 
       setIsEditingProfile(false);
-      alert('Profile updated successfully!');
+      showSuccess('Profile updated successfully!');
 
     } catch (error) {
       console.error('Error updating profile:', error);
       if (error.response) {
         if (error.response.status === 401) {
-          alert('Authentication failed. Please log in again.');
+          showError('Authentication failed. Please log in again.');
         } else if (error.response.status === 404) {
-          alert('Artist profile not found.');
+          showError('Artist profile not found.');
         } else {
-          alert(`Failed to update profile: ${error.response.data || error.response.statusText}`);
+          showError(`Failed to update profile: ${error.response.data || error.response.statusText}`);
         }
       } else {
-        alert('Network error. Please check your connection and try again.');
+        showError('Network error. Please check your connection and try again.');
       }
     }
   };
@@ -545,8 +592,6 @@ const ArtistPortfolio = () => {
 
   const handleSaveArtwork = async (updatedArtworkData) => {
     try {
-      const formData = new FormData();
-
       // Get the artwork ID - try different possible property names
       const artworkId = updatedArtworkData.artworkId ||
         updatedArtworkData.artwork_id ||
@@ -557,38 +602,51 @@ const ArtistPortfolio = () => {
 
       if (!artworkId) {
         console.error('No artwork ID found in:', updatedArtworkData, selectedArtwork);
-        alert('Error: Artwork ID not found. Please try again.');
+        showError('Error: Artwork ID not found. Please try again.');
         return;
       }
 
-      // Append all artwork data to FormData (excluding ID and image file temporarily)
-      Object.keys(updatedArtworkData).forEach(key => {
-        if (key !== 'imageFile' && key !== 'artworkId' && key !== 'artwork_id' && key !== 'id') {
-          const value = updatedArtworkData[key];
-          if (value !== null && value !== undefined) {
-            formData.append(key, value);
-          }
-        }
-      });
-
-      // Append image file if provided
-      if (updatedArtworkData.imageFile) {
-        formData.append('image', updatedArtworkData.imageFile);
-      }
-
       const token = localStorage.getItem('token');
-
       if (!token) {
-        alert('Authentication error. Please log in again.');
+        showError('Authentication error. Please log in again.');
         return;
       }
 
       console.log('Updating artwork with ID:', artworkId);
-      console.log('FormData contents:', Object.fromEntries(formData.entries()));
+      console.log('Updated data being sent:', updatedArtworkData);
+      console.log('Original artwork data:', selectedArtwork);
 
-      // Try without multipart/form-data first - send as JSON if no file
-      if (!updatedArtworkData.imageFile) {
-        // If no image file, send as JSON
+      let response;
+
+      if (updatedArtworkData.imageFile) {
+        // If there's an image file, use the upload endpoint with FormData
+        const formData = new FormData();
+
+        // Append all fields to FormData
+        Object.keys(updatedArtworkData).forEach(key => {
+          if (key !== 'imageFile' && key !== 'artworkId' && key !== 'artwork_id' && key !== 'id') {
+            const value = updatedArtworkData[key];
+            if (value !== null && value !== undefined) {
+              formData.append(key, value);
+            }
+          }
+        });
+
+        // Append image file
+        formData.append('image', updatedArtworkData.imageFile);
+
+        response = await axios.put(
+          `http://localhost:8081/api/artworks/${artworkId}/upload`,
+          formData,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`
+              // Don't set Content-Type - let axios handle it automatically for multipart
+            }
+          }
+        );
+      } else {
+        // If no image file, send as JSON to regular endpoint
         const jsonData = {};
         Object.keys(updatedArtworkData).forEach(key => {
           if (key !== 'imageFile' && key !== 'artworkId' && key !== 'artwork_id' && key !== 'id') {
@@ -599,7 +657,7 @@ const ArtistPortfolio = () => {
           }
         });
 
-        const response = await axios.put(
+        response = await axios.put(
           `http://localhost:8081/api/artworks/${artworkId}`,
           jsonData,
           {
@@ -609,98 +667,46 @@ const ArtistPortfolio = () => {
             }
           }
         );
-
-        console.log('Update response:', response.data);
-
-        // Update the artworks list with the updated artwork (use local data for immediate UI)
-        setArtworks(prevArtworks =>
-          prevArtworks.map(artwork => {
-            const currentId = artwork.artworkId || artwork.artwork_id || artwork.id;
-            return currentId === artworkId ? { ...artwork, ...updatedArtworkData } : artwork;
-          })
-        );
-
-        setIsEditingArtwork(false);
-        setSelectedArtwork(null);
-
-        // Show success message
-        alert('Artwork updated successfully!');
-      } else {
-        // If there's an image file, use FormData but don't set Content-Type header
-        const response = await axios.put(
-          `http://localhost:8081/api/artworks/${artworkId}`,
-          formData,
-          {
-            headers: {
-              'Authorization': `Bearer ${token}`
-              // Don't set Content-Type - let axios handle it automatically
-            }
-          }
-        );
-
-        console.log('Update response:', response.data);
-
-        // Update the artworks list with the updated artwork (use local data for immediate UI)
-        setArtworks(prevArtworks =>
-          prevArtworks.map(artwork => {
-            const currentId = artwork.artworkId || artwork.artwork_id || artwork.id;
-            return currentId === artworkId ? { ...artwork, ...updatedArtworkData } : artwork;
-          })
-        );
-
-        setIsEditingArtwork(false);
-        setSelectedArtwork(null);
-
-        // Show success message
-        alert('Artwork updated successfully!');
       }
+
+      console.log('Update response:', response.data);
+
+      // Update the artworks list with the updated artwork from server response
+      setArtworks(prevArtworks =>
+        prevArtworks.map(artwork => {
+          const currentId = artwork.artworkId || artwork.artwork_id || artwork.id;
+          if (currentId === artworkId) {
+            // Use the server response data which includes updated imageUrl
+            const serverData = response.data;
+            return {
+              ...artwork,
+              ...serverData,
+              // Ensure consistent ID field naming
+              artworkId: serverData.artworkId || serverData.artwork_id || serverData.id || artworkId,
+              // Update all possible image field variations
+              imageUrl: serverData.imageUrl || serverData.image_url,
+              image: serverData.imageUrl || serverData.image_url || serverData.image,
+            };
+          }
+          return artwork;
+        })
+      );
+
+      setIsEditingArtwork(false);
+      setSelectedArtwork(null);
+
+      // Show success message
+      showSuccess('Artwork updated successfully!');
 
     } catch (error) {
       console.error('Error updating artwork:', error);
 
-      // Always update locally as fallback and close modal
-      const artworkId = updatedArtworkData.artworkId ||
-        updatedArtworkData.artwork_id ||
-        updatedArtworkData.id ||
-        selectedArtwork?.artworkId ||
-        selectedArtwork?.artwork_id ||
-        selectedArtwork?.id;
-
-      if (artworkId) {
-        setArtworks(prevArtworks =>
-          prevArtworks.map(artwork => {
-            const currentId = artwork.artworkId || artwork.artwork_id || artwork.id;
-            return currentId === artworkId ? { ...artwork, ...updatedArtworkData } : artwork;
-          })
-        );
-
-        setIsEditingArtwork(false);
-        setSelectedArtwork(null);
-        alert('Artwork updated successfully!');
+      if (error.response) {
+        console.error('Response data:', error.response.data);
+        console.error('Response status:', error.response.status);
+        showError(`Failed to update artwork: ${error.response.data || error.message}`);
       } else {
-        // More detailed error handling only if we can't update locally
-        if (error.response) {
-          console.error('Server response:', error.response.data);
-          console.error('Status code:', error.response.status);
-
-          if (error.response.status === 401) {
-            alert('Authentication failed. Please log in again.');
-          } else if (error.response.status === 403) {
-            alert('You do not have permission to update this artwork.');
-          } else if (error.response.status === 404) {
-            alert('Artwork not found. It may have been deleted.');
-          } else if (error.response.status === 415) {
-            alert('Server does not support the file format. Please try a different image format.');
-          } else {
-            alert(`Failed to update artwork: ${error.response.data.message || error.response.data || 'Server error'}`);
-          }
-        } else if (error.request) {
-          console.error('No response received:', error.request);
-          alert('Network error. Please check your connection and try again.');
-        } else {
-          console.error('Request setup error:', error.message);
-          alert('Failed to update artwork. Please try again.');
-        }
+        showError('Failed to update artwork. Please try again.');
       }
     }
   };
@@ -733,11 +739,11 @@ const ArtistPortfolio = () => {
       setSelectedArtwork(null);
 
       // Show success message
-      alert('Artwork deleted successfully!');
+      showSuccess('Artwork deleted successfully!');
 
     } catch (error) {
       console.error('Error deleting artwork:', error);
-      alert('Failed to delete artwork. Please try again.');
+      showError('Failed to delete artwork. Please try again.');
     }
   };
 
@@ -757,11 +763,43 @@ const ArtistPortfolio = () => {
     }));
   };
 
+  // Navigation functions for post images
+  const navigatePostImage = (postId, direction) => {
+    const post = portfolioPosts.find(p => p.post_id === postId);
+    if (!post || !post.images || post.images.length <= 1) return;
+
+    setPostImageIndex(prev => {
+      const currentIndex = prev[postId] || 0;
+      let newIndex;
+
+      if (direction === 'next') {
+        newIndex = (currentIndex + 1) % post.images.length;
+      } else {
+        newIndex = currentIndex === 0 ? post.images.length - 1 : currentIndex - 1;
+      }
+
+      return {
+        ...prev,
+        [postId]: newIndex
+      };
+    });
+  };
+
+  const getCurrentImageIndex = (postId) => {
+    return postImageIndex[postId] || 0;
+  };
+
   const handleSavePost = async () => {
     const formData = new FormData();
     formData.append('caption', newPost.caption);
     formData.append('location', 'Colombo'); // optional: make dynamic
-    formData.append('image', newPost.imageFiles[0]);
+
+    // ✅ Add all images to FormData
+    if (newPost.imageFiles && newPost.imageFiles.length > 0) {
+      newPost.imageFiles.forEach((file, index) => {
+        formData.append('images', file); // Use 'images' to match backend parameter
+      });
+    }
 
     // 👇 Check before making request
     if (!token || !role || !userId) {
@@ -791,7 +829,7 @@ const ArtistPortfolio = () => {
       });
 
       // Show success message
-      alert('Post created successfully!');
+      showSuccess('Post created successfully!');
 
       // Refresh posts from the server to get the latest data
       try {
@@ -803,7 +841,15 @@ const ArtistPortfolio = () => {
             },
           }
         );
-        setPortfolioPosts(postsResponse.data);
+
+        // Sort posts by creation date (newest first) as a fallback
+        const sortedPosts = Array.isArray(postsResponse.data) ? postsResponse.data.sort((a, b) => {
+          const dateA = new Date(a.created_at);
+          const dateB = new Date(b.created_at);
+          return dateB - dateA; // Descending order (newest first)
+        }) : [];
+
+        setPortfolioPosts(sortedPosts);
       } catch (fetchError) {
         console.error('Error fetching updated posts:', fetchError);
         // Fallback to adding the new post to existing posts
@@ -812,7 +858,7 @@ const ArtistPortfolio = () => {
 
     } catch (error) {
       console.error('Error uploading post:', error);
-      alert('Failed to create post. Please try again.');
+      showError('Failed to create post. Please try again.');
     }
   };
 
@@ -851,7 +897,7 @@ const ArtistPortfolio = () => {
       const userId = localStorage.getItem('userId');
 
       if (!token || !userId) {
-        alert('Authentication required. Please log in again.');
+        showError('Authentication required. Please log in again.');
         return;
       }
 
@@ -861,7 +907,8 @@ const ArtistPortfolio = () => {
       formData.append('medium', artworkData.medium);
       formData.append('size', artworkData.size || '');
       formData.append('year', artworkData.year || new Date().getFullYear().toString());
-      formData.append('price', artworkData.price.toString());
+      // Ensure price is properly formatted as a number string
+      formData.append('price', (parseFloat(artworkData.price) || 0).toString());
       formData.append('description', artworkData.description || '');
       formData.append('category', artworkData.category || '');
       formData.append('tags', artworkData.tags || '');
@@ -905,21 +952,21 @@ const ArtistPortfolio = () => {
       });
 
       // Show success message
-      alert('Artwork uploaded successfully!');
+      showSuccess('Artwork uploaded successfully!');
 
     } catch (error) {
       console.error('Error creating artwork:', error);
 
       if (error.response) {
         if (error.response.status === 401) {
-          alert('Authentication failed. Please log in again.');
+          showError('Authentication failed. Please log in again.');
         } else if (error.response.status === 400) {
-          alert(`Invalid data: ${error.response.data.message || 'Please check your input.'}`);
+          showError(`Invalid data: ${error.response.data.message || 'Please check your input.'}`);
         } else {
-          alert(`Failed to upload artwork: ${error.response.data.message || 'Server error'}`);
+          showError(`Failed to upload artwork: ${error.response.data.message || 'Server error'}`);
         }
       } else {
-        alert('Network error. Please check your connection and try again.');
+        showError('Network error. Please check your connection and try again.');
       }
     }
   };
@@ -951,7 +998,7 @@ const ArtistPortfolio = () => {
       const token = localStorage.getItem('token'); // or from useAuth()
 
       if (!token) {
-        alert("You must be logged in to delete posts.");
+        showError("You must be logged in to delete posts.");
         return;
       }
 
@@ -965,10 +1012,10 @@ const ArtistPortfolio = () => {
       // Update UI after successful deletion - use post_id instead of id
       setPortfolioPosts((prevPosts) => prevPosts.filter(post => post.post_id !== postId));
 
-      alert("Post deleted successfully!");
+      showSuccess("Post deleted successfully!");
     } catch (error) {
       console.error("Error deleting post:", error);
-      alert("Failed to delete the post. Try again.");
+      showError("Failed to delete the post. Try again.");
     }
   };
 
@@ -985,7 +1032,7 @@ const ArtistPortfolio = () => {
       const token = localStorage.getItem('token');
 
       if (!token) {
-        alert("You must be logged in to edit posts.");
+        showError("You must be logged in to edit posts.");
         return;
       }
 
@@ -1025,7 +1072,7 @@ const ArtistPortfolio = () => {
       setShowEditModal(false);
       setEditingItem(null);
 
-      alert('Post updated successfully!');
+      showSuccess('Post updated successfully!');
 
     } catch (error) {
       console.error('Error updating post:', error);
@@ -1035,20 +1082,20 @@ const ArtistPortfolio = () => {
         console.error('Status code:', error.response.status);
 
         if (error.response.status === 401) {
-          alert('Authentication failed. Please log in again.');
+          showError('Authentication failed. Please log in again.');
         } else if (error.response.status === 403) {
-          alert('You are not authorized to edit this post.');
+          showError('You are not authorized to edit this post.');
         } else if (error.response.status === 404) {
-          alert('Post not found.');
+          showError('Post not found.');
         } else {
-          alert(`Failed to update post: ${error.response.data || error.response.statusText}`);
+          showError(`Failed to update post: ${error.response.data || error.response.statusText}`);
         }
       } else if (error.request) {
         console.error('No response received:', error.request);
-        alert('Network error. Please check your connection and try again.');
+        showError('Network error. Please check your connection and try again.');
       } else {
         console.error('Request setup error:', error.message);
-        alert('Failed to update post. Please try again.');
+        showError('Failed to update post. Please try again.');
       }
     }
   };
@@ -1114,13 +1161,28 @@ const ArtistPortfolio = () => {
     setSelectedArtwork(null);
   };
 
+  // Logout functionality
+  const handleLogoutClick = () => {
+    setShowLogoutConfirm(true);
+  };
+
+  const confirmLogout = () => {
+    logout();
+    setShowLogoutConfirm(false);
+    navigate("/");
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutConfirm(false);
+  };
+
   const handleToggleFeature = async (artwork) => {
     try {
       const artworkId = artwork.artwork_id || artwork.artworkId || artwork.id;
       const token = localStorage.getItem('token');
 
       if (!token) {
-        alert('You must be logged in to update artwork.');
+        showError('You must be logged in to update artwork.');
         return;
       }
 
@@ -1149,10 +1211,10 @@ const ArtistPortfolio = () => {
       );
 
       setSelectedArtwork(updatedArtwork);
-      alert(`Artwork ${updatedArtwork.featured ? 'featured' : 'unfeatured'} successfully!`);
+      showSuccess(`Artwork ${updatedArtwork.featured ? 'featured' : 'unfeatured'} successfully!`);
     } catch (error) {
       console.error('Error toggling feature status:', error);
-      alert('Failed to update feature status');
+      showError('Failed to update feature status');
     }
   };
 
@@ -1162,7 +1224,7 @@ const ArtistPortfolio = () => {
       const token = localStorage.getItem('token');
 
       if (!token) {
-        alert('You must be logged in to update artwork.');
+        showError('You must be logged in to update artwork.');
         return;
       }
 
@@ -1191,10 +1253,10 @@ const ArtistPortfolio = () => {
       );
 
       setSelectedArtwork(updatedArtwork);
-      alert('Artwork marked as sold!');
+      showSuccess('Artwork marked as sold!');
     } catch (error) {
       console.error('Error marking artwork as sold:', error);
-      alert('Failed to mark artwork as sold');
+      showError('Failed to mark artwork as sold');
     }
   };
 
@@ -1205,7 +1267,7 @@ const ArtistPortfolio = () => {
   const handleSaveCover = async (newCoverImage) => {
     try {
       if (!userId || !token) {
-        alert('Authentication error. Please log in again.');
+        showError('Authentication error. Please log in again.');
         return;
       }
 
@@ -1239,18 +1301,18 @@ const ArtistPortfolio = () => {
       }));
 
       setIsChangingCover(false);
-      alert('Cover image updated successfully!');
+      showSuccess('Cover image updated successfully!');
 
     } catch (error) {
       console.error('Error uploading cover image:', error);
-      alert('Failed to update cover image. Please try again.');
+      showError('Failed to update cover image. Please try again.');
     }
   };
 
   const handleAvatarUpload = async (avatarFile) => {
     try {
       if (!userId || !token) {
-        alert('Authentication error. Please log in again.');
+        showError('Authentication error. Please log in again.');
         return;
       }
 
@@ -1385,13 +1447,22 @@ const ArtistPortfolio = () => {
                     </div>
                   </div>
                 </div>
-                <button
-                  onClick={() => setIsEditingProfile(!isEditingProfile)}
-                  className="mt-4 md:mt-0 bg-[#7f5539] text-[#fdf9f4] px-6 py-2 rounded-lg hover:bg-[#6e4c34] transition-colors font-medium flex items-center space-x-2"
-                >
-                  <Edit className="h-4 w-4" />
-                  <span>Edit Profile</span>
-                </button>
+                <div className="mt-4 md:mt-0 flex space-x-3">
+                  <button
+                    onClick={() => setIsEditingProfile(!isEditingProfile)}
+                    className="bg-[#7f5539] text-[#fdf9f4] px-6 py-2 rounded-lg hover:bg-[#6e4c34] transition-colors font-medium flex items-center space-x-2"
+                  >
+                    <Edit className="h-4 w-4" />
+                    <span>Edit Profile</span>
+                  </button>
+                  <button
+                    onClick={handleLogoutClick}
+                    className="bg-[#D87C5A] text-white px-6 py-2 rounded-lg hover:bg-[#c5704f] transition-colors font-medium flex items-center space-x-2"
+                  >
+                    <User className="h-4 w-4" />
+                    <span>Logout</span>
+                  </button>
+                </div>
               </div>
 
               {/* Bio */}
@@ -1661,13 +1732,84 @@ const ArtistPortfolio = () => {
                       <p className="text-[#7f5539] leading-relaxed">{post.caption}</p>
                     </div>
 
-                    {/* Post Image */}
+                    {/* Post Images */}
                     <div className="relative">
-                      <img
-                        src={`http://localhost:8081${post.image}`}
-                        alt={`Post ${post.post_id}`}
-                        className="w-full h-[32rem] object-cover"
-                      />
+                      {post.images && post.images.length > 0 ? (
+                        <div className="relative group">
+                          {/* Main Image Display */}
+                          <img
+                            src={post.images[getCurrentImageIndex(post.post_id)]?.startsWith('http')
+                              ? post.images[getCurrentImageIndex(post.post_id)]
+                              : `http://localhost:8081${encodeURI(post.images[getCurrentImageIndex(post.post_id)] || '')}`}
+                            alt={`Post ${post.post_id} - Image ${getCurrentImageIndex(post.post_id) + 1}`}
+                            className="w-full h-[32rem] object-cover"
+                            onError={(e) => {
+                              console.error('Failed to load post feed image:', post.images[getCurrentImageIndex(post.post_id)]);
+                              console.error('Post feed: Constructed URL was:', e.target.src);
+                              e.target.src = 'https://images.pexels.com/photos/1070981/pexels-photo-1070981.jpeg?auto=compress&cs=tinysrgb&w=400';
+                              e.target.onerror = null;
+                            }}
+                          />
+
+                          {/* Navigation Arrows (show only if multiple images) */}
+                          {post.images.length > 1 && (
+                            <>
+                              {/* Previous Button */}
+                              <button
+                                onClick={() => navigatePostImage(post.post_id, 'prev')}
+                                className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10"
+                              >
+                                <ChevronLeft size={20} />
+                              </button>
+
+                              {/* Next Button */}
+                              <button
+                                onClick={() => navigatePostImage(post.post_id, 'next')}
+                                className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10"
+                              >
+                                <ChevronRight size={20} />
+                              </button>
+
+                              {/* Image Counter */}
+                              <div className="absolute bottom-4 right-4 bg-black/60 text-white text-sm px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                {getCurrentImageIndex(post.post_id) + 1} / {post.images.length}
+                              </div>
+
+                              {/* Dots Indicator */}
+                              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                {post.images.map((_, index) => (
+                                  <button
+                                    key={index}
+                                    onClick={() => setPostImageIndex(prev => ({
+                                      ...prev,
+                                      [post.post_id]: index
+                                    }))}
+                                    className={`w-2 h-2 rounded-full transition-all duration-200 ${index === getCurrentImageIndex(post.post_id)
+                                      ? 'bg-white scale-125'
+                                      : 'bg-white/50 hover:bg-white/80'
+                                      }`}
+                                  />
+                                ))}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      ) : (
+                        // Fallback: Show single image if images array is empty but image field exists
+                        post.image && (
+                          <img
+                            src={post.image?.startsWith('http') ? post.image : `http://localhost:8081${encodeURI(post.image || '')}`}
+                            alt={`Post ${post.post_id}`}
+                            className="w-full h-[32rem] object-cover"
+                            onError={(e) => {
+                              console.error('Failed to load post feed image:', post.image);
+                              console.error('Post feed: Constructed URL was:', e.target.src);
+                              e.target.src = 'https://images.pexels.com/photos/1070981/pexels-photo-1070981.jpeg?auto=compress&cs=tinysrgb&w=400';
+                              e.target.onerror = null;
+                            }}
+                          />
+                        )
+                      )}
                     </div>
 
                     {/* Post Actions */}
@@ -1739,11 +1881,17 @@ const ArtistPortfolio = () => {
                   </h3>
                   <div className="space-y-3">
                     {Array.isArray(artworks) && artworks.slice(0, 4).map((artwork, index) => (
-                      <div key={artwork.artwork_id || artwork.id || `featured-artwork-${index}`} className="flex items-center space-x-3">
+                      <div key={artwork.artworkId || `featured-${index}-${artwork.title || 'unknown'}`} className="flex items-center space-x-3">
                         <img
-                          src={`http://localhost:8081${artwork.imageUrl}`}
+                          src={artwork.imageUrl?.startsWith('http') ? artwork.imageUrl : `http://localhost:8081${encodeURI(artwork.imageUrl || '')}`}
                           alt={artwork.title}
                           className="w-12 h-12 rounded-lg object-cover"
+                          onError={(e) => {
+                            console.error('Failed to load sidebar image:', artwork.imageUrl);
+                            console.error('Sidebar: Constructed URL was:', e.target.src);
+                            e.target.src = 'https://images.pexels.com/photos/1070981/pexels-photo-1070981.jpeg?auto=compress&cs=tinysrgb&w=400';
+                            e.target.onerror = null;
+                          }}
                         />
                         <div className="flex-1">
                           <p className="text-sm font-medium text-[#7f5539]">{artwork.title}</p>
@@ -1905,14 +2053,16 @@ const ArtistPortfolio = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {artworks.map((artwork, index) => (
-                  <div key={artwork.artworkId || artwork.artwork_id || artwork.id || `artwork-${index}`} className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-lg transition-all duration-300 group">
+                  <div key={artwork.artworkId || `artwork-${index}-${artwork.title || 'unknown'}`} className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-lg transition-all duration-300 group">
                     <div className="relative">
                       <img
-                        src={artwork.imageUrl?.startsWith('http') ? artwork.imageUrl : `http://localhost:8081${artwork.imageUrl}`}
+                        src={artwork.imageUrl?.startsWith('http') ? artwork.imageUrl : `http://localhost:8081${encodeURI(artwork.imageUrl || '')}`}
                         alt={artwork.title}
                         className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                         onError={(e) => {
-                          e.target.src = '/api/placeholder/400/300';
+                          console.error('Failed to load image:', artwork.imageUrl);
+                          console.error('Constructed URL was:', e.target.src);
+                          e.target.src = 'https://images.pexels.com/photos/1070981/pexels-photo-1070981.jpeg?auto=compress&cs=tinysrgb&w=400';
                           e.target.onerror = null;
                         }}
                       />
@@ -1954,7 +2104,7 @@ const ArtistPortfolio = () => {
                       <h4 className="font-semibold text-[#7f5539] mb-1">{artwork.title}</h4>
                       <p className="text-sm text-[#7f5539]/70 mb-2">{artwork.medium} • {artwork.size}</p>
                       <div className="flex items-center justify-between mb-3">
-                        <span className="text-lg font-bold text-[#7f5539]">${artwork.price}</span>
+                        <span className="text-lg font-bold text-[#7f5539]">{formatLKR(artwork.price)}</span>
                         <span className="text-sm text-[#7f5539]/60">{artwork.year}</span>
                       </div>
 
@@ -2186,9 +2336,15 @@ const ArtistPortfolio = () => {
                               {index + 1}
                             </div>
                             <img
-                              src={artwork.image}
+                              src={artwork.imageUrl?.startsWith('http') ? artwork.imageUrl : `http://localhost:8081${encodeURI(artwork.imageUrl || '')}`}
                               alt={artwork.title}
                               className="w-12 h-12 rounded-lg object-cover"
+                              onError={(e) => {
+                                console.error('Failed to load top artwork image:', artwork.imageUrl);
+                                console.error('Top artwork: Constructed URL was:', e.target.src);
+                                e.target.src = 'https://images.pexels.com/photos/1070981/pexels-photo-1070981.jpeg?auto=compress&cs=tinysrgb&w=400';
+                                e.target.onerror = null;
+                              }}
                             />
                             <div>
                               <p className="font-medium text-[#7f5539] text-sm">{artwork.title}</p>
@@ -2221,9 +2377,17 @@ const ArtistPortfolio = () => {
                               {index + 1}
                             </div>
                             <img
-                              src={`http://localhost:8081${post.image}`}
+                              src={post.images && post.images.length > 0 ?
+                                (post.images[0]?.startsWith('http') ? post.images[0] : `http://localhost:8081${encodeURI(post.images[0] || '')}`) :
+                                (post.image?.startsWith('http') ? post.image : `http://localhost:8081${encodeURI(post.image || '')}`)}
                               alt={`Post ${post.id}`}
                               className="w-12 h-12 rounded-lg object-cover"
+                              onError={(e) => {
+                                console.error('Failed to load post image:', post.images?.[0] || post.image);
+                                console.error('Post thumbnail: Constructed URL was:', e.target.src);
+                                e.target.src = 'https://images.pexels.com/photos/1070981/pexels-photo-1070981.jpeg?auto=compress&cs=tinysrgb&w=400';
+                                e.target.onerror = null;
+                              }}
                             />
                             <div>
                               <p className="font-medium text-[#7f5539] text-sm">
@@ -2397,6 +2561,7 @@ const ArtistPortfolio = () => {
         onSave={handleSaveProfile}
         artistProfile={artistProfile}
         onAvatarUpload={handleAvatarUpload}
+        onCoverUpload={handleSaveCover}
       />
 
       {/* Upload Post Modal */}
@@ -2407,6 +2572,19 @@ const ArtistPortfolio = () => {
         onArtworkChange={handleArtworkChange}
         onImageUpload={handleImageUpload}
         onCancel={handleCancelAddArtwork}
+        onSuccess={(newArtworkData) => {
+          console.log('NEW ARTWORK RECEIVED:', newArtworkData);
+          console.log('NEW ARTWORK ID:', newArtworkData?.artworkId);
+          console.log('NEW ARTWORK TITLE:', newArtworkData?.title);
+
+          // Add the new artwork to the front of the artworks list
+          setArtworks(prevArtworks => {
+            console.log('PREVIOUS ARTWORKS COUNT:', prevArtworks.length);
+            const newList = [newArtworkData, ...prevArtworks];
+            console.log('NEW ARTWORKS COUNT:', newList.length);
+            return newList;
+          });
+        }}
       />
 
       {/* Artwork Detail Modal */}
@@ -2467,6 +2645,41 @@ const ArtistPortfolio = () => {
         onCancel={handleCancelDeleteArtwork}
         isLoading={false}
       />
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full mx-4 transform transition-all duration-300 ease-out scale-100">
+            <div className="text-center">
+              {/* Title */}
+              <h3 className="text-2xl font-bold text-[#362625] mb-2">
+                Confirm Logout
+              </h3>
+
+              {/* Message */}
+              <p className="text-gray-600 mb-8 text-lg">
+                Are you sure you want to log out of your account?
+              </p>
+
+              {/* Buttons */}
+              <div className="flex gap-4 justify-center">
+                <button
+                  onClick={cancelLogout}
+                  className="px-6 py-3 bg-gray-100 text-[#362625] rounded-xl hover:bg-gray-200 transition-all duration-200 font-medium border border-gray-200 hover:border-gray-300 min-w-[120px]"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmLogout}
+                  className="px-6 py-3 bg-gradient-to-r from-[#e74c3c] to-[#c0392b] text-white rounded-xl hover:from-[#c0392b] hover:to-[#a93226] transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105 min-w-[120px]"
+                >
+                  Log Out
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
