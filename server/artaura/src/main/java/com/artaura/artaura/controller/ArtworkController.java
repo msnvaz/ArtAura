@@ -126,19 +126,10 @@ public class ArtworkController {
     public ResponseEntity<ArtWorkResponseDTO> updateArtWork(@PathVariable Long artworkId, @RequestBody ArtWorkUpdateDTO dto) {
         try {
             dto.setArtworkId(artworkId);
-
-            // Debug logging
-            System.out.println("=== JSON UPDATE ENDPOINT ===");
-            System.out.println("Artwork ID: " + artworkId);
-            System.out.println("Price received: " + dto.getPrice());
-            System.out.println("Title received: " + dto.getTitle());
-
             artWorkDAO.updateArtWork(dto);
 
             // Return updated artwork data
             ArtWorkResponseDTO updatedArtwork = artWorkDAO.getArtWorkById(artworkId);
-            System.out.println("Price after update: " + updatedArtwork.getPrice());
-
             return ResponseEntity.ok(updatedArtwork);
         } catch (Exception e) {
             e.printStackTrace();
@@ -180,13 +171,7 @@ public class ArtworkController {
                 dto.setYear(year);
             }
             if (price != null) {
-                System.out.println("=== MULTIPART UPDATE ENDPOINT ===");
-                System.out.println("Artwork ID: " + artworkId);
-                System.out.println("Price string received: " + price);
-
-                Double priceValue = Double.parseDouble(price);
-                System.out.println("Price parsed as Double: " + priceValue);
-                dto.setPrice(priceValue);
+                dto.setPrice(Double.parseDouble(price));
             }
             if (description != null) {
                 dto.setDescription(description);

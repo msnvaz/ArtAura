@@ -37,12 +37,6 @@ const EditArtworkModal = ({
     // Initialize form data when artwork changes
     useEffect(() => {
         if (artwork && isOpen) {
-            console.log('Initializing EditArtworkModal with artwork:', {
-                artworkId: artwork.artworkId || artwork.artwork_id || artwork.id,
-                originalPrice: artwork.price,
-                priceType: typeof artwork.price
-            });
-
             setFormData({
                 title: artwork.title || '',
                 medium: artwork.medium || '',
@@ -60,9 +54,7 @@ const EditArtworkModal = ({
             // IMPORTANT: Clear any previously selected image file when switching artworks
             setImageFile(null);
         }
-    }, [artwork, isOpen]);
-
-    // Clear image file state when modal is closed
+    }, [artwork, isOpen]);    // Clear image file state when modal is closed
     useEffect(() => {
         if (!isOpen) {
             setImageFile(null);
@@ -100,15 +92,6 @@ const EditArtworkModal = ({
                 artworkId: artwork.artworkId || artwork.id,
                 imageFile: imageFile
             };
-
-            console.log('EditArtworkModal - Submitting data:', {
-                artworkId: submissionData.artworkId,
-                hasImageFile: !!submissionData.imageFile,
-                imageFileName: submissionData.imageFile ? submissionData.imageFile.name : 'none',
-                price: submissionData.price,
-                originalPrice: artwork.price,
-                formDataPrice: formData.price
-            });
 
             await onSave(submissionData);
             onClose();
