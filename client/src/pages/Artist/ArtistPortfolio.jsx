@@ -34,6 +34,7 @@ import {
   TrendingUp,
   TrendingDown,
   Users,
+  User,
   DollarSign,
   Share2,
   Download,
@@ -124,7 +125,8 @@ const ArtistPortfolio = () => {
     // allowSharing: true
   });
 
-  const { token, role, userId } = useAuth();
+  const { token, role, userId, logout } = useAuth();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [portfolioPosts, setPortfolioPosts] = useState([]);
   const [postImageIndex, setPostImageIndex] = useState({}); // Track current image index for each post
   const [artistProfile, setArtistProfile] = useState(null);
@@ -1159,6 +1161,21 @@ const ArtistPortfolio = () => {
     setSelectedArtwork(null);
   };
 
+  // Logout functionality
+  const handleLogoutClick = () => {
+    setShowLogoutConfirm(true);
+  };
+
+  const confirmLogout = () => {
+    logout();
+    setShowLogoutConfirm(false);
+    navigate("/");
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutConfirm(false);
+  };
+
   const handleToggleFeature = async (artwork) => {
     try {
       const artworkId = artwork.artwork_id || artwork.artworkId || artwork.id;
@@ -1430,13 +1447,22 @@ const ArtistPortfolio = () => {
                     </div>
                   </div>
                 </div>
-                <button
-                  onClick={() => setIsEditingProfile(!isEditingProfile)}
-                  className="mt-4 md:mt-0 bg-[#7f5539] text-[#fdf9f4] px-6 py-2 rounded-lg hover:bg-[#6e4c34] transition-colors font-medium flex items-center space-x-2"
-                >
-                  <Edit className="h-4 w-4" />
-                  <span>Edit Profile</span>
-                </button>
+                <div className="mt-4 md:mt-0 flex space-x-3">
+                  <button
+                    onClick={() => setIsEditingProfile(!isEditingProfile)}
+                    className="bg-[#7f5539] text-[#fdf9f4] px-6 py-2 rounded-lg hover:bg-[#6e4c34] transition-colors font-medium flex items-center space-x-2"
+                  >
+                    <Edit className="h-4 w-4" />
+                    <span>Edit Profile</span>
+                  </button>
+                  <button
+                    onClick={handleLogoutClick}
+                    className="bg-[#D87C5A] text-white px-6 py-2 rounded-lg hover:bg-[#c5704f] transition-colors font-medium flex items-center space-x-2"
+                  >
+                    <User className="h-4 w-4" />
+                    <span>Logout</span>
+                  </button>
+                </div>
               </div>
 
               {/* Bio */}
@@ -2619,6 +2645,41 @@ const ArtistPortfolio = () => {
         onCancel={handleCancelDeleteArtwork}
         isLoading={false}
       />
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full mx-4 transform transition-all duration-300 ease-out scale-100">
+            <div className="text-center">
+              {/* Title */}
+              <h3 className="text-2xl font-bold text-[#362625] mb-2">
+                Confirm Logout
+              </h3>
+
+              {/* Message */}
+              <p className="text-gray-600 mb-8 text-lg">
+                Are you sure you want to log out of your account?
+              </p>
+
+              {/* Buttons */}
+              <div className="flex gap-4 justify-center">
+                <button
+                  onClick={cancelLogout}
+                  className="px-6 py-3 bg-gray-100 text-[#362625] rounded-xl hover:bg-gray-200 transition-all duration-200 font-medium border border-gray-200 hover:border-gray-300 min-w-[120px]"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmLogout}
+                  className="px-6 py-3 bg-gradient-to-r from-[#e74c3c] to-[#c0392b] text-white rounded-xl hover:from-[#c0392b] hover:to-[#a93226] transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105 min-w-[120px]"
+                >
+                  Log Out
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
