@@ -189,13 +189,67 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
 
   return (
     <>
+      {/* CSS styles for button animations */}
+      <style jsx>{`
+        @keyframes smoothFadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(15px) scale(0.98);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+
+        @keyframes slideInFromTop {
+          from {
+            opacity: 0;
+            transform: translateY(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .page-container {
+          animation: smoothFadeIn 0.4s ease-out;
+          opacity: 1;
+        }
+
+        .smooth-transition {
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-animate {
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+          opacity: 1;
+          transform: translateY(0);
+        }
+
+        .btn-animate:hover {
+          transform: translateY(-1px) scale(1.02);
+        }
+
+        .form-animate {
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Ensure smooth rendering */
+        * {
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+        }
+      `}</style>
+
       {/* Bootstrap CSS */}
       <link
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
         rel="stylesheet"
       />
 
-      <div className="min-h-screen" style={{ backgroundColor: "#FFF5E1" }}>
+      <div className="min-h-screen page-container" style={{ backgroundColor: "#FFF5E1" }}>
         {/* Full Width Header */}
         <div
           className="w-full shadow-sm p-6 mb-8 relative"
@@ -227,19 +281,11 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
               </div>
               <div className="mt-4 md:mt-0 flex gap-2 items-center">
                 <button
-                  className="border px-3 py-2 rounded-lg font-medium flex items-center space-x-1 transition-colors whitespace-nowrap"
+                  className="border px-3 py-2 rounded-lg font-medium flex items-center space-x-1 whitespace-nowrap btn-animate"
                   style={{
                     borderColor: "#FFE4D6",
                     color: "#FFE4D6",
                     backgroundColor: "rgba(255, 228, 214, 0.1)",
-                  }}
-                  onMouseOver={(e) => {
-                    e.target.style.backgroundColor = "#FFE4D6";
-                    e.target.style.color = "#5D3A00";
-                  }}
-                  onMouseOut={(e) => {
-                    e.target.style.backgroundColor = "rgba(255, 228, 214, 0.1)";
-                    e.target.style.color = "#FFE4D6";
                   }}
                   onClick={() => navigate("/challenges")}
                 >
@@ -248,19 +294,11 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
                   <span className="sm:hidden">Challenges</span>
                 </button>
                 <button
-                  className="border px-3 py-2 rounded-lg font-medium flex items-center space-x-1 transition-colors whitespace-nowrap"
+                  className="border px-3 py-2 rounded-lg font-medium flex items-center space-x-1 whitespace-nowrap btn-animate"
                   style={{
                     borderColor: "#FFE4D6",
                     color: "#FFE4D6",
                     backgroundColor: "rgba(255, 228, 214, 0.1)",
-                  }}
-                  onMouseOver={(e) => {
-                    e.target.style.backgroundColor = "#FFE4D6";
-                    e.target.style.color = "#5D3A00";
-                  }}
-                  onMouseOut={(e) => {
-                    e.target.style.backgroundColor = "rgba(255, 228, 214, 0.1)";
-                    e.target.style.color = "#FFE4D6";
                   }}
                   onClick={() => navigate("/moderatordashboard")}
                 >
@@ -276,7 +314,7 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
           {/* Form Container */}
           <div
-            className="rounded-lg shadow-sm border h-full relative overflow-hidden"
+            className="rounded-lg shadow-sm border h-full relative overflow-hidden form-animate"
             style={{ backgroundColor: "#FFF5E1" }}
           >
             {/* Form Header */}
@@ -709,7 +747,7 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className={`flex items-center gap-2 px-8 py-3 rounded-lg font-medium transition-colors ${
+                    className={`flex items-center gap-2 px-8 py-3 rounded-lg font-medium btn-animate ${
                       isSubmitting
                         ? "opacity-50 cursor-not-allowed"
                         : "focus:ring-2 focus:ring-offset-2"
@@ -717,16 +755,6 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
                     style={{
                       backgroundColor: "#D87C5A",
                       color: "white",
-                    }}
-                    onMouseOver={(e) => {
-                      if (!isSubmitting) {
-                        e.target.style.backgroundColor = "#B85A3A";
-                      }
-                    }}
-                    onMouseOut={(e) => {
-                      if (!isSubmitting) {
-                        e.target.style.backgroundColor = "#D87C5A";
-                      }
                     }}
                   >
                     <Send size={18} />

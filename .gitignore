@@ -16,3 +16,5 @@ uploads
 server/.env
 server/autura/.env
 server/production/artaura/application.properties
+server/artaura/src/main/resources/application.properties
+**/application.properties

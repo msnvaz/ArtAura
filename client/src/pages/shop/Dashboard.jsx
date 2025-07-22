@@ -14,20 +14,20 @@ import {
 } from 'lucide-react';
 
 const Dashboard = () => {
-  // --- Statistics Card Data (with all styles) ---
+  // --- Statistics Card Data (Sri Lankan Context) ---
   const stats = [
     {
       title: 'Total Revenue',
-      value: '$12,847',
+      value: 'Rs. 3,25,000',
       change: '+12.5%',
       trend: 'up',
       icon: DollarSign,
       iconBg: 'bg-[#D87C5A]',
-      textColor: 'text-[#D87C5]',
+      textColor: 'text-[#D87C5A]',
     },
     {
       title: 'Products in Stock',
-      value: '1,247',
+      value: '847',
       change: '-3.2%',
       trend: 'down',
       icon: Package,
@@ -36,7 +36,7 @@ const Dashboard = () => {
     },
     {
       title: 'Active Sponsorships',
-      value: '89',
+      value: '23',
       change: '+8.1%',
       trend: 'up',
       icon: Handshake,
@@ -45,7 +45,7 @@ const Dashboard = () => {
     },
     {
       title: 'Monthly Orders',
-      value: '342',
+      value: '156',
       change: '+15.3%',
       trend: 'up',
       icon: ShoppingCart,
@@ -54,14 +54,14 @@ const Dashboard = () => {
     }
   ];
 
-  // --- Recent Activities Data ---
+  // --- Recent Activities Data (Sri Lankan Context) ---
   const recentActivities = [
     {
       id: 1,
       type: 'sale',
       message: 'New order for Watercolor Set Premium',
       time: '2 minutes ago',
-      amount: '$89.99',
+      amount: 'Rs. 2,500',
       bgColor: 'bg-[#FFD95A]',   
       iconColor: 'text-white'
     },
@@ -70,14 +70,14 @@ const Dashboard = () => {
       type: 'stock',
       message: 'Low stock alert: Acrylic Paint Tubes',
       time: '15 minutes ago',
-      amount: '5 items left',
+      amount: '8 items left',
       bgColor: 'bg-[#D87C5A]',   
       iconColor: 'text-white'
     },
     {
       id: 3,
       type: 'sponsorship',
-      message: 'Sponsorship granted to Sarah Johnson',
+      message: 'Sponsorship granted to Kamal Perera',
       time: '1 hour ago',
       amount: '15% discount',
       bgColor: 'bg-[#66bb6a]', 
@@ -86,16 +86,16 @@ const Dashboard = () => {
     {
       id: 4,
       type: 'sale',
-      message: 'New order for Canvas Bundle',
+      message: 'New order for Canvas Bundle from Kandy',
       time: '2 hours ago',
-      amount: '$156.50',
+      amount: 'Rs. 4,200',
       bgColor: 'bg-[#FFD95A]',   
       iconColor: 'text-white'
     },
     {
       id: 5,
       type: 'sponsorship',
-      message: 'Sponsorship granted to Michael Lee',
+      message: 'Sponsorship granted to Nimal Silva',
       time: '3 hours ago',
       amount: '10% discount',
       bgColor: 'bg-[#66bb6a]', 
@@ -216,7 +216,7 @@ const Dashboard = () => {
                 </div>
                 <div className="flex justify-between items-center p-3 bg-[#FFE4D6] rounded-lg">
                   <span className="text-sm text-[#5D3A00] font-medium">Revenue</span>
-                  <span className="text-lg font-bold text-[#5D3A00]">$1,247</span>
+                  <span className="text-lg font-bold text-[#5D3A00]">Rs. 28,500</span>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-[#E8F5E9] rounded-lg">
                   <span className="text-sm text-[#5D3A00] font-medium">New Customers</span>
@@ -224,10 +224,8 @@ const Dashboard = () => {
                 </div>
               </div>
             </div>
-
           </div>
         </div>
-
       </div>
     </div>
   );
