@@ -773,7 +773,7 @@ const Financial = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-2 financial-header">
           <h2 className="text-2xl font-bold flex items-center gap-2" style={{color: '#5D3A00'}}>
             <DollarSign size={24} />
-            Finance 
+            Financial Management
           </h2>
           <CurrencySelector className="flex-shrink-0" />
         </div>
