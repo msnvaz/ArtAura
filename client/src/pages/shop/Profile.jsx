@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Sidebar from '../../components/Sidebar';
+import Navbar from '../../components/Navbar'; // Changed import
 import {
   User,
   Mail,
@@ -83,9 +83,9 @@ const ProfileDetails = () => {
   ];
 
   return (
-    <div className="flex">
-      <Sidebar />
-      <div className="ml-20 md:ml-64 flex-1 space-y-6 bg-white min-h-screen p-6 animate-fade-in">
+    <div className="min-h-screen bg-gray-50">
+      <Navbar /> {/* Use Navbar instead of Sidebar */}
+      <div className="pt-6 px-6"> {/* Add top padding instead of left margin */}
         {/* Header Section */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
           <div>
