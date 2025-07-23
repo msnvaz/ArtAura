@@ -1,13 +1,20 @@
 import {
   Award,
   BarChart3,
+  Calendar,
   Clock,
+  Edit,
+  Eye,
+  Filter,
   Plus,
+  Search,
+  Settings,
   Shield,
   Star,
+  Trash2,
   Trophy,
   User,
-  Users,
+  Users
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -19,6 +26,22 @@ const ModeratorDashboard = () => {
   const isSignedIn = !!token;
   const [activeSection, setActiveSection] = useState("dashboard");
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  
+  // Challenge List state variables
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
+
+  // Scoring Criteria state variables
+  const [selectedChallenge, setSelectedChallenge] = useState('');
+  const [selectedScoringChallenge, setSelectedScoringChallenge] = useState('');
+  const [criteria, setCriteria] = useState({
+    likesWeight: 25,
+    commentsWeight: 25,
+    buyerInterestWeight: 25,
+    expertEvaluationWeight: 25
+  });
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [contestantSearchTerm, setContestantSearchTerm] = useState('');
 
   const handleLogoutClick = () => {
     setShowLogoutConfirm(true);
@@ -33,6 +56,235 @@ const ModeratorDashboard = () => {
   const cancelLogout = () => {
     setShowLogoutConfirm(false);
   };
+
+  // Challenge data for the integrated Challenge List
+  const challenges = [
+    {
+      id: 1,
+      title: 'Sri Lankan Heritage Art Challenge 2025',
+      description: 'Create artwork inspired by Sri Lankan cultural heritage, traditional architecture, and ancient Buddhist temples.',
+      status: 'active',
+      publishDate: '2025-07-01',
+      deadline: '2025-08-15',
+      participants: 156,
+      submissions: 89,
+      category: 'Traditional Art'
+    },
+    {
+      id: 2,
+      title: 'Kandy Perahera Digital Art Contest',
+      description: 'Design digital artworks capturing the vibrant colors and cultural essence of the famous Kandy Esala Perahera festival.',
+      status: 'review',
+      publishDate: '2025-06-15',
+      deadline: '2025-08-10',
+      participants: 203,
+      submissions: 145,
+      category: 'Digital Art'
+    },
+    {
+      id: 3,
+      title: 'Ceylon Tea Plantation Landscape Art',
+      description: 'Paint or photograph the stunning tea plantation landscapes of Sri Lanka\'s hill country including Nuwara Eliya and Ella.',
+      status: 'completed',
+      publishDate: '2025-05-20',
+      deadline: '2025-07-05',
+      participants: 89,
+      submissions: 67,
+      category: 'Landscape'
+    },
+    {
+      id: 4,
+      title: 'Sigiriya Rock Fortress Art Challenge',
+      description: 'Create artistic interpretations of the ancient Sigiriya Rock Fortress and its famous frescoes.',
+      status: 'draft',
+      publishDate: '2025-08-20',
+      deadline: '2025-09-30',
+      participants: 0,
+      submissions: 0,
+      category: 'Historical Art'
+    }
+  ];
+
+  // Dummy contestant data for scoring criteria
+  const getContestantData = (challengeId) => {
+    const baseContestants = [
+      {
+        id: 1,
+        name: 'Nadeesha Perera',
+        artworkTitle: 'Digital Dreams',
+        submissionDate: '2025-07-15',
+        likes: 234,
+        comments: 45,
+        buyerInterest: 8.5,
+        expertScore: 9.2,
+        imageUrl: 'https://images.pexels.com/photos/1292241/pexels-photo-1292241.jpeg?auto=compress&cs=tinysrgb&w=400'
+      },
+      {
+        id: 2,
+        name: 'Kasun Fernando',
+        artworkTitle: 'Abstract Fusion',
+        submissionDate: '2025-07-16',
+        likes: 189,
+        comments: 32,
+        buyerInterest: 7.8,
+        expertScore: 8.9,
+        imageUrl: 'https://images.pexels.com/photos/1183992/pexels-photo-1183992.jpeg?auto=compress&cs=tinysrgb&w=400'
+      },
+      {
+        id: 3,
+        name: 'Tharushi Silva',
+        artworkTitle: 'Vibrant Expressions',
+        submissionDate: '2025-07-17',
+        likes: 156,
+        comments: 28,
+        buyerInterest: 9.1,
+        expertScore: 8.7,
+        imageUrl: 'https://images.pexels.com/photos/1194420/pexels-photo-1194420.jpeg?auto=compress&cs=tinysrgb&w=400'
+      },
+      {
+        id: 4,
+        name: 'Amila Jayawardena',
+        artworkTitle: 'Cosmic Journey',
+        submissionDate: '2025-07-18',
+        likes: 201,
+        comments: 38,
+        buyerInterest: 8.3,
+        expertScore: 9.0,
+        imageUrl: 'https://images.pexels.com/photos/1108572/pexels-photo-1108572.jpeg?auto=compress&cs=tinysrgb&w=400'
+      },
+      {
+        id: 5,
+        name: 'Sanduni Wijesekara',
+        artworkTitle: 'Nature\'s Symphony',
+        submissionDate: '2025-07-19',
+        likes: 178,
+        comments: 35,
+        buyerInterest: 8.8,
+        expertScore: 8.6,
+        imageUrl: 'https://images.pexels.com/photos/1212407/pexels-photo-1212407.jpeg?auto=compress&cs=tinysrgb&w=400'
+      }
+    ];
+
+    // Modify data based on challenge type
+    return baseContestants.map(contestant => ({
+      ...contestant,
+      challengeId: challengeId,
+      // Add some variation based on challenge
+      likes: contestant.likes + Math.floor(Math.random() * 50),
+      comments: contestant.comments + Math.floor(Math.random() * 15),
+      buyerInterest: Math.min(10, contestant.buyerInterest + (Math.random() - 0.5)),
+      expertScore: Math.min(10, contestant.expertScore + (Math.random() - 0.5))
+    }));
+  };
+
+  // Function to get challenge-specific criteria
+  const getChallengeSpecificCriteria = (challengeId) => {
+    // Mock challenge-specific criteria data
+    const challengeCriteria = {
+      1: { // Sri Lankan Heritage Art Challenge 2025
+        likesWeight: 20,
+        commentsWeight: 30,
+        buyerInterestWeight: 20,
+        expertEvaluationWeight: 30,
+        defined: true
+      },
+      2: { // Kandy Perahera Digital Art Contest
+        likesWeight: 30,
+        commentsWeight: 25,
+        buyerInterestWeight: 25,
+        expertEvaluationWeight: 20,
+        defined: true
+      },
+      3: { // Ceylon Tea Plantation Landscape Art
+        likesWeight: 25,
+        commentsWeight: 20,
+        buyerInterestWeight: 30,
+        expertEvaluationWeight: 25,
+        defined: true
+      },
+      4: { // Sigiriya Rock Fortress Art Challenge
+        likesWeight: 15,
+        commentsWeight: 25,
+        buyerInterestWeight: 25,
+        expertEvaluationWeight: 35,
+        defined: true
+      },
+      5: { // Galle Fort Architecture Drawing Contest
+        likesWeight: 25,
+        commentsWeight: 25,
+        buyerInterestWeight: 25,
+        expertEvaluationWeight: 25,
+        defined: false
+      }
+    };
+
+    return challengeCriteria[challengeId] || {
+      likesWeight: 25,
+      commentsWeight: 25,
+      buyerInterestWeight: 25,
+      expertEvaluationWeight: 25,
+      defined: false
+    };
+  };
+
+  const selectedChallengeData = challenges.find(c => c.id === selectedChallenge);
+  const contestants = selectedChallenge ? getContestantData(selectedChallenge) : [];
+
+  // Scoring criteria functions
+  const handleWeightChange = (field, value) => {
+    const numValue = parseInt(value) || 0;
+    setCriteria(prev => ({
+      ...prev,
+      [field]: numValue
+    }));
+  };
+
+  const getTotalWeight = () => {
+    return criteria.likesWeight + criteria.commentsWeight + criteria.buyerInterestWeight + criteria.expertEvaluationWeight;
+  };
+
+  const isValidCriteria = () => {
+    return getTotalWeight() === 100 && Object.values(criteria).every(weight => weight > 0);
+  };
+
+  const handleSubmit = () => {
+    if (!isValidCriteria()) {
+      alert('Please ensure all weights are greater than 0 and total equals 100%');
+      return;
+    }
+    
+    // Show confirmation dialog
+    const confirmMessage = `The scoring criteria for "${selectedChallengeData?.title}" will be saved and cannot be modified. Winners will be calculated based on these weights.\n\nAre you sure you want to proceed?`;
+    
+    if (window.confirm(confirmMessage)) {
+      setIsSubmitted(true);
+      console.log('Scoring criteria submitted:', criteria);
+    }
+  };
+
+  const totalPercentage = getTotalWeight();
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'active':
+        return 'bg-green-100 text-green-800';
+      case 'review':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'completed':
+        return 'bg-blue-100 text-blue-800';
+      case 'draft':
+        return 'bg-gray-100 text-gray-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const filteredChallenges = challenges.filter(challenge => {
+    const matchesSearch = challenge.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         challenge.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFilter = filterStatus === 'all' || challenge.status === filterStatus;
+    return matchesSearch && matchesFilter;
+  });
 
   const stats = [
     {
@@ -99,25 +351,25 @@ const ModeratorDashboard = () => {
   const recentActivity = [
     {
       type: "challenge",
-      message: "New challenge created: Digital Art Showcase",
+      message: "New challenge created: Sri Lankan Heritage Art Challenge 2025",
       time: "2 hours ago",
       icon: Trophy,
     },
     {
       type: "verification",
-      message: "Exhibition verified: Modern Art Gallery",
+      message: "Exhibition verified: Colombo National Art Gallery",
       time: "4 hours ago",
       icon: Shield,
     },
     {
       type: "winner",
-      message: "Winner selected: Web Design Challenge",
+      message: "Winner selected: Kandy Perahera Digital Art Contest",
       time: "6 hours ago",
       icon: Award,
     },
     {
       type: "scoring",
-      message: "Scoring criteria updated: AI Art Competition",
+      message: "Scoring criteria updated: Ceylon Tea Plantation Landscape Art",
       time: "8 hours ago",
       icon: Star,
     },
@@ -314,112 +566,109 @@ const ModeratorDashboard = () => {
       case "dashboard":
         return renderDashboard();
       case 'challenges':
-        // Art-related Challenge Details for Artists, including winner selection
+        // Integrated Challenge Details Dashboard (previously from ChallengeList)
         return (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4" style={{color: '#5D3A00'}}>Art Challenges</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* Currently Selected Active Challenge from WinnerSelection */}
-              {/* Drawing Competition */}
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <div className="flex items-center gap-2 mb-2">
-                  <Trophy className="h-5 w-5 text-amber-600" />
-                  <span className="text-sm font-medium text-amber-800">Drawing</span>
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">National Drawing Competition</h3>
-                <p className="text-gray-600 text-sm mb-4">Showcase your drawing skills on the theme "Nature and Wildlife". Open to all artists.</p>
-                <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-                  <Clock size={16} />
-                  <span>Deadline: 8/30/2025</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
-                  <Users size={16} />
-                  <span>210 participants • 120 submissions</span>
-                </div>
-                <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+          <div className="space-y-6 w-full">
+            {/* Header */}
+            <div className="flex justify-between items-center">
+              <div>
+                <h2 className="text-xl font-bold text-amber-900">All Challenges</h2>
+                <p className="text-amber-700 mt-1">View and manage challenge details</p>
               </div>
-              {/* Landscape Painting Challenge - Another Active Challenge */}
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <div className="flex items-center gap-2 mb-2">
-                  <Trophy className="h-5 w-5 text-amber-600" />
-                  <span className="text-sm font-medium text-amber-800">Painting</span>
+            </div>
+
+            {/* Filters */}
+            <div className="bg-white rounded-lg shadow-md p-6 smooth-transition">
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                    <input
+                      type="text"
+                      placeholder="Search challenges..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    />
+                  </div>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Landscape Painting Challenge</h3>
-                <p className="text-gray-600 text-sm mb-4">Paint a beautiful landscape inspired by your favorite place. All painting styles and mediums are welcome.</p>
-                <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-                  <Clock size={16} />
-                  <span>Deadline: 9/5/2025</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
-                  <Users size={16} />
-                  <span>160 participants • 80 submissions</span>
-                </div>
-                <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Active</span>
-              </div>
-              {/* Portrait Art Challenge */}
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <div className="flex items-center gap-2 mb-2">
-                  <Trophy className="h-5 w-5 text-amber-600" />
-                  <span className="text-sm font-medium text-amber-800">Portrait</span>
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Portrait Art Challenge</h3>
-                <p className="text-gray-600 text-sm mb-4">Create a portrait artwork of a famous personality using any medium of your choice.</p>
-                <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-                  <Clock size={16} />
-                  <span>Deadline: 9/10/2025</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
-                  <Users size={16} />
-                  <span>175 participants • 98 submissions</span>
-                </div>
-                <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Review</span>
-                <button
-                  className="border px-3 py-2 rounded-lg font-medium flex items-center space-x-1 whitespace-nowrap btn-animate mt-4"
-                  style={{
-                    borderColor: "#FFE4D6",
-                    color: "#FFE4D6",
-                    backgroundColor: "rgba(255, 228, 214, 0.1)",
-                  }}
-                >
-                  <Trophy size={14} />
-                  <span>View Details</span>
-                </button>
-              </div>
-              {/* Abstract Art Contest */}
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <div className="flex items-center gap-2 mb-2">
-                  <Trophy className="h-5 w-5 text-amber-600" />
-                  <span className="text-sm font-medium text-amber-800">Abstract</span>
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Abstract Art Contest</h3>
-                <p className="text-gray-600 text-sm mb-4">Express your creativity with abstract art. All styles and mediums are welcome.</p>
-                <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-                  <Clock size={16} />
-                  <span>Deadline: 9/25/2025</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
-                  <Users size={16} />
-                  <span>132 participants • 70 submissions</span>
-                </div>
-                <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Completed</span>
-                {/* Winner Selection Example */}
-                <button
-                  className="border px-3 py-2 rounded-lg font-medium flex items-center space-x-1 whitespace-nowrap btn-animate mt-4"
-                  style={{
-                    borderColor: "#FFE4D6",
-                    color: "#FFE4D6",
-                    backgroundColor: "rgba(255, 228, 214, 0.1)",
-                  }}
-                >
-                  <Trophy size={14} />
-                  <span>View Details</span>
-                </button>
-                <div className="mt-4 p-3 rounded bg-blue-50 border border-blue-200">
-                  <span className="block text-sm font-semibold text-blue-800 mb-1">Winner Selected</span>
-                  <span className="block text-xs text-blue-700">Winner: Priya Sharma (Artwork: "Dreamscape")</span>
+                <div className="flex items-center gap-2">
+                  <Filter size={20} className="text-gray-500" />
+                  <select
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  >
+                    <option value="all">All Status</option>
+                    <option value="draft">Draft</option>
+                    <option value="active">Active</option>
+                    <option value="review">Review</option>
+                    <option value="completed">Completed</option>
+                  </select>
                 </div>
               </div>
             </div>
+
+            {/* Challenge Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredChallenges.map((challenge) => (
+                <div key={challenge.id} className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow card-animate">
+                  <div className="p-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex items-center gap-2">
+                        <Trophy className="h-5 w-5 text-amber-600" />
+                        <span className="text-sm font-medium text-amber-800">{challenge.category}</span>
+                      </div>
+                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(challenge.status)}`}>
+                        {challenge.status.charAt(0).toUpperCase() + challenge.status.slice(1)}
+                      </span>
+                    </div>
+
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{challenge.title}</h3>
+                    <p className="text-gray-600 text-sm mb-4 line-clamp-2">{challenge.description}</p>
+
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-center gap-2 text-sm text-gray-500">
+                        <Calendar size={16} />
+                        <span>Deadline: {new Date(challenge.deadline).toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-500">
+                        <Users size={16} />
+                        <span>{challenge.participants} participants • {challenge.submissions} submissions</span>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between items-center pt-4 border-t border-gray-200">
+                      <div className="flex gap-2">
+                        <button className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors btn-animate">
+                          <Eye size={16} />
+                        </button>
+                        <button className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors btn-animate">
+                          <Edit size={16} />
+                        </button>
+                        <button className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors btn-animate">
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                      <button
+                        onClick={() => navigate(`/challenges/${challenge.id}`)}
+                        className="text-sm font-medium text-amber-800 hover:text-amber-900 btn-animate"
+                      >
+                        View Details →
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {filteredChallenges.length === 0 && (
+              <div className="text-center py-12">
+                <Trophy className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No challenges found</h3>
+                <p className="text-gray-500">Try adjusting your search or filter criteria.</p>
+              </div>
+            )}
           </div>
         );
       case 'verification':
@@ -469,7 +718,249 @@ const ModeratorDashboard = () => {
           </div>
         );
       case 'scoring':
-        return <div className="p-6">Scoring Criteria content coming soon...</div>;
+        // Get selected challenge data for scoring
+        const selectedScoringChallengeData = challenges.find(c => c.id === parseInt(selectedScoringChallenge));
+        const challengeSpecificCriteria = selectedScoringChallenge ? getChallengeSpecificCriteria(parseInt(selectedScoringChallenge)) : null;
+
+        // Get contestants for selected challenge only (if selected)
+        const scoringContestants = selectedScoringChallenge ? 
+          getContestantData(parseInt(selectedScoringChallenge)).map(contestant => ({
+            ...contestant,
+            challengeTitle: selectedScoringChallengeData?.title,
+            challengeId: selectedScoringChallenge
+          })) : [];
+
+        // Filter contestants based on search term
+        const filteredScoringContestants = scoringContestants.filter(contestant =>
+          contestant.name.toLowerCase().includes(contestantSearchTerm.toLowerCase()) ||
+          contestant.artworkTitle.toLowerCase().includes(contestantSearchTerm.toLowerCase())
+        );
+
+        return (
+          <div className="p-8">
+            <div className="flex items-center gap-3 mb-6">
+              <BarChart3 className="h-6 w-6 text-[#7f5539]" />
+              <h2 className="text-2xl font-semibold text-[#362625]">Scoring & Evaluation</h2>
+            </div>
+
+            {/* Challenge Selection */}
+            <div className="bg-white rounded-lg border border-[#d87c5a] p-6 mb-6">
+              <label className="block text-sm font-medium mb-3" style={{color: '#362625'}}>
+                Select Challenge for Scoring
+              </label>
+              <select
+                value={selectedScoringChallenge}
+                onChange={(e) => setSelectedScoringChallenge(e.target.value)}
+                className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent text-lg"
+                style={{borderColor: '#d87c5a', backgroundColor: 'white', color: '#362625'}}
+              >
+                <option value="">Select a challenge...</option>
+                {challenges.map(challenge => (
+                  <option key={challenge.id} value={challenge.id}>
+                    {challenge.title} ({challenge.status}) - {challenge.participants} participants
+                  </option>
+                ))}
+              </select>
+
+              {/* Challenge Details */}
+              {selectedScoringChallengeData && (
+                <div className="mt-4 p-4 rounded-lg" style={{backgroundColor: '#f4e8dc'}}>
+                  <h4 className="font-semibold mb-2" style={{color: '#362625'}}>{selectedScoringChallengeData.title}</h4>
+                  <p className="text-sm mb-3" style={{color: '#7f5539'}}>{selectedScoringChallengeData.description}</p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                      <span className="font-medium" style={{color: '#362625'}}>Status:</span>
+                      <span className={`ml-1 px-2 py-1 rounded text-xs ${
+                        selectedScoringChallengeData.status === 'active' ? 'bg-green-100 text-green-800' : 
+                        selectedScoringChallengeData.status === 'review' ? 'bg-blue-100 text-blue-800' :
+                        selectedScoringChallengeData.status === 'completed' ? 'bg-gray-100 text-gray-800' : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {selectedScoringChallengeData.status}
+                      </span>
+                    </div>
+                    <div><span className="font-medium" style={{color: '#362625'}}>Participants:</span> <span style={{color: '#7f5539'}}>{selectedScoringChallengeData.participants}</span></div>
+                    <div><span className="font-medium" style={{color: '#362625'}}>Submissions:</span> <span style={{color: '#7f5539'}}>{selectedScoringChallengeData.submissions}</span></div>
+                    <div><span className="font-medium" style={{color: '#362625'}}>Deadline:</span> <span style={{color: '#7f5539'}}>{selectedScoringChallengeData.deadline}</span></div>
+                  </div>
+                  
+                  {/* Criteria Status */}
+                  <div className="mt-3 pt-3 border-t" style={{borderColor: '#d87c5a'}}>
+                    <div className={`flex items-center gap-2 text-sm ${
+                      challengeSpecificCriteria?.defined ? 'text-green-700' : 'text-orange-700'
+                    }`}>
+                      <Settings size={16} />
+                      <span className="font-medium">
+                        {challengeSpecificCriteria?.defined ? 'Scoring criteria defined for this challenge' : 'Using default scoring criteria'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Current Scoring Criteria Display - Only show if challenge is selected */}
+            {selectedScoringChallenge && challengeSpecificCriteria && (
+              <div className="bg-[#f4e8dc] border border-[#d87c5a] rounded-lg p-6 mb-8">
+                <h3 className="text-lg font-medium text-[#362625] mb-4">
+                  Current Scoring Criteria for "{selectedScoringChallengeData?.title}"
+                </h3>
+                <p className="text-[#7f5539] mb-4">
+                  {challengeSpecificCriteria.defined ? 
+                    'Custom scoring weights defined for this challenge' : 
+                    'Default scoring weights applied to this challenge'
+                  }
+                </p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="bg-white rounded-lg p-4 text-center border border-[#d87c5a]">
+                    <div className="text-2xl font-bold text-[#7f5539]">{challengeSpecificCriteria.likesWeight}%</div>
+                    <div className="text-sm text-[#362625]">Social Engagement</div>
+                  </div>
+                  <div className="bg-white rounded-lg p-4 text-center border border-[#d87c5a]">
+                    <div className="text-2xl font-bold text-[#7f5539]">{challengeSpecificCriteria.commentsWeight}%</div>
+                    <div className="text-sm text-[#362625]">Community Interaction</div>
+                  </div>
+                  <div className="bg-white rounded-lg p-4 text-center border border-[#d87c5a]">
+                    <div className="text-2xl font-bold text-[#7f5539]">{challengeSpecificCriteria.buyerInterestWeight}%</div>
+                    <div className="text-sm text-[#362625]">Market Appeal</div>
+                  </div>
+                  <div className="bg-white rounded-lg p-4 text-center border border-[#d87c5a]">
+                    <div className="text-2xl font-bold text-[#7f5539]">{challengeSpecificCriteria.expertEvaluationWeight}%</div>
+                    <div className="text-sm text-[#362625]">Expert Assessment</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Search Contestants - Only show if challenge is selected */}
+            {selectedScoringChallenge && (
+              <div className="bg-white rounded-lg border border-[#d87c5a] p-6 mb-6">
+                <label className="block text-sm font-medium mb-3" style={{color: '#362625'}}>
+                  Search Contestants and Artworks
+                </label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2" size={20} style={{color: '#7f5539'}} />
+                  <input
+                    type="text"
+                    placeholder="Search by contestant name or artwork title..."
+                    value={contestantSearchTerm}
+                    onChange={(e) => setContestantSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent text-lg"
+                    style={{borderColor: '#d87c5a', backgroundColor: 'white', color: '#362625'}}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Contestants Performance List - Only show if challenge is selected */}
+            {selectedScoringChallenge && challengeSpecificCriteria && (
+              <div className="bg-white rounded-lg border border-[#d87c5a] p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-lg font-medium text-gray-900">
+                    Contestant Performance for "{selectedScoringChallengeData?.title}"
+                  </h3>
+                  <div className="text-sm text-gray-500">
+                    {filteredScoringContestants.length} contestant{filteredScoringContestants.length !== 1 ? 's' : ''} found
+                  </div>
+                </div>
+                
+                <div className="grid gap-4">
+                  {filteredScoringContestants.map((contestant, index) => (
+                    <div key={`${contestant.challengeId}-${contestant.id}`} className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex-1">
+                          <h4 className="font-medium text-gray-900">{contestant.name}</h4>
+                          <p className="text-sm text-gray-500">Artwork: {contestant.artworkTitle}</p>
+                          <p className="text-xs text-[#7f5539] font-medium mt-1">Submission Date: {contestant.submissionDate}</p>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-2xl font-bold text-[#7f5539]">
+                            {Math.round((
+                              contestant.likes/250*challengeSpecificCriteria.likesWeight + 
+                              contestant.comments/50*challengeSpecificCriteria.commentsWeight + 
+                              contestant.buyerInterest*10*challengeSpecificCriteria.buyerInterestWeight/100 + 
+                              contestant.expertScore*10*challengeSpecificCriteria.expertEvaluationWeight/100
+                            ))}
+                          </div>
+                          <div className="text-sm text-gray-500">Calculated Score</div>
+                        </div>
+                      </div>
+                      
+                      {/* Performance Metrics */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                        <div className="text-center">
+                          <div className="text-sm font-medium text-gray-900">{contestant.likes}</div>
+                          <div className="text-xs text-gray-500">Likes</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-sm font-medium text-gray-900">{contestant.comments}</div>
+                          <div className="text-xs text-gray-500">Comments</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-sm font-medium text-gray-900">{contestant.buyerInterest.toFixed(1)}/10</div>
+                          <div className="text-xs text-gray-500">Market Appeal</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-sm font-medium text-gray-900">{contestant.expertScore.toFixed(1)}/10</div>
+                          <div className="text-xs text-gray-500">Expert Score</div>
+                        </div>
+                      </div>
+
+                      {/* Score Breakdown */}
+                      <div className="border-t pt-3">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                          <div className="bg-blue-50 rounded p-2 text-center">
+                            <div className="font-medium text-blue-800">
+                              {Math.round(contestant.likes/250*challengeSpecificCriteria.likesWeight)}
+                            </div>
+                            <div className="text-blue-600">Social ({challengeSpecificCriteria.likesWeight}%)</div>
+                          </div>
+                          <div className="bg-green-50 rounded p-2 text-center">
+                            <div className="font-medium text-green-800">
+                              {Math.round(contestant.comments/50*challengeSpecificCriteria.commentsWeight)}
+                            </div>
+                            <div className="text-green-600">Community ({challengeSpecificCriteria.commentsWeight}%)</div>
+                          </div>
+                          <div className="bg-orange-50 rounded p-2 text-center">
+                            <div className="font-medium text-orange-800">
+                              {Math.round(contestant.buyerInterest*10*challengeSpecificCriteria.buyerInterestWeight/100)}
+                            </div>
+                            <div className="text-orange-600">Market ({challengeSpecificCriteria.buyerInterestWeight}%)</div>
+                          </div>
+                          <div className="bg-purple-50 rounded p-2 text-center">
+                            <div className="font-medium text-purple-800">
+                              {Math.round(contestant.expertScore*10*challengeSpecificCriteria.expertEvaluationWeight/100)}
+                            </div>
+                            <div className="text-purple-600">Expert ({challengeSpecificCriteria.expertEvaluationWeight}%)</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {filteredScoringContestants.length === 0 && scoringContestants.length > 0 && (
+                    <div className="text-center py-12">
+                      <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">No contestants found</h3>
+                      <p className="text-gray-500">
+                        Try adjusting your search terms.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* No Challenge Selected Message */}
+            {!selectedScoringChallenge && (
+              <div className="text-center py-12">
+                <Trophy className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No Challenge Selected</h3>
+                <p className="text-gray-500">Please select a challenge above to view its scoring criteria and contestant performance.</p>
+              </div>
+            )}
+          </div>
+        );
       case 'winner':
         // Mock previous challenges data (should match WinnerSelection)
         const previousChallenges = [
@@ -641,6 +1132,15 @@ const ModeratorDashboard = () => {
 
         .btn-animate:hover {
           transform: translateY(-1px) scale(1.02);
+        }
+
+        .card-animate {
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card-animate:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
         }
 
         /* Prevent flash of unstyled content */
