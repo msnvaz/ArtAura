@@ -35,7 +35,8 @@ const RegisterPage = () => {
     nicImage: null,
   });
 
-  const { setUser } = useUser();
+  // const { setUser } = useUser();
+  useUser();
   const navigate = useNavigate();
 
   // Email validation function
