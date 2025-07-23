@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { formatLKR } from '../../util/currency';
 
 const ArtGallery = ({ artworks }) => {
   const navigate = useNavigate();
@@ -18,7 +19,7 @@ const ArtGallery = ({ artworks }) => {
           <img src={art.imageUrls?.[0]} alt={art.title} className="w-full h-60 object-cover" />
           <div className="p-4">
             <h3 className="text-lg font-semibold text-[#362625]">{art.title}</h3>
-            <span className="text-md font-bold text-green-600">${art.price}</span>
+            <span className="text-md font-bold text-green-600">{formatLKR(art.price)}</span>
           </div>
         </div>
       ))}

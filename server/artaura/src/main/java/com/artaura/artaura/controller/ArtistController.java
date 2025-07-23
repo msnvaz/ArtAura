@@ -30,7 +30,7 @@ public class ArtistController {
     }
 
     @GetMapping("/profile/{artistId}")
-    public ResponseEntity<ArtistProfileResponseDTO> getProfile(@PathVariable Long artistId) {
+    public ResponseEntity<ArtistProfileResponseDTO> getProfile(@PathVariable("artistId") Long artistId) {
         Optional<ArtistProfileResponseDTO> profile = artistService.getProfile(artistId);
         if (profile.isPresent()) {
             return ResponseEntity.ok(profile.get());
@@ -40,7 +40,7 @@ public class ArtistController {
     }
 
     @PutMapping("/profile/{artistId}")
-    public ResponseEntity<String> updateProfile(@PathVariable Long artistId,
+    public ResponseEntity<String> updateProfile(@PathVariable("artistId") Long artistId,
             @RequestBody ArtistProfileUpdateDTO updateDTO) {
         try {
             artistService.updateProfile(artistId, updateDTO);
@@ -54,7 +54,7 @@ public class ArtistController {
     }
 
     @PostMapping("/profile/{artistId}/avatar")
-    public ResponseEntity<?> uploadAvatar(@PathVariable Long artistId,
+    public ResponseEntity<?> uploadAvatar(@PathVariable("artistId") Long artistId,
             @RequestParam("image") MultipartFile imageFile) {
         try {
             System.out.println("Received avatar upload request for artist: " + artistId);
@@ -82,7 +82,7 @@ public class ArtistController {
     }
 
     @PostMapping("/profile/{artistId}/cover")
-    public ResponseEntity<?> uploadCoverImage(@PathVariable Long artistId,
+    public ResponseEntity<?> uploadCoverImage(@PathVariable("artistId") Long artistId,
             @RequestParam("image") MultipartFile imageFile) {
         try {
             String imageUrl = artistService.updateCoverImage(artistId, imageFile);

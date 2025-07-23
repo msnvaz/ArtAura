@@ -497,7 +497,7 @@ const ArtworkManagement = () => {
 
       <div className="space-y-4 artwork-container">
         {/* Test Component - Remove this in production */}
-        <AdminArtworkTestComponent />
+        {/* <AdminArtworkTestComponent /> */}
         
         {/* Artwork Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 artwork-stats">
@@ -546,7 +546,7 @@ const ArtworkManagement = () => {
         {/* Artwork Management Heading */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-2 artwork-header">
           <h2 className="text-2xl font-bold flex items-center gap-2" style={{color: '#5D3A00'}}>
-            Artwork Management ({filteredArtworks.length} artworks)
+            Artworks ({filteredArtworks.length} artworks)
           </h2>
           <CurrencySelector className="flex-shrink-0" />
         </div>

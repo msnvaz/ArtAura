@@ -21,6 +21,7 @@ import adminUserApi from '../../services/adminUserApi';
 const UsersManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [filterType, setFilterType] = useState('all');
   const [selectedUser, setSelectedUser] = useState(null);
   const [expandedRow, setExpandedRow] = useState(null);
   const [expandType, setExpandType] = useState(null); // 'details' or 'confirm'
@@ -119,7 +120,9 @@ const UsersManagement = () => {
         user.email?.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesStatus =
       filterStatus === 'all' || user.status?.toLowerCase() === filterStatus.toLowerCase();
-    return matchesSearch && matchesStatus;
+    const matchesType =
+      filterType === 'all' || user.userType?.toLowerCase() === filterType.toLowerCase();
+    return matchesSearch && matchesStatus && matchesType;
   });
 
   // User management stats
@@ -157,6 +160,33 @@ const UsersManagement = () => {
       changeType: 'positive'
     }
   ];
+
+  // Toggle Switch Component
+  const TypeToggleSwitch = () => {
+    const types = ['all', 'artist', 'buyer', 'shop', 'moderator'];
+    
+    return (
+      <div className="flex items-center gap-2 bg-white rounded-lg p-1 border" style={{borderColor: '#FFE4D6'}}>
+        {types.map((type) => (
+          <button
+            key={type}
+            onClick={() => setFilterType(type)}
+            className={`px-3 py-1 rounded-md text-sm font-medium transition-all duration-200 ${
+              filterType === type 
+                ? 'text-white shadow-sm' 
+                : 'text-gray-600 hover:text-gray-800'
+            }`}
+            style={{
+              backgroundColor: filterType === type ? '#D87C5A' : 'transparent',
+              transform: filterType === type ? 'scale(1.02)' : 'scale(1)'
+            }}
+          >
+            {type === 'all' ? 'All Types' : type.charAt(0).toUpperCase() + type.slice(1)}
+          </button>
+        ))}
+      </div>
+    );
+  };
 
   // User Details Row Component
   const UserDetailsRow = ({ user }) => {
@@ -482,7 +512,7 @@ const UsersManagement = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-2 users-header">
           <h2 className="text-2xl font-bold flex items-center gap-2" style={{color: '#5D3A00'}}>
             <Users size={24} />
-            User Management ({filteredUsers.length} users)
+            Users ({filteredUsers.length} users)
           </h2>
           <CurrencySelector className="flex-shrink-0" />
         </div>
@@ -515,12 +545,13 @@ const UsersManagement = () => {
                 <option value="suspended">Suspended</option>
               </select>
             </div>
+            <TypeToggleSwitch />
           </div>
         </div>
 
         {/* Users Table */}
         <div className="bg-white rounded-lg shadow-sm overflow-hidden users-table">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto min-w-full">
             {loading ? (
               <div className="p-8 text-center" style={{ color: '#D87C5A' }}>
                 <Users size={48} className="mx-auto mb-4 opacity-50" />
@@ -539,29 +570,29 @@ const UsersManagement = () => {
                 <p className="text-sm">Try adjusting your search terms or filters</p>
               </div>
             ) : (
-              <table className="w-full">
+              <table className="w-full min-w-max">
                 <thead style={{ backgroundColor: '#FFF5E1' }}>
                   <tr>
-                    <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>User</th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Type</th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Status</th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Join Date</th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Artworks</th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Revenue/Spent</th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold" style={{color: '#5D3A00'}}>Actions</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold whitespace-nowrap" style={{color: '#5D3A00'}}>User</th>
+                    <th className="px-3 py-3 text-left text-sm font-semibold whitespace-nowrap" style={{color: '#5D3A00'}}>Type</th>
+                    <th className="px-3 py-3 text-left text-sm font-semibold whitespace-nowrap" style={{color: '#5D3A00'}}>Status</th>
+                    <th className="px-3 py-3 text-left text-sm font-semibold whitespace-nowrap" style={{color: '#5D3A00'}}>Join Date</th>
+                    <th className="px-3 py-3 text-left text-sm font-semibold whitespace-nowrap" style={{color: '#5D3A00'}}>Artworks</th>
+                    <th className="px-3 py-3 text-left text-sm font-semibold whitespace-nowrap" style={{color: '#5D3A00'}}>Revenue/Spent</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold whitespace-nowrap" style={{color: '#5D3A00'}}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredUsers.map((user, index) => (
                     <React.Fragment key={user.userId}>
                       <tr className={`user-row ${index % 2 === 0 ? 'bg-white' : ''} ${expandedRow === user.userId ? 'border-b-0' : ''}`} style={{backgroundColor: index % 2 === 1 ? '#FFF5E1' : 'white'}}>
-                        <td className="px-6 py-4">
-                          <div>
-                            <div className="font-medium" style={{color: '#5D3A00'}}>{user.firstName} {user.lastName}</div>
-                            <div className="text-sm" style={{color: '#D87C5A'}}>{user.email}</div>
+                        <td className="px-4 py-4 min-w-0">
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium truncate" style={{color: '#5D3A00'}}>{user.firstName} {user.lastName}</div>
+                            <div className="text-sm truncate" style={{color: '#D87C5A'}}>{user.email}</div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-sm" style={{color: '#5D3A00'}}>
+                        <td className="px-3 py-4 text-sm whitespace-nowrap" style={{color: '#5D3A00'}}>
                           <span className="px-2 py-1 text-xs font-medium rounded-full" style={{
                             backgroundColor: user.userType === 'artist' ? '#FFE4D6' : user.userType === 'moderator' ? '#FFD95A' : user.userType === 'buyer' ? '#E8F5E8' : user.userType === 'shop' ? '#E3F2FD' : '#FFF5E1',
                             color: '#5D3A00'
@@ -569,7 +600,7 @@ const UsersManagement = () => {
                             {user.userType}
                           </span>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-3 py-4 whitespace-nowrap">
                           <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                             user.status === 'Active' ? 'text-green-800 bg-green-100' :
                             user.status === 'Pending' ? 'text-yellow-800 bg-yellow-100' :
@@ -578,14 +609,14 @@ const UsersManagement = () => {
                             {user.status}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-sm" style={{color: '#5D3A00'}}>{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : ''}</td>
-                        <td className="px-6 py-4 text-sm" style={{color: '#5D3A00'}}>
+                        <td className="px-3 py-4 text-sm whitespace-nowrap" style={{color: '#5D3A00'}}>{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : ''}</td>
+                        <td className="px-3 py-4 text-sm text-center whitespace-nowrap" style={{color: '#5D3A00'}}>
                           <span className="font-medium">
                             {user.userType === 'artist' ? (user.total_artworks || 0) : '-'}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-sm" style={{color: '#5D3A00'}}>
-                          <div>
+                        <td className="px-3 py-4 text-sm whitespace-nowrap" style={{color: '#5D3A00'}}>
+                          <div className="text-center">
                             <div className="font-medium" style={{color: '#D87C5A'}}>
                               {formatPrice(user.userType === 'artist' ? (user.revenue || 0) : (user.spent || 0), "LKR")}
                             </div>
@@ -594,8 +625,8 @@ const UsersManagement = () => {
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-2">
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-1">
                             <button
                               onClick={() => handleViewDetails(user)}
                               className="p-2 rounded-lg transition-colors"
@@ -610,7 +641,7 @@ const UsersManagement = () => {
                               }}
                               title="View Details"
                             >
-                              {expandedRow === user.userId && expandType === 'details' ? <ChevronUp size={16} /> : <Eye size={16} />}
+                              {expandedRow === user.userId && expandType === 'details' ? <ChevronUp size={14} /> : <Eye size={14} />}
                             </button>
                             <button
                               onClick={() => handleBlockUser(user.userId, user.userType, user.status)}
@@ -627,7 +658,7 @@ const UsersManagement = () => {
                               }}
                               title={user.status === 'Suspended' ? 'Unblock User' : 'Block User'}
                             >
-                              {user.status === 'Suspended' ? <UserCheck size={16} /> : <UserX size={16} />}
+                              {user.status === 'Suspended' ? <UserCheck size={14} /> : <UserX size={14} />}
                             </button>
                             <button
                               className="p-2 rounded-lg transition-colors"
@@ -642,7 +673,7 @@ const UsersManagement = () => {
                               }}
                               title="More Options"
                             >
-                              <MoreVertical size={16} />
+                              <MoreVertical size={13} />
                             </button>
                           </div>
                         </td>
