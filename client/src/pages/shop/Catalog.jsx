@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+
 import Navbar from '../../components/Navbar'; // Changed import
+
 import { 
   Search, 
   Plus, 
@@ -280,6 +282,7 @@ const CatalogManagement = () => {
   });
 
   return (
+
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       
@@ -327,11 +330,14 @@ const CatalogManagement = () => {
               Add Product
             </button>
           </div>
+
         </div>
 
         {/* Loading state */}
         {loading && (
+
           <div className="bg-white rounded-2xl shadow-xl p-6 border border-[#FFE4D6] text-center animate-fade-in">
+
             <div className="flex flex-col items-center">
               <div className="w-16 h-16 bg-[#FFE4D6] rounded-full flex items-center justify-center mb-4 animate-pulse">
                 <Package className="w-8 h-8 text-[#D87C5A]" />
@@ -343,7 +349,9 @@ const CatalogManagement = () => {
 
         {/* Error state */}
         {error && (
+
           <div className="bg-white rounded-2xl shadow-xl p-6 border border-red-200 text-center animate-fade-in">
+
             <div className="flex flex-col items-center">
               <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
                 <Package className="w-8 h-8 text-red-600" />
@@ -362,7 +370,9 @@ const CatalogManagement = () => {
 
         {/* Products Grid */}
         {!loading && !error && (
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 mb-4">
+
             {filteredProducts.map((product, index) => (
               <div 
                 key={product.id} 
@@ -414,22 +424,28 @@ const CatalogManagement = () => {
                   <div className="flex justify-start items-center gap-2 mt-3">
                     <button 
                       onClick={() => setSelectedProduct(product)} 
+
                       className="w-fit bg-[#D87C5A] text-white py-1.5 px-2 rounded-lg hover:bg-[#c06949] text-xs font-semibold shadow hover:shadow-md transition-all duration-300 flex items-center space-x-1"
                     >
+
                       <Eye className="w-3 h-3" />
                       <span>View</span>
                     </button>
                     <button 
                       onClick={() => openEditModal(product)}
+
                       className="w-fit bg-[#FFF5E1] text-[#5D3A00] py-1.5 px-2 rounded-lg hover:bg-[#FFE4D6] text-xs font-semibold shadow hover:shadow-md transition-all duration-300 flex items-center space-x-1"
                     >
+
                       <Edit3 className="w-3 h-3" />
                       <span>Edit</span>
                     </button>
                     <button 
                       onClick={() => openDeleteModal(product)}
+
                       className="w-fit bg-red-100 text-red-600 py-1.5 px-2 rounded-lg hover:bg-red-200 text-xs font-semibold shadow hover:shadow-md transition-all duration-300 flex items-center space-x-1"
                     >
+
                       <Trash2 className="w-4 h-4" />       
                     </button>
                   </div>
@@ -441,7 +457,9 @@ const CatalogManagement = () => {
 
         {/* No products found */}
         {!loading && !error && filteredProducts.length === 0 && (
+
           <div className="bg-white rounded-2xl shadow-xl p-6 border border-[#FFE4D6] text-center animate-fade-in">
+
             <div className="flex flex-col items-center">
               <div className="w-16 h-16 bg-[#FFE4D6] rounded-full flex items-center justify-center mb-4">
                 <Package className="w-8 h-8 text-[#D87C5A]" />
