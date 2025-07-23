@@ -287,19 +287,6 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
                     color: "#FFE4D6",
                     backgroundColor: "rgba(255, 228, 214, 0.1)",
                   }}
-                  onClick={() => navigate("/challenges")}
-                >
-                  <Trophy size={14} />
-                  <span className="hidden sm:inline">View Challenges</span>
-                  <span className="sm:hidden">Challenges</span>
-                </button>
-                <button
-                  className="border px-3 py-2 rounded-lg font-medium flex items-center space-x-1 whitespace-nowrap btn-animate"
-                  style={{
-                    borderColor: "#FFE4D6",
-                    color: "#FFE4D6",
-                    backgroundColor: "rgba(255, 228, 214, 0.1)",
-                  }}
                   onClick={() => navigate("/moderatordashboard")}
                 >
                   <Shield size={14} />
