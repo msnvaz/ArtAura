@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Sidebar from '../../components/Sidebar';
-
+import Navbar from '../../components/Navbar'; // Changed import
 import { 
   Search, 
   Plus, 
@@ -281,51 +280,58 @@ const CatalogManagement = () => {
   });
 
   return (
-    <div className="flex">
-      <Sidebar />
-      <div className="ml-20 md:ml-64 flex-1 space-y-6 bg-white min-h-screen p-6 animate-fade-in">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-4">
-          <div className="flex items-center gap-3 w-full max-w-md">
-          <div className="relative flex-1 ">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#D87C5A] w-4 h-4" />
-            <input
-              type="text"
-              placeholder="Search..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-[#FFE4D6] hover:border-[#D87C5A] focus:border-[#D87C5A]  focus:ring-0 outline-none   rounded-lg text-sm"
-            />
-          </div>
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      
+      {/* Main Content Container with minimal left/right margins */}
+      <div className="pt-4 px-0 sm:px-1 lg:px-2 max-w-full mx-0">
+        {/* Header Section */}
+        <div className="mb-4">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 mb-3">
+            {/* Search and Filter Section */}
+            <div className="flex items-center gap-3 w-full max-w-md">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#D87C5A] w-4 h-4" />
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-[#FFE4D6] hover:border-[#D87C5A] focus:border-[#D87C5A] focus:ring-0 outline-none rounded-lg text-sm"
+                />
+              </div>
 
-          {/* Category Filter */}
-          <div className="relative w-36">
-             <Filter className="absolute left-2 top-1/2 -translate-y-1/2 text-[#D87C5A] w-4 h-4 pointer-events-none" />
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full pl-8 pr-2 py-2 border border-[#FFE4D6]  hover:border-[#D87C5A] focus:border-[#D87C5A] focus:ring-0 outline-none   rounded-lg text-sm appearance-none"
+              {/* Category Filter */}
+              <div className="relative w-36">
+                <Filter className="absolute left-2 top-1/2 -translate-y-1/2 text-[#D87C5A] w-4 h-4 pointer-events-none" />
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="w-full pl-8 pr-2 py-2 border border-[#FFE4D6] hover:border-[#D87C5A] focus:border-[#D87C5A] focus:ring-0 outline-none rounded-lg text-sm appearance-none"
+                >
+                  {categories.map(category => (
+                    <option key={category} value={category}>
+                      {category === 'all' ? 'All Categories' : category}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Add Product Button */}
+            <button 
+              onClick={() => setShowAddModal(true)}
+              className="bg-gradient-to-r from-[#D87C5A] to-[#5D3A00] text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
             >
-              {categories.map(category => (
-                <option key={category} value={category}>
-                  {category === 'all' ? 'All Categories' : category}
-                </option>
-              ))}
-            </select>
+              <Plus className="w-4 h-4 inline mr-2" />
+              Add Product
+            </button>
           </div>
-          </div>
-
-          {/* Add Product Button */}
-          <button 
-            onClick={() => setShowAddModal(true)}
-            className="bg-gradient-to-r from-[#D87C5A] to-[#5D3A00] text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300">
-            <Plus className="w-4 h-4 inline mr-2" />
-            Add Product
-          </button>
         </div>
 
         {/* Loading state */}
         {loading && (
-          <div className="bg-white rounded-2xl shadow-xl p-12 border border-[#FFE4D6] text-center animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-xl p-6 border border-[#FFE4D6] text-center animate-fade-in">
             <div className="flex flex-col items-center">
               <div className="w-16 h-16 bg-[#FFE4D6] rounded-full flex items-center justify-center mb-4 animate-pulse">
                 <Package className="w-8 h-8 text-[#D87C5A]" />
@@ -337,7 +343,7 @@ const CatalogManagement = () => {
 
         {/* Error state */}
         {error && (
-          <div className="bg-white rounded-2xl shadow-xl p-12 border border-red-200 text-center animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-xl p-6 border border-red-200 text-center animate-fade-in">
             <div className="flex flex-col items-center">
               <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
                 <Package className="w-8 h-8 text-red-600" />
@@ -356,7 +362,7 @@ const CatalogManagement = () => {
 
         {/* Products Grid */}
         {!loading && !error && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 mb-4">
             {filteredProducts.map((product, index) => (
               <div 
                 key={product.id} 
@@ -408,19 +414,22 @@ const CatalogManagement = () => {
                   <div className="flex justify-start items-center gap-2 mt-3">
                     <button 
                       onClick={() => setSelectedProduct(product)} 
-                      className="w-fit bg-[#D87C5A] text-white py-1.5 px-2 rounded-lg hover:bg-[#c06949] text-xs font-semibold shadow hover:shadow-md transition-all duration-300 flex items-center space-x-1">
+                      className="w-fit bg-[#D87C5A] text-white py-1.5 px-2 rounded-lg hover:bg-[#c06949] text-xs font-semibold shadow hover:shadow-md transition-all duration-300 flex items-center space-x-1"
+                    >
                       <Eye className="w-3 h-3" />
                       <span>View</span>
                     </button>
                     <button 
                       onClick={() => openEditModal(product)}
-                      className="w-fit bg-[#FFF5E1] text-[#5D3A00] py-1.5 px-2 rounded-lg hover:bg-[#FFE4D6] text-xs font-semibold shadow hover:shadow-md transition-all duration-300 flex items-center space-x-1">
+                      className="w-fit bg-[#FFF5E1] text-[#5D3A00] py-1.5 px-2 rounded-lg hover:bg-[#FFE4D6] text-xs font-semibold shadow hover:shadow-md transition-all duration-300 flex items-center space-x-1"
+                    >
                       <Edit3 className="w-3 h-3" />
                       <span>Edit</span>
                     </button>
                     <button 
                       onClick={() => openDeleteModal(product)}
-                      className="w-fit bg-red-100 text-red-600 py-1.5 px-2 rounded-lg hover:bg-red-200 text-xs font-semibold shadow hover:shadow-md transition-all duration-300 flex items-center space-x-1">
+                      className="w-fit bg-red-100 text-red-600 py-1.5 px-2 rounded-lg hover:bg-red-200 text-xs font-semibold shadow hover:shadow-md transition-all duration-300 flex items-center space-x-1"
+                    >
                       <Trash2 className="w-4 h-4" />       
                     </button>
                   </div>
@@ -432,7 +441,7 @@ const CatalogManagement = () => {
 
         {/* No products found */}
         {!loading && !error && filteredProducts.length === 0 && (
-          <div className="bg-white rounded-2xl shadow-xl p-12 border border-[#FFE4D6] text-center animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-xl p-6 border border-[#FFE4D6] text-center animate-fade-in">
             <div className="flex flex-col items-center">
               <div className="w-16 h-16 bg-[#FFE4D6] rounded-full flex items-center justify-center mb-4">
                 <Package className="w-8 h-8 text-[#D87C5A]" />

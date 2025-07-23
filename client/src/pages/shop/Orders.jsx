@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import Sidebar from '../../components/Sidebar';
+import Navbar from '../../components/Navbar'; // Changed import
 import { 
   ShoppingCart,
   Download,
@@ -259,332 +259,332 @@ const Orders = () => {
   };
 
   return (
-    <div className="flex">
-    <Sidebar />
-    <div className="ml-20 md:ml-64 flex-1 space-y-6 bg-white min-h-screen p-6 animate-fade-in">
-      {/* Inline Search Bar and Export Button */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-4">
-        {/* Inline Search Bar and Filter Section */}
-        <div className="flex items-center gap-3 w-full max-w-md">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#D87C5A] w-4 h-4" />
-            <input
-              type="text"
-              placeholder="Search..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-[#FFE4D6] hover:border-[#D87C5A] focus:border-[#D87C5A]  focus:ring-0 outline-none   rounded-lg text-sm"
-            />
+    <div className="min-h-screen bg-gray-50">
+      <Navbar /> {/* Use Navbar instead of Sidebar */}
+      <div className="pt-6 px-6"> {/* Add top padding instead of left margin */}
+        {/* Inline Search Bar and Export Button */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-4">
+          {/* Inline Search Bar and Filter Section */}
+          <div className="flex items-center gap-3 w-full max-w-md">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#D87C5A] w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-[#FFE4D6] hover:border-[#D87C5A] focus:border-[#D87C5A]  focus:ring-0 outline-none   rounded-lg text-sm"
+              />
+            </div>
+            <div className="relative w-36">
+              <Filter className="absolute left-2 top-1/2 -translate-y-1/2 text-[#D87C5A] w-4 h-4 pointer-events-none" />
+              <select
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                className="w-full pl-8 pr-2 py-2 border border-[#FFE4D6]  hover:border-[#D87C5A] focus:border-[#D87C5A] focus:ring-0 outline-none   rounded-lg text-sm appearance-none"
+              >
+                <option value="all">All Orders</option>
+                <option value="pending">Pending</option>
+                <option value="processing">Processing</option>
+                <option value="shipped">Shipped</option>
+                <option value="delivered">Delivered</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
           </div>
-          <div className="relative w-36">
-            <Filter className="absolute left-2 top-1/2 -translate-y-1/2 text-[#D87C5A] w-4 h-4 pointer-events-none" />
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              className="w-full pl-8 pr-2 py-2 border border-[#FFE4D6]  hover:border-[#D87C5A] focus:border-[#D87C5A] focus:ring-0 outline-none   rounded-lg text-sm appearance-none"
-            >
-              <option value="all">All Orders</option>
-              <option value="pending">Pending</option>
-              <option value="processing">Processing</option>
-              <option value="shipped">Shipped</option>
-              <option value="delivered">Delivered</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-          </div>
+          
+          <button
+            onClick={() => setShowExportModal(true)}
+            className="bg-gradient-to-r from-[#D87C5A] to-[#5D3A00] text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
+          >
+            <Download className="w-4 h-4 inline mr-2" />
+            Export Orders
+          </button>
         </div>
-        
-        <button
-          onClick={() => setShowExportModal(true)}
-          className="bg-gradient-to-r from-[#D87C5A] to-[#5D3A00] text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
-        >
-          <Download className="w-4 h-4 inline mr-2" />
-          Export Orders
-        </button>
-      </div>
 
-      {/* Orders List */}
-      <div className="bg-white rounded-2xl shadow-xl border border-[#FFE4D6] overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gradient-to-r from-[#FFF5E1] to-[#FFE4D6]">
-              <tr>
-                <th className="px-6 py-4 text-left text-xs font-medium text-[#5D3A00] uppercase tracking-wider">Order</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-[#5D3A00] uppercase tracking-wider">Customer</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-[#5D3A00] uppercase tracking-wider">Items</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-[#5D3A00] uppercase tracking-wider">Total</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-[#5D3A00] uppercase tracking-wider">Status</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-[#5D3A00] uppercase tracking-wider">Date</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-[#5D3A00] uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#FFF5E1]">
-              {filteredOrders.map((order) => (
-                <tr key={order.id} className="hover:bg-[#FFF5E1]/60 transition-all duration-200">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-[#5D3A00]">{order.id}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-bold text-[#5D3A00]">{order.customer}</div>
-                    <div className="text-sm text-[#5D3A00]/70 flex items-center gap-1">
-                      <Mail className="w-3 h-3 animate-fade-in" /> {order.email}
-                    </div>
-                    <div className="text-sm text-[#5D3A00]/70 flex items-center gap-1">
-                      <Phone className="w-3 h-3 animate-fade-in" /> {order.phone}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-[#5D3A00] space-y-1">
-                      {order.items.map((item, idx) => (
-                        <div key={idx}>{item}</div>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-bold text-[#5D3A00]">{order.total}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium group ${getStatusColor(order.status)}`}>
-                      {getStatusIcon(order.status)}
-                      {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#5D3A00]">
-                    {new Date(order.date).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button onClick={() => setSelectedOrder(order)} className="text-white hover:text-[#5D3A00] bg-[#D87C5A] hover:bg-[#FFD95A]/70 px-3 py-1 rounded-lg transition-all duration-300">
-                      <Eye className="w-4 h-4 inline mr-1 animate-fade-in" /> View
-                    </button>
-                  </td>
+        {/* Orders List */}
+        <div className="bg-white rounded-2xl shadow-xl border border-[#FFE4D6] overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gradient-to-r from-[#FFF5E1] to-[#FFE4D6]">
+                <tr>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-[#5D3A00] uppercase tracking-wider">Order</th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-[#5D3A00] uppercase tracking-wider">Customer</th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-[#5D3A00] uppercase tracking-wider">Items</th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-[#5D3A00] uppercase tracking-wider">Total</th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-[#5D3A00] uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-[#5D3A00] uppercase tracking-wider">Date</th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-[#5D3A00] uppercase tracking-wider">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-[#FFF5E1]">
+                {filteredOrders.map((order) => (
+                  <tr key={order.id} className="hover:bg-[#FFF5E1]/60 transition-all duration-200">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-[#5D3A00]">{order.id}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-bold text-[#5D3A00]">{order.customer}</div>
+                      <div className="text-sm text-[#5D3A00]/70 flex items-center gap-1">
+                        <Mail className="w-3 h-3 animate-fade-in" /> {order.email}
+                      </div>
+                      <div className="text-sm text-[#5D3A00]/70 flex items-center gap-1">
+                        <Phone className="w-3 h-3 animate-fade-in" /> {order.phone}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-[#5D3A00] space-y-1">
+                        {order.items.map((item, idx) => (
+                          <div key={idx}>{item}</div>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-bold text-[#5D3A00]">{order.total}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium group ${getStatusColor(order.status)}`}>
+                        {getStatusIcon(order.status)}
+                        {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#5D3A00]">
+                      {new Date(order.date).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <button onClick={() => setSelectedOrder(order)} className="text-white hover:text-[#5D3A00] bg-[#D87C5A] hover:bg-[#FFD95A]/70 px-3 py-1 rounded-lg transition-all duration-300">
+                        <Eye className="w-4 h-4 inline mr-1 animate-fade-in" /> View
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-        {/* No Orders Found */}
-        {filteredOrders.length === 0 && (
-          <div className="text-center py-12">
-            <Package className="w-12 h-12 text-[#D87C5A] mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-[#5D3A00] mb-2">No orders found</h3>
-            <p className="text-[#5D3A00]/70">Try adjusting your search or filter criteria</p>
+          {/* No Orders Found */}
+          {filteredOrders.length === 0 && (
+            <div className="text-center py-12">
+              <Package className="w-12 h-12 text-[#D87C5A] mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-[#5D3A00] mb-2">No orders found</h3>
+              <p className="text-[#5D3A00]/70">Try adjusting your search or filter criteria</p>
+            </div>
+          )}
+        </div>
+      
+       {/* Order Details Modal */}
+        {selectedOrder && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="bg-gradient-to-r p-6 rounded-t-2xl border-b border-[#FFE4D6]">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold text-[#5D3A00] flex items-center gap-2">
+                    <Package className="w-6 h-6 text-[#D87C5A]" />
+                    Order Details
+                  </h2>
+                  <button
+                    onClick={() => setSelectedOrder(null)}
+                    className="text-[#5D3A00] hover:text-[#D87C5A] transition-colors"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+              </div>
+              
+              <div className="p-6 space-y-6">
+                {/* Order Info */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-[#5D3A00] mb-3 flex items-center gap-2">
+                        <FileText className="w-5 h-5 text-[#D87C5A]" />
+                        Order Information
+                      </h3>
+                      <div className="space-y-2 text-sm">
+                        <div><span className="font-medium">Order ID:</span> {selectedOrder.id}</div>
+                        <div><span className="font-medium">Date:</span> {new Date(selectedOrder.date).toLocaleDateString()}</div>
+                        <div><span className="font-medium">Total:</span> <span className="text-[#D87C5A] font-bold">{selectedOrder.total}</span></div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">Status:</span>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedOrder.status)}`}>
+                            {selectedOrder.status.charAt(0).toUpperCase() + selectedOrder.status.slice(1)}
+                          </span>
+                        </div>
+                        {selectedOrder.trackingNumber && (
+                          <div><span className="font-medium">Tracking Number:</span> {selectedOrder.trackingNumber}</div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-[#5D3A00] mb-3 flex items-center gap-2">
+                        <Users className="w-5 h-5 text-[#D87C5A]" />
+                        Customer Information
+                      </h3>
+                      <div className="space-y-2 text-sm">
+                        <div><span className="font-medium">Name:</span> {selectedOrder.customer}</div>
+                        <div className="flex items-center gap-1">
+                          <Mail className="w-3 h-3 text-[#D87C5A]" />
+                          {selectedOrder.email}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Phone className="w-3 h-3 text-[#D87C5A]" />
+                          {selectedOrder.phone}
+                        </div>
+                        <div className="flex items-start gap-1">
+                          <MapPin className="w-3 h-3 text-[#D87C5A] mt-1 flex-shrink-0" />
+                          <span className="text-xs">{selectedOrder.address}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Items */}
+                <div>
+                  <h3 className="text-lg font-semibold text-[#5D3A00] mb-3 flex items-center gap-2">
+                    <ShoppingCart className="w-5 h-5 text-[#D87C5A]" />
+                    Order Items
+                  </h3>
+                  <div className="bg-[#FFF5E1] rounded-lg p-4">
+                    <ul className="space-y-2">
+                      {selectedOrder.items.map((item, idx) => (
+                        <li key={idx} className="flex items-center gap-2 text-sm">
+                          <div className="w-2 h-2 bg-[#D87C5A] rounded-full"></div>
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Rating */}
+                <div>
+                  <h3 className="text-lg font-semibold text-[#5D3A00] mb-3">Customer Rating</h3>
+                  {renderStars(selectedOrder.rating)}
+                </div>
+
+                {/* Notes */}
+                {selectedOrder.notes && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-[#5D3A00] mb-3">Notes</h3>
+                    <div className="bg-[#FFF5E1] rounded-lg p-4 text-sm text-[#5D3A00]">
+                      {selectedOrder.notes}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Export Modal */}
+        {showExportModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
+              <div className="bg-gradient-to-r  p-6 rounded-t-2xl border-b border-[#FFE4D6]">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold text-[#5D3A00] flex items-center gap-2">
+                    <Download className="w-6 h-6 text-[#D87C5A]" />
+                    Export Orders
+                  </h2>
+                  <button
+                    onClick={() => setShowExportModal(false)}
+                    className="text-[#5D3A00] hover:text-[#D87C5A] transition-colors"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+              </div>
+              
+              <div className="p-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#5D3A00] mb-2">Export Format</label>
+                  <select
+                    value={exportOptions.format}
+                    onChange={(e) => setExportOptions({...exportOptions, format: e.target.value})}
+                    className="w-full border border-[#FFE4D6] focus:ring-0 outline-none rounded-lg px-3 py-2 text-sm"
+                  >
+                    <option value="csv">CSV</option>
+                    <option value="json">JSON</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-[#5D3A00] mb-2">Date Range</label>
+                  <select
+                    value={exportOptions.dateRange}
+                    onChange={(e) => setExportOptions({...exportOptions, dateRange: e.target.value})}
+                    className="w-full border border-[#FFE4D6] focus:ring-0 outline-none rounded-lg px-3 py-2 text-sm"
+                  >
+                    <option value="all">All Time</option>
+                    <option value="today">Today</option>
+                    <option value="week">This Week</option>
+                    <option value="month">This Month</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-[#5D3A00] mb-2">Order Status</label>
+                  <select
+                    value={exportOptions.status}
+                    onChange={(e) => setExportOptions({...exportOptions, status: e.target.value})}
+                    className="w-full border border-[#FFE4D6] focus:ring-0 outline-none rounded-lg px-3 py-2 text-sm"
+                  >
+                    <option value="all">All Statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="processing">Processing</option>
+                    <option value="shipped">Shipped</option>
+                    <option value="delivered">Delivered</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-[#5D3A00]">Include Data</label>
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={exportOptions.includeCustomerInfo}
+                        onChange={(e) => setExportOptions({...exportOptions, includeCustomerInfo: e.target.checked})}
+                        className="rounded border-[#FFE4D6] focus:ring-0 outline-none"
+                      />
+                      <span className="text-sm text-[#5D3A00]">Customer Information</span>
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={exportOptions.includeItems}
+                        onChange={(e) => setExportOptions({...exportOptions, includeItems: e.target.checked})}
+                        className="rounded border-[#FFE4D6] focus:ring-0 outline-none"
+                      />
+                      <span className="text-sm text-[#5D3A00]">Order Items Details</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <button
+                    onClick={() => setShowExportModal(false)}
+                    className="flex-1 px-4 py-2 text-[#5D3A00] border border-[#FFE4D6] focus:ring-0 outline-none rounded-lg hover:bg-[#FFF5E1] transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleExport}
+                    className="flex-1 px-4 py-2 bg-gradient-to-r from-[#D87C5A] to-[#5D3A00] text-white rounded-lg hover:shadow-lg transition-all duration-300"
+                  >
+                    Export Data
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
-    
-     {/* Order Details Modal */}
-      {selectedOrder && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="bg-gradient-to-r p-6 rounded-t-2xl border-b border-[#FFE4D6]">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-[#5D3A00] flex items-center gap-2">
-                  <Package className="w-6 h-6 text-[#D87C5A]" />
-                  Order Details
-                </h2>
-                <button
-                  onClick={() => setSelectedOrder(null)}
-                  className="text-[#5D3A00] hover:text-[#D87C5A] transition-colors"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-            </div>
-            
-            <div className="p-6 space-y-6">
-              {/* Order Info */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-lg font-semibold text-[#5D3A00] mb-3 flex items-center gap-2">
-                      <FileText className="w-5 h-5 text-[#D87C5A]" />
-                      Order Information
-                    </h3>
-                    <div className="space-y-2 text-sm">
-                      <div><span className="font-medium">Order ID:</span> {selectedOrder.id}</div>
-                      <div><span className="font-medium">Date:</span> {new Date(selectedOrder.date).toLocaleDateString()}</div>
-                      <div><span className="font-medium">Total:</span> <span className="text-[#D87C5A] font-bold">{selectedOrder.total}</span></div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">Status:</span>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedOrder.status)}`}>
-                          {selectedOrder.status.charAt(0).toUpperCase() + selectedOrder.status.slice(1)}
-                        </span>
-                      </div>
-                      {selectedOrder.trackingNumber && (
-                        <div><span className="font-medium">Tracking Number:</span> {selectedOrder.trackingNumber}</div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-lg font-semibold text-[#5D3A00] mb-3 flex items-center gap-2">
-                      <Users className="w-5 h-5 text-[#D87C5A]" />
-                      Customer Information
-                    </h3>
-                    <div className="space-y-2 text-sm">
-                      <div><span className="font-medium">Name:</span> {selectedOrder.customer}</div>
-                      <div className="flex items-center gap-1">
-                        <Mail className="w-3 h-3 text-[#D87C5A]" />
-                        {selectedOrder.email}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Phone className="w-3 h-3 text-[#D87C5A]" />
-                        {selectedOrder.phone}
-                      </div>
-                      <div className="flex items-start gap-1">
-                        <MapPin className="w-3 h-3 text-[#D87C5A] mt-1 flex-shrink-0" />
-                        <span className="text-xs">{selectedOrder.address}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Items */}
-              <div>
-                <h3 className="text-lg font-semibold text-[#5D3A00] mb-3 flex items-center gap-2">
-                  <ShoppingCart className="w-5 h-5 text-[#D87C5A]" />
-                  Order Items
-                </h3>
-                <div className="bg-[#FFF5E1] rounded-lg p-4">
-                  <ul className="space-y-2">
-                    {selectedOrder.items.map((item, idx) => (
-                      <li key={idx} className="flex items-center gap-2 text-sm">
-                        <div className="w-2 h-2 bg-[#D87C5A] rounded-full"></div>
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-
-              {/* Rating */}
-              <div>
-                <h3 className="text-lg font-semibold text-[#5D3A00] mb-3">Customer Rating</h3>
-                {renderStars(selectedOrder.rating)}
-              </div>
-
-              {/* Notes */}
-              {selectedOrder.notes && (
-                <div>
-                  <h3 className="text-lg font-semibold text-[#5D3A00] mb-3">Notes</h3>
-                  <div className="bg-[#FFF5E1] rounded-lg p-4 text-sm text-[#5D3A00]">
-                    {selectedOrder.notes}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Export Modal */}
-      {showExportModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
-            <div className="bg-gradient-to-r  p-6 rounded-t-2xl border-b border-[#FFE4D6]">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-[#5D3A00] flex items-center gap-2">
-                  <Download className="w-6 h-6 text-[#D87C5A]" />
-                  Export Orders
-                </h2>
-                <button
-                  onClick={() => setShowExportModal(false)}
-                  className="text-[#5D3A00] hover:text-[#D87C5A] transition-colors"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-            </div>
-            
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-[#5D3A00] mb-2">Export Format</label>
-                <select
-                  value={exportOptions.format}
-                  onChange={(e) => setExportOptions({...exportOptions, format: e.target.value})}
-                  className="w-full border border-[#FFE4D6] focus:ring-0 outline-none rounded-lg px-3 py-2 text-sm"
-                >
-                  <option value="csv">CSV</option>
-                  <option value="json">JSON</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-[#5D3A00] mb-2">Date Range</label>
-                <select
-                  value={exportOptions.dateRange}
-                  onChange={(e) => setExportOptions({...exportOptions, dateRange: e.target.value})}
-                  className="w-full border border-[#FFE4D6] focus:ring-0 outline-none rounded-lg px-3 py-2 text-sm"
-                >
-                  <option value="all">All Time</option>
-                  <option value="today">Today</option>
-                  <option value="week">This Week</option>
-                  <option value="month">This Month</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-[#5D3A00] mb-2">Order Status</label>
-                <select
-                  value={exportOptions.status}
-                  onChange={(e) => setExportOptions({...exportOptions, status: e.target.value})}
-                  className="w-full border border-[#FFE4D6] focus:ring-0 outline-none rounded-lg px-3 py-2 text-sm"
-                >
-                  <option value="all">All Statuses</option>
-                  <option value="pending">Pending</option>
-                  <option value="processing">Processing</option>
-                  <option value="shipped">Shipped</option>
-                  <option value="delivered">Delivered</option>
-                  <option value="cancelled">Cancelled</option>
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-[#5D3A00]">Include Data</label>
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={exportOptions.includeCustomerInfo}
-                      onChange={(e) => setExportOptions({...exportOptions, includeCustomerInfo: e.target.checked})}
-                      className="rounded border-[#FFE4D6] focus:ring-0 outline-none"
-                    />
-                    <span className="text-sm text-[#5D3A00]">Customer Information</span>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={exportOptions.includeItems}
-                      onChange={(e) => setExportOptions({...exportOptions, includeItems: e.target.checked})}
-                      className="rounded border-[#FFE4D6] focus:ring-0 outline-none"
-                    />
-                    <span className="text-sm text-[#5D3A00]">Order Items Details</span>
-                  </label>
-                </div>
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <button
-                  onClick={() => setShowExportModal(false)}
-                  className="flex-1 px-4 py-2 text-[#5D3A00] border border-[#FFE4D6] focus:ring-0 outline-none rounded-lg hover:bg-[#FFF5E1] transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleExport}
-                  className="flex-1 px-4 py-2 bg-gradient-to-r from-[#D87C5A] to-[#5D3A00] text-white rounded-lg hover:shadow-lg transition-all duration-300"
-                >
-                  Export Data
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
     </div>
   ); 
 };
