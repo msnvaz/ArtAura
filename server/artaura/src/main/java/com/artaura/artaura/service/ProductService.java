@@ -1,25 +1,16 @@
 package com.artaura.artaura.service;
 
-import com.artaura.artaura.dao.ProductDAO;
 import com.artaura.artaura.dto.catalog.AddProductDTO;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 
-@Service
-public class ProductService {
+public interface ProductService {
+    void addProduct(AddProductDTO product);
 
-    private final ProductDAO dao;
+    List<AddProductDTO> getAllProducts();
 
-    public ProductService(ProductDAO dao) {
-        this.dao = dao;
-    }
+    void deleteProduct(Long id);
 
-    public void createProduct(AddProductDTO product) {
-        dao.save(product);
-    }
+    void updateProduct(Long id, AddProductDTO product);
 
-    public List<AddProductDTO> getAllProducts() {
-        return dao.findAll();
-    }
+    AddProductDTO getProductById(Long id);
 }

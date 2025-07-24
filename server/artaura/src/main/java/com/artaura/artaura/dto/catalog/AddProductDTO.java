@@ -1,36 +1,99 @@
 package com.artaura.artaura.dto.catalog;
 
-import lombok.Data;
-
-@Data
 public class AddProductDTO {
     private Long id;
     private String name;
     private String sku;
     private String category;
-    private double price;
-    private int stock;
+    private Double price;
+    private Integer stock;
     private String status;
     private String image;
-    private double rating;
-    private int sales;
+    private Double rating;
+    private Integer sales;
 
-    // Lombok @Data annotation will generate getters and setters
-    // But if you need custom logic, you can add them manually:
-    
+    // Default constructor
+    public AddProductDTO() {
+    }
+
+    // Getters and Setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getSku() {
+        return sku;
+    }
+
+    public void setSku(String sku) {
+        this.sku = sku;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public Double getPrice() {
+        return price != null ? price : 0.0;
+    }
+
+    public void setPrice(Double price) {
+        this.price = price;
+    }
+
+    public Integer getStock() {
+        return stock != null ? stock : 0;
+    }
+
+    public void setStock(Integer stock) {
+        this.stock = stock;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getImage() {
+        return image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
+    }
+
     public Double getRating() {
-        return rating;
+        return rating != null ? rating : 0.0;
     }
-    
+
     public void setRating(Double rating) {
-        this.rating = rating != null ? rating : 0.0;
+        this.rating = rating;
     }
-    
+
     public Integer getSales() {
-        return sales;
+        return sales != null ? sales : 0;
     }
-    
+
     public void setSales(Integer sales) {
-        this.sales = sales != null ? sales : 0;
+        this.sales = sales;
     }
 }
