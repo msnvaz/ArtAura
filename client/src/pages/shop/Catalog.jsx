@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 
 import Navbar from '../../components/Navbar'; // Changed import
+import Toast from '../../components/Toast';
+import { useToast } from '../../hooks/useToast';
 
 import { 
   Search, 
@@ -19,6 +21,8 @@ import {
 } from 'lucide-react';
 
 const CatalogManagement = () => {
+  const { toast, showToast, hideToast } = useToast();
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -146,7 +150,7 @@ const CatalogManagement = () => {
   };
 
   // Fetch products from backend
-  const fetchProducts = async () => {
+  const fetchProducts = async (showSuccessMessage = false) => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
@@ -166,17 +170,23 @@ const CatalogManagement = () => {
       const data = await response.json();
       setProducts(data);
       setError(null);
+      
+      // Show success message only when manually refreshing
+      if (showSuccessMessage && data.length > 0) {
+        showToast("📦 Products refreshed successfully!", "success", 2000);
+      }
     } catch (err) {
       console.error("Error fetching products:", err);
       setError("Failed to load products");
+      showToast("❌ Failed to load products. Please try again.", "error", 4000);
     } finally {
       setLoading(false);
     }
   };
 
-  // Fetch products on component mount
+  // Fetch products on component mount (without success message)
   useEffect(() => {
-    fetchProducts();
+    fetchProducts(false);
   }, []);
 
   const handleAddProduct = async (e) => {
@@ -185,7 +195,7 @@ const CatalogManagement = () => {
     const token = localStorage.getItem("token");
 
     if (!token) {
-      alert("You must be logged in to add a product.");
+      showToast("❌ You must be logged in to add a product.", "error", 3000);
       return;
     }
 
@@ -198,8 +208,8 @@ const CatalogManagement = () => {
         stock: parseInt(newProduct.stock),
         status: getStatus(parseInt(newProduct.stock)),
         image: newProduct.image || '/src/assets/catalog.jpeg',
-        rating: 0.0, // Default rating for new products
-        sales: 0 // Default sales for new products
+        rating: 0.0,
+        sales: 0
       };
 
       const response = await fetch("http://localhost:8081/api/products/add", {
@@ -213,12 +223,11 @@ const CatalogManagement = () => {
 
       if (!response.ok) {
         const error = await response.json();
-        alert(error.message || "Failed to add product");
+        showToast(`❌ ${error.message || "Failed to add product"}`, "error", 2000);
         return;
       }
 
-      const result = await response.text();
-      alert(result || "Product added successfully!");
+      showToast(`✨ Product "${newProduct.name}" created successfully!`, "create", 2500);
 
       // Reset form and close modal
       setNewProduct({
@@ -232,12 +241,10 @@ const CatalogManagement = () => {
       });
 
       setShowAddModal(false);
-      
-      // Refresh products list
       fetchProducts();
     } catch (err) {
       console.error("Error while adding product:", err);
-      alert("Server error. Please try again later.");
+      showToast("❌ Server error. Please try again later.", "error", 4000);
     }
   };
 
@@ -247,7 +254,7 @@ const CatalogManagement = () => {
     const token = localStorage.getItem("token");
 
     if (!token) {
-      alert("You must be logged in to edit a product.");
+      showToast("❌ You must be logged in to edit a product.", "error", 3000);
       return;
     }
 
@@ -275,22 +282,18 @@ const CatalogManagement = () => {
 
       if (!response.ok) {
         const error = await response.json();
-        alert(error.message || "Failed to update product");
+        showToast(`❌ ${error.message || "Failed to update product"}`, "error", 2000);
         return;
       }
 
-      const result = await response.text();
-      alert(result || "Product updated successfully!");
+      showToast(`🔄 Product "${productToEdit.name}" updated successfully!`, "update", 2500);
 
-      // Close modal and refresh products list
       setShowEditModal(false);
       setProductToEdit(null);
-      
-      // Refresh products list
       fetchProducts();
     } catch (err) {
       console.error("Error while updating product:", err);
-      alert("Server error. Please try again later.");
+      showToast("❌ Server error. Please try again later.", "error", 4000);
     }
   };
 
@@ -298,11 +301,13 @@ const CatalogManagement = () => {
     const token = localStorage.getItem("token");
 
     if (!token) {
-      alert("You must be logged in to delete a product.");
+      showToast("❌ You must be logged in to delete a product.", "error", 3000);
       return;
     }
 
     try {
+      const productName = productToDelete.name;
+      
       const response = await fetch(`http://localhost:8081/api/products/delete/${productToDelete.id}`, {
         method: "DELETE",
         headers: {
@@ -313,22 +318,18 @@ const CatalogManagement = () => {
 
       if (!response.ok) {
         const error = await response.json();
-        alert(error.message || "Failed to delete product");
+        showToast(`❌ ${error.message || "Failed to delete product"}`, "error", 2000);
         return;
       }
 
-      const result = await response.text();
-      alert(result || "Product deleted successfully!");
+      showToast(`🗑️ Product "${productName}" deleted successfully!`, "delete", 2500);
 
-      // Close modal and refresh products list
       setShowDeleteModal(false);
       setProductToDelete(null);
-      
-      // Refresh products list
       fetchProducts();
     } catch (err) {
       console.error("Error while deleting product:", err);
-      alert("Server error. Please try again later.");
+      showToast("❌ Server error. Please try again later.", "error", 4000);
     }
   };
 
@@ -354,7 +355,16 @@ const CatalogManagement = () => {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       
-      {/* Main Content Container with minimal left/right margins */}
+      {/* Toast Notification - Auto closes, no manual close button */}
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={hideToast}
+        duration={toast.duration}
+      />
+      
+      {/* Main Content Container */}
       <div className="pt-4 px-0 sm:px-1 lg:px-2 max-w-full mx-0">
         {/* Header Section */}
         <div className="mb-4">
@@ -389,16 +399,26 @@ const CatalogManagement = () => {
               </div>
             </div>
 
-            {/* Add Product Button */}
-            <button 
-              onClick={() => setShowAddModal(true)}
-              className="bg-gradient-to-r from-[#D87C5A] to-[#5D3A00] text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
-            >
-              <Plus className="w-4 h-4 inline mr-2" />
-              Add Product
-            </button>
+            <div className="flex items-center gap-3">
+              {/* Refresh Button */}
+              <button 
+                onClick={() => fetchProducts(true)} // Show success message when manually refreshing
+                className="bg-white border border-[#FFE4D6] text-[#5D3A00] px-4 py-3 rounded-xl font-semibold hover:bg-[#FFF5E1] hover:border-[#D87C5A] transition-all duration-300 flex items-center gap-2"
+              >
+                <Package className="w-4 h-4" />
+                Refresh
+              </button>
+              
+              {/* Add Product Button */}
+              <button 
+                onClick={() => setShowAddModal(true)}
+                className="bg-gradient-to-r from-[#D87C5A] to-[#5D3A00] text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
+              >
+                <Plus className="w-4 h-4 inline mr-2" />
+                Add Product
+              </button>
+            </div>
           </div>
-
         </div>
 
         {/* Loading state */}
