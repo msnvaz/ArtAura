@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { Calendar, X } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import axios from "axios";
+const API_URL = import.meta.env.VITE_API_URL;
 
-const ExhibitionPostForm = () => {
+const ExhibitionPostForm = ({ exhibitionPosts, setExhibitionPosts }) => {
   const { auth } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -21,6 +23,10 @@ const ExhibitionPostForm = () => {
     contactPhone: "",
     requirements: "",
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [formErrors, setFormErrors] = useState({});
 
   const categories = [
     "Contemporary Art",
@@ -49,28 +55,85 @@ const ExhibitionPostForm = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const validateForm = () => {
+    const errors = {};
+    if (!formData.startDate) errors.startDate = "Start date is required.";
+    if (!formData.endDate) errors.endDate = "End date is required.";
+    if (
+      formData.startDate &&
+      formData.endDate &&
+      formData.endDate < formData.startDate
+    ) {
+      errors.endDate = "End date cannot be earlier than start date.";
+    }
+    if (!formData.startTime) errors.startTime = "Start time is required.";
+    if (!formData.endTime) errors.endTime = "End time is required.";
+    if (!formData.organizer) errors.organizer = "Organizer is required.";
+    if (!formData.contactEmail)
+      errors.contactEmail = "Contact email is required.";
+    else if (!/^\S+@\S+\.\S+$/.test(formData.contactEmail))
+      errors.contactEmail = "Invalid email format.";
+    if (!formData.contactPhone)
+      errors.contactPhone = "Contact number is required.";
+    else if (!/^\d{10,}$/.test(formData.contactPhone.replace(/\D/g, "")))
+      errors.contactPhone = "Invalid contact number.";
+    return errors;
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle form submission
-    console.log("Exhibition form submitted:", formData);
-    // Reset form and close
-    setFormData({
-      title: "",
-      description: "",
-      location: "",
-      startDate: "",
-      endDate: "",
-      startTime: "",
-      endTime: "",
-      organizer: "",
-      category: "",
-      entryFee: "",
-      maxParticipants: "",
-      contactEmail: "",
-      contactPhone: "",
-      requirements: "",
-    });
-    setShowForm(false);
+    setLoading(true);
+    setError("");
+    setSuccess("");
+    const errors = validateForm();
+    setFormErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      setLoading(false);
+      return;
+    }
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_URL}/api/buyer/exhibitions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(formData),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to post exhibition.");
+      }
+      const newPost = await response.json();
+      if (setExhibitionPosts) {
+        setExhibitionPosts((prev) => [newPost, ...(prev || [])]);
+      }
+      setSuccess("Exhibition posted successfully!");
+      setFormData({
+        title: "",
+        description: "",
+        location: "",
+        startDate: "",
+        endDate: "",
+        startTime: "",
+        endTime: "",
+        organizer: "",
+        category: "",
+        entryFee: "",
+        maxParticipants: "",
+        contactEmail: "",
+        contactPhone: "",
+        requirements: "",
+      });
+      setShowForm(false);
+      setFormErrors({});
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCancel = () => {
@@ -136,6 +199,10 @@ const ExhibitionPostForm = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {error && <div className="text-red-600 text-sm mb-2">{error}</div>}
+          {success && (
+            <div className="text-green-600 text-sm mb-2">{success}</div>
+          )}
           {/* Exhibition Title */}
           <div>
             <label className="block text-sm font-medium text-[#7f5539] mb-1">
@@ -151,7 +218,6 @@ const ExhibitionPostForm = () => {
               placeholder="Enter exhibition title"
             />
           </div>
-
           {/* Description */}
           <div>
             <label className="block text-sm font-medium text-[#7f5539] mb-1">
@@ -167,7 +233,6 @@ const ExhibitionPostForm = () => {
               placeholder="Describe the exhibition, theme, featured artists, etc."
             />
           </div>
-
           {/* Location and Category */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -204,7 +269,6 @@ const ExhibitionPostForm = () => {
               </select>
             </div>
           </div>
-
           {/* Date and Time */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -219,6 +283,11 @@ const ExhibitionPostForm = () => {
                 required
                 className="w-full px-4 py-2 border border-[#FFD95A] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFD95A] text-[#7f5539]"
               />
+              {formErrors.startDate && (
+                <div className="text-red-600 text-xs mt-1">
+                  {formErrors.startDate}
+                </div>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-[#7f5539] mb-1">
@@ -232,50 +301,71 @@ const ExhibitionPostForm = () => {
                 required
                 className="w-full px-4 py-2 border border-[#FFD95A] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFD95A] text-[#7f5539]"
               />
+              {formErrors.endDate && (
+                <div className="text-red-600 text-xs mt-1">
+                  {formErrors.endDate}
+                </div>
+              )}
             </div>
           </div>
-
           {/* Time and Organizer */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-[#7f5539] mb-1">
-                Start Time
+                Start Time *
               </label>
               <input
                 type="time"
                 name="startTime"
                 value={formData.startTime}
                 onChange={handleInputChange}
+                required
                 className="w-full px-4 py-2 border border-[#FFD95A] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFD95A] text-[#7f5539]"
               />
+              {formErrors.startTime && (
+                <div className="text-red-600 text-xs mt-1">
+                  {formErrors.startTime}
+                </div>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-[#7f5539] mb-1">
-                End Time
+                End Time *
               </label>
               <input
                 type="time"
                 name="endTime"
                 value={formData.endTime}
                 onChange={handleInputChange}
+                required
                 className="w-full px-4 py-2 border border-[#FFD95A] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFD95A] text-[#7f5539]"
               />
+              {formErrors.endTime && (
+                <div className="text-red-600 text-xs mt-1">
+                  {formErrors.endTime}
+                </div>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-[#7f5539] mb-1">
-                Organizer
+                Organizer *
               </label>
               <input
                 type="text"
                 name="organizer"
                 value={formData.organizer}
                 onChange={handleInputChange}
+                required
                 className="w-full px-4 py-2 border border-[#FFD95A] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFD95A] text-[#7f5539]"
                 placeholder="Organization name"
               />
+              {formErrors.organizer && (
+                <div className="text-red-600 text-xs mt-1">
+                  {formErrors.organizer}
+                </div>
+              )}
             </div>
           </div>
-
           {/* Entry Fee and Max Participants */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -305,37 +395,47 @@ const ExhibitionPostForm = () => {
               />
             </div>
           </div>
-
           {/* Contact Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-[#7f5539] mb-1">
-                Contact Email
+                Contact Email *
               </label>
               <input
                 type="email"
                 name="contactEmail"
                 value={formData.contactEmail}
                 onChange={handleInputChange}
+                required
                 className="w-full px-4 py-2 border border-[#FFD95A] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFD95A] text-[#7f5539]"
                 placeholder="e.g. info@lankaart.lk"
               />
+              {formErrors.contactEmail && (
+                <div className="text-red-600 text-xs mt-1">
+                  {formErrors.contactEmail}
+                </div>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-[#7f5539] mb-1">
-                Contact Phone
+                Contact Phone *
               </label>
               <input
                 type="tel"
                 name="contactPhone"
                 value={formData.contactPhone}
                 onChange={handleInputChange}
+                required
                 className="w-full px-4 py-2 border border-[#FFD95A] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFD95A] text-[#7f5539]"
                 placeholder="e.g. 011-2345678"
               />
+              {formErrors.contactPhone && (
+                <div className="text-red-600 text-xs mt-1">
+                  {formErrors.contactPhone}
+                </div>
+              )}
             </div>
           </div>
-
           {/* Requirements */}
           <div>
             <label className="block text-sm font-medium text-[#7f5539] mb-1">
@@ -350,21 +450,22 @@ const ExhibitionPostForm = () => {
               placeholder="e.g. Only Sri Lankan artists, artworks inspired by local culture, etc."
             />
           </div>
-
           {/* Submit Buttons */}
           <div className="flex justify-end gap-3 pt-4">
             <button
               type="button"
               onClick={handleCancel}
               className="px-6 py-2 border border-[#FFD95A] text-[#7f5539] rounded-lg hover:bg-[#FFD95A]/20 transition-colors"
+              disabled={loading}
             >
               Cancel
             </button>
             <button
               type="submit"
               className="px-6 py-2 bg-[#D87C5A] hover:bg-[#7f5539] text-white rounded-lg font-semibold transition-colors"
+              disabled={loading}
             >
-              Post Exhibition
+              {loading ? "Posting..." : "Post Exhibition"}
             </button>
           </div>
         </form>
