@@ -241,27 +241,95 @@ const CatalogManagement = () => {
     }
   };
 
-   const handleEditProduct = (e) => {
+  const handleEditProduct = async (e) => {
     e.preventDefault();
-    const updatedProducts = products.map(p => 
-      p.id === productToEdit.id 
-        ? { 
-          ...productToEdit, 
-          price: parseFloat(productToEdit.price),
-          stock: parseInt(productToEdit.stock),
-          status: getStatus(parseInt(productToEdit.stock))
-        }
-        : p
-    );
-    setProducts(updatedProducts);
-    setShowEditModal(false);
-    setProductToEdit(null);
+
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      alert("You must be logged in to edit a product.");
+      return;
+    }
+
+    try {
+      const productData = {
+        name: productToEdit.name,
+        sku: productToEdit.sku,
+        category: productToEdit.category,
+        price: parseFloat(productToEdit.price),
+        stock: parseInt(productToEdit.stock),
+        status: getStatus(parseInt(productToEdit.stock)),
+        image: productToEdit.image,
+        rating: parseFloat(productToEdit.rating) || 0.0,
+        sales: parseInt(productToEdit.sales) || 0
+      };
+
+      const response = await fetch(`http://localhost:8081/api/products/update/${productToEdit.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(productData),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        alert(error.message || "Failed to update product");
+        return;
+      }
+
+      const result = await response.text();
+      alert(result || "Product updated successfully!");
+
+      // Close modal and refresh products list
+      setShowEditModal(false);
+      setProductToEdit(null);
+      
+      // Refresh products list
+      fetchProducts();
+    } catch (err) {
+      console.error("Error while updating product:", err);
+      alert("Server error. Please try again later.");
+    }
   };
 
-  const handleDeleteProduct = () => {
-    setProducts(products.filter(p => p.id !== productToDelete.id));
-    setShowDeleteModal(false);
-    setProductToDelete(null);
+  const handleDeleteProduct = async () => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      alert("You must be logged in to delete a product.");
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:8081/api/products/delete/${productToDelete.id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        alert(error.message || "Failed to delete product");
+        return;
+      }
+
+      const result = await response.text();
+      alert(result || "Product deleted successfully!");
+
+      // Close modal and refresh products list
+      setShowDeleteModal(false);
+      setProductToDelete(null);
+      
+      // Refresh products list
+      fetchProducts();
+    } catch (err) {
+      console.error("Error while deleting product:", err);
+      alert("Server error. Please try again later.");
+    }
   };
 
   const openEditModal = (product) => {
