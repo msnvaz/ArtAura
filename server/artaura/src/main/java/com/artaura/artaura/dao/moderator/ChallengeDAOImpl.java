@@ -1,3 +1,4 @@
+
 package com.artaura.artaura.dao.moderator;
 
 import java.util.List;
@@ -13,6 +14,12 @@ import com.artaura.artaura.dto.moderator.ChallengeListDTO;
 public class ChallengeDAOImpl implements ChallengeDAO {
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Override
+    public void deleteChallenge(int challengeId) {
+        String sql = "DELETE FROM challenges WHERE id = ?";
+        jdbcTemplate.update(sql, challengeId);
+    }
 
     @Override
     public void insertChallenge(ChallengeDTO challenge, String moderatorId) {
