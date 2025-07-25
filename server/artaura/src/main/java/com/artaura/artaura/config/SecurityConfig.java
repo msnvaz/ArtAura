@@ -42,7 +42,8 @@ public class SecurityConfig {
                                 "/api/buyer/signup",
                                 "/api/shop/signup",
                                 "/uploads/**",   // <<< THIS ALLOWS IMAGE ACCESS
-                                "/api/admin/artworks/**"  // <<< TEMPORARY: Allow admin artwork endpoints for development
+                                "/api/admin/artworks/**", // <<< TEMPORARY: Allow admin artwork endpoints for development
+                                "/api/buyer/exhibitions/**"
                         ).permitAll() // ✅ Public endpoints
 
                         .requestMatchers("/api/posts/create").authenticated()
