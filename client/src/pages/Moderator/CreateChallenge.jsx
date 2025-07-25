@@ -1,3 +1,4 @@
+import axios from "axios";
 import {
   Calendar,
   Clock,
@@ -5,10 +6,10 @@ import {
   Plus,
   Send,
   Shield,
-  Trophy,
   Sparkles,
-  Users,
   Target,
+  Trophy,
+  Users,
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -129,12 +130,27 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
           : null,
       };
 
-      if (onSubmit) await onSubmit(challengeData);
+      // Get JWT token from localStorage (adjust key if needed)
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("You are not authenticated. Please log in.");
+        setIsSubmitting(false);
+        return;
+      }
 
-      // Show success message
+      // Send POST request to backend
+
+      await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/challenges`,
+        challengeData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
       alert("Challenge created successfully!");
-
-      // Reset form
       setFormData({
         title: "",
         publishDate: "",
@@ -146,12 +162,13 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
         maxParticipants: "",
         rewards: "",
       });
-
-      // Navigate back to dashboard
       navigate("/moderatordashboard");
     } catch (error) {
       console.error("Error creating challenge:", error);
-      alert("Error creating challenge. Please try again.");
+      alert(
+        error.response?.data?.message ||
+          "Error creating challenge. Please try again."
+      );
     } finally {
       setIsSubmitting(false);
     }
