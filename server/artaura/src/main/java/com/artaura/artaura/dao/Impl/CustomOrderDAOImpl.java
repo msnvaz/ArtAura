@@ -38,25 +38,25 @@ public class CustomOrderDAOImpl implements CustomOrderDAO {
             """;
 
         return jdbc.query(sql, (rs, rowNum) -> new CustomOrderDTO(
-                rs.getLong("order_id"),
-                rs.getLong("buyer_id"),
-                rs.getLong("artist_id"),
-                rs.getString("buyer_name"),
-                rs.getString("buyer_email"),
-                rs.getString("title"),
-                rs.getString("description"),
-                rs.getString("reference_image_url"),
-                rs.getBigDecimal("budget"),
-                rs.getString("preferred_size"),
-                rs.getString("preferred_medium"),
-                rs.getDate("deadline_date") != null ? rs.getDate("deadline_date").toLocalDate() : null,
-                rs.getString("status"),
-                rs.getObject("artist_estimated_days", Integer.class),
-                rs.getString("artist_notes"),
-                rs.getTimestamp("created_at") != null ? rs.getTimestamp("created_at").toLocalDateTime() : null,
-                rs.getTimestamp("updated_at") != null ? rs.getTimestamp("updated_at").toLocalDateTime() : null,
-                rs.getTimestamp("accepted_at") != null ? rs.getTimestamp("accepted_at").toLocalDateTime() : null,
-                rs.getTimestamp("rejected_at") != null ? rs.getTimestamp("rejected_at").toLocalDateTime() : null
+            rs.getLong("order_id"),
+            rs.getLong("buyer_id"),
+            rs.getLong("artist_id"),
+            rs.getString("buyer_name"),
+            rs.getString("buyer_email"),
+            rs.getString("title"),
+            rs.getString("description"),
+            rs.getString("reference_image_url"),
+            rs.getBigDecimal("budget"),
+            rs.getString("preferred_size"),
+            rs.getString("preferred_medium"),
+            rs.getDate("deadline_date") != null ? rs.getDate("deadline_date").toLocalDate() : null,
+            rs.getString("status"),
+            rs.getObject("artist_estimated_days", Integer.class),
+            rs.getString("artist_notes"),
+            rs.getTimestamp("created_at") != null ? rs.getTimestamp("created_at").toLocalDateTime() : null,
+            rs.getTimestamp("updated_at") != null ? rs.getTimestamp("updated_at").toLocalDateTime() : null,
+            rs.getTimestamp("accepted_at") != null ? rs.getTimestamp("accepted_at").toLocalDateTime() : null,
+            rs.getTimestamp("rejected_at") != null ? rs.getTimestamp("rejected_at").toLocalDateTime() : null
         ), artistId);
     }
 
@@ -77,25 +77,25 @@ public class CustomOrderDAOImpl implements CustomOrderDAO {
             """;
 
         return jdbc.query(sql, (rs, rowNum) -> new CustomOrderDTO(
-                rs.getLong("order_id"),
-                rs.getLong("buyer_id"),
-                rs.getLong("artist_id"),
-                rs.getString("artist_name"), // This will be artist name for buyer view
-                rs.getString("artist_email"),
-                rs.getString("title"),
-                rs.getString("description"),
-                rs.getString("reference_image_url"),
-                rs.getBigDecimal("budget"),
-                rs.getString("preferred_size"),
-                rs.getString("preferred_medium"),
-                rs.getDate("deadline_date") != null ? rs.getDate("deadline_date").toLocalDate() : null,
-                rs.getString("status"),
-                rs.getObject("artist_estimated_days", Integer.class),
-                rs.getString("artist_notes"),
-                rs.getTimestamp("created_at") != null ? rs.getTimestamp("created_at").toLocalDateTime() : null,
-                rs.getTimestamp("updated_at") != null ? rs.getTimestamp("updated_at").toLocalDateTime() : null,
-                rs.getTimestamp("accepted_at") != null ? rs.getTimestamp("accepted_at").toLocalDateTime() : null,
-                rs.getTimestamp("rejected_at") != null ? rs.getTimestamp("rejected_at").toLocalDateTime() : null
+            rs.getLong("order_id"),
+            rs.getLong("buyer_id"),
+            rs.getLong("artist_id"),
+            rs.getString("artist_name"), // This will be artist name for buyer view
+            rs.getString("artist_email"),
+            rs.getString("title"),
+            rs.getString("description"),
+            rs.getString("reference_image_url"),
+            rs.getBigDecimal("budget"),
+            rs.getString("preferred_size"),
+            rs.getString("preferred_medium"),
+            rs.getDate("deadline_date") != null ? rs.getDate("deadline_date").toLocalDate() : null,
+            rs.getString("status"),
+            rs.getObject("artist_estimated_days", Integer.class),
+            rs.getString("artist_notes"),
+            rs.getTimestamp("created_at") != null ? rs.getTimestamp("created_at").toLocalDateTime() : null,
+            rs.getTimestamp("updated_at") != null ? rs.getTimestamp("updated_at").toLocalDateTime() : null,
+            rs.getTimestamp("accepted_at") != null ? rs.getTimestamp("accepted_at").toLocalDateTime() : null,
+            rs.getTimestamp("rejected_at") != null ? rs.getTimestamp("rejected_at").toLocalDateTime() : null
         ), buyerId);
     }
 
@@ -116,25 +116,25 @@ public class CustomOrderDAOImpl implements CustomOrderDAO {
 
         try {
             CustomOrderDTO order = jdbc.queryForObject(sql, (rs, rowNum) -> new CustomOrderDTO(
-                    rs.getLong("order_id"),
-                    rs.getLong("buyer_id"),
-                    rs.getLong("artist_id"),
-                    rs.getString("buyer_name"),
-                    rs.getString("buyer_email"),
-                    rs.getString("title"),
-                    rs.getString("description"),
-                    rs.getString("reference_image_url"),
-                    rs.getBigDecimal("budget"),
-                    rs.getString("preferred_size"),
-                    rs.getString("preferred_medium"),
-                    rs.getDate("deadline_date") != null ? rs.getDate("deadline_date").toLocalDate() : null,
-                    rs.getString("status"),
-                    rs.getObject("artist_estimated_days", Integer.class),
-                    rs.getString("artist_notes"),
-                    rs.getTimestamp("created_at") != null ? rs.getTimestamp("created_at").toLocalDateTime() : null,
-                    rs.getTimestamp("updated_at") != null ? rs.getTimestamp("updated_at").toLocalDateTime() : null,
-                    rs.getTimestamp("accepted_at") != null ? rs.getTimestamp("accepted_at").toLocalDateTime() : null,
-                    rs.getTimestamp("rejected_at") != null ? rs.getTimestamp("rejected_at").toLocalDateTime() : null
+                rs.getLong("order_id"),
+                rs.getLong("buyer_id"),
+                rs.getLong("artist_id"),
+                rs.getString("buyer_name"),
+                rs.getString("buyer_email"),
+                rs.getString("title"),
+                rs.getString("description"),
+                rs.getString("reference_image_url"),
+                rs.getBigDecimal("budget"),
+                rs.getString("preferred_size"),
+                rs.getString("preferred_medium"),
+                rs.getDate("deadline_date") != null ? rs.getDate("deadline_date").toLocalDate() : null,
+                rs.getString("status"),
+                rs.getObject("artist_estimated_days", Integer.class),
+                rs.getString("artist_notes"),
+                rs.getTimestamp("created_at") != null ? rs.getTimestamp("created_at").toLocalDateTime() : null,
+                rs.getTimestamp("updated_at") != null ? rs.getTimestamp("updated_at").toLocalDateTime() : null,
+                rs.getTimestamp("accepted_at") != null ? rs.getTimestamp("accepted_at").toLocalDateTime() : null,
+                rs.getTimestamp("rejected_at") != null ? rs.getTimestamp("rejected_at").toLocalDateTime() : null
             ), orderId);
             return Optional.of(order);
         } catch (Exception e) {
@@ -155,12 +155,12 @@ public class CustomOrderDAOImpl implements CustomOrderDAO {
             """;
 
         LocalDateTime now = LocalDateTime.now();
-        jdbc.update(sql,
-                acceptRequest.getEstimatedDays(),
-                acceptRequest.getArtistNotes(),
-                now,
-                now,
-                orderId);
+        jdbc.update(sql, 
+            acceptRequest.getEstimatedDays(),
+            acceptRequest.getArtistNotes(),
+            now,
+            now,
+            orderId);
     }
 
     @Override
@@ -193,7 +193,7 @@ public class CustomOrderDAOImpl implements CustomOrderDAO {
             """;
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
-
+        
         jdbc.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             ps.setLong(1, orderDTO.getBuyerId());

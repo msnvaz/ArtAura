@@ -13,6 +13,7 @@ import ExhibitionsSection from '../../components/artist/ExhibitionsSection';
 import AchievementsSection from '../../components/artist/AchievementsSection';
 import EditArtworkModal from '../../components/artworks/EditArtworkModal';
 import DeleteConfirmationModal from '../../components/artworks/DeleteConfirmationModal';
+import { AcceptOrderModal, RejectOrderModal } from '../../components/orders/OrderModals';
 import { useAuth } from "../../context/AuthContext";
 import {
   Plus,
@@ -1431,7 +1432,7 @@ const ArtistPortfolio = () => {
     }
   };
 
-  // Order handler functions for modals
+  // Order handler functions
   const handleAcceptOrder = (orderId) => {
     const order = orders.find(o => o.orderId === orderId);
     if (order) {
@@ -2320,11 +2321,11 @@ const ArtistPortfolio = () => {
                         <div className="flex flex-col items-end space-y-3">
                           {/* Status Badge */}
                           <span className={`px-3 py-1 rounded-full text-xs font-medium ${order.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                            order.status === 'ACCEPTED' ? 'bg-green-100 text-green-800' :
-                              order.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
-                                order.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-800' :
-                                  order.status === 'COMPLETED' ? 'bg-purple-100 text-purple-800' :
-                                    'bg-gray-100 text-gray-800'
+                              order.status === 'ACCEPTED' ? 'bg-green-100 text-green-800' :
+                                order.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
+                                  order.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-800' :
+                                    order.status === 'COMPLETED' ? 'bg-purple-100 text-purple-800' :
+                                      'bg-gray-100 text-gray-800'
                             }`}>
                             {order.status}
                           </span>
@@ -2934,16 +2935,16 @@ const ArtistPortfolio = () => {
 
       {/* Order Modals */}
       <AcceptOrderModal
-        order={selectedOrder}
-        isOpen={isAcceptingOrder}
-        onClose={() => setIsAcceptingOrder(false)}
-        onSuccess={handleOrderActionSuccess}
+        isOpen={acceptModalOpen}
+        onClose={closeAcceptModal}
+        orderId={selectedOrderId}
+        onAccept={handleAcceptOrder}
       />
       <RejectOrderModal
-        order={selectedOrder}
-        isOpen={isRejectingOrder}
-        onClose={() => setIsRejectingOrder(false)}
-        onSuccess={handleOrderActionSuccess}
+        isOpen={rejectModalOpen}
+        onClose={closeRejectModal}
+        orderId={selectedOrderId}
+        onReject={handleRejectOrder}
       />
     </div>
   );

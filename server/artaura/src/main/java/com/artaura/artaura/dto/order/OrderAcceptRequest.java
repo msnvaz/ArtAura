@@ -3,14 +3,12 @@ package com.artaura.artaura.dto.order;
 import java.math.BigDecimal;
 
 public class OrderAcceptRequest {
-
     private Integer estimatedDays;
     private String artistNotes;
     private BigDecimal revisedBudget; // Optional - if artist wants to suggest different budget
 
     // Default constructor
-    public OrderAcceptRequest() {
-    }
+    public OrderAcceptRequest() {}
 
     // Constructor with all fields
     public OrderAcceptRequest(Integer estimatedDays, String artistNotes, BigDecimal revisedBudget) {
