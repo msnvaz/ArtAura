@@ -8,4 +8,6 @@ public interface ShopService {
     ShopDTO getShopByEmail(String email);
 
     void updateShop(Long shopId, ShopDTO shop);
+
+    ShopDTO getShopByUserId(Long userId);
 }

@@ -1,11 +1,14 @@
 package com.artaura.artaura.dto.shop;
 
 import lombok.Data;
+
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 @Data
 public class ShopDTO {
     private Long shopId;
+    private Long userId;
     private String shopName;
     private String ownerName;
     private String email;
@@ -20,6 +23,24 @@ public class ShopDTO {
 
     // Default constructor
     public ShopDTO() {
+    }
+    
+
+    // Getters and Setters
+    public Long getShopId() {
+        return shopId;
+    }
+
+    public void setShopId(Long shopId) {
+        this.shopId = shopId;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 
     // Constructor with all fields
@@ -39,5 +60,17 @@ public class ShopDTO {
         this.agreedTerms = agreedTerms;
         this.status = status;
         this.createdAt = createdAt;
+    }
+
+
+    public void setCreatedAt(Timestamp timestamp) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'setCreatedAt'");
+    }
+
+
+    public void setCreatedAt(LocalDateTime localDateTime) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'setCreatedAt'");
     }
 }
