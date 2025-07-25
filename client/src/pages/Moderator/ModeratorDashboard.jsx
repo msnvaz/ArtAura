@@ -1,24 +1,20 @@
 import {
   Award,
   BarChart3,
-  Calendar,
   Clock,
-  Edit,
-  Eye,
-  Filter,
   Plus,
   Search,
   Settings,
   Shield,
   Star,
-  Trash2,
   Trophy,
   User,
   Users
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from 'react';
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import ChallengeList from './ChallengeList';
 
 const ModeratorDashboard = () => {
   const navigate = useNavigate();
@@ -57,53 +53,26 @@ const ModeratorDashboard = () => {
     setShowLogoutConfirm(false);
   };
 
-  // Challenge data for the integrated Challenge List
-  const challenges = [
-    {
-      id: 1,
-      title: 'Sri Lankan Heritage Art Challenge 2025',
-      description: 'Create artwork inspired by Sri Lankan cultural heritage, traditional architecture, and ancient Buddhist temples.',
-      status: 'active',
-      publishDate: '2025-07-01',
-      deadline: '2025-08-15',
-      participants: 156,
-      submissions: 89,
-      category: 'Traditional Art'
-    },
-    {
-      id: 2,
-      title: 'Kandy Perahera Digital Art Contest',
-      description: 'Design digital artworks capturing the vibrant colors and cultural essence of the famous Kandy Esala Perahera festival.',
-      status: 'review',
-      publishDate: '2025-06-15',
-      deadline: '2025-08-10',
-      participants: 203,
-      submissions: 145,
-      category: 'Digital Art'
-    },
-    {
-      id: 3,
-      title: 'Ceylon Tea Plantation Landscape Art',
-      description: 'Paint or photograph the stunning tea plantation landscapes of Sri Lanka\'s hill country including Nuwara Eliya and Ella.',
-      status: 'completed',
-      publishDate: '2025-05-20',
-      deadline: '2025-07-05',
-      participants: 89,
-      submissions: 67,
-      category: 'Landscape'
-    },
-    {
-      id: 4,
-      title: 'Sigiriya Rock Fortress Art Challenge',
-      description: 'Create artistic interpretations of the ancient Sigiriya Rock Fortress and its famous frescoes.',
-      status: 'draft',
-      publishDate: '2025-08-20',
-      deadline: '2025-09-30',
-      participants: 0,
-      submissions: 0,
-      category: 'Historical Art'
-    }
-  ];
+  // Challenge data fetched from backend
+  const [challenges, setChallenges] = useState([]);
+  const [loadingChallenges, setLoadingChallenges] = useState(true);
+  const [challengesError, setChallengesError] = useState(null);
+
+  useEffect(() => {
+    const fetchChallenges = async () => {
+      setLoadingChallenges(true);
+      setChallengesError(null);
+      try {
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/challenges`);
+        setChallenges(response.data);
+      } catch (err) {
+        setChallengesError('Failed to load challenges.');
+      } finally {
+        setLoadingChallenges(false);
+      }
+    };
+    fetchChallenges();
+  }, []);
 
   // Dummy contestant data for scoring criteria
   const getContestantData = (challengeId) => {
@@ -566,111 +535,7 @@ const ModeratorDashboard = () => {
       case "dashboard":
         return renderDashboard();
       case 'challenges':
-        // Integrated Challenge Details Dashboard (previously from ChallengeList)
-        return (
-          <div className="space-y-6 w-full">
-            {/* Header */}
-            <div className="flex justify-between items-center">
-              <div>
-                <h2 className="text-xl font-bold text-amber-900">All Challenges</h2>
-                <p className="text-amber-700 mt-1">View and manage challenge details</p>
-              </div>
-            </div>
-
-            {/* Filters */}
-            <div className="bg-white rounded-lg shadow-md p-6 smooth-transition">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                    <input
-                      type="text"
-                      placeholder="Search challenges..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                    />
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Filter size={20} className="text-gray-500" />
-                  <select
-                    value={filterStatus}
-                    onChange={(e) => setFilterStatus(e.target.value)}
-                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                  >
-                    <option value="all">All Status</option>
-                    <option value="draft">Draft</option>
-                    <option value="active">Active</option>
-                    <option value="review">Review</option>
-                    <option value="completed">Completed</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* Challenge Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredChallenges.map((challenge) => (
-                <div key={challenge.id} className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow card-animate">
-                  <div className="p-6">
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex items-center gap-2">
-                        <Trophy className="h-5 w-5 text-amber-600" />
-                        <span className="text-sm font-medium text-amber-800">{challenge.category}</span>
-                      </div>
-                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(challenge.status)}`}>
-                        {challenge.status.charAt(0).toUpperCase() + challenge.status.slice(1)}
-                      </span>
-                    </div>
-
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{challenge.title}</h3>
-                    <p className="text-gray-600 text-sm mb-4 line-clamp-2">{challenge.description}</p>
-
-                    <div className="space-y-2 mb-4">
-                      <div className="flex items-center gap-2 text-sm text-gray-500">
-                        <Calendar size={16} />
-                        <span>Deadline: {new Date(challenge.deadline).toLocaleDateString()}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-gray-500">
-                        <Users size={16} />
-                        <span>{challenge.participants} participants • {challenge.submissions} submissions</span>
-                      </div>
-                    </div>
-
-                    <div className="flex justify-between items-center pt-4 border-t border-gray-200">
-                      <div className="flex gap-2">
-                        <button className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors btn-animate">
-                          <Eye size={16} />
-                        </button>
-                        <button className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors btn-animate">
-                          <Edit size={16} />
-                        </button>
-                        <button className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors btn-animate">
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                      <button
-                        onClick={() => navigate(`/challenges/${challenge.id}`)}
-                        className="text-sm font-medium text-amber-800 hover:text-amber-900 btn-animate"
-                      >
-                        View Details →
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {filteredChallenges.length === 0 && (
-              <div className="text-center py-12">
-                <Trophy className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No challenges found</h3>
-                <p className="text-gray-500">Try adjusting your search or filter criteria.</p>
-              </div>
-            )}
-          </div>
-        );
+        return <ChallengeList />;
       case 'verification':
         // Inline Approved and Rejected Exhibitions
         return (
