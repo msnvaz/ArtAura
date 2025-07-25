@@ -19,8 +19,6 @@ public class ChallengeRowMapper implements RowMapper<ChallengeListDTO> {
         challenge.setDescription(rs.getString("description"));
         challenge.setMaxParticipants(rs.getInt("max_participants"));
         challenge.setRewards(rs.getString("rewards"));
-        challenge.setSponsorshipType(rs.getString("sponsorship_type"));
-        challenge.setSponsorshipMessage(rs.getString("sponsorship_message"));
         challenge.setRequestSponsorship(rs.getInt("request_sponsorship") == 1);
         challenge.setStatus(rs.getString("status"));
         challenge.setModeratorId(rs.getInt("moderator_id"));

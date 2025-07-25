@@ -17,17 +17,11 @@ public class ChallengeDAOImpl implements ChallengeDAO {
     @Override
     public void insertChallenge(ChallengeDTO challenge, String moderatorId) {
         // Determine request_sponsorship and status
-        boolean requestSponsorship = challenge.getSponsorshipRequest() != null;
+        boolean requestSponsorship = challenge.isRequestSponsorship();
         int requestSponsorshipValue = requestSponsorship ? 1 : 0;
         String status = requestSponsorship ? "draft" : "active";
 
-        String sql = "INSERT INTO challenges (title, category, publish_date_time, deadline_date_time, description, max_participants, rewards, sponsorship_type, sponsorship_message, request_sponsorship, status, moderator_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        String sponsorshipType = null;
-        String sponsorshipMessage = null;
-        if (requestSponsorship) {
-            sponsorshipType = challenge.getSponsorshipRequest().getType();
-            sponsorshipMessage = challenge.getSponsorshipRequest().getMessage();
-        }
+        String sql = "INSERT INTO challenges (title, category, publish_date_time, deadline_date_time, description, max_participants, rewards, request_sponsorship, status, moderator_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         jdbcTemplate.update(sql,
             challenge.getTitle(),
             challenge.getCategory(),
@@ -36,8 +30,6 @@ public class ChallengeDAOImpl implements ChallengeDAO {
             challenge.getDescription(),
             challenge.getMaxParticipants(),
             challenge.getRewards(),
-            sponsorshipType,
-            sponsorshipMessage,
             requestSponsorshipValue,
             status,
             moderatorId

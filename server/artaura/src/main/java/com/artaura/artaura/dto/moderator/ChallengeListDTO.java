@@ -12,8 +12,6 @@ public class ChallengeListDTO {
     private String description;
     private int maxParticipants;
     private String rewards;
-    private String sponsorshipType;
-    private String sponsorshipMessage;
     private boolean requestSponsorship;
     private String status;
     private int moderatorId;

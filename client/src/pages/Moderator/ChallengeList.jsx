@@ -61,7 +61,7 @@ const ChallengeList = () => {
   // State for edit form popup
   const [showEditModal, setShowEditModal] = useState(false);
   const [challengeToEdit, setChallengeToEdit] = useState(null);
-  const [editForm, setEditForm] = useState({ title: '', description: '', sponsorshipType: '', sponsorshipMessage: '', requestSponsorship: false });
+  const [editForm, setEditForm] = useState({ title: '', description: '', requestSponsorship: false });
 
 
 
@@ -70,8 +70,6 @@ const ChallengeList = () => {
     setEditForm({
       title: challenge.title || '',
       description: challenge.description || '',
-      sponsorshipType: challenge.sponsorshipType || '',
-      sponsorshipMessage: challenge.sponsorshipMessage || '',
       requestSponsorship: !!challenge.requestSponsorship
     });
     setShowEditModal(true);
@@ -279,17 +277,7 @@ const ChallengeList = () => {
                   </h3>
                   <p className="text-gray-600 text-sm mb-2 line-clamp-2">{challenge.description}</p>
 
-                  {/* Sponsorship Details */}
-                  {challenge.requestSponsorship && (
-                    <div className="mb-2">
-                      {challenge.sponsorshipType && (
-                        <div className="text-xs text-blue-700 font-medium">Type: {challenge.sponsorshipType}</div>
-                      )}
-                      {challenge.sponsorshipMessage && (
-                        <div className="text-xs text-blue-700">Message: {challenge.sponsorshipMessage}</div>
-                      )}
-                    </div>
-                  )}
+                  {/* Sponsorship badge only, no details */}
 
                   <div className="space-y-2 mb-4">
                     <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -377,9 +365,7 @@ const ChallengeList = () => {
                   </div>
                   {challengeToView.requestSponsorship && (
                     <div className="bg-blue-50 rounded-lg p-3 mt-2">
-                      <div className="font-semibold text-blue-700 mb-1">Sponsorship Details</div>
-                      <div className="text-sm text-blue-700">Type: {challengeToView.sponsorshipType}</div>
-                      <div className="text-sm text-blue-700">Message: {challengeToView.sponsorshipMessage}</div>
+                      <div className="font-semibold text-blue-700 mb-1">Sponsorship Requested</div>
                     </div>
                   )}
                   {challengeToView.scoringCriteria && (
@@ -457,30 +443,7 @@ const ChallengeList = () => {
               />
               <label className="text-sm">Request Sponsorship</label>
             </div>
-            {editForm.requestSponsorship && (
-              <>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Sponsorship Type</label>
-                  <input
-                    type="text"
-                    name="sponsorshipType"
-                    value={editForm.sponsorshipType}
-                    onChange={handleEditFormChange}
-                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Sponsorship Message</label>
-                  <textarea
-                    name="sponsorshipMessage"
-                    value={editForm.sponsorshipMessage}
-                    onChange={handleEditFormChange}
-                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                    rows={2}
-                  />
-                </div>
-              </>
-            )}
+            {/* No sponsorship type/message fields in edit modal */}
             <div className="flex gap-4 justify-center mt-6">
               <button
                 type="button"
