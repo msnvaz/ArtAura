@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import { Calendar, X } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import { useNotification } from "../../context/NotificationContext";
 import axios from "axios";
 const API_URL = import.meta.env.VITE_API_URL;
 
 const ExhibitionPostForm = ({ exhibitionPosts, setExhibitionPosts }) => {
   const { auth } = useAuth();
+  const { showSuccess, showError } = useNotification();
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
@@ -25,7 +27,6 @@ const ExhibitionPostForm = ({ exhibitionPosts, setExhibitionPosts }) => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [formErrors, setFormErrors] = useState({});
 
   const categories = [
@@ -80,11 +81,11 @@ const ExhibitionPostForm = ({ exhibitionPosts, setExhibitionPosts }) => {
     return errors;
   };
 
+  // When submitting, always set status to 'pending'
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
-    setSuccess("");
     const errors = validateForm();
     setFormErrors(errors);
     if (Object.keys(errors).length > 0) {
@@ -94,13 +95,17 @@ const ExhibitionPostForm = ({ exhibitionPosts, setExhibitionPosts }) => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
+      const postData = {
+        ...formData,
+        status: "pending", // Always set status to pending
+      };
       const response = await fetch(`${API_URL}/api/buyer/exhibitions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(postData),
       });
       if (!response.ok) {
         const errorData = await response.json();
@@ -110,7 +115,7 @@ const ExhibitionPostForm = ({ exhibitionPosts, setExhibitionPosts }) => {
       if (setExhibitionPosts) {
         setExhibitionPosts((prev) => [newPost, ...(prev || [])]);
       }
-      setSuccess("Exhibition posted successfully!");
+      showSuccess("Exhibition posted successfully!");
       setFormData({
         title: "",
         description: "",
@@ -200,9 +205,6 @@ const ExhibitionPostForm = ({ exhibitionPosts, setExhibitionPosts }) => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && <div className="text-red-600 text-sm mb-2">{error}</div>}
-          {success && (
-            <div className="text-green-600 text-sm mb-2">{success}</div>
-          )}
           {/* Exhibition Title */}
           <div>
             <label className="block text-sm font-medium text-[#7f5539] mb-1">

@@ -21,5 +21,14 @@ public class ExhibitionPostDTO {
     private String requirements;
     private Long createdBy;
     private String createdAt;
+    private String status; // pending, verified, rejected
     // getters and setters
+
+    // Manual setters in case Lombok fails
+    public void setCreatedBy(Long createdBy) { this.createdBy = createdBy; }
+    public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
+    public void setStatus(String status) { this.status = status; }
+    public String getStatus() { return status; }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 }

@@ -154,12 +154,26 @@ const CommunityPage = () => {
     setActiveFilter(filter);
   };
 
+  // Only show verified exhibition posts in the feed
+  const verifiedExhibitionPosts = exhibitionPosts.filter(
+    (post) =>
+      post.status === "verified" || post.verification_status === "verified"
+  );
+
   // Combine and filter posts
   const getAllPosts = () => {
-    const allPosts = [...posts, ...exhibitionPosts];
-    return allPosts.sort(
+    // Ensure exhibitionPosts are sorted by created_at DESC
+    const sortedExhibitionPosts = [...verifiedExhibitionPosts].sort(
+      (a, b) =>
+        new Date(b.createdAt || b.created_at) -
+        new Date(a.createdAt || a.created_at)
+    );
+    // Ensure regular posts are sorted by created_at DESC
+    const sortedRegularPosts = [...posts].sort(
       (a, b) => new Date(b.created_at) - new Date(a.created_at)
     );
+    // Exhibition posts should appear first, then regular posts
+    return [...sortedExhibitionPosts, ...sortedRegularPosts];
   };
 
   const getFilteredPosts = () => {
@@ -191,7 +205,12 @@ const CommunityPage = () => {
           {/* Center Feed */}
           <main className="flex-1 max-w-2xl mx-auto">
             {/* Exhibition Post Form - Only for Buyers */}
-            {role === "buyer" && <ExhibitionPostForm />}
+            {role === "buyer" && (
+              <ExhibitionPostForm
+                exhibitionPosts={exhibitionPosts}
+                setExhibitionPosts={setExhibitionPosts}
+              />
+            )}
 
             {/* Info Message for Artists */}
             {role === "artist" && (

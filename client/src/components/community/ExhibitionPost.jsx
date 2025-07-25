@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import {
   Heart,
-  MessageCircle,
-  Share,
   MoreHorizontal,
   Calendar,
   MapPin,
@@ -33,9 +31,13 @@ const ExhibitionPost = ({
   likes,
   comments,
   artist,
+  currentUserId,
+  onEdit,
+  onDelete,
 }) => {
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(likes);
+  const [showMenu, setShowMenu] = useState(false);
 
   const handleLike = () => {
     setIsLiked(!isLiked);
@@ -79,16 +81,27 @@ const ExhibitionPost = ({
     }
   };
 
+  // Owner check should use createdBy (buyer id) instead of artist.id
+  const isOwner =
+    currentUserId &&
+    String(currentUserId) === String(post.createdBy || artist?.id);
+
   return (
     <div className="bg-white rounded-lg shadow-sm border border-[#fdf9f4]/40 overflow-hidden mb-4">
       {/* Compact Header */}
       <div className="flex items-center justify-between p-3 border-b border-[#fdf9f4]/50">
         <div className="flex items-center space-x-2">
-          <img
-            src={artist.avatar}
-            alt={artist.name}
-            className="w-8 h-8 rounded-full object-cover border border-[#ffe4d6]"
-          />
+          {artist.avatar ? (
+            <img
+              src={artist.avatar}
+              alt={artist.name}
+              className="w-8 h-8 rounded-full object-cover border border-[#ffe4d6]"
+            />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-gray-200 border border-[#ffe4d6] flex items-center justify-center">
+              <User className="w-5 h-5 text-gray-400" />
+            </div>
+          )}
           <div>
             <h3 className="text-[#7f5539] font-medium text-sm">
               {artist.name}
@@ -98,13 +111,33 @@ const ExhibitionPost = ({
             </p>
           </div>
         </div>
-        <div className="flex items-center space-x-1">
+        <div className="flex items-center space-x-1 relative">
           <span className="bg-[#D87C5A] text-white px-2 py-1 rounded-full text-xs font-medium">
             Exhibition
           </span>
-          <button className="text-[#7f5539]/60 hover:text-[#7f5539] p-1 rounded-full hover:bg-[#ffe4d6]">
-            <MoreHorizontal className="w-4 h-4" />
-          </button>
+          {/* Always show 3 dots menu */}
+          <div className="relative">
+            <button
+              className="text-[#7f5539]/60 hover:text-[#7f5539] p-1 rounded-full hover:bg-[#ffe4d6]"
+              onClick={() => setShowMenu((v) => !v)}
+            >
+              <MoreHorizontal className="w-4 h-4" />
+            </button>
+            {showMenu && (
+              <div className="absolute right-0 top-8 bg-white border border-[#fdf9f4]/50 rounded-lg shadow-lg py-2 min-w-[180px] z-10">
+                <button
+                  onClick={() => {
+                    setShowMenu(false);
+                    if (artist?.name)
+                      alert(`Requesting further info from ${artist.name}`);
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-[#7f5539] hover:bg-[#fdf9f4] transition-colors flex items-center space-x-2"
+                >
+                  <span>Request Further Info</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -233,14 +266,8 @@ const ExhibitionPost = ({
               <Heart className={`w-4 h-4 ${isLiked ? "fill-current" : ""}`} />
               <span className="text-sm font-medium">{likesCount}</span>
             </button>
-            <button className="flex items-center space-x-1 text-[#7f5539]/60 hover:text-blue-500 transition-colors">
-              <MessageCircle className="w-4 h-4" />
-              <span className="text-sm font-medium">{comments}</span>
-            </button>
+            {/* Removed comment icon and count */}
           </div>
-          <button className="text-[#7f5539]/60 hover:text-[#7f5539] transition-colors">
-            <Share className="w-4 h-4" />
-          </button>
         </div>
       </div>
     </div>
