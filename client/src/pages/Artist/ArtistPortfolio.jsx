@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { formatDistanceToNow, isValid } from 'date-fns';
 import ArtworkDetailModal from '../../components/artworks/ArtworkDetailModal';
@@ -8,6 +8,7 @@ import UploadPostModal from '../../components/artworks/UploadPostModal';
 import PostUploadModal from '../../components/social/PostUploadModal';
 import ChangeCoverModal from '../../components/profile/ChangeCoverModal';
 import EditPostModel from '../../components/artist/EditPostModel';
+import { AcceptOrderModal, RejectOrderModal } from '../../components/orders/OrderModals';
 import ExhibitionsSection from '../../components/artist/ExhibitionsSection';
 import AchievementsSection from '../../components/artist/AchievementsSection';
 import EditArtworkModal from '../../components/artworks/EditArtworkModal';
@@ -58,7 +59,61 @@ import { useNotification } from '../../context/NotificationContext';
 
 const ArtistPortfolio = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { showSuccess, showError, showInfo } = useNotification();
+
+  // Get initial tab from URL or default to 'portfolio'
+  const initialTab = searchParams.get('tab') || 'portfolio';
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  // Handle tab changes using React Router
+  const handleTabChange = (tabId) => {
+    setSearchParams({ tab: tabId });
+  };
+
+  // Sync activeTab with URL changes
+  useEffect(() => {
+    const urlTab = searchParams.get('tab') || 'portfolio';
+    setActiveTab(urlTab);
+  }, [searchParams]);
+
+  // Prevent navigation away from portfolio (back to login page)
+  useEffect(() => {
+    // Trap user on portfolio route unless logging out, but allow tab switching
+    const handleBeforeUnload = (event) => {
+      event.preventDefault();
+      event.returnValue = 'Are you sure you want to leave? Please use the logout button.';
+      return 'Are you sure you want to leave? Please use the logout button.';
+    };
+
+    // Listen for popstate (back/forward button)
+    const handlePopState = (event) => {
+      // If leaving portfolio route, trap user
+      if (!window.location.pathname.includes('/artist/artistportfolio')) {
+        const currentTab = searchParams.get('tab') || 'portfolio';
+        const portfolioUrl = `/artist/artistportfolio?tab=${currentTab}`;
+        window.history.pushState({ tab: currentTab, page: 'portfolio' }, '', portfolioUrl);
+        showInfo('Please use the logout button to leave your portfolio.');
+      }
+      // Otherwise, allow tab switching (do nothing)
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [searchParams, showInfo]);
+
+  // On mount, push a dummy state only once
+  useEffect(() => {
+    const currentTab = searchParams.get('tab') || 'portfolio';
+    const portfolioUrl = `/artist/artistportfolio?tab=${currentTab}`;
+    window.history.pushState({ tab: currentTab, page: 'portfolio' }, '', portfolioUrl);
+  }, []); // Only on mount
 
   // Helper functions for achievement display
   const getAchievementIcon = (iconType) => {
@@ -86,7 +141,6 @@ const ArtistPortfolio = () => {
     return colorMap[colorScheme] || 'bg-yellow-100 text-yellow-800 border-yellow-200';
   };
 
-  const [activeTab, setActiveTab] = useState('portfolio');
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isAddingArtwork, setIsAddingArtwork] = useState(false);
   const [isCreatingPost, setIsCreatingPost] = useState(false);
@@ -95,6 +149,15 @@ const ArtistPortfolio = () => {
   const [selectedArtwork, setSelectedArtwork] = useState(null);
   const [isEditingArtwork, setIsEditingArtwork] = useState(false);
   const [isDeletingArtwork, setIsDeletingArtwork] = useState(false);
+
+  // Orders state
+  const [orders, setOrders] = useState([]);
+  const [ordersCount, setOrdersCount] = useState(0);
+  const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
+  const [loadingOrders, setLoadingOrders] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [isAcceptingOrder, setIsAcceptingOrder] = useState(false);
+  const [isRejectingOrder, setIsRejectingOrder] = useState(false);
 
   const [editedProfile, setEditedProfile] = useState({
     name: '',
@@ -318,6 +381,67 @@ const ArtistPortfolio = () => {
   // Fetch initial exhibitions count
   useEffect(() => {
     fetchExhibitionsCount();
+  }, [userId, token]);
+
+  // Fetch orders data
+  const fetchOrdersData = async () => {
+    if (!userId || !token) {
+      console.warn("Missing userId or token. Skipping orders fetch.");
+      return;
+    }
+
+    try {
+      setLoadingOrders(true);
+
+      // Fetch orders
+      const ordersResponse = await axios.get(`http://localhost:8081/api/orders/artist`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (ordersResponse.data && ordersResponse.data.success) {
+        setOrders(ordersResponse.data.data || []);
+      }
+
+      // Fetch orders count
+      const countResponse = await axios.get(`http://localhost:8081/api/orders/artist/count`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (countResponse.data && countResponse.data.success) {
+        setOrdersCount(countResponse.data.data || 0);
+      }
+
+      // Fetch pending orders count
+      const pendingResponse = await axios.get(`http://localhost:8081/api/orders/artist/pending-count`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (pendingResponse.data && pendingResponse.data.success) {
+        setPendingOrdersCount(pendingResponse.data.data || 0);
+      }
+
+      console.log('Orders data loaded successfully');
+    } catch (error) {
+      console.error("Error fetching orders data:", error);
+      setOrders([]);
+      setOrdersCount(0);
+      setPendingOrdersCount(0);
+    } finally {
+      setLoadingOrders(false);
+    }
+  };
+
+  // Fetch initial orders data
+  useEffect(() => {
+    if (userId && token) {
+      fetchOrdersData();
+    }
   }, [userId, token]);
 
   useEffect(() => {
@@ -1360,6 +1484,38 @@ const ArtistPortfolio = () => {
     }
   };
 
+  // Order handler functions
+  const handleAcceptOrder = (orderId) => {
+    const order = orders.find(o => o.orderId === orderId);
+    if (order) {
+      setSelectedOrder(order);
+      setIsAcceptingOrder(true);
+    }
+  };
+
+  const handleRejectOrder = (orderId) => {
+    const order = orders.find(o => o.orderId === orderId);
+    if (order) {
+      setSelectedOrder(order);
+      setIsRejectingOrder(true);
+    }
+  };
+
+  const handleOrderActionSuccess = () => {
+    // Refresh orders data
+    fetchOrdersData();
+  };
+
+  const closeAcceptModal = () => {
+    setIsAcceptingOrder(false);
+    setSelectedOrder(null);
+  };
+
+  const closeRejectModal = () => {
+    setIsRejectingOrder(false);
+    setSelectedOrder(null);
+  };
+
   // Loading state
   if (loading || !artistProfile) {
     return (
@@ -1512,6 +1668,7 @@ const ArtistPortfolio = () => {
               {[
                 { id: 'portfolio', label: 'Portfolio', count: portfolioPosts.length },
                 { id: 'tosell', label: 'To sell', count: Array.isArray(artworks) ? artworks.length : 0 },
+                { id: 'orders', label: 'Orders', count: ordersCount },
                 { id: 'exhibitions', label: 'Exhibitions', count: exhibitionsCount },
                 { id: 'achievements', label: 'Achievements', count: achievementsCount },
                 { id: 'analytics', label: 'Analytics' }
@@ -1520,10 +1677,14 @@ const ArtistPortfolio = () => {
                   <button
                     key={tab.id}
                     onClick={() => {
-                      setActiveTab(tab.id);
+                      handleTabChange(tab.id);
                       // Refresh achievements data when achievements tab is clicked
                       if (tab.id === 'achievements' && userId && token) {
                         fetchAchievementsData();
+                      }
+                      // Refresh orders data when orders tab is clicked
+                      if (tab.id === 'orders' && userId && token) {
+                        fetchOrdersData();
                       }
                     }}
                     className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors ${activeTab === tab.id
@@ -1606,7 +1767,7 @@ const ArtistPortfolio = () => {
                     )}
                   </div>
                   <button
-                    onClick={() => setActiveTab('achievements')}
+                    onClick={() => handleTabChange('achievements')}
                     className="w-full mt-4 text-[#7f5539] hover:text-[#6e4c34] text-sm font-medium transition-colors"
                   >
                     View All Achievements
@@ -1636,14 +1797,6 @@ const ArtistPortfolio = () => {
                     >
                       <Plus className="h-5 w-5 text-[#7f5539]" />
                       <span className="text-[#7f5539]">Add Artwork</span>
-                    </button>
-                    <button className="w-full flex items-center space-x-3 p-3 hover:bg-[#fdf9f4]/30 rounded-lg transition-colors text-left">
-                      <Edit className="h-5 w-5 text-[#7f5539]" />
-                      <span className="text-[#7f5539]">Edit Profile</span>
-                    </button>
-                    <button className="w-full flex items-center space-x-3 p-3 hover:bg-[#fdf9f4]/30 rounded-lg transition-colors text-left">
-                      <Palette className="h-5 w-5 text-[#7f5539]" />
-                      <span className="text-[#7f5539]">View Analytics</span>
                     </button>
                   </div>
                 </div>
@@ -1905,7 +2058,7 @@ const ArtistPortfolio = () => {
                     ))}
                   </div>
                   <button
-                    onClick={() => setActiveTab('tosell')}
+                    onClick={() => handleTabChange('tosell')}
                     className="w-full mt-4 text-[#7f5539] hover:text-[#6e4c34] text-sm font-medium transition-colors"
                   >
                     View All Artworks
@@ -2131,6 +2284,159 @@ const ArtistPortfolio = () => {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Orders Tab */}
+        {activeTab === 'orders' && (
+          <div className="space-y-8">
+            {/* Orders Header */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-[#7f5539] mb-2">Custom Orders</h3>
+                  <p className="text-[#7f5539]/70">Manage custom artwork requests from customers</p>
+                </div>
+                <div className="mt-4 md:mt-0 flex items-center space-x-4">
+                  <div className="bg-blue-50 px-4 py-2 rounded-lg">
+                    <span className="text-blue-600 font-medium">Total Orders: </span>
+                    <span className="text-blue-800 font-bold">{ordersCount}</span>
+                  </div>
+                  <div className="bg-orange-50 px-4 py-2 rounded-lg">
+                    <span className="text-orange-600 font-medium">Pending: </span>
+                    <span className="text-orange-800 font-bold">{pendingOrdersCount}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Orders List */}
+            <div className="bg-white rounded-lg shadow-sm">
+              {loadingOrders ? (
+                <div className="p-8 text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#7f5539] mx-auto"></div>
+                  <p className="mt-2 text-[#7f5539]/70">Loading orders...</p>
+                </div>
+              ) : orders.length === 0 ? (
+                <div className="p-8 text-center">
+                  <MessageCircle className="h-16 w-16 text-[#7f5539]/30 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-[#7f5539] mb-2">No Orders Yet</h3>
+                  <p className="text-[#7f5539]/70">You haven't received any custom order requests yet.</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-[#fdf9f4]/50">
+                  {orders.map((order) => (
+                    <div key={order.orderId} className="p-6">
+                      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between space-y-4 lg:space-y-0">
+                        {/* Order Info */}
+                        <div className="flex-1">
+                          <div className="flex items-start space-x-4">
+                            {order.referenceImageUrl && (
+                              <img
+                                src={`http://localhost:8081${order.referenceImageUrl}`}
+                                alt="Reference"
+                                className="w-16 h-16 object-cover rounded-lg"
+                              />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <h4 className="text-lg font-semibold text-[#7f5539] truncate">{order.title}</h4>
+                              <p className="text-sm text-[#7f5539]/70 mb-2">From: {order.buyerName}</p>
+                              <p className="text-[#7f5539]/80 text-sm mb-3 line-clamp-2">{order.description}</p>
+
+                              <div className="flex flex-wrap gap-4 text-sm">
+                                <div className="flex items-center text-[#7f5539]/70">
+                                  <DollarSign className="h-4 w-4 mr-1" />
+                                  Budget: LKR {order.budget?.toLocaleString()}
+                                </div>
+                                {order.preferredSize && (
+                                  <div className="flex items-center text-[#7f5539]/70">
+                                    <Target className="h-4 w-4 mr-1" />
+                                    Size: {order.preferredSize}
+                                  </div>
+                                )}
+                                {order.preferredMedium && (
+                                  <div className="flex items-center text-[#7f5539]/70">
+                                    <Palette className="h-4 w-4 mr-1" />
+                                    Medium: {order.preferredMedium}
+                                  </div>
+                                )}
+                                {order.deadlineDate && (
+                                  <div className="flex items-center text-[#7f5539]/70">
+                                    <Calendar className="h-4 w-4 mr-1" />
+                                    Deadline: {new Date(order.deadlineDate).toLocaleDateString()}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Order Status & Actions */}
+                        <div className="flex flex-col items-end space-y-3">
+                          {/* Status Badge */}
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${order.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+                            order.status === 'ACCEPTED' ? 'bg-green-100 text-green-800' :
+                              order.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
+                                order.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-800' :
+                                  order.status === 'COMPLETED' ? 'bg-purple-100 text-purple-800' :
+                                    'bg-gray-100 text-gray-800'
+                            }`}>
+                            {order.status}
+                          </span>
+
+                          {/* Action Buttons */}
+                          {order.status === 'PENDING' && (
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => handleAcceptOrder(order.orderId)}
+                                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm font-medium flex items-center space-x-1"
+                              >
+                                <Save className="h-4 w-4" />
+                                <span>Accept</span>
+                              </button>
+                              <button
+                                onClick={() => handleRejectOrder(order.orderId)}
+                                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm font-medium flex items-center space-x-1"
+                              >
+                                <X className="h-4 w-4" />
+                                <span>Reject</span>
+                              </button>
+                            </div>
+                          )}
+
+                          {/* Order Date */}
+                          <div className="flex items-center text-xs text-[#7f5539]/50">
+                            <Clock className="h-3 w-3 mr-1" />
+                            {formatDistanceToNow(new Date(order.createdAt), { addSuffix: true })}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Artist Response (if accepted) */}
+                      {order.status === 'ACCEPTED' && order.artistNotes && (
+                        <div className="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
+                          <h5 className="font-medium text-green-800 mb-2">Your Response:</h5>
+                          <p className="text-green-700 text-sm mb-2">{order.artistNotes}</p>
+                          {order.artistEstimatedDays && (
+                            <p className="text-green-600 text-sm font-medium">
+                              Estimated completion: {order.artistEstimatedDays} days
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Rejection Reason (if rejected) */}
+                      {order.status === 'REJECTED' && order.artistNotes && (
+                        <div className="mt-4 p-4 bg-red-50 rounded-lg border border-red-200">
+                          <h5 className="font-medium text-red-800 mb-2">Rejection Reason:</h5>
+                          <p className="text-red-700 text-sm">{order.artistNotes}</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -2680,6 +2986,20 @@ const ArtistPortfolio = () => {
           </div>
         </div>
       )}
+
+      {/* Order Modals */}
+      <AcceptOrderModal
+        isOpen={isAcceptingOrder}
+        onClose={closeAcceptModal}
+        order={selectedOrder}
+        onAccept={handleOrderActionSuccess}
+      />
+      <RejectOrderModal
+        isOpen={isRejectingOrder}
+        onClose={closeRejectModal}
+        order={selectedOrder}
+        onReject={handleOrderActionSuccess}
+      />
     </div>
   );
 };
