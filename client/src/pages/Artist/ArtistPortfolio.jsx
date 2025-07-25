@@ -13,7 +13,6 @@ import ExhibitionsSection from '../../components/artist/ExhibitionsSection';
 import AchievementsSection from '../../components/artist/AchievementsSection';
 import EditArtworkModal from '../../components/artworks/EditArtworkModal';
 import DeleteConfirmationModal from '../../components/artworks/DeleteConfirmationModal';
-import { AcceptOrderModal, RejectOrderModal } from '../../components/orders/OrderModals';
 import { useAuth } from "../../context/AuthContext";
 import {
   Plus,
@@ -1454,6 +1453,16 @@ const ArtistPortfolio = () => {
     fetchOrdersData();
   };
 
+  const closeAcceptModal = () => {
+    setIsAcceptingOrder(false);
+    setSelectedOrder(null);
+  };
+
+  const closeRejectModal = () => {
+    setIsRejectingOrder(false);
+    setSelectedOrder(null);
+  };
+
   // Loading state
   if (loading || !artistProfile) {
     return (
@@ -1735,14 +1744,6 @@ const ArtistPortfolio = () => {
                     >
                       <Plus className="h-5 w-5 text-[#7f5539]" />
                       <span className="text-[#7f5539]">Add Artwork</span>
-                    </button>
-                    <button className="w-full flex items-center space-x-3 p-3 hover:bg-[#fdf9f4]/30 rounded-lg transition-colors text-left">
-                      <Edit className="h-5 w-5 text-[#7f5539]" />
-                      <span className="text-[#7f5539]">Edit Profile</span>
-                    </button>
-                    <button className="w-full flex items-center space-x-3 p-3 hover:bg-[#fdf9f4]/30 rounded-lg transition-colors text-left">
-                      <Palette className="h-5 w-5 text-[#7f5539]" />
-                      <span className="text-[#7f5539]">View Analytics</span>
                     </button>
                   </div>
                 </div>
@@ -2321,11 +2322,11 @@ const ArtistPortfolio = () => {
                         <div className="flex flex-col items-end space-y-3">
                           {/* Status Badge */}
                           <span className={`px-3 py-1 rounded-full text-xs font-medium ${order.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                              order.status === 'ACCEPTED' ? 'bg-green-100 text-green-800' :
-                                order.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
-                                  order.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-800' :
-                                    order.status === 'COMPLETED' ? 'bg-purple-100 text-purple-800' :
-                                      'bg-gray-100 text-gray-800'
+                            order.status === 'ACCEPTED' ? 'bg-green-100 text-green-800' :
+                              order.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
+                                order.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-800' :
+                                  order.status === 'COMPLETED' ? 'bg-purple-100 text-purple-800' :
+                                    'bg-gray-100 text-gray-800'
                             }`}>
                             {order.status}
                           </span>
@@ -2935,16 +2936,16 @@ const ArtistPortfolio = () => {
 
       {/* Order Modals */}
       <AcceptOrderModal
-        isOpen={acceptModalOpen}
+        isOpen={isAcceptingOrder}
         onClose={closeAcceptModal}
-        orderId={selectedOrderId}
-        onAccept={handleAcceptOrder}
+        order={selectedOrder}
+        onAccept={handleOrderActionSuccess}
       />
       <RejectOrderModal
-        isOpen={rejectModalOpen}
+        isOpen={isRejectingOrder}
         onClose={closeRejectModal}
-        orderId={selectedOrderId}
-        onReject={handleRejectOrder}
+        order={selectedOrder}
+        onReject={handleOrderActionSuccess}
       />
     </div>
   );
