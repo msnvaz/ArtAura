@@ -1,3 +1,19 @@
+  // Get left bar color for card based on status (verification-list style)
+  // Exhibition verification style: use Tailwind border-l-4 and color classes
+  const getStatusBorderClass = (status) => {
+    switch (status) {
+      case 'active':
+        return 'border-l-4 border-green-400';
+      case 'draft':
+        return 'border-l-4 border-gray-400';
+      case 'completed':
+        return 'border-l-4 border-blue-400';
+      case 'review':
+        return 'border-l-4 border-yellow-400';
+      default:
+        return 'border-l-4 border-gray-200';
+    }
+  };
 import axios from 'axios';
 import { Calendar, Edit, Eye, Filter, Search, Trash2, Trophy } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -117,12 +133,26 @@ const ChallengeList = () => {
     setChallengeToDelete(null);
   };
 
-  const handleConfirmDelete = () => {
-    // Here you would call your delete API
-    // For now, just close the modal
-    setShowDeleteModal(false);
-    setChallengeToDelete(null);
-    // Optionally, show a toast or reload the list
+  // State for delete loading
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const handleConfirmDelete = async () => {
+    if (!challengeToDelete) return;
+    setDeleteLoading(true);
+    try {
+      await axios.delete(
+        `${import.meta.env.VITE_API_URL}/api/challenges/${challengeToDelete.id}`,
+        token ? { headers: { Authorization: `Bearer ${token}` } } : {}
+      );
+      // Remove the deleted challenge from the list
+      setChallenges((prev) => prev.filter((c) => c.id !== challengeToDelete.id));
+      setShowDeleteModal(false);
+      setChallengeToDelete(null);
+    } catch (err) {
+      setError('Failed to delete challenge.');
+    } finally {
+      setDeleteLoading(false);
+    }
   };
 
   const filteredChallenges = challenges.filter(challenge => {
@@ -134,64 +164,7 @@ const ChallengeList = () => {
 
   return (
     <>
-      {/* CSS styles for button animations */}
-      <style jsx>{`
-        @keyframes smoothFadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(15px) scale(0.98);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-          }
-        }
-
-        @keyframes slideInFromTop {
-          from {
-            opacity: 0;
-            transform: translateY(-20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .page-container {
-          animation: smoothFadeIn 0.4s ease-out;
-          opacity: 1;
-        }
-
-        .smooth-transition {
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .btn-animate {
-          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-          opacity: 1;
-          transform: translateY(0);
-        }
-
-        .btn-animate:hover {
-          transform: translateY(-1px) scale(1.02);
-        }
-
-        .card-animate {
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .card-animate:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Ensure smooth rendering */
-        * {
-          -webkit-font-smoothing: antialiased;
-          -moz-osx-font-smoothing: grayscale;
-        }
-      `}</style>
+      {/* All custom styles removed; use Tailwind for transitions and animation */}
 
       {/* Bootstrap CSS */}
       <link 
@@ -257,7 +230,10 @@ const ChallengeList = () => {
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredChallenges.map((challenge) => (
-              <div key={challenge.id} className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow card-animate">
+              <div
+                key={challenge.id}
+                className={`bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow card-animate ${getStatusBorderClass(challenge.status)}`}
+              >
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex items-center gap-2">
@@ -363,11 +339,31 @@ const ChallengeList = () => {
                       </div>
                     )}
                   </div>
+
+                  {/* Draft label with dark box if status is draft */}
                   {challengeToView.requestSponsorship && (
                     <div className="bg-blue-50 rounded-lg p-3 mt-2">
                       <div className="font-semibold text-blue-700 mb-1">Sponsorship Requested</div>
                     </div>
                   )}
+
+                  {/* Rewards & Prizes section */}
+                  {(challengeToView.rewards || challengeToView.prizes) && (
+                    <div className="bg-green-50 rounded-lg p-3 mt-2">
+                      <div className="font-semibold text-green-700 mb-1">Rewards & Prizes</div>
+                      {challengeToView.rewards && (
+                        <div className="text-green-800 text-sm mb-1">
+                          <span className="font-semibold">Rewards:</span> {challengeToView.rewards}
+                        </div>
+                      )}
+                      {challengeToView.prizes && (
+                        <div className="text-green-800 text-sm">
+                          <span className="font-semibold">Prizes:</span> {challengeToView.prizes}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {challengeToView.scoringCriteria && (
                     <div className="bg-amber-50 rounded-lg p-3 mt-2">
                       <div className="font-semibold text-amber-700 mb-1">Scoring Criteria</div>
@@ -479,15 +475,17 @@ const ChallengeList = () => {
             <div className="flex gap-4 justify-center">
               <button
                 onClick={handleCancelDelete}
+                disabled={deleteLoading}
                 className="px-6 py-3 bg-gray-100 text-[#362625] rounded-xl hover:bg-gray-200 transition-all duration-200 font-medium border border-gray-200 hover:border-gray-300 min-w-[120px]"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmDelete}
-                className="px-6 py-3 bg-gradient-to-r from-[#e74c3c] to-[#c0392b] text-white rounded-xl hover:from-[#c0392b] hover:to-[#a93226] transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105 min-w-[120px]"
+                disabled={deleteLoading}
+                className={`px-6 py-3 bg-gradient-to-r from-[#e74c3c] to-[#c0392b] text-white rounded-xl hover:from-[#c0392b] hover:to-[#a93226] transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105 min-w-[120px] ${deleteLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
               >
-                Delete
+                {deleteLoading ? 'Deleting...' : 'Delete'}
               </button>
             </div>
           </div>

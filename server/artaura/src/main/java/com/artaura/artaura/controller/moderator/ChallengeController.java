@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import com.artaura.artaura.dto.moderator.ChallengeDTO;
 import com.artaura.artaura.dto.moderator.ChallengeListDTO;
@@ -42,5 +44,11 @@ public class ChallengeController {
     public ResponseEntity<List<ChallengeListDTO>> getAllChallenges() {
         List<ChallengeListDTO> challenges = challengeService.getAllChallenges();
         return ResponseEntity.ok(challenges);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteChallenge(@PathVariable int id) {
+        challengeService.deleteChallenge(id);
+        return ResponseEntity.ok("Challenge deleted successfully");
     }
 }

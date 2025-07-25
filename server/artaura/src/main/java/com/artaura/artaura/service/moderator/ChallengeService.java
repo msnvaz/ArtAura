@@ -15,6 +15,10 @@ public class ChallengeService {
     @Autowired
     private ChallengeDAO challengeDAO;
 
+    public void deleteChallenge(int challengeId) {
+        challengeDAO.deleteChallenge(challengeId);
+    }
+
     public void createChallenge(ChallengeDTO challenge, String moderatorId) {
         challengeDAO.insertChallenge(challenge, moderatorId);
     }
