@@ -5,7 +5,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class CustomOrderDTO {
-
     private Long orderId;
     private Long buyerId;
     private Long artistId;
@@ -27,15 +26,14 @@ public class CustomOrderDTO {
     private LocalDateTime rejectedAt;
 
     // Default constructor
-    public CustomOrderDTO() {
-    }
+    public CustomOrderDTO() {}
 
     // Constructor with all fields
     public CustomOrderDTO(Long orderId, Long buyerId, Long artistId, String buyerName, String buyerEmail,
-            String title, String description, String referenceImageUrl, BigDecimal budget,
-            String preferredSize, String preferredMedium, LocalDate deadlineDate, String status,
-            Integer artistEstimatedDays, String artistNotes, LocalDateTime createdAt,
-            LocalDateTime updatedAt, LocalDateTime acceptedAt, LocalDateTime rejectedAt) {
+                         String title, String description, String referenceImageUrl, BigDecimal budget,
+                         String preferredSize, String preferredMedium, LocalDate deadlineDate, String status,
+                         Integer artistEstimatedDays, String artistNotes, LocalDateTime createdAt,
+                         LocalDateTime updatedAt, LocalDateTime acceptedAt, LocalDateTime rejectedAt) {
         this.orderId = orderId;
         this.buyerId = buyerId;
         this.artistId = artistId;
@@ -58,155 +56,60 @@ public class CustomOrderDTO {
     }
 
     // Getters and Setters
-    public Long getOrderId() {
-        return orderId;
-    }
+    public Long getOrderId() { return orderId; }
+    public void setOrderId(Long orderId) { this.orderId = orderId; }
 
-    public void setOrderId(Long orderId) {
-        this.orderId = orderId;
-    }
+    public Long getBuyerId() { return buyerId; }
+    public void setBuyerId(Long buyerId) { this.buyerId = buyerId; }
 
-    public Long getBuyerId() {
-        return buyerId;
-    }
+    public Long getArtistId() { return artistId; }
+    public void setArtistId(Long artistId) { this.artistId = artistId; }
 
-    public void setBuyerId(Long buyerId) {
-        this.buyerId = buyerId;
-    }
+    public String getBuyerName() { return buyerName; }
+    public void setBuyerName(String buyerName) { this.buyerName = buyerName; }
 
-    public Long getArtistId() {
-        return artistId;
-    }
+    public String getBuyerEmail() { return buyerEmail; }
+    public void setBuyerEmail(String buyerEmail) { this.buyerEmail = buyerEmail; }
 
-    public void setArtistId(Long artistId) {
-        this.artistId = artistId;
-    }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
 
-    public String getBuyerName() {
-        return buyerName;
-    }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 
-    public void setBuyerName(String buyerName) {
-        this.buyerName = buyerName;
-    }
+    public String getReferenceImageUrl() { return referenceImageUrl; }
+    public void setReferenceImageUrl(String referenceImageUrl) { this.referenceImageUrl = referenceImageUrl; }
 
-    public String getBuyerEmail() {
-        return buyerEmail;
-    }
+    public BigDecimal getBudget() { return budget; }
+    public void setBudget(BigDecimal budget) { this.budget = budget; }
 
-    public void setBuyerEmail(String buyerEmail) {
-        this.buyerEmail = buyerEmail;
-    }
+    public String getPreferredSize() { return preferredSize; }
+    public void setPreferredSize(String preferredSize) { this.preferredSize = preferredSize; }
 
-    public String getTitle() {
-        return title;
-    }
+    public String getPreferredMedium() { return preferredMedium; }
+    public void setPreferredMedium(String preferredMedium) { this.preferredMedium = preferredMedium; }
 
-    public void setTitle(String title) {
-        this.title = title;
-    }
+    public LocalDate getDeadlineDate() { return deadlineDate; }
+    public void setDeadlineDate(LocalDate deadlineDate) { this.deadlineDate = deadlineDate; }
 
-    public String getDescription() {
-        return description;
-    }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
+    public Integer getArtistEstimatedDays() { return artistEstimatedDays; }
+    public void setArtistEstimatedDays(Integer artistEstimatedDays) { this.artistEstimatedDays = artistEstimatedDays; }
 
-    public String getReferenceImageUrl() {
-        return referenceImageUrl;
-    }
+    public String getArtistNotes() { return artistNotes; }
+    public void setArtistNotes(String artistNotes) { this.artistNotes = artistNotes; }
 
-    public void setReferenceImageUrl(String referenceImageUrl) {
-        this.referenceImageUrl = referenceImageUrl;
-    }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
-    public BigDecimal getBudget() {
-        return budget;
-    }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 
-    public void setBudget(BigDecimal budget) {
-        this.budget = budget;
-    }
+    public LocalDateTime getAcceptedAt() { return acceptedAt; }
+    public void setAcceptedAt(LocalDateTime acceptedAt) { this.acceptedAt = acceptedAt; }
 
-    public String getPreferredSize() {
-        return preferredSize;
-    }
-
-    public void setPreferredSize(String preferredSize) {
-        this.preferredSize = preferredSize;
-    }
-
-    public String getPreferredMedium() {
-        return preferredMedium;
-    }
-
-    public void setPreferredMedium(String preferredMedium) {
-        this.preferredMedium = preferredMedium;
-    }
-
-    public LocalDate getDeadlineDate() {
-        return deadlineDate;
-    }
-
-    public void setDeadlineDate(LocalDate deadlineDate) {
-        this.deadlineDate = deadlineDate;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public Integer getArtistEstimatedDays() {
-        return artistEstimatedDays;
-    }
-
-    public void setArtistEstimatedDays(Integer artistEstimatedDays) {
-        this.artistEstimatedDays = artistEstimatedDays;
-    }
-
-    public String getArtistNotes() {
-        return artistNotes;
-    }
-
-    public void setArtistNotes(String artistNotes) {
-        this.artistNotes = artistNotes;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public LocalDateTime getAcceptedAt() {
-        return acceptedAt;
-    }
-
-    public void setAcceptedAt(LocalDateTime acceptedAt) {
-        this.acceptedAt = acceptedAt;
-    }
-
-    public LocalDateTime getRejectedAt() {
-        return rejectedAt;
-    }
-
-    public void setRejectedAt(LocalDateTime rejectedAt) {
-        this.rejectedAt = rejectedAt;
-    }
+    public LocalDateTime getRejectedAt() { return rejectedAt; }
+    public void setRejectedAt(LocalDateTime rejectedAt) { this.rejectedAt = rejectedAt; }
 }

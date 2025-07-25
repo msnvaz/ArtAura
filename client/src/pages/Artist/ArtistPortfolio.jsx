@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { formatDistanceToNow, isValid } from 'date-fns';
 import ArtworkDetailModal from '../../components/artworks/ArtworkDetailModal';
@@ -59,7 +59,61 @@ import { useNotification } from '../../context/NotificationContext';
 
 const ArtistPortfolio = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { showSuccess, showError, showInfo } = useNotification();
+
+  // Get initial tab from URL or default to 'portfolio'
+  const initialTab = searchParams.get('tab') || 'portfolio';
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  // Handle tab changes using React Router
+  const handleTabChange = (tabId) => {
+    setSearchParams({ tab: tabId });
+  };
+
+  // Sync activeTab with URL changes
+  useEffect(() => {
+    const urlTab = searchParams.get('tab') || 'portfolio';
+    setActiveTab(urlTab);
+  }, [searchParams]);
+
+  // Prevent navigation away from portfolio (back to login page)
+  useEffect(() => {
+    // Trap user on portfolio route unless logging out, but allow tab switching
+    const handleBeforeUnload = (event) => {
+      event.preventDefault();
+      event.returnValue = 'Are you sure you want to leave? Please use the logout button.';
+      return 'Are you sure you want to leave? Please use the logout button.';
+    };
+
+    // Listen for popstate (back/forward button)
+    const handlePopState = (event) => {
+      // If leaving portfolio route, trap user
+      if (!window.location.pathname.includes('/artist/artistportfolio')) {
+        const currentTab = searchParams.get('tab') || 'portfolio';
+        const portfolioUrl = `/artist/artistportfolio?tab=${currentTab}`;
+        window.history.pushState({ tab: currentTab, page: 'portfolio' }, '', portfolioUrl);
+        showInfo('Please use the logout button to leave your portfolio.');
+      }
+      // Otherwise, allow tab switching (do nothing)
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [searchParams, showInfo]);
+
+  // On mount, push a dummy state only once
+  useEffect(() => {
+    const currentTab = searchParams.get('tab') || 'portfolio';
+    const portfolioUrl = `/artist/artistportfolio?tab=${currentTab}`;
+    window.history.pushState({ tab: currentTab, page: 'portfolio' }, '', portfolioUrl);
+  }, []); // Only on mount
 
   // Helper functions for achievement display
   const getAchievementIcon = (iconType) => {
@@ -87,7 +141,6 @@ const ArtistPortfolio = () => {
     return colorMap[colorScheme] || 'bg-yellow-100 text-yellow-800 border-yellow-200';
   };
 
-  const [activeTab, setActiveTab] = useState('portfolio');
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isAddingArtwork, setIsAddingArtwork] = useState(false);
   const [isCreatingPost, setIsCreatingPost] = useState(false);
@@ -1431,7 +1484,7 @@ const ArtistPortfolio = () => {
     }
   };
 
-  // Order handler functions for modals
+  // Order handler functions
   const handleAcceptOrder = (orderId) => {
     const order = orders.find(o => o.orderId === orderId);
     if (order) {
@@ -1451,6 +1504,16 @@ const ArtistPortfolio = () => {
   const handleOrderActionSuccess = () => {
     // Refresh orders data
     fetchOrdersData();
+  };
+
+  const closeAcceptModal = () => {
+    setIsAcceptingOrder(false);
+    setSelectedOrder(null);
+  };
+
+  const closeRejectModal = () => {
+    setIsRejectingOrder(false);
+    setSelectedOrder(null);
   };
 
   // Loading state
@@ -1614,7 +1677,7 @@ const ArtistPortfolio = () => {
                   <button
                     key={tab.id}
                     onClick={() => {
-                      setActiveTab(tab.id);
+                      handleTabChange(tab.id);
                       // Refresh achievements data when achievements tab is clicked
                       if (tab.id === 'achievements' && userId && token) {
                         fetchAchievementsData();
@@ -1704,7 +1767,7 @@ const ArtistPortfolio = () => {
                     )}
                   </div>
                   <button
-                    onClick={() => setActiveTab('achievements')}
+                    onClick={() => handleTabChange('achievements')}
                     className="w-full mt-4 text-[#7f5539] hover:text-[#6e4c34] text-sm font-medium transition-colors"
                   >
                     View All Achievements
@@ -1734,14 +1797,6 @@ const ArtistPortfolio = () => {
                     >
                       <Plus className="h-5 w-5 text-[#7f5539]" />
                       <span className="text-[#7f5539]">Add Artwork</span>
-                    </button>
-                    <button className="w-full flex items-center space-x-3 p-3 hover:bg-[#fdf9f4]/30 rounded-lg transition-colors text-left">
-                      <Edit className="h-5 w-5 text-[#7f5539]" />
-                      <span className="text-[#7f5539]">Edit Profile</span>
-                    </button>
-                    <button className="w-full flex items-center space-x-3 p-3 hover:bg-[#fdf9f4]/30 rounded-lg transition-colors text-left">
-                      <Palette className="h-5 w-5 text-[#7f5539]" />
-                      <span className="text-[#7f5539]">View Analytics</span>
                     </button>
                   </div>
                 </div>
@@ -2003,7 +2058,7 @@ const ArtistPortfolio = () => {
                     ))}
                   </div>
                   <button
-                    onClick={() => setActiveTab('tosell')}
+                    onClick={() => handleTabChange('tosell')}
                     className="w-full mt-4 text-[#7f5539] hover:text-[#6e4c34] text-sm font-medium transition-colors"
                   >
                     View All Artworks
@@ -2934,16 +2989,16 @@ const ArtistPortfolio = () => {
 
       {/* Order Modals */}
       <AcceptOrderModal
-        order={selectedOrder}
         isOpen={isAcceptingOrder}
-        onClose={() => setIsAcceptingOrder(false)}
-        onSuccess={handleOrderActionSuccess}
+        onClose={closeAcceptModal}
+        order={selectedOrder}
+        onAccept={handleOrderActionSuccess}
       />
       <RejectOrderModal
-        order={selectedOrder}
         isOpen={isRejectingOrder}
-        onClose={() => setIsRejectingOrder(false)}
-        onSuccess={handleOrderActionSuccess}
+        onClose={closeRejectModal}
+        order={selectedOrder}
+        onReject={handleOrderActionSuccess}
       />
     </div>
   );

@@ -1,13 +1,11 @@
 package com.artaura.artaura.dto.order;
 
 public class OrderResponseDTO {
-
     private String message;
     private Object data;
     private boolean success;
 
-    public OrderResponseDTO() {
-    }
+    public OrderResponseDTO() {}
 
     public OrderResponseDTO(String message, Object data) {
         this.message = message;

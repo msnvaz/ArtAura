@@ -37,12 +37,12 @@ public class CustomOrderServiceImpl implements CustomOrderService {
         if (orderOpt.isEmpty()) {
             throw new RuntimeException("Order not found");
         }
-
+        
         CustomOrderDTO order = orderOpt.get();
         if (!"PENDING".equals(order.getStatus())) {
             throw new RuntimeException("Order is not in pending status");
         }
-
+        
         customOrderDAO.acceptOrder(orderId, acceptRequest);
     }
 
@@ -53,12 +53,12 @@ public class CustomOrderServiceImpl implements CustomOrderService {
         if (orderOpt.isEmpty()) {
             throw new RuntimeException("Order not found");
         }
-
+        
         CustomOrderDTO order = orderOpt.get();
         if (!"PENDING".equals(order.getStatus())) {
             throw new RuntimeException("Order is not in pending status");
         }
-
+        
         customOrderDAO.rejectOrder(orderId, rejectionReason);
     }
 
