@@ -39,7 +39,7 @@ public class ExhibitionPostDAOImpl implements ExhibitionPostDAO {
 
     @Override
     public List<ExhibitionPostDTO> getAllExhibitions() {
-        String sql = "SELECT * FROM exhibitions";
+        String sql = "SELECT e.*, CONCAT(b.first_name, ' ', b.last_name) AS creator_name FROM exhibitions e LEFT JOIN buyers b ON e.created_by = b.buyer_id";
         return jdbcTemplate.query(sql, (rs, rowNum) -> {
             ExhibitionPostDTO exhibition = new ExhibitionPostDTO();
             exhibition.setId(rs.getLong("id"));
@@ -59,8 +59,9 @@ public class ExhibitionPostDAOImpl implements ExhibitionPostDAO {
             exhibition.setRequirements(rs.getString("requirements"));
             exhibition.setCreatedBy(rs.getLong("created_by"));
             exhibition.setCreatedAt(rs.getString("created_at"));
-            exhibition.setStatus(rs.getString("status")); // Map the status field
-            // If you have any JSON fields, parse them here as needed
+            exhibition.setStatus(rs.getString("status"));
+            exhibition.setCreatorName(rs.getString("creator_name"));
+            exhibition.setLikes(rs.getInt("likes")); // <-- Add this line
             return exhibition;
         });
     }
@@ -122,5 +123,56 @@ public class ExhibitionPostDAOImpl implements ExhibitionPostDAO {
     public int delete(Long postId) {
         String sql = "DELETE FROM exhibitions WHERE id = ?";
         return jdbcTemplate.update(sql, postId);
+    }
+    
+    public int incrementLikes(Long postId) {
+        // Get userId from SecurityContext if available (or pass as parameter if needed)
+        // For now, assume userId is passed as a parameter to this method in the service/controller
+        throw new UnsupportedOperationException("Use incrementLikes(Long postId, Long userId) instead");
+    }
+
+    // New method to enforce single-like-per-user
+    public int incrementLikes(Long postId, Long userId) {
+        // Check if user already liked
+        String checkSql = "SELECT COUNT(*) FROM exhibition_post_likes WHERE post_id = ? AND user_id = ?";
+        Integer count = jdbcTemplate.queryForObject(checkSql, Integer.class, postId, userId);
+        if (count != null && count > 0) {
+            // Already liked, return current like count
+            String selectSql = "SELECT likes FROM exhibitions WHERE id = ?";
+            Integer likes = jdbcTemplate.queryForObject(selectSql, Integer.class, postId);
+            return likes != null ? likes : 0;
+        }
+        // Insert like
+        String insertSql = "INSERT INTO exhibition_post_likes (post_id, user_id) VALUES (?, ?)";
+        jdbcTemplate.update(insertSql, postId, userId);
+        // Increment likes count
+        String updateSql = "UPDATE exhibitions SET likes = COALESCE(likes,0) + 1 WHERE id = ?";
+        jdbcTemplate.update(updateSql, postId);
+        // Return new like count
+        String selectSql = "SELECT likes FROM exhibitions WHERE id = ?";
+        Integer likes = jdbcTemplate.queryForObject(selectSql, Integer.class, postId);
+        return likes != null ? likes : 0;
+    }
+
+    @Override
+    public int removeUserLike(Long postId, Long userId) {
+        String sql = "DELETE FROM exhibition_post_likes WHERE post_id = ? AND user_id = ?";
+        int affected = jdbcTemplate.update(sql, postId, userId);
+        if (affected > 0) {
+            // Decrement the likes count in the exhibitions table
+            String updateLikes = "UPDATE exhibitions SET likes = GREATEST(COALESCE(likes,1) - 1, 0) WHERE id = ?";
+            jdbcTemplate.update(updateLikes, postId);
+        }
+        // Return the new like count
+        String selectSql = "SELECT likes FROM exhibitions WHERE id = ?";
+        Integer likes = jdbcTemplate.queryForObject(selectSql, Integer.class, postId);
+        return likes != null ? likes : 0;
+    }
+
+    @Override
+    public int hasUserLiked(Long postId, Long userId) {
+        String sql = "SELECT COUNT(*) FROM exhibition_post_likes WHERE post_id = ? AND user_id = ?";
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, postId, userId);
+        return count != null && count > 0 ? 1 : 0;
     }
 }

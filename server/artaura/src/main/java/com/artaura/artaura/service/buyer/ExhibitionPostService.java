@@ -58,4 +58,17 @@ public class ExhibitionPostService {
         int deleted = exhibitionPostDAO.delete(postId);
         return deleted > 0;
     }
+
+    // Use the new incrementLikes method with userId
+    public int incrementLikes(Long postId, Long userId) {
+        return exhibitionPostDAO.incrementLikes(postId, userId);
+    }
+
+    public int removeUserLike(Long postId, Long userId) {
+        return exhibitionPostDAO.removeUserLike(postId, userId);
+    }
+
+    public boolean hasUserLiked(Long postId, Long userId) {
+        return exhibitionPostDAO.hasUserLiked(postId, userId) != 0;
+    }
 }

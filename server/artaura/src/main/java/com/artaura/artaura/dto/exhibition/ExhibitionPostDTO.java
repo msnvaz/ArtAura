@@ -22,6 +22,8 @@ public class ExhibitionPostDTO {
     private Long createdBy;
     private String createdAt;
     private String status; // pending, verified, rejected
+    private String creatorName;
+    private Integer likes;
     // getters and setters
 
     // Manual setters in case Lombok fails
@@ -31,4 +33,8 @@ public class ExhibitionPostDTO {
     public String getStatus() { return status; }
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+    public String getCreatorName() { return creatorName; }
+    public void setCreatorName(String creatorName) { this.creatorName = creatorName; }
+    public Integer getLikes() { return likes; }
+    public void setLikes(Integer likes) { this.likes = likes; }
 }

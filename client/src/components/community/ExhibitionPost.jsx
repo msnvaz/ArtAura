@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
+import SockJS from "sockjs-client";
+import { Client } from "@stomp/stompjs";
 import {
   Heart,
   MoreHorizontal,
@@ -10,6 +12,8 @@ import {
   User,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
 const ExhibitionPost = ({
   post_id,
@@ -38,10 +42,74 @@ const ExhibitionPost = ({
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(likes);
   const [showMenu, setShowMenu] = useState(false);
+  const stompClientRef = useRef(null);
 
-  const handleLike = () => {
-    setIsLiked(!isLiked);
-    setLikesCount(isLiked ? likesCount - 1 : likesCount + 1);
+  useEffect(() => {
+    setLikesCount(likes); // Always sync likesCount with prop on mount/refresh
+    // Connect to WebSocket for real-time like updates
+    const socket = new SockJS(`${API_URL}/ws`);
+    const client = new Client({
+      webSocketFactory: () => socket,
+      reconnectDelay: 5000,
+    });
+    client.onConnect = () => {
+      client.subscribe("/topic/likes", (message) => {
+        const { postId, likes } = JSON.parse(message.body);
+        if (String(postId) === String(post_id)) {
+          setLikesCount(likes);
+        }
+      });
+    };
+    client.activate();
+    stompClientRef.current = client;
+    // Fetch if user has liked this post
+    fetch(`${API_URL}/api/buyer/exhibitions/${post_id}/has-liked`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    })
+      .then((res) => res.json())
+      .then((data) => setIsLiked(data.liked))
+      .catch(() => setIsLiked(false));
+    return () => {
+      client.deactivate();
+    };
+  }, [post_id, likes]);
+
+  const handleLike = async () => {
+    if (isLiked) {
+      setIsLiked(false);
+      try {
+        const res = await fetch(
+          `${API_URL}/api/buyer/exhibitions/${post_id}/like`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+        const data = await res.json();
+        setLikesCount(data.likes);
+      } catch (err) {
+        setIsLiked(true);
+      }
+    } else {
+      setIsLiked(true);
+      try {
+        const res = await fetch(
+          `${API_URL}/api/buyer/exhibitions/${post_id}/like`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+        const data = await res.json();
+        setLikesCount(data.likes);
+      } catch (err) {
+        setIsLiked(false);
+      }
+    }
   };
 
   const formatDate = (dateString) => {
@@ -257,14 +325,27 @@ const ExhibitionPost = ({
           <div className="flex items-center space-x-4">
             <button
               onClick={handleLike}
-              className={`flex items-center space-x-1 transition-colors ${
+              className={`flex items-center space-x-1 transition-colors relative group ${
                 isLiked
                   ? "text-red-500"
                   : "text-[#7f5539]/60 hover:text-red-500"
               }`}
+              aria-label={isLiked ? "Unlike this post" : "Like this post"}
             >
-              <Heart className={`w-4 h-4 ${isLiked ? "fill-current" : ""}`} />
-              <span className="text-sm font-medium">{likesCount}</span>
+              <span className="relative flex items-center">
+                <Heart
+                  className={`w-4 h-4 ${
+                    isLiked ? "fill-current text-red-500" : ""
+                  }`}
+                />
+                {/* Tooltip */}
+                <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 z-20 whitespace-nowrap">
+                  {isLiked ? "Unlike" : "Like"}
+                </span>
+              </span>
+              <span className="text-sm font-medium transition-colors duration-200">
+                {likesCount}
+              </span>
             </button>
             {/* Removed comment icon and count */}
           </div>

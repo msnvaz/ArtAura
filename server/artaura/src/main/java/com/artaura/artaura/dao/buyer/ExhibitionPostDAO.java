@@ -10,4 +10,8 @@ public interface ExhibitionPostDAO {
     List<ExhibitionPostDTO> findByCreatedBy(Long userId);
     int update(ExhibitionPostDTO post); // update by postId
     int delete(Long postId); // delete by postId
+    int incrementLikes(Long postId, Long userId);
+    int hasUserLiked(Long postId, Long userId);
+//    int addUserLike(Long postId, Long userId);
+    int removeUserLike(Long postId, Long userId);
 }
