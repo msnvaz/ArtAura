@@ -18,6 +18,9 @@ public class ExhibitionPostController {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private LikeWebSocketController likeWebSocketController;
+
     @PostMapping
     public ResponseEntity<ExhibitionPostDTO> createExhibition(@RequestBody ExhibitionPostDTO post, @RequestHeader("Authorization") String tokenHeader) {
         // Extract JWT token from header
@@ -73,5 +76,35 @@ public class ExhibitionPostController {
             return ResponseEntity.status(404).body("Post not found or not deletable");
         }
         return ResponseEntity.ok("Post deleted successfully");
+    }
+
+    @PostMapping("/{postId}/like")
+    public ResponseEntity<?> likeExhibitionPost(@PathVariable Long postId, @RequestHeader("Authorization") String tokenHeader) {
+        String token = tokenHeader.startsWith("Bearer ") ? tokenHeader.substring(7).trim() : tokenHeader.trim();
+        Long userId = jwtUtil.extractUserId(token);
+        int newLikeCount = exhibitionPostService.incrementLikes(postId, userId);
+        likeWebSocketController.broadcastLikeUpdate(postId, newLikeCount);
+        return ResponseEntity.ok(java.util.Map.of("likes", newLikeCount));
+    }
+
+    @DeleteMapping("/{postId}/like")
+    public ResponseEntity<?> unlikeExhibitionPost(
+            @PathVariable Long postId,
+            @RequestHeader("Authorization") String tokenHeader) {
+        String token = tokenHeader.startsWith("Bearer ") ? tokenHeader.substring(7).trim() : tokenHeader.trim();
+        Long userId = jwtUtil.extractUserId(token);
+        int newLikeCount = exhibitionPostService.removeUserLike(postId, userId);
+        likeWebSocketController.broadcastLikeUpdate(postId, newLikeCount);
+        return ResponseEntity.ok(java.util.Map.of("likes", newLikeCount));
+    }
+
+    @GetMapping("/{postId}/has-liked")
+    public ResponseEntity<?> hasUserLiked(
+            @PathVariable Long postId,
+            @RequestHeader("Authorization") String tokenHeader) {
+        String token = tokenHeader.startsWith("Bearer ") ? tokenHeader.substring(7).trim() : tokenHeader.trim();
+        Long userId = jwtUtil.extractUserId(token);
+        boolean liked = exhibitionPostService.hasUserLiked(postId, userId);
+        return ResponseEntity.ok(java.util.Map.of("liked", liked));
     }
 }

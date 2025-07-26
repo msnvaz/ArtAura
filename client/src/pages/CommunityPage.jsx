@@ -193,16 +193,14 @@ const CommunityPage = () => {
       <CartSidebar />
 
       {/* Main Container */}
-      <div className="flex justify-center pt-24 pb-10">
+      <div className="flex justify-center pt-24 pb-10 min-h-screen">
         <div className="flex w-full max-w-7xl px-4">
-          {/* Left Sidebar - Hidden on mobile and tablet */}
+          {/* Left Sidebar - Not fixed, scrolls with page */}
           <aside className="hidden lg:block w-80 mr-6">
-            <div className="sticky top-28">
-              <RecentChallenges />
-            </div>
+            <RecentChallenges />
           </aside>
 
-          {/* Center Feed */}
+          {/* Center Feed - Not scrollable, grows with content */}
           <main className="flex-1 max-w-2xl mx-auto">
             {/* Exhibition Post Form - Only for Buyers */}
             {role === "buyer" && (
@@ -317,14 +315,8 @@ const CommunityPage = () => {
                         likes={post.likes || 0}
                         comments={post.comments || 0}
                         artist={{
-                          name:
-                            userProfile.name ||
-                            localStorage.getItem("profile_name") ||
-                            "Unknown User",
-                          avatar:
-                            userProfile.avatar ||
-                            localStorage.getItem("profile_avatar") ||
-                            "",
+                          name: post.creatorName || "Unknown User",
+                          avatar: "", // You can extend backend to return avatar if needed
                         }}
                       />
                     );
@@ -354,11 +346,9 @@ const CommunityPage = () => {
             </div>
           </main>
 
-          {/* Right Sidebar - Hidden on mobile and tablet */}
+          {/* Right Sidebar - Not fixed, scrolls with page */}
           <aside className="hidden lg:block w-80 ml-6">
-            <div className="sticky top-28">
-              <TopArtists />
-            </div>
+            <TopArtists />
           </aside>
         </div>
       </div>
