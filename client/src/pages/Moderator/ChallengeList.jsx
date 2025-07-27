@@ -232,9 +232,9 @@ const ChallengeList = () => {
             {filteredChallenges.map((challenge) => (
               <div
                 key={challenge.id}
-                className={`bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow card-animate ${getStatusBorderClass(challenge.status)}`}
+                className={`bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow card-animate ${getStatusBorderClass(challenge.status)} flex flex-col h-full`}
               >
-                <div className="p-6">
+                <div className="flex flex-col flex-1 p-6">
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex items-center gap-2">
                       <Trophy className="h-5 w-5 text-amber-600" />
@@ -251,43 +251,63 @@ const ChallengeList = () => {
                       <span className="ml-2 px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Sponsorship</span>
                     )}
                   </h3>
+
                   <p className="text-gray-600 text-sm mb-2 line-clamp-2">{challenge.description}</p>
 
-                  {/* Sponsorship badge only, no details */}
+                  {/* Rewards & Prizes section - consistent with details modal */}
+                  {(challenge.rewards || challenge.prizes) && (
+                    <div className="mb-2">
+                      <span className="font-semibold flex items-center gap-2 text-amber-800">
+                        <Trophy size={16} className="text-amber-600" /> Rewards & Prizes:
+                      </span>
+                      {challenge.rewards && (
+                        <div className="ml-6 text-sm text-gray-700">
+                          <span className="font-semibold">Rewards:</span> <span>{challenge.rewards}</span>
+                        </div>
+                      )}
+                      {challenge.prizes && (
+                        <div className="ml-6 text-sm text-gray-700">
+                          <span className="font-semibold">Prizes:</span> <span>{challenge.prizes}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   <div className="space-y-2 mb-4">
                     <div className="flex items-center gap-2 text-sm text-gray-500">
-                      <Calendar size={16} />
-                      <span>Deadline: {challenge.deadlineDateTime ? new Date(challenge.deadlineDateTime).toLocaleDateString() : '-'}</span>
+                      <Calendar size={16} className="text-amber-600" />
+                      <span><span className="font-semibold">Deadline:</span> {challenge.deadlineDateTime ? new Date(challenge.deadlineDateTime).toLocaleDateString() : '-'}</span>
                     </div>
                     {/* You can add participants/submissions here if you add them to the backend */}
                   </div>
 
-                  <div className="flex justify-between items-center pt-4 border-t border-gray-200">
-                    <div className="flex gap-2">
-                      <button
-                        className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors btn-animate"
-                        onClick={() => handleViewClick(challenge)}
-                        style={{ transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)', opacity: 1, transform: 'translateY(0)' }}
-                      >
-                        <Eye size={16} />
-                      </button>
-                      <button
-                        className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors btn-animate"
-                        onClick={() => handleEditClick(challenge)}
-                        style={{ transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)', opacity: 1, transform: 'translateY(0)' }}
-                      >
-                        <Edit size={16} />
-                      </button>
-                      <button
-                        className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors btn-animate"
-                        onClick={() => handleDeleteClick(challenge)}
-                        style={{ transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)', opacity: 1, transform: 'translateY(0)' }}
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                    {/* View Details button removed as requested */}
+                  <div className="flex-1"></div>
+                  {/* Action icons always at the bottom, now aligned left */}
+                  <div className="flex justify-start gap-2 pt-4 border-t border-gray-200 mt-4">
+                    <button
+                      className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors btn-animate"
+                      onClick={() => handleViewClick(challenge)}
+                      title="View Details"
+                      style={{ transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)' }}
+                    >
+                      <Eye size={16} />
+                    </button>
+                    <button
+                      className="p-2 hover:bg-blue-50 rounded-lg transition-colors btn-animate"
+                      onClick={() => handleEditClick(challenge)}
+                      title="Edit Challenge"
+                      style={{ transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)' }}
+                    >
+                      <Edit size={16} style={{ color: '#0D6EFD' }} />
+                    </button>
+                    <button
+                      className="p-2 hover:bg-red-50 rounded-lg transition-colors btn-animate"
+                      onClick={() => handleDeleteClick(challenge)}
+                      title="Delete Challenge"
+                      style={{ transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)' }}
+                    >
+                      <Trash2 size={16} style={{ color: '#EF4444' }} />
+                    </button>
                   </div>
                 </div>
               </div>
@@ -303,20 +323,30 @@ const ChallengeList = () => {
                 </div>
                 <div className="space-y-4 text-left">
                   <div>
-                    <span className="font-semibold">Title:</span> <span className="text-gray-800">{challengeToView.title}</span>
+                    <span className="font-semibold flex items-center gap-2">
+                      <Trophy size={16} className="text-amber-600" /> Title:
+                    </span>
+                    <span className="text-gray-800 ml-6">{challengeToView.title}</span>
                   </div>
                   <div>
-                    <span className="font-semibold">Description:</span> <span className="text-gray-700">{challengeToView.description}</span>
+                    <span className="font-semibold flex items-center gap-2">
+                      <Edit size={16} className="text-amber-600" /> Description:
+                    </span>
+                    <span className="text-gray-700 ml-6 block text-justify">{challengeToView.description}</span>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
                     <div>
-                      <span className="font-semibold">Category:</span> <span className="text-gray-700">{challengeToView.category}</span>
+                      <span className="font-semibold flex items-center gap-2">
+                        <Filter size={16} className="text-amber-600" /> Category:
+                      </span>
+                      <span className="text-gray-700 ml-6">{challengeToView.category === 'Other' ? 'Other (Custom Category)' : challengeToView.category}</span>
                     </div>
-                    <div>
-                      <span className="font-semibold">Status:</span> <span className="text-gray-700">{challengeToView.status}</span>
-                    </div>
-                    <div>
-                      <span className="font-semibold">Deadline:</span> <span className="text-gray-700">{challengeToView.deadlineDateTime ? new Date(challengeToView.deadlineDateTime).toLocaleDateString() : '-'}</span>
+                    {/* Status field removed from Challenge Details modal for consistency */}
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold flex items-center gap-2">
+                        <Calendar size={16} className="text-amber-600" /> <span className="font-semibold">Deadline:</span>
+                      </span>
+                      <span className="text-gray-700">{challengeToView.deadlineDateTime ? new Date(challengeToView.deadlineDateTime).toLocaleDateString() : '-'}</span>
                     </div>
                     {challengeToView.createdDateTime && (
                       <div>
@@ -347,18 +377,20 @@ const ChallengeList = () => {
                     </div>
                   )}
 
-                  {/* Rewards & Prizes section */}
+                  {/* Rewards & Prizes section - consistent with other details */}
                   {(challengeToView.rewards || challengeToView.prizes) && (
-                    <div className="bg-green-50 rounded-lg p-3 mt-2">
-                      <div className="font-semibold text-green-700 mb-1">Rewards & Prizes</div>
+                    <div className="mt-2">
+                      <span className="font-semibold flex items-center gap-2">
+                        <Trophy size={16} className="text-amber-600" /> Rewards & Prizes:
+                      </span>
                       {challengeToView.rewards && (
-                        <div className="text-green-800 text-sm mb-1">
-                          <span className="font-semibold">Rewards:</span> {challengeToView.rewards}
+                        <div className="ml-6">
+                          <span className="font-semibold">Rewards:</span> <span className="text-gray-700">{challengeToView.rewards}</span>
                         </div>
                       )}
                       {challengeToView.prizes && (
-                        <div className="text-green-800 text-sm">
-                          <span className="font-semibold">Prizes:</span> {challengeToView.prizes}
+                        <div className="ml-6">
+                          <span className="font-semibold">Prizes:</span> <span className="text-gray-700">{challengeToView.prizes}</span>
                         </div>
                       )}
                     </div>
@@ -410,7 +442,7 @@ const ChallengeList = () => {
           </div>
           <form className="space-y-4 text-left">
             <div>
-              <label className="block text-sm font-medium mb-1">Title</label>
+              <label className="block text-sm font-medium mb-1 flex items-center gap-2"><Trophy size={16} className="text-amber-600" /> Title</label>
               <input
                 type="text"
                 name="title"
@@ -420,7 +452,7 @@ const ChallengeList = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Description</label>
+              <label className="block text-sm font-medium mb-1 flex items-center gap-2"><Edit size={16} className="text-amber-600" /> Description</label>
               <textarea
                 name="description"
                 value={editForm.description}
@@ -429,15 +461,48 @@ const ChallengeList = () => {
                 rows={3}
               />
             </div>
-            <div className="flex items-center mb-2">
+            <div>
+              <label className="block text-sm font-medium mb-1 flex items-center gap-2"><Filter size={16} className="text-amber-600" /> Category</label>
               <input
-                type="checkbox"
-                name="requestSponsorship"
-                checked={editForm.requestSponsorship}
+                list="edit-category-options"
+                type="text"
+                name="category"
+                value={editForm.category || ''}
                 onChange={handleEditFormChange}
-                className="mr-2"
+                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                autoComplete="off"
               />
-              <label className="text-sm">Request Sponsorship</label>
+              <datalist id="edit-category-options">
+                <option value="Traditional Art" />
+                <option value="Abstract Art" />
+                <option value="Portrait" />
+                <option value="Landscape" />
+                <option value="Street Art" />
+                <option value="Other" />
+              </datalist>
+            </div>
+            {/* Status field removed from Edit Challenge modal as requested */}
+            <div>
+              <label className="block text-sm font-medium mb-1 flex items-center gap-2"><Calendar size={16} className="text-amber-600" /> Deadline</label>
+              <input
+                type="date"
+                name="deadlineDateTime"
+                value={editForm.deadlineDateTime ? editForm.deadlineDateTime.split('T')[0] : ''}
+                onChange={handleEditFormChange}
+                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1 flex items-center gap-2">
+                <Trophy size={16} className="text-amber-600" /> Request Sponsorship
+                <input
+                  type="checkbox"
+                  name="requestSponsorship"
+                  checked={editForm.requestSponsorship}
+                  onChange={handleEditFormChange}
+                  className="ml-2 accent-amber-600 h-4 w-4"
+                />
+              </label>
             </div>
             {/* No sponsorship type/message fields in edit modal */}
             <div className="flex gap-4 justify-center mt-6">
@@ -451,7 +516,7 @@ const ChallengeList = () => {
               <button
                 type="button"
                 onClick={handleSaveEdit}
-                className="px-6 py-3 bg-gradient-to-r from-[#FFD95A] to-[#D87C5A] text-[#362625] rounded-xl hover:from-[#D87C5A] hover:to-[#FFD95A] transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105 min-w-[120px]"
+                className="px-6 py-3 bg-gradient-to-r from-yellow-300 to-orange-400 text-[#362625] rounded-xl hover:from-orange-400 hover:to-yellow-300 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105 min-w-[120px]"
               >
                 Save
               </button>
