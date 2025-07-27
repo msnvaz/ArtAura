@@ -15,7 +15,7 @@
     }
   };
 import axios from 'axios';
-import { Calendar, Edit, Eye, Filter, Search, Trash2, Trophy } from 'lucide-react';
+import { Calendar, Edit, Eye, Filter, Search, Trash2, Trophy, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -278,7 +278,12 @@ const ChallengeList = () => {
                       <Calendar size={16} className="text-amber-600" />
                       <span><span className="font-semibold">Deadline:</span> {challenge.deadlineDateTime ? new Date(challenge.deadlineDateTime).toLocaleDateString() : '-'}</span>
                     </div>
-                    {/* You can add participants/submissions here if you add them to the backend */}
+                    {challenge.maxParticipants !== undefined && (
+                      <div className="flex items-center gap-2 text-sm text-gray-500">
+                        <Users size={16} className="text-amber-600" />
+                        <span><span className="font-semibold">Max Participants:</span> {challenge.maxParticipants}</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex-1"></div>
@@ -356,6 +361,14 @@ const ChallengeList = () => {
                     {challengeToView.updatedDateTime && (
                       <div>
                         <span className="font-semibold">Last Updated:</span> <span className="text-gray-700">{new Date(challengeToView.updatedDateTime).toLocaleDateString()}</span>
+                      </div>
+                    )}
+                    {challengeToView.maxParticipants !== undefined && (
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold flex items-center gap-2">
+                          <Users size={16} className="text-amber-600" /> Max Participants:
+                        </span>
+                        <span className="text-gray-700">{challengeToView.maxParticipants}</span>
                       </div>
                     )}
                     {challengeToView.participants !== undefined && (
@@ -449,6 +462,17 @@ const ChallengeList = () => {
                 value={editForm.title}
                 onChange={handleEditFormChange}
                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1 flex items-center gap-2"><Users size={16} className="text-amber-600" /> Max Participants</label>
+              <input
+                type="number"
+                name="maxParticipants"
+                value={editForm.maxParticipants || ''}
+                onChange={handleEditFormChange}
+                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                min="1"
               />
             </div>
             <div>
