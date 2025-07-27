@@ -33,11 +33,7 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
   const navigate = useNavigate();
 
   const categories = [
-    "Digital Art",
     "Traditional Art",
-    "Photography",
-    "Sculpture",
-    "Mixed Media",
     "Abstract Art",
     "Portrait",
     "Landscape",
@@ -375,10 +371,12 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
                         <Target size={16} />
                         Category *
                       </label>
-                      <select
+                      <input
+                        list="category-options"
                         name="category"
                         value={formData.category}
                         onChange={handleInputChange}
+                        placeholder="Select or type a category"
                         className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-colors ${
                           errors.category ? "border-red-500" : ""
                         }`}
@@ -387,14 +385,13 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
                           backgroundColor: "white",
                           color: "#5D3A00",
                         }}
-                      >
-                        <option value="">Select a category</option>
+                        autoComplete="off"
+                      />
+                      <datalist id="category-options">
                         {categories.map((category) => (
-                          <option key={category} value={category}>
-                            {category}
-                          </option>
+                          <option key={category} value={category} />
                         ))}
-                      </select>
+                      </datalist>
                       {errors.category && (
                         <p className="mt-1 text-sm text-red-600">
                           {errors.category}
