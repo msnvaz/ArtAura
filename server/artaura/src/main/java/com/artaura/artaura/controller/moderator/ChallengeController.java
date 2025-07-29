@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
 
 import com.artaura.artaura.dto.moderator.ChallengeDTO;
 import com.artaura.artaura.dto.moderator.ChallengeListDTO;
@@ -50,5 +51,18 @@ public class ChallengeController {
     public ResponseEntity<?> deleteChallenge(@PathVariable int id) {
         challengeService.deleteChallenge(id);
         return ResponseEntity.ok("Challenge deleted successfully");
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateChallenge(
+        @PathVariable int id,
+        @RequestBody ChallengeDTO challengeDTO,
+        @RequestHeader("Authorization") String authHeader
+    ) {
+        String token = authHeader.replace("Bearer ", "");
+        Long moderatorId = jwtUtil.extractUserId(token);
+        challengeDTO.setId(id);
+        challengeService.updateChallenge(challengeDTO, moderatorId != null ? moderatorId.toString() : null);
+        return ResponseEntity.ok("Challenge updated successfully");
     }
 }

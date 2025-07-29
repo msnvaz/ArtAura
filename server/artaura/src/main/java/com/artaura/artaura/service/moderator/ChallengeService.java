@@ -26,4 +26,8 @@ public class ChallengeService {
     public List<ChallengeListDTO> getAllChallenges() {
         return challengeDAO.getAllChallenges();
     }
+
+    public void updateChallenge(ChallengeDTO challenge, String moderatorId) {
+        challengeDAO.updateChallenge(challenge, moderatorId);
+    }
 }
