@@ -30,22 +30,23 @@ const ChallengeList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const fetchChallenges = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/api/challenges`,
+        token ? { headers: { Authorization: `Bearer ${token}` } } : {}
+      );
+      setChallenges(response.data);
+    } catch (err) {
+      setError('Failed to load challenges.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchChallenges = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await axios.get(
-          `${import.meta.env.VITE_API_URL}/api/challenges`,
-          token ? { headers: { Authorization: `Bearer ${token}` } } : {}
-        );
-        setChallenges(response.data);
-      } catch (err) {
-        setError('Failed to load challenges.');
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchChallenges();
   }, [token]);
 
@@ -86,6 +87,10 @@ const ChallengeList = () => {
     setEditForm({
       title: challenge.title || '',
       description: challenge.description || '',
+      category: challenge.category || '',
+      deadlineDateTime: challenge.deadlineDateTime || '',
+      maxParticipants: challenge.maxParticipants || 1,
+      rewards: challenge.rewards || '',
       requestSponsorship: !!challenge.requestSponsorship
     });
     setShowEditModal(true);
@@ -121,11 +126,66 @@ const ChallengeList = () => {
     setChallengeToEdit(null);
   };
 
-  const handleSaveEdit = () => {
-    // Here you would call your update API
-    setShowEditModal(false);
-    setChallengeToEdit(null);
-    // Optionally, show a toast or reload the list
+  const handleSaveEdit = async () => {
+    if (!challengeToEdit) return;
+    
+    // Validate required fields
+    if (!editForm.title || !editForm.description || !editForm.category || 
+        !editForm.deadlineDateTime || !editForm.maxParticipants) {
+      setError('Please fill in all required fields.');
+      return;
+    }
+
+    try {
+      // Prepare the payload for the backend
+      const payload = {
+        id: challengeToEdit.id,
+        title: editForm.title,
+        description: editForm.description,
+        category: editForm.category,
+        deadlineDateTime: editForm.deadlineDateTime
+          ? (editForm.deadlineDateTime.length <= 10
+              ? editForm.deadlineDateTime + (challengeToEdit.deadlineDateTime?.slice(10) || 'T00:00:00')
+              : editForm.deadlineDateTime)
+          : '',
+        maxParticipants: parseInt(editForm.maxParticipants) || 1,
+        rewards: editForm.rewards || '',
+        requestSponsorship: editForm.requestSponsorship || false
+      };
+      
+      await axios.put(
+        `${import.meta.env.VITE_API_URL}/api/challenges/${challengeToEdit.id}`,
+        payload,
+        {
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      // Refresh the challenges list to show updated data
+      await fetchChallenges();
+      
+      setShowEditModal(false);
+      setChallengeToEdit(null);
+      setEditForm({});
+      setError(null);
+      
+      // Show success message
+      alert('Challenge updated successfully!');
+    } catch (err) {
+      console.error('Error updating challenge:', err);
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else if (err.response?.status === 401) {
+        setError('You are not authorized to edit challenges.');
+      } else if (err.response?.status === 404) {
+        setError('Challenge not found.');
+      } else {
+        setError('Failed to update challenge. Please try again.');
+      }
+    }
   };
 
   const handleCancelDelete = () => {
@@ -514,6 +574,17 @@ const ChallengeList = () => {
                 value={editForm.deadlineDateTime ? editForm.deadlineDateTime.split('T')[0] : ''}
                 onChange={handleEditFormChange}
                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1 flex items-center gap-2"><Trophy size={16} className="text-amber-600" /> Rewards</label>
+              <textarea
+                name="rewards"
+                value={editForm.rewards || ''}
+                onChange={handleEditFormChange}
+                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                rows={2}
+                placeholder="Optional: Describe the rewards and prizes"
               />
             </div>
             <div>

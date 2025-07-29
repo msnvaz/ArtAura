@@ -47,4 +47,20 @@ public class ChallengeDAOImpl implements ChallengeDAO {
         String sql = "SELECT * FROM challenges ORDER BY publish_date_time DESC";
         return jdbcTemplate.query(sql, new ChallengeRowMapper());
     }
+
+    @Override
+    public void updateChallenge(ChallengeDTO challenge, String moderatorId) {
+        String sql = "UPDATE challenges SET title=?, category=?, deadline_date_time=?, description=?, max_participants=?, rewards=?, request_sponsorship=? WHERE id=? AND moderator_id=?";
+        jdbcTemplate.update(sql,
+            challenge.getTitle(),
+            challenge.getCategory(),
+            challenge.getDeadlineDateTime(),
+            challenge.getDescription(),
+            challenge.getMaxParticipants(),
+            challenge.getRewards(),
+            challenge.isRequestSponsorship() ? 1 : 0,
+            challenge.getId(),
+            moderatorId
+        );
+    }
 }

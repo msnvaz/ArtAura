@@ -5,6 +5,7 @@ import lombok.Data;
 
 @Data
 public class ChallengeDTO {
+    private int id;
     private String title;
     private String category;
     private String publishDateTime;
