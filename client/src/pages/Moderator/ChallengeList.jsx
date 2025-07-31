@@ -84,11 +84,30 @@ const ChallengeList = () => {
 
   const handleEditClick = (challenge) => {
     setChallengeToEdit(challenge);
+    
+    // Ensure proper datetime format for editing
+    let editableDateTime = '';
+    if (challenge.deadlineDateTime) {
+      const dateStr = challenge.deadlineDateTime.toString();
+      if (dateStr.includes('T')) {
+        editableDateTime = dateStr;
+      } else if (dateStr.includes(' ')) {
+        // Convert MySQL format to ISO format for editing
+        editableDateTime = dateStr.replace(' ', 'T');
+      } else {
+        // If only date, add default time
+        editableDateTime = dateStr + 'T23:59:59';
+      }
+    }
+    
+    console.log('Original challenge datetime:', challenge.deadlineDateTime);
+    console.log('Converted for editing:', editableDateTime);
+    
     setEditForm({
       title: challenge.title || '',
       description: challenge.description || '',
       category: challenge.category || '',
-      deadlineDateTime: challenge.deadlineDateTime || '',
+      deadlineDateTime: editableDateTime,
       maxParticipants: challenge.maxParticipants || 1,
       rewards: challenge.rewards || '',
       requestSponsorship: !!challenge.requestSponsorship
@@ -115,10 +134,23 @@ const ChallengeList = () => {
 
   const handleEditFormChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setEditForm((prev) => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
+    
+    if (name === 'deadlineDateTime') {
+      // Handle date change - preserve time if it exists
+      const currentTime = editForm.deadlineDateTime ? 
+        (editForm.deadlineDateTime.includes('T') ? editForm.deadlineDateTime.split('T')[1] : '00:00:00') : 
+        '00:00:00';
+      const newDateTime = value ? `${value}T${currentTime}` : '';
+      setEditForm((prev) => ({
+        ...prev,
+        deadlineDateTime: newDateTime
+      }));
+    } else {
+      setEditForm((prev) => ({
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value
+      }));
+    }
   };
 
   const handleCancelEdit = () => {
@@ -138,20 +170,71 @@ const ChallengeList = () => {
 
     try {
       // Prepare the payload for the backend
+      let formattedDeadlineDateTime = '';
+      if (editForm.deadlineDateTime && editForm.deadlineDateTime.trim() !== '') {
+        // Get clean datetime string
+        const dateTimeStr = editForm.deadlineDateTime.trim();
+        
+        console.log('Processing datetime:', dateTimeStr);
+        
+        if (dateTimeStr.includes('T')) {
+          try {
+            // Parse the ISO datetime and convert to MySQL format
+            const dateObj = new Date(dateTimeStr);
+            
+            // Check if the date is valid
+            if (isNaN(dateObj.getTime())) {
+              setError('Invalid deadline date/time. Please check your input.');
+              return;
+            }
+            
+            // Format as YYYY-MM-DD HH:MM:SS
+            const year = dateObj.getFullYear();
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            const hours = String(dateObj.getHours()).padStart(2, '0');
+            const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+            const seconds = String(dateObj.getSeconds()).padStart(2, '0');
+            
+            formattedDeadlineDateTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+          } catch (error) {
+            console.error('Error parsing datetime:', error);
+            setError('Invalid deadline date/time format. Please check your input.');
+            return;
+          }
+        } else if (dateTimeStr.length >= 10) {
+          // Only date provided, add default end-of-day time
+          formattedDeadlineDateTime = `${dateTimeStr} 23:59:59`;
+        } else {
+          setError('Invalid deadline date format. Please select a valid date.');
+          return;
+        }
+      } else {
+        setError('Deadline date and time are required.');
+        return;
+      }
+
+      // Final validation of the formatted datetime
+      if (!formattedDeadlineDateTime || formattedDeadlineDateTime.length < 19) {
+        setError('Failed to format deadline datetime. Please check your input.');
+        return;
+      }
+
+      console.log('Original datetime from form:', editForm.deadlineDateTime);
+      console.log('Formatted datetime for backend:', formattedDeadlineDateTime);
+
       const payload = {
         id: challengeToEdit.id,
         title: editForm.title,
         description: editForm.description,
         category: editForm.category,
-        deadlineDateTime: editForm.deadlineDateTime
-          ? (editForm.deadlineDateTime.length <= 10
-              ? editForm.deadlineDateTime + (challengeToEdit.deadlineDateTime?.slice(10) || 'T00:00:00')
-              : editForm.deadlineDateTime)
-          : '',
+        deadlineDateTime: formattedDeadlineDateTime,
         maxParticipants: parseInt(editForm.maxParticipants) || 1,
         rewards: editForm.rewards || '',
         requestSponsorship: editForm.requestSponsorship || false
       };
+      
+      console.log('Full payload being sent:', JSON.stringify(payload, null, 2));
       
       await axios.put(
         `${import.meta.env.VITE_API_URL}/api/challenges/${challengeToEdit.id}`,
@@ -176,6 +259,7 @@ const ChallengeList = () => {
       alert('Challenge updated successfully!');
     } catch (err) {
       console.error('Error updating challenge:', err);
+      console.error('Error response:', err.response?.data);
       if (err.response?.data?.message) {
         setError(err.response.data.message);
       } else if (err.response?.status === 401) {
@@ -336,7 +420,13 @@ const ChallengeList = () => {
                   <div className="space-y-2 mb-4">
                     <div className="flex items-center gap-2 text-sm text-gray-500">
                       <Calendar size={16} className="text-amber-600" />
-                      <span><span className="font-semibold">Deadline:</span> {challenge.deadlineDateTime ? new Date(challenge.deadlineDateTime).toLocaleDateString() : '-'}</span>
+                      <span>
+                        <span className="font-semibold">Deadline:</span> 
+                        {challenge.deadlineDateTime ? 
+                          ` ${new Date(challenge.deadlineDateTime).toLocaleDateString()} at ${new Date(challenge.deadlineDateTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}` 
+                          : ' -'
+                        }
+                      </span>
                     </div>
                     {challenge.maxParticipants !== undefined && (
                       <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -411,7 +501,12 @@ const ChallengeList = () => {
                       <span className="font-semibold flex items-center gap-2">
                         <Calendar size={16} className="text-amber-600" /> <span className="font-semibold">Deadline:</span>
                       </span>
-                      <span className="text-gray-700">{challengeToView.deadlineDateTime ? new Date(challengeToView.deadlineDateTime).toLocaleDateString() : '-'}</span>
+                      <span className="text-gray-700">
+                        {challengeToView.deadlineDateTime ? 
+                          `${new Date(challengeToView.deadlineDateTime).toLocaleDateString()} at ${new Date(challengeToView.deadlineDateTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}` 
+                          : '-'
+                        }
+                      </span>
                     </div>
                     {challengeToView.createdDateTime && (
                       <div>
@@ -567,12 +662,29 @@ const ChallengeList = () => {
             </div>
             {/* Status field removed from Edit Challenge modal as requested */}
             <div>
-              <label className="block text-sm font-medium mb-1 flex items-center gap-2"><Calendar size={16} className="text-amber-600" /> Deadline</label>
+              <label className="block text-sm font-medium mb-1 flex items-center gap-2"><Calendar size={16} className="text-amber-600" /> Deadline Date</label>
               <input
                 type="date"
                 name="deadlineDateTime"
                 value={editForm.deadlineDateTime ? editForm.deadlineDateTime.split('T')[0] : ''}
                 onChange={handleEditFormChange}
+                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1 flex items-center gap-2"><Calendar size={16} className="text-amber-600" /> Deadline Time</label>
+              <input
+                type="time"
+                name="deadlineTime"
+                value={editForm.deadlineDateTime ? (editForm.deadlineDateTime.includes('T') ? editForm.deadlineDateTime.split('T')[1]?.slice(0,5) : '00:00') : ''}
+                onChange={(e) => {
+                  const dateOnly = editForm.deadlineDateTime ? editForm.deadlineDateTime.split('T')[0] : '';
+                  if (dateOnly && e.target.value) {
+                    const newDateTime = `${dateOnly}T${e.target.value}:00`;
+                    console.log('Setting new datetime:', newDateTime); // Debug log
+                    setEditForm(prev => ({ ...prev, deadlineDateTime: newDateTime }));
+                  }
+                }}
                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
               />
             </div>

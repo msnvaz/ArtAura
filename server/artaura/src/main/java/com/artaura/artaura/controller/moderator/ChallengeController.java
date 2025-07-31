@@ -59,6 +59,12 @@ public class ChallengeController {
         @RequestBody ChallengeDTO challengeDTO,
         @RequestHeader("Authorization") String authHeader
     ) {
+        // Debug logging
+        System.out.println("Received challenge update request:");
+        System.out.println("ID: " + id);
+        System.out.println("Title: " + challengeDTO.getTitle());
+        System.out.println("Deadline DateTime: '" + challengeDTO.getDeadlineDateTime() + "'");
+        
         String token = authHeader.replace("Bearer ", "");
         Long moderatorId = jwtUtil.extractUserId(token);
         challengeDTO.setId(id);

@@ -51,10 +51,52 @@ public class ChallengeDAOImpl implements ChallengeDAO {
     @Override
     public void updateChallenge(ChallengeDTO challenge, String moderatorId) {
         String sql = "UPDATE challenges SET title=?, category=?, deadline_date_time=?, description=?, max_participants=?, rewards=?, request_sponsorship=? WHERE id=? AND moderator_id=?";
+        
+        // Clean and validate the deadline datetime
+        String formattedDeadline = challenge.getDeadlineDateTime();
+        if (formattedDeadline != null && !formattedDeadline.trim().isEmpty()) {
+            // Remove any extra whitespace
+            formattedDeadline = formattedDeadline.trim();
+            
+            // Log the received datetime for debugging
+            System.out.println("Received datetime: '" + formattedDeadline + "'");
+            
+            // Check if we have a valid datetime string before processing
+            if (formattedDeadline.length() < 10) {
+                System.err.println("Datetime string too short: '" + formattedDeadline + "'");
+                throw new IllegalArgumentException("Invalid datetime format: datetime string is too short");
+            }
+            
+            // If it contains 'T', convert to MySQL format
+            if (formattedDeadline.contains("T")) {
+                formattedDeadline = formattedDeadline.replace("T", " ");
+            }
+            
+            // Only remove non-essential characters, but preserve the structure
+            formattedDeadline = formattedDeadline.replaceAll("[^\\d\\-\\s:]", "");
+            
+            // Check if we still have a valid string after cleaning
+            if (formattedDeadline.length() < 19) {
+                System.err.println("Datetime string too short after cleaning: '" + formattedDeadline + "'");
+                throw new IllegalArgumentException("Invalid datetime format: datetime becomes invalid after cleaning");
+            }
+            
+            // Ensure proper format: YYYY-MM-DD HH:MM:SS
+            if (formattedDeadline.matches("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}")) {
+                System.out.println("Valid datetime format: '" + formattedDeadline + "'");
+            } else {
+                System.err.println("Invalid datetime format: '" + formattedDeadline + "'");
+                throw new IllegalArgumentException("Invalid datetime format: " + formattedDeadline + " (expected: YYYY-MM-DD HH:MM:SS)");
+            }
+        } else {
+            System.err.println("Null or empty datetime received");
+            throw new IllegalArgumentException("Deadline datetime cannot be null or empty");
+        }
+        
         jdbcTemplate.update(sql,
             challenge.getTitle(),
             challenge.getCategory(),
-            challenge.getDeadlineDateTime(),
+            formattedDeadline,
             challenge.getDescription(),
             challenge.getMaxParticipants(),
             challenge.getRewards(),
