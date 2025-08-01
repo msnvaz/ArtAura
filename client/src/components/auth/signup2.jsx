@@ -245,7 +245,7 @@ const RegisterPage = () => {
                 Already have an account?{" "}
               </span>
               <Link
-                to="/login"
+                to="/"
                 className="font-semibold text-[#362625] hover:text-[#362625]/80 transition-colors underline"
               >
                 Sign in here
@@ -570,7 +570,7 @@ const RegisterPage = () => {
                   Already have an account?{" "}
                 </span>
                 <Link
-                  to="/login"
+                  to="/"
                   className="font-bold text-[#362625] hover:text-[#362625]/80 transition-colors underline"
                 >
                   Sign in here
