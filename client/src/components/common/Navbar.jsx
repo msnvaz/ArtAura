@@ -49,7 +49,7 @@ const Navbar = ({ onToggleSidebar }) => {
                 href="/shop-products"
                 className="text-white font-medium hover:text-[#87CEEB] transition-colors"
               >
-                Shop
+                Artworks
               </a>
               <a
                 href="/artists"
