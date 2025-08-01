@@ -13,8 +13,10 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from 'react';
 import { useNavigate } from "react-router-dom";
+import axios from 'axios';
 import { useAuth } from "../../context/AuthContext";
 import ChallengeList from './ChallengeList';
+import VerificationList from './VerificationList';
 
 const ModeratorDashboard = () => {
   const navigate = useNavigate();
@@ -537,51 +539,7 @@ const ModeratorDashboard = () => {
       case 'challenges':
         return <ChallengeList />;
       case 'verification':
-        // Inline Approved and Rejected Exhibitions
-        return (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4" style={{color: '#5D3A00'}}>Exhibition Verification</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* Approved Exhibition Example */}
-              <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-400">
-                <div className="flex items-center gap-2 mb-2">
-                  <Shield className="h-5 w-5 text-green-600" />
-                  <span className="text-sm font-medium text-green-800">Approved</span>
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Modern Art Showcase 2024</h3>
-                <p className="text-gray-600 text-sm mb-4">A contemporary art exhibition featuring local artists exploring themes of urban life and digital culture.</p>
-                <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-                  <Clock size={16} />
-                  <span>Start: 8/15/2024</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
-                  <User size={16} />
-                  <span>Sarah Johnson</span>
-                </div>
-                <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Approved</span>
-              </div>
-              {/* Rejected Exhibition Example */}
-              <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-red-400">
-                <div className="flex items-center gap-2 mb-2">
-                  <Shield className="h-5 w-5 text-red-600" />
-                  <span className="text-sm font-medium text-red-800">Rejected</span>
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Digital Art Festival</h3>
-                <p className="text-gray-600 text-sm mb-4">Interactive digital art installations and VR experiences that push the boundaries of technology and creativity.</p>
-                <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-                  <Clock size={16} />
-                  <span>Start: 8/10/2024</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
-                  <User size={16} />
-                  <span>Alex Kim</span>
-                </div>
-                <span className="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Rejected</span>
-                <div className="mt-2 text-xs text-red-700">Reason: Insufficient venue safety documentation</div>
-              </div>
-            </div>
-          </div>
-        );
+        return <VerificationList />;
       case 'scoring':
         // Get selected challenge data for scoring
         const selectedScoringChallengeData = challenges.find(c => c.id === parseInt(selectedScoringChallenge));
