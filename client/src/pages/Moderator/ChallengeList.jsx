@@ -15,7 +15,7 @@
     }
   };
 import axios from 'axios';
-import { Calendar, Edit, Eye, Filter, Search, Trash2, Trophy, Users } from 'lucide-react';
+import { Calendar, CheckCircle, Clock, Edit, Eye, Filter, Search, Trash2, Trophy, Users, AlertCircle, FileText } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -63,6 +63,17 @@ const ChallengeList = () => {
       default:
         return 'bg-gray-100 text-gray-800';
     }
+  };
+
+  // Function to get challenge statistics
+  const getChallengeStats = () => {
+    return {
+      total: challenges.length,
+      draft: challenges.filter(c => c.status === 'draft').length,
+      active: challenges.filter(c => c.status === 'active').length,
+      review: challenges.filter(c => c.status === 'review').length,
+      completed: challenges.filter(c => c.status === 'completed').length
+    };
   };
 
 
@@ -328,6 +339,60 @@ const ChallengeList = () => {
           <p className="text-amber-700 mt-1">View and manage challenge details</p>
         </div>
       </div>
+
+      {/* Stats Cards */}
+      {(() => {
+        const stats = getChallengeStats();
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+            <div className="bg-white rounded-lg p-4 border border-gray-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total Challenges</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+                </div>
+                <Trophy className="h-8 w-8 text-gray-400" />
+              </div>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-800">Draft</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.draft}</p>
+                </div>
+                <FileText className="h-8 w-8 text-gray-500" />
+              </div>
+            </div>
+            <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-green-800">Active</p>
+                  <p className="text-2xl font-bold text-green-900">{stats.active}</p>
+                </div>
+                <CheckCircle className="h-8 w-8 text-green-500" />
+              </div>
+            </div>
+            <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-yellow-800">Under Review</p>
+                  <p className="text-2xl font-bold text-yellow-900">{stats.review}</p>
+                </div>
+                <AlertCircle className="h-8 w-8 text-yellow-500" />
+              </div>
+            </div>
+            <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-blue-800">Completed</p>
+                  <p className="text-2xl font-bold text-blue-900">{stats.completed}</p>
+                </div>
+                <Clock className="h-8 w-8 text-blue-500" />
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-md p-6 smooth-transition">
