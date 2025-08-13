@@ -51,6 +51,9 @@ import ScoringCriteria from "./pages/Moderator/ScoringCriteria";
 import VerifyExhibition from "./pages/Moderator/VerifyExhibition";
 import WinnerSelection from "./pages/Moderator/WinnerSelection";
 
+// Delivery Partner Pages
+import DeliveryPartnerPage from "./pages/DeliveryPartnerPage";
+
 // Components
 import Footer from "./components/Footer";
 import FooterLarge from "./components/FooterLarge";
@@ -102,6 +105,7 @@ function AppWrapper() {
         <Route path="/winner-selection" element={<Layout><WinnerSelection /></Layout>} />
         <Route path="/verify-exhibition" element={<Layout><VerifyExhibition /></Layout>} />
         <Route path="/scoring-criteria" element={<Layout><ScoringCriteria /></Layout>} />
+        <Route path="/delivery/dashboard" element={<PageTransition><DeliveryPartnerPage /></PageTransition>} />
       </Routes>
       {isLargeFooter ? <FooterLarge /> : <Footer />}
     </>
