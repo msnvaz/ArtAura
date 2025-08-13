@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",
+    "@stomp/stompjs": "^7.1.1",
     "axios": "^1.10.0",
     "bootstrap": "^5.3.7",
     "daisyui": "^5.0.43",
@@ -21,12 +22,16 @@
     "react-dom": "^19.1.0",
     "react-feather": "^2.0.10",
     "react-hook-form": "^7.58.1",
+    "react-image-crop": "^11.0.10",
     "react-router-dom": "^7.6.2",
     "react-toastify": "^11.0.5",
     "run-parallel": "^1.2.0",
+    "sockjs-client": "^1.6.1",
+    "stompjs": "^2.3.3",
     "yup": "^1.6.1"
   },
   "devDependencies": {
+    "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
     "@eslint/js": "^9.25.0",
     "@tailwindcss/forms": "^0.5.10",
     "@types/react": "^19.1.2",

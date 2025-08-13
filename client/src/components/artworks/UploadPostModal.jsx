@@ -1,5 +1,8 @@
-import React from 'react';
-import { Plus, Upload, Save, X } from 'lucide-react';
+import React, { useState } from 'react';
+import { Plus, Upload, Save, X, Edit3 } from 'lucide-react';
+import ImageEditorModal from '../modals/ImageEditorModal';
+import { useNotification } from '../../context/NotificationContext';
+import axios from 'axios';
 
 const UploadPostModal = ({
     isOpen,
@@ -7,10 +10,113 @@ const UploadPostModal = ({
     newArtwork,
     onArtworkChange,
     onImageUpload,
-    onSave,
-    onCancel
+    onSave, // will be replaced by internal handler
+    onCancel,
+    onSuccess // New callback for successful upload
 }) => {
+    const { showSuccess, showError } = useNotification();
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const [isEditingImage, setIsEditingImage] = useState(false);
+    const [currentEditingImage, setCurrentEditingImage] = useState(null);
+    const [currentEditingIndex, setCurrentEditingIndex] = useState(null);
+
+    const handleEditImage = (imageFile, index) => {
+        setCurrentEditingImage(imageFile);
+        setCurrentEditingIndex(index);
+        setIsEditingImage(true);
+    };
+
+    const handleSaveEditedImage = (editedFile) => {
+        if (currentEditingIndex !== null && newArtwork.imageFiles) {
+            const updatedFiles = [...newArtwork.imageFiles];
+            updatedFiles[currentEditingIndex] = editedFile;
+            onArtworkChange('imageFiles', updatedFiles);
+        }
+        setIsEditingImage(false);
+        setCurrentEditingImage(null);
+        setCurrentEditingIndex(null);
+    };
+
+    const handleCloseEditor = () => {
+        setIsEditingImage(false);
+        setCurrentEditingImage(null);
+        setCurrentEditingIndex(null);
+    };
+
     if (!isOpen) return null;
+
+    const handleSave = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError(null);
+
+        try {
+            const token = localStorage.getItem('token');
+            const userId = localStorage.getItem('userId');
+
+            if (!token || !userId) {
+                setError('Authentication required.');
+                setLoading(false);
+                window.location.href = '/login';
+                return;
+            }
+
+            // Validate required fields
+            if (!newArtwork.title || !newArtwork.medium || !newArtwork.price) {
+                setError('Please fill in all required fields (Title, Medium, Price).');
+                setLoading(false);
+                return;
+            }
+
+            // Create FormData for multipart upload
+            const formData = new FormData();
+            formData.append('title', newArtwork.title);
+            formData.append('medium', newArtwork.medium);
+            formData.append('size', newArtwork.size || '');
+            formData.append('year', newArtwork.year || new Date().getFullYear().toString());
+            // Ensure price is properly formatted as a number string
+            formData.append('price', (parseFloat(newArtwork.price) || 0).toString());
+            formData.append('description', newArtwork.description || '');
+            formData.append('category', newArtwork.category || '');
+            formData.append('tags', newArtwork.tags || '');
+
+            // Add image file if selected
+            if (newArtwork.imageFiles && newArtwork.imageFiles.length > 0) {
+                formData.append('image', newArtwork.imageFiles[0]);
+            }
+
+            console.log('Uploading artwork with FormData...');
+
+            const response = await axios.post(
+                `http://localhost:8081/api/artworks/artist/${userId}/upload`,
+                formData,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'multipart/form-data'
+                    }
+                }
+            );
+
+            console.log('Artwork added successfully:', response.data);
+            setLoading(false);
+
+            // Show success message
+            showSuccess('Artwork added successfully!');
+
+            // Call onSuccess callback with the new artwork data
+            if (onSuccess) {
+                onSuccess(response.data);
+            }
+
+            if (onClose) onClose();
+        } catch (err) {
+            console.error('Error adding artwork:', err.response || err);
+            setError(err?.response?.data?.message || err?.message || 'Failed to add artwork.');
+            setLoading(false);
+        }
+    };
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -31,7 +137,7 @@ const UploadPostModal = ({
 
                 {/* Modal Content */}
                 <div className="p-6">
-                    <form className="space-y-6">
+                    <form className="space-y-6" onSubmit={handleSave}>
                         {/* Image Upload Section */}
                         <div className="space-y-4">
                             <h3 className="text-lg font-semibold text-[#7f5539]">Artwork Images</h3>
@@ -68,6 +174,61 @@ const UploadPostModal = ({
                                     )}
                                 </div>
                             </div>
+
+                            {/* Image Preview Section */}
+                            {newArtwork.imageFiles && newArtwork.imageFiles.length > 0 && (
+                                <div className="mt-4">
+                                    <h4 className="text-md font-medium text-[#7f5539] mb-3">Selected Images</h4>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                                        {Array.from(newArtwork.imageFiles).map((file, index) => (
+                                            <div key={index} className="relative group">
+                                                <img
+                                                    src={URL.createObjectURL(file)}
+                                                    alt={`Artwork preview ${index + 1}`}
+                                                    className="w-full h-32 object-cover rounded-lg border border-[#7f5539]/20"
+                                                />
+
+                                                {/* Image Controls */}
+                                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-200 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                                    <div className="flex space-x-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleEditImage(file, index)}
+                                                            className="bg-[#7f5539] text-white p-2 rounded-full hover:bg-[#6e4c34] transition-colors"
+                                                            title="Edit Image"
+                                                        >
+                                                            <Edit3 size={14} />
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const updatedFiles = Array.from(newArtwork.imageFiles).filter((_, i) => i !== index);
+                                                                onArtworkChange('imageFiles', updatedFiles);
+                                                            }}
+                                                            className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors"
+                                                            title="Remove Image"
+                                                        >
+                                                            <X size={14} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                {/* Always visible remove button for mobile */}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const updatedFiles = Array.from(newArtwork.imageFiles).filter((_, i) => i !== index);
+                                                        onArtworkChange('imageFiles', updatedFiles);
+                                                    }}
+                                                    className="absolute top-1 right-1 bg-black/50 text-white p-1 rounded-full hover:bg-black/70 transition-colors md:hidden"
+                                                >
+                                                    <X size={12} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* Basic Information */}
@@ -136,12 +297,12 @@ const UploadPostModal = ({
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-[#7f5539]">Price *</label>
                                     <div className="relative">
-                                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#7f5539]/60">$</span>
+                                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#7f5539]/60 font-medium">LKR</span>
                                         <input
                                             type="number"
                                             value={newArtwork.price}
                                             onChange={(e) => onArtworkChange('price', e.target.value)}
-                                            className="w-full pl-8 pr-3 py-2 border border-[#7f5539]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7f5539]/20 focus:border-[#7f5539] transition-colors"
+                                            className="w-full pl-12 pr-3 py-2 border border-[#7f5539]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7f5539]/20 focus:border-[#7f5539] transition-colors"
                                             placeholder="0.00"
                                             min="0"
                                             step="0.01"
@@ -237,26 +398,40 @@ const UploadPostModal = ({
                                 </div>
                             </div>
                         </div>
+
+                        {/* Form Buttons - Inside form for proper submission */}
+                        <div className="flex flex-col items-end space-y-2 pt-6 border-t border-[#fdf9f4]/50">
+                            {error && <div className="text-red-600 text-sm mb-2 w-full text-right">{error}</div>}
+                            <div className="flex items-center justify-end space-x-4 w-full">
+                                <button
+                                    type="button"
+                                    onClick={onCancel}
+                                    className="px-6 py-2 border border-[#7f5539]/30 text-[#7f5539] rounded-lg hover:bg-[#7f5539]/5 transition-colors font-medium"
+                                    disabled={loading}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="px-6 py-2 bg-[#7f5539] text-white rounded-lg hover:bg-[#6e4c34] transition-colors font-medium flex items-center space-x-2 disabled:opacity-60"
+                                    disabled={loading}
+                                >
+                                    <Save size={16} />
+                                    <span>{loading ? 'Adding...' : 'Add Artwork'}</span>
+                                </button>
+                            </div>
+                        </div>
                     </form>
                 </div>
-
-                {/* Modal Footer */}
-                <div className="flex items-center justify-end space-x-4 p-6 border-t border-[#fdf9f4]/50">
-                    <button
-                        onClick={onCancel}
-                        className="px-6 py-2 border border-[#7f5539]/30 text-[#7f5539] rounded-lg hover:bg-[#7f5539]/5 transition-colors font-medium"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        onClick={onSave}
-                        className="px-6 py-2 bg-[#7f5539] text-white rounded-lg hover:bg-[#6e4c34] transition-colors font-medium flex items-center space-x-2"
-                    >
-                        <Save size={16} />
-                        <span>Add Artwork</span>
-                    </button>
-                </div>
             </div>
+
+            {/* Image Editor Modal */}
+            <ImageEditorModal
+                isOpen={isEditingImage}
+                onClose={handleCloseEditor}
+                imageFile={currentEditingImage}
+                onSave={handleSaveEditedImage}
+            />
         </div>
     );
 };

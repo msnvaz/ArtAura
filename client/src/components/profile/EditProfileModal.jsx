@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { X, Save, Upload, User, Mail, Phone, MapPin } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import axios from "axios";
 
 const EditProfileModal = ({ isOpen, onClose, profileData, onUpdate }) => {
-  const { auth } = useAuth();
+  const { token, userId } = useAuth();
   const [formData, setFormData] = useState({
     firstName: profileData?.firstName || "",
     lastName: profileData?.lastName || "",
@@ -19,6 +19,20 @@ const EditProfileModal = ({ isOpen, onClose, profileData, onUpdate }) => {
   const [loading, setLoading] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
+
+  useEffect(() => {
+    setFormData({
+      firstName: profileData?.name?.split(" ")[0] || "",
+      lastName: profileData?.name?.split(" ").slice(1).join(" ") || "",
+      email: profileData?.email || "",
+      phone: profileData?.contactNo || "",
+      streetAddress: profileData?.streetAddress || "",
+      city: profileData?.city || "",
+      state: profileData?.state || "",
+      postalCode: profileData?.zipCode || "",
+      bio: profileData?.bio || "",
+    });
+  }, [profileData, isOpen]);
 
   if (!isOpen) return null;
 
@@ -44,45 +58,51 @@ const EditProfileModal = ({ isOpen, onClose, profileData, onUpdate }) => {
     setLoading(true);
 
     try {
-      // Comment out API calls since backend is not ready
-      // const API_URL = import.meta.env.VITE_API_URL;
-
-      // Handle file upload if selected
-      let avatarUrl = profileData.avatar;
-      // if (selectedFile) {
-      //   const formDataFile = new FormData();
-      //   formDataFile.append('avatar', selectedFile);
-      //
-      //   const uploadResponse = await axios.post(`${API_URL}/api/user/upload-avatar`, formDataFile, {
-      //     headers: {
-      //       Authorization: `Bearer ${auth.token}`,
-      //       'Content-Type': 'multipart/form-data'
-      //     }
-      //   });
-      //   avatarUrl = uploadResponse.data.avatarUrl;
-      // }
-
-      // Update profile data
-      const updateData = {
-        ...formData,
-        avatar: previewUrl || profileData.avatar,
-      };
-
-      // Comment out API call since backend is not ready
-      // const response = await axios.put(`${API_URL}/api/user/profile`, updateData, {
-      //   headers: {
-      //     Authorization: `Bearer ${auth.token}`,
-      //     'Content-Type': 'application/json'
-      //   }
-      // });
-
-      onUpdate(updateData);
+      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+      const formDataObj = new FormData();
+      // Use existing profileData for unchanged fields
+      formDataObj.append(
+        "profile",
+        new Blob(
+          [
+            JSON.stringify({
+              name: `${
+                formData.firstName || profileData?.name?.split(" ")[0] || ""
+              } ${
+                formData.lastName ||
+                profileData?.name?.split(" ").slice(1).join(" ") ||
+                ""
+              }`.trim(),
+              email: formData.email || profileData?.email || "",
+              contactNo: formData.phone || profileData?.contactNo || "",
+              streetAddress:
+                formData.streetAddress || profileData?.streetAddress || "",
+              city: formData.city || profileData?.city || "",
+              state: formData.state || profileData?.state || "",
+              zipCode: formData.postalCode || profileData?.zipCode || "",
+              bio: formData.bio || profileData?.bio || "",
+            }),
+          ],
+          { type: "application/json" }
+        )
+      );
+      if (selectedFile) {
+        formDataObj.append("image", selectedFile);
+      }
+      const response = await axios.put(
+        `${API_URL}/api/users/${userId}`,
+        formDataObj,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      onUpdate(response.data);
       onClose();
     } catch (error) {
       console.error("Error updating profile:", error);
-      // For demo purposes, update anyway
-      onUpdate({ ...formData, avatar: previewUrl || profileData.avatar });
-      onClose();
     } finally {
       setLoading(false);
     }
@@ -139,7 +159,6 @@ const EditProfileModal = ({ isOpen, onClose, profileData, onUpdate }) => {
                 name="firstName"
                 value={formData.firstName}
                 onChange={handleInputChange}
-                required
                 className="w-full px-3 py-3 border border-[#FFE4D6] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D87C5A] focus:border-transparent"
                 placeholder="Enter your first name"
               />
@@ -154,7 +173,6 @@ const EditProfileModal = ({ isOpen, onClose, profileData, onUpdate }) => {
                 name="lastName"
                 value={formData.lastName}
                 onChange={handleInputChange}
-                required
                 className="w-full px-3 py-3 border border-[#FFE4D6] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D87C5A] focus:border-transparent"
                 placeholder="Enter your last name"
               />
@@ -171,7 +189,6 @@ const EditProfileModal = ({ isOpen, onClose, profileData, onUpdate }) => {
               name="email"
               value={formData.email}
               onChange={handleInputChange}
-              required
               className="w-full px-3 py-3 border border-[#FFE4D6] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D87C5A] focus:border-transparent"
               placeholder="Enter your email"
             />

@@ -662,7 +662,7 @@ function ShopRegisterPage() {
           <div className="text-center pt-4">
             <span className="text-[#362625]/70">Already have an account? </span>
             <Link
-              to="/login"
+              to="/"
               className="font-medium text-[#362625] hover:text-[#362625]/80 transition-colors"
             >
               Sign in here

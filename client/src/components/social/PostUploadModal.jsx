@@ -1,5 +1,6 @@
-import React from 'react';
-import { Camera, X, Save, Image, Video, Smile, MapPin, Users } from 'lucide-react';
+import React, { useState } from 'react';
+import { Camera, X, Save, Image, Video, Smile, MapPin, Users, Edit3 } from 'lucide-react';
+import ImageEditorModal from '../modals/ImageEditorModal';
 
 const PostUploadModal = ({
     isOpen,
@@ -11,6 +12,33 @@ const PostUploadModal = ({
     onCancel,
     artistProfile
 }) => {
+    const [isEditingImage, setIsEditingImage] = useState(false);
+    const [currentEditingImage, setCurrentEditingImage] = useState(null);
+    const [currentEditingIndex, setCurrentEditingIndex] = useState(null);
+
+    const handleEditImage = (imageFile, index) => {
+        setCurrentEditingImage(imageFile);
+        setCurrentEditingIndex(index);
+        setIsEditingImage(true);
+    };
+
+    const handleSaveEditedImage = (editedFile) => {
+        if (currentEditingIndex !== null && newPost.imageFiles) {
+            const updatedFiles = [...newPost.imageFiles];
+            updatedFiles[currentEditingIndex] = editedFile;
+            onPostChange('imageFiles', updatedFiles);
+        }
+        setIsEditingImage(false);
+        setCurrentEditingImage(null);
+        setCurrentEditingIndex(null);
+    };
+
+    const handleCloseEditor = () => {
+        setIsEditingImage(false);
+        setCurrentEditingImage(null);
+        setCurrentEditingIndex(null);
+    };
+
     if (!isOpen) return null;
 
     return (
@@ -64,19 +92,43 @@ const PostUploadModal = ({
                             <div className="relative">
                                 <div className="grid grid-cols-1 gap-2">
                                     {Array.from(newPost.imageFiles).map((file, index) => (
-                                        <div key={index} className="relative">
+                                        <div key={index} className="relative group">
                                             <img
                                                 src={URL.createObjectURL(file)}
                                                 alt={`Upload preview ${index + 1}`}
                                                 className="w-full h-64 object-cover rounded-lg"
                                             />
 
+                                            {/* Image Controls */}
+                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-200 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                                <div className="flex space-x-2">
+                                                    <button
+                                                        onClick={() => handleEditImage(file, index)}
+                                                        className="bg-[#7f5539] text-white p-2 rounded-full hover:bg-[#6e4c34] transition-colors"
+                                                        title="Edit Image"
+                                                    >
+                                                        <Edit3 size={16} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            const newFiles = Array.from(newPost.imageFiles).filter((_, i) => i !== index);
+                                                            onPostChange('imageFiles', newFiles);
+                                                        }}
+                                                        className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors"
+                                                        title="Remove Image"
+                                                    >
+                                                        <X size={16} />
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {/* Always visible remove button for mobile */}
                                             <button
                                                 onClick={() => {
                                                     const newFiles = Array.from(newPost.imageFiles).filter((_, i) => i !== index);
                                                     onPostChange('imageFiles', newFiles);
                                                 }}
-                                                className="absolute top-2 right-2 bg-black/50 text-white p-1 rounded-full hover:bg-black/70 transition-colors"
+                                                className="absolute top-2 right-2 bg-black/50 text-white p-1 rounded-full hover:bg-black/70 transition-colors md:hidden"
                                             >
                                                 <X size={16} />
                                             </button>
@@ -185,6 +237,14 @@ const PostUploadModal = ({
                     </button>
                 </div>
             </div>
+
+            {/* Image Editor Modal */}
+            <ImageEditorModal
+                isOpen={isEditingImage}
+                onClose={handleCloseEditor}
+                imageFile={currentEditingImage}
+                onSave={handleSaveEditedImage}
+            />
         </div>
     );
 };

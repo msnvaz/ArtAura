@@ -9,7 +9,9 @@ import {
   DollarSign,
   Eye,
   Filter,
+  Mail,
   MapPin,
+  Phone,
   Search,
   Shield,
   User,
@@ -38,16 +40,18 @@ const [exhibitionPosts, setExhibitionPosts] = useState([
     id: 1,
     title: "Modern Art Showcase 2025",
     description: "A contemporary art exhibition featuring local artists exploring themes of urban life and digital culture. This immersive experience will showcase cutting-edge installations, interactive digital art pieces, and thought-provoking sculptures that challenge traditional artistic boundaries.",
-    location: "Downtown Gallery, Main Street",
-    startDate: "2024-08-15",
+    location: "Viharamaha Devi Park, Colombo 07",
+    startDate: "2025-08-15",
     startTime: "10:00",
-    endDate: "2024-08-20",
+    endDate: "2025-08-20",
     endTime: "18:00",
-    createdBy: "Sarah Johnson",
+    createdBy: "Chamath Abeywardena",
     userHandle: "@artgallery_dt",
+    contactEmail: "abeywardena@example.com",
+    contactPhone: "+947-555-123456",
     status: "pending",
-    feePaid: "$150",
-    submittedAt: "2024-07-10T14:30:00Z",
+    feePaid: "LKR 2000",
+    submittedAt: "2025-07-10T14:30:00Z",
     images: [
       "https://images.pexels.com/photos/1070527/pexels-photo-1070527.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&fit=crop",
       "https://images.pexels.com/photos/1183992/pexels-photo-1183992.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&fit=crop",
@@ -59,71 +63,77 @@ const [exhibitionPosts, setExhibitionPosts] = useState([
   },
   {
     id: 2,
-    title: "Vintage Photography Collection",
-    description: "A curated collection of vintage photographs from the 1950s-1980s showcasing urban development and social change. This exhibition features rare prints from renowned photographers documenting the transformation of metropolitan areas.",
-    location: "Heritage Museum, Cultural District",
-    startDate: "2024-09-01",
+    title: "Ceylon Heritage Photography",
+    description: "A stunning collection of vintage photographs from colonial Ceylon to modern Sri Lanka (1920s-1990s) showcasing the transformation of Colombo, Kandy, and Galle. This exhibition features rare prints documenting independence celebrations, traditional festivals, and architectural heritage.",
+    location: "National Museum, Colombo 07",
+    startDate: "2025-09-01",
     startTime: "09:00",
-    endDate: "2024-09-15",
+    endDate: "2025-09-15",
     endTime: "17:00",
-    createdBy: "Michael Chen",
-    userHandle: "@vintage_lens",
+    createdBy: "Pradeep Fernando",
+    userHandle: "@heritage_lanka",
+    contactEmail: "pradeep.fernando@sltnet.lk",
+    contactPhone: "+94-11-234-5678",
     status: "pending",
-    feePaid: "$200",
-    submittedAt: "2024-07-12T16:45:00Z",
+    feePaid: "LKR 15,000",
+    submittedAt: "2025-07-12T16:45:00Z",
     images: [
       "https://images.pexels.com/photos/1183992/pexels-photo-1183992.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&fit=crop",
       "https://images.pexels.com/photos/1070527/pexels-photo-1070527.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&fit=crop"
     ],
     category: "Photography",
-    expectedVisitors: 150,
+    expectedVisitors: 200,
     notificationCount: 1
   },
   {
     id: 3,
-    title: "Sculpture Garden Opening",
-    description: "Grand opening of our new outdoor sculpture garden featuring works by international artists. This permanent installation will showcase large-scale sculptures in a beautifully landscaped environment, creating a unique dialogue between art and nature.",
-    location: "City Park, Sculpture Avenue",
-    startDate: "2024-07-25",
+    title: "Buddha Statue Garden Opening",
+    description: "Grand opening of our new sculpture garden featuring traditional Buddha statues and contemporary interpretations by Sri Lankan artists. This peaceful installation showcases the harmony between ancient Buddhist art and modern sculptural techniques in the beautiful Peradeniya botanical gardens.",
+    location: "Royal Botanical Gardens, Peradeniya",
+    startDate: "2025-07-25",
     startTime: "11:00",
-    endDate: "2024-07-25",
+    endDate: "2025-07-25",
     endTime: "16:00",
-    createdBy: "Emma Rodriguez",
-    userHandle: "@citypark_art",
+    createdBy: "Nimal Rajapaksa",
+    userHandle: "@buddhist_art_lk",
+    contactEmail: "nimal.rajapaksa@gmail.com",
+    contactPhone: "+94-81-234-5678",
     status: "approved",
-    feePaid: "$100",
-    submittedAt: "2024-07-01T09:15:00Z",
+    feePaid: "LKR 8,000",
+    submittedAt: "2025-07-01T09:15:00Z",
     images: [
       "https://images.pexels.com/photos/1839919/pexels-photo-1839919.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&fit=crop",
       "https://images.pexels.com/photos/1070527/pexels-photo-1070527.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&fit=crop",
       "https://images.pexels.com/photos/1183992/pexels-photo-1183992.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&fit=crop"
     ],
     category: "Sculpture",
-    expectedVisitors: 300,
+    expectedVisitors: 400,
     notificationCount: 0
   },
   {
     id: 4,
-    title: "Digital Art Festival",
-    description: "Interactive digital art installations and VR experiences that push the boundaries of technology and creativity. Visitors will experience immersive virtual reality environments, AI-generated art, and interactive installations that respond to movement and sound.",
-    location: "Tech Hub, Innovation Center",
-    startDate: "2024-08-10",
+    title: "Tech Meets Tradition Festival",
+    description: "Interactive digital art installations combining traditional Sri Lankan motifs with cutting-edge technology. Experience VR journeys through ancient temples, AI-generated Kandyan dancing sequences, and interactive installations that respond to traditional drums and sitar music.",
+    location: "BMICH Exhibition Hall, Colombo 07",
+    startDate: "2025-08-10",
     startTime: "12:00",
-    endDate: "2024-08-12",
+    endDate: "2025-08-12",
     endTime: "20:00",
-    createdBy: "Alex Kim",
-    userHandle: "@digital_futures",
+    createdBy: "Kasun Wijewardana",
+    userHandle: "@tech_culture_lk",
+    contactEmail: "kasun.wijewardana@dialog.lk",
+    contactPhone: "+94-77-123-4567",
     status: "rejected",
-    feePaid: "$175",
-    submittedAt: "2024-07-05T11:20:00Z",
+    feePaid: "LKR 25,000",
+    submittedAt: "2025-07-05T11:20:00Z",
     images: [
       "https://images.pexels.com/photos/1183992/pexels-photo-1183992.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&fit=crop",
       "https://images.pexels.com/photos/1839919/pexels-photo-1839919.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&fit=crop"
     ],
     category: "Digital Art",
-    expectedVisitors: 500,
+    expectedVisitors: 600,
     notificationCount: 0,
-    rejectionReason: "Insufficient venue safety documentation"
+    rejectionReason: "Insufficient sound equipment safety certification for traditional music performances"
   }
 ]);
 
@@ -247,6 +257,25 @@ const navigateImage = (direction) => {
 
 return (
   <>
+    {/* CSS styles for button animations */}
+    <style jsx>{`
+      .btn-animate {
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .btn-animate:hover {
+        transform: translateY(-1px) scale(1.02);
+      }
+
+      /* Ensure smooth rendering */
+      * {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+    `}</style>
+
     {/* Bootstrap CSS */}
     <link 
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" 
@@ -264,7 +293,7 @@ return (
           backgroundRepeat: 'no-repeat'
         }}
       >
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
             <div className="flex items-center space-x-4">
               <div className="p-3 rounded-full" style={{backgroundColor: '#FFD95A'}}>
@@ -276,7 +305,7 @@ return (
               </div>
             </div>
             <div className="mt-4 md:mt-0 flex gap-2 items-center">
-              <div className="relative">
+              <div className="relative mr-3">
                 <Bell className="w-6 h-6 text-white" />
                 {totalNotifications > 0 && (
                   <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
@@ -285,19 +314,11 @@ return (
                 )}
               </div>
               <button
-                className="border px-3 py-2 rounded-lg font-medium flex items-center space-x-1 transition-colors whitespace-nowrap"
+                className="border px-3 py-2 rounded-lg font-medium flex items-center space-x-1 whitespace-nowrap btn-animate"
                 style={{
                   borderColor: '#FFE4D6',
                   color: '#FFE4D6',
                   backgroundColor: 'rgba(255, 228, 214, 0.1)'
-                }}
-                onMouseOver={(e) => {
-                  e.target.style.backgroundColor = '#FFE4D6';
-                  e.target.style.color = '#5D3A00';
-                }}
-                onMouseOut={(e) => {
-                  e.target.style.backgroundColor = 'rgba(255, 228, 214, 0.1)';
-                  e.target.style.color = '#FFE4D6';
                 }}
                 onClick={() => navigate('/moderatordashboard')}
               >
@@ -429,6 +450,14 @@ return (
                             <Calendar className="w-4 h-4" />
                             <span>{formatDateTime(post.startDate, post.startTime)} - {formatDateTime(post.endDate, post.endTime)}</span>
                           </div>
+                          <div className="flex items-center gap-2 text-sm" style={{color: '#D87C5A'}}>
+                            <Mail size={16} style={{verticalAlign: 'middle'}} />
+                            <span>{post.contactEmail}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm" style={{color: '#D87C5A'}}>
+                             <Phone size={16} style={{verticalAlign: 'middle'}} />
+                            <span>{post.contactPhone}</span>
+                          </div>
                         </div>
                         
                         <p className="text-sm mb-4" style={{color: '#5D3A00'}}>
@@ -489,14 +518,14 @@ return (
                           <div className="flex gap-2">
                             <button
                               onClick={() => handleApprove(post.id)}
-                              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg"
                             >
                               <Check className="w-4 h-4" />
                               Approve
                             </button>
                             <button
                               onClick={() => openRejectModal(post.id)}
-                              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg"
                             >
                               <X className="w-4 h-4" />
                               Reject
@@ -574,6 +603,19 @@ return (
                       <p className="text-sm leading-relaxed" style={{color: '#5D3A00'}}>
                         {selectedPost.description}
                       </p>
+                    </div>
+                    <div className="mb-6">
+                      <h3 className="text-lg font-semibold mb-2" style={{color: '#5D3A00'}}>Contact & Location Details</h3>
+                      <div className="flex flex-col gap-2">
+                        <span className="text-sm flex items-center gap-2" style={{color: '#D87C5A'}}>
+                          <Mail size={18} style={{verticalAlign: 'middle'}} />
+                          {selectedPost.contactEmail}
+                        </span>
+                        <span className="text-sm flex items-center gap-2" style={{color: '#D87C5A'}}>
+                          <Phone size={18} style={{verticalAlign: 'middle'}} />
+                          {selectedPost.contactPhone}
+                        </span>
+                      </div>
                     </div>
 
                     {selectedPost.images && selectedPost.images.length > 0 && (

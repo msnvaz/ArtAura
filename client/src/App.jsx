@@ -24,7 +24,7 @@ import Login from "./components/auth/login";
 import ShopRegisterPage from "./components/auth/shopSignup";
 import Signup from "./components/auth/signup2";
 import ArtworkDetail from "./pages/Artist/ArtWorkDetail";
-import ArtistDashboard from "./pages/Artist/ArtistDashboard";
+
 import ArtistPortfolio from "./pages/Artist/ArtistPortfolio";
 import UploadArtWork from "./pages/Artist/UploadArtWork";
 import CommunityPage from "./pages/CommunityPage";
@@ -50,6 +50,9 @@ import ModeratorExhibition from "./pages/Moderator/ModeratorExhibition";
 import ScoringCriteria from "./pages/Moderator/ScoringCriteria";
 import VerifyExhibition from "./pages/Moderator/VerifyExhibition";
 import WinnerSelection from "./pages/Moderator/WinnerSelection";
+
+// Delivery Partner Pages
+import DeliveryPartnerPage from "./pages/DeliveryPartnerPage";
 
 // Components
 import Footer from "./components/Footer";
@@ -93,7 +96,6 @@ function AppWrapper() {
         <Route path="/shop/profile" element={<PageTransition><Profile /></PageTransition>} />
         <Route path="/uploadartwork" element={<PageTransition><UploadArtWork /></PageTransition>} />
         <Route path="/artworks/:id" element={<PageTransition><ArtworkDetail /></PageTransition>} />
-        <Route path="/artist/artistdashboard" element={<PageTransition><ArtistDashboard /></PageTransition>} />
         <Route path="/artist/artistportfolio" element={<PageTransition><ArtistPortfolio /></PageTransition>} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/moderatordashboard" element={<Layout><ModeratorDashboard /></Layout>} />
@@ -103,6 +105,7 @@ function AppWrapper() {
         <Route path="/winner-selection" element={<Layout><WinnerSelection /></Layout>} />
         <Route path="/verify-exhibition" element={<Layout><VerifyExhibition /></Layout>} />
         <Route path="/scoring-criteria" element={<Layout><ScoringCriteria /></Layout>} />
+        <Route path="/delivery/dashboard" element={<PageTransition><DeliveryPartnerPage /></PageTransition>} />
       </Routes>
       {isLargeFooter ? <FooterLarge /> : <Footer />}
     </>

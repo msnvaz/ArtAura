@@ -34,8 +34,8 @@ const ArtworkDetail = () => {
             <ImageZoomLens
               key={index}
               src={img}
-              zoom={5}         // Adjust zoom level (2x here)
-              lensSize={120}   // Adjust lens box size
+              zoom={7}         // Increased zoom level for better detail
+              lensSize={160}   // Increased lens box size for better visibility
             />
           ))}
         </div>
@@ -52,4 +52,3 @@ const ArtworkDetail = () => {
 };
 
 export default ArtworkDetail;
-

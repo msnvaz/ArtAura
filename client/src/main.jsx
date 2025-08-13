@@ -5,24 +5,30 @@ import { ArtProvider } from "./context/ArtContext"; // ✅ Import the provider
 import { AuthProvider } from "./context/AuthContext";
 import { UserProvider } from "./context/UserContext";
 import { CartProvider } from "./context/CartContext"; // ✅ Import CartProvider
+import { NotificationProvider } from "./context/NotificationContext"; // ✅ Import NotificationProvider
 import "./index.css";
+
+// Polyfill for Node.js global in browser (for sockjs-client)
+window.global = window;
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <AuthProvider>
-      <ArtProvider>
-        {" "}
-        {/* ✅ Wrap App with ArtProvider */}
-        <UserProvider>
+    <NotificationProvider>
+      <AuthProvider>
+        <ArtProvider>
           {" "}
-          {/* ✅ Wrap App with UserProvider */}
-          <CartProvider>
+          {/* ✅ Wrap App with ArtProvider */}
+          <UserProvider>
             {" "}
-            {/* ✅ Wrap App with CartProvider */}
-            <App />
-          </CartProvider>
-        </UserProvider>
-      </ArtProvider>
-    </AuthProvider>
+            {/* ✅ Wrap App with UserProvider */}
+            <CartProvider>
+              {" "}
+              {/* ✅ Wrap App with CartProvider */}
+              <App />
+            </CartProvider>
+          </UserProvider>
+        </ArtProvider>
+      </AuthProvider>
+    </NotificationProvider>
   </StrictMode>
 );

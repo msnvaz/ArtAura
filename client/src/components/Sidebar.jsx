@@ -14,7 +14,7 @@ import { useAuth } from "../context/AuthContext";
 import { useState } from "react";
 
 const mockUser = {
-  name: "John Doe",
+  name: "Wameesha",
   image: "/src/assets/user.png",
 };
 
@@ -25,12 +25,6 @@ const mainLinks = [
   { name: "Analytics", path: "/shop/analytics", icon: BarChart3 },
   { name: "Sponsorships", path: "/shop/sponsorships", icon: Handshake },
 
-  {
-    name: "Notifications",
-    path: "/portal/notifications",
-    icon: Bell,
-    hasBell: true,
-  },
 ];
 
 const logoutLink = { name: "Log out", path: "/", icon: LogOut };

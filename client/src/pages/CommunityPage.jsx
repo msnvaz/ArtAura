@@ -8,14 +8,44 @@ import ExhibitionPostForm from "../components/community/ExhibitionPostForm";
 import RecentChallenges from "../components/community/RecentChallenges";
 import CartSidebar from "../components/cart/CartSidebar";
 import { Filter, Calendar, Image, Users } from "lucide-react";
-import axios from "axios";
+import { formatDistanceToNow, isValid } from "date-fns";
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 const CommunityPage = () => {
-  const { role } = useAuth(); // Get user role from auth context
+  const { role, userId, token } = useAuth(); // Get user role and ID from auth context
   const [posts, setPosts] = useState([]);
   const [exhibitionPosts, setExhibitionPosts] = useState([]);
   const [activeFilter, setActiveFilter] = useState("all");
   const [loading, setLoading] = useState(true);
+  const [userProfile, setUserProfile] = useState({ name: "", avatar: "" });
+
+  // Helper function to safely format time distance
+  const safeFormatDistanceToNow = (date) => {
+    if (!date) return "Unknown time";
+
+    let d;
+    if (typeof date === "string") {
+      d = new Date(date);
+      if (!isValid(d)) {
+        const timestamp = parseInt(date);
+        if (!isNaN(timestamp)) {
+          d = new Date(timestamp);
+        }
+      }
+    } else if (typeof date === "number") {
+      d = new Date(date);
+    } else {
+      d = new Date(date);
+    }
+
+    if (!isValid(d)) {
+      console.warn("Invalid date provided to safeFormatDistanceToNow:", date);
+      return "Unknown time";
+    }
+
+    return formatDistanceToNow(d, { addSuffix: true });
+  };
 
   // Mock regular posts
   const mockRegularPosts = [
@@ -28,7 +58,7 @@ const CommunityPage = () => {
       },
       caption: "My latest Sri Lankan style painting! 🇱🇰🎨✨",
       image: "/art1.jpeg", // public image
-      created_at: "2025-07-15T10:30:00Z",
+      created_at: new Date(Date.now() - 15 * 60 * 1000).toISOString(), // 15 minutes ago
       likes: 34,
       comments: 5,
     },
@@ -41,7 +71,7 @@ const CommunityPage = () => {
       },
       caption: "My new clay sculpture!",
       image: "/art2.jpeg", // public image
-      created_at: "2025-07-16T14:20:00Z",
+      created_at: new Date(Date.now() - 45 * 60 * 1000).toISOString(), // 45 minutes ago
       likes: 21,
       comments: 2,
     },
@@ -54,111 +84,96 @@ const CommunityPage = () => {
       },
       caption: "Throwback to my first exhibition! 🇱🇰 #tbt",
       image: "/art3.jpeg", // public image
-      created_at: "2025-07-14T09:00:00Z",
+      created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
       likes: 47,
       comments: 8,
     },
   ];
 
-  // Mock exhibition posts
-  const mockExhibitionPosts = [
-    {
-      post_id: 4,
-      type: "exhibition",
-      title: "Modern Sri Lankan Art Exhibition",
-      description:
-        "A showcase of modern Sri Lankan painters and their creations.",
-      location: "Colombo Art Gallery, Colombo",
-      startDate: "2025-08-15",
-      endDate: "2025-08-25",
-      startTime: "10:00",
-      endTime: "18:00",
-      organizer: "Sri Lanka Contemporary Arts Society",
-      category: "Modern Art",
-      entryFee: "LKR 1000",
-      created_at: "2025-07-18T09:00:00Z",
-      likes: 56,
-      comments: 12,
-      verification_status: "verified",
-      artist: {
-        name: "Nadeesha Gunawardena",
-        avatar: "https://randomuser.me/api/portraits/women/25.jpg",
-      },
-    },
-    {
-      post_id: 5,
-      type: "exhibition",
-      title: "Digital Photography Workshop & Exhibition",
-      description: "A workshop and exhibition for Sri Lankan photographers.",
-      location: "Kandy Cultural Center, Kandy",
-      startDate: "2025-07-30",
-      endDate: "2025-08-01",
-      startTime: "09:00",
-      endTime: "17:00",
-      organizer: "Photography Club Sri Lanka",
-      category: "Photography",
-      entryFee: "LKR 2500",
-      created_at: "2025-07-17T14:30:00Z",
-      likes: 43,
-      comments: 8,
-      verification_status: "verified",
-      artist: {
-        name: "Sahan Perera",
-        avatar: "https://randomuser.me/api/portraits/men/15.jpg",
-      },
-    },
-    {
-      post_id: 6,
-      type: "exhibition",
-      title: "Young Artists Collective Exhibition",
-      description: "An exhibition of works by young Sri Lankan artists.",
-      location: "National Museum, Galle",
-      startDate: "2025-08-05",
-      endDate: "2025-08-12",
-      startTime: "10:00",
-      endTime: "19:00",
-      organizer: "Youth Arts Foundation Sri Lanka",
-      category: "Mixed Media",
-      entryFee: "LKR 500",
-      created_at: "2025-07-16T11:20:00Z",
-      likes: 38,
-      comments: 15,
-      verification_status: "verified",
-      artist: {
-        name: "Ishara Jayasuriya",
-        avatar: "https://randomuser.me/api/portraits/women/42.jpg",
-      },
-    },
-  ];
+  useEffect(() => {
+    const fetchExhibitionPosts = async () => {
+      setLoading(true);
+      try {
+        // Direct fetch using VITE_API_URL
+        const response = await fetch(`${API_URL}/api/buyer/exhibitions/all`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "application/json",
+          },
+        });
+        const data = await response.json();
+        setExhibitionPosts(data || []);
+      } catch (error) {
+        setExhibitionPosts([]);
+        console.error("Error fetching exhibition posts:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // For demo, keep regular posts as mock
+    setPosts(mockRegularPosts);
+    fetchExhibitionPosts();
+  }, []);
 
   useEffect(() => {
-    // Uncomment below to fetch from backend
-    // const fetchPosts = async () => {
-    //   try {
-    //     const response = await axios.get('http://localhost:8080/api/posts/all');
-    //     setPosts(response.data);
-    //   } catch (error) {
-    //     setPosts([]);
-    //   }
-    // };
-    // fetchPosts();
+    // Fetch user profile and save to localStorage
+    if (!userId || !token) return;
+    fetch(`${API_URL}/api/users/${userId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        const profile = {
+          name:
+            data.name ||
+            `${data.firstName || ""} ${data.lastName || ""}`.trim() ||
+            "Unknown User",
+          avatar: data.avatar || data.avatarUrl || "",
+        };
+        setUserProfile(profile);
+        localStorage.setItem("profile_name", profile.name);
+        localStorage.setItem("profile_avatar", profile.avatar);
+      })
+      .catch(() => {
+        setUserProfile({ name: "Unknown User", avatar: "" });
+        localStorage.setItem("profile_name", "Unknown User");
+        localStorage.setItem("profile_avatar", "");
+      });
+  }, [userId, token]);
 
-    // For demo, set mock data
-    setPosts(mockRegularPosts);
-    setExhibitionPosts(mockExhibitionPosts);
-    setLoading(false);
-  }, []);
+  // Artist posts backend logic commented out
+  // useEffect(() => {
+  //   const fetchArtistPosts = async () => {
+  //     // Backend logic for artist posts
+  //   };
+  //   fetchArtistPosts();
+  // }, []);
 
   const handleFilterChange = (filter) => {
     setActiveFilter(filter);
   };
 
+  // Only show verified exhibition posts in the feed
+  const verifiedExhibitionPosts = exhibitionPosts.filter(
+    (post) =>
+      post.status === "verified" || post.verification_status === "verified"
+  );
+
   // Combine and filter posts
   const getAllPosts = () => {
-    const allPosts = [...posts, ...exhibitionPosts];
-    return allPosts.sort(
+    // Ensure exhibitionPosts are sorted by created_at DESC
+    const sortedExhibitionPosts = [...verifiedExhibitionPosts].sort(
+      (a, b) =>
+        new Date(b.createdAt || b.created_at) -
+        new Date(a.createdAt || a.created_at)
+    );
+    // Ensure regular posts are sorted by created_at DESC
+    const sortedRegularPosts = [...posts].sort(
       (a, b) => new Date(b.created_at) - new Date(a.created_at)
     );
+    // Exhibition posts should appear first, then regular posts
+    return [...sortedExhibitionPosts, ...sortedRegularPosts];
   };
 
   const getFilteredPosts = () => {
@@ -178,19 +193,22 @@ const CommunityPage = () => {
       <CartSidebar />
 
       {/* Main Container */}
-      <div className="flex justify-center pt-24 pb-10">
+      <div className="flex justify-center pt-24 pb-10 min-h-screen">
         <div className="flex w-full max-w-7xl px-4">
-          {/* Left Sidebar - Hidden on mobile and tablet */}
+          {/* Left Sidebar - Not fixed, scrolls with page */}
           <aside className="hidden lg:block w-80 mr-6">
-            <div className="sticky top-28">
-              <RecentChallenges />
-            </div>
+            <RecentChallenges />
           </aside>
 
-          {/* Center Feed */}
+          {/* Center Feed - Not scrollable, grows with content */}
           <main className="flex-1 max-w-2xl mx-auto">
             {/* Exhibition Post Form - Only for Buyers */}
-            {role === "buyer" && <ExhibitionPostForm />}
+            {role === "buyer" && (
+              <ExhibitionPostForm
+                exhibitionPosts={exhibitionPosts}
+                setExhibitionPosts={setExhibitionPosts}
+              />
+            )}
 
             {/* Info Message for Artists */}
             {role === "artist" && (
@@ -272,12 +290,13 @@ const CommunityPage = () => {
                   </p>
                 </div>
               ) : (
-                filteredPosts.map((post) => {
-                  if (post.type === "exhibition") {
+                filteredPosts.map((post, index) => {
+                  if (post.type === "exhibition" || post.category) {
+                    // Use a unique key for each exhibition post
                     return (
                       <ExhibitionPost
-                        key={post.post_id}
-                        post_id={post.post_id}
+                        key={post.id ? `exh-${post.id}` : `exh-${index}`}
+                        post_id={post.id || post.post_id}
                         title={post.title}
                         description={post.description}
                         location={post.location}
@@ -288,35 +307,48 @@ const CommunityPage = () => {
                         organizer={post.organizer}
                         category={post.category}
                         entryFee={post.entryFee}
-                        created_at={post.created_at}
-                        likes={post.likes}
-                        comments={post.comments}
-                        artist={post.artist}
+                        maxParticipants={post.maxParticipants}
+                        contactEmail={post.contactEmail}
+                        contactPhone={post.contactPhone}
+                        requirements={post.requirements}
+                        created_at={post.createdAt || post.created_at}
+                        likes={post.likes || 0}
+                        comments={post.comments || 0}
+                        artist={{
+                          name: post.creatorName || "Unknown User",
+                          avatar: "", // You can extend backend to return avatar if needed
+                        }}
                       />
                     );
                   } else {
-                    return (
-                      <Post
-                        key={post.post_id}
-                        username={post.artist.name}
-                        avatar={post.artist.avatar}
-                        timeAgo={post.created_at}
-                        image={post.image}
-                        likes={post.likes}
-                        caption={post.caption}
-                      />
-                    );
+                    const artistName =
+                      post.artist && post.artist.name
+                        ? post.artist.name
+                        : "Unknown Artist";
+                    const artistAvatar =
+                      post.artist && post.artist.avatar
+                        ? post.artist.avatar
+                        : "";
+                    // return (
+                    //   <Post
+                    //     key={`reg-${post.post_id}-${index}`}
+                    //     username={artistName}
+                    //     avatar={artistAvatar}
+                    //     timeAgo={safeFormatDistanceToNow(post.created_at)}
+                    //     image={`http://localhost:8081${post.image}`}
+                    //     likes={post.likes}
+                    //     caption={post.caption}
+                    //   />
+                    // );
                   }
                 })
               )}
             </div>
           </main>
 
-          {/* Right Sidebar - Hidden on mobile and tablet */}
+          {/* Right Sidebar - Not fixed, scrolls with page */}
           <aside className="hidden lg:block w-80 ml-6">
-            <div className="sticky top-28">
-              <TopArtists />
-            </div>
+            <TopArtists />
           </aside>
         </div>
       </div>

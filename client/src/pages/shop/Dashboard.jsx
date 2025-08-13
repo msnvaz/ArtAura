@@ -1,5 +1,5 @@
 import React from 'react';
-import Sidebar from '../../components/Sidebar';
+import Navbar from '../../components/Navbar';
 import {
   DollarSign,
   ArrowUpRight,
@@ -14,20 +14,20 @@ import {
 } from 'lucide-react';
 
 const Dashboard = () => {
-  // --- Statistics Card Data (with all styles) ---
+  // --- Statistics Card Data (Sri Lankan Context) ---
   const stats = [
     {
       title: 'Total Revenue',
-      value: '$12,847',
+      value: 'Rs. 3,25,000',
       change: '+12.5%',
       trend: 'up',
       icon: DollarSign,
       iconBg: 'bg-[#D87C5A]',
-      textColor: 'text-[#D87C5]',
+      textColor: 'text-[#D87C5A]',
     },
     {
       title: 'Products in Stock',
-      value: '1,247',
+      value: '847',
       change: '-3.2%',
       trend: 'down',
       icon: Package,
@@ -36,7 +36,7 @@ const Dashboard = () => {
     },
     {
       title: 'Active Sponsorships',
-      value: '89',
+      value: '23',
       change: '+8.1%',
       trend: 'up',
       icon: Handshake,
@@ -45,7 +45,7 @@ const Dashboard = () => {
     },
     {
       title: 'Monthly Orders',
-      value: '342',
+      value: '156',
       change: '+15.3%',
       trend: 'up',
       icon: ShoppingCart,
@@ -54,14 +54,14 @@ const Dashboard = () => {
     }
   ];
 
-  // --- Recent Activities Data ---
+  // --- Recent Activities Data (Sri Lankan Context) ---
   const recentActivities = [
     {
       id: 1,
       type: 'sale',
       message: 'New order for Watercolor Set Premium',
       time: '2 minutes ago',
-      amount: '$89.99',
+      amount: 'Rs. 2,500',
       bgColor: 'bg-[#FFD95A]',   
       iconColor: 'text-white'
     },
@@ -70,14 +70,14 @@ const Dashboard = () => {
       type: 'stock',
       message: 'Low stock alert: Acrylic Paint Tubes',
       time: '15 minutes ago',
-      amount: '5 items left',
+      amount: '8 items left',
       bgColor: 'bg-[#D87C5A]',   
       iconColor: 'text-white'
     },
     {
       id: 3,
       type: 'sponsorship',
-      message: 'Sponsorship granted to Sarah Johnson',
+      message: 'Sponsorship granted to Kamal Perera',
       time: '1 hour ago',
       amount: '15% discount',
       bgColor: 'bg-[#66bb6a]', 
@@ -86,16 +86,16 @@ const Dashboard = () => {
     {
       id: 4,
       type: 'sale',
-      message: 'New order for Canvas Bundle',
+      message: 'New order for Canvas Bundle from Kandy',
       time: '2 hours ago',
-      amount: '$156.50',
+      amount: 'Rs. 4,200',
       bgColor: 'bg-[#FFD95A]',   
       iconColor: 'text-white'
     },
     {
       id: 5,
       type: 'sponsorship',
-      message: 'Sponsorship granted to Michael Lee',
+      message: 'Sponsorship granted to Nimal Silva',
       time: '3 hours ago',
       amount: '10% discount',
       bgColor: 'bg-[#66bb6a]', 
@@ -104,52 +104,49 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="flex">
-      <Sidebar />
-      <div className="ml-20 md:ml-64 flex-1 space-y-6 bg-white min-h-screen p-6 animate-fade-in"
-          style={{
-            backgroundImage: "url('/src/assets/art.png')",
-            backgroundSize: "100% 100%",
-            backgroundPosition: "center",
-            backgroundRepeat: "no-repeat",
-            opacity: 0.07 // adjust this value for more/less transparency
-          }}>
-
-        {/* --- Stats Cards --- */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stats.map((stat, index) => {
-            const Icon = stat.icon;
-            return (
-              <div
-                key={index}
-                className={`rounded-2xl border border-[#f3f3f3] bg-white  shadow-[0_0_16px_2px_rgba(93,58,0,0.15)] p-6 transition-all duration-500 hover:scale-105 hover:shadow-2xl animate-fade-in`}
-                style={{ animationDelay: `${index * 0.1}s`, animationFillMode: 'both' }}
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`p-3 rounded-xl ${stat.iconBg} shadow-lg transform transition-transform duration-500 hover:rotate-3`}>
-                    <Icon className="w-6 h-6 text-white" />
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      
+      {/* Main Dashboard Container with proper spacing */}
+      <div className="pt-4 px-1 sm:px-2 lg:px-4 max-w-full mx-0">
+        
+        {/* Stats Cards Section */}
+        <div className="mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+            {stats.map((stat, index) => {
+              const Icon = stat.icon;
+              return (
+                <div
+                  key={index}
+                  className="rounded-2xl border border-[#f3f3f3] bg-white shadow-[0_0_16px_2px_rgba(93,58,0,0.15)] p-6 transition-all duration-500 hover:scale-105 hover:shadow-2xl animate-fade-in"
+                  style={{ animationDelay: `${index * 0.1}s`, animationFillMode: 'both' }}
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <div className={`p-3 rounded-xl ${stat.iconBg} shadow-lg transform transition-transform duration-500 hover:rotate-3`}>
+                      <Icon className="w-6 h-6 text-white" />
+                    </div>
+                    <div className={`flex items-center text-sm font-semibold px-3 py-1 rounded-full ${
+                      stat.trend === 'up' ? 'text-[#388e3c] bg-[#e8f5e9]' : 'text-red-700 bg-red-100'
+                    }`}>
+                      {stat.trend === 'up' ? <ArrowUpRight className="w-4 h-4 mr-1" /> : <ArrowDownRight className="w-4 h-4 mr-1" />}
+                      {stat.change}
+                    </div>
                   </div>
-                  <div className={`flex items-center text-sm font-semibold px-3 py-1 rounded-full ${
-                    stat.trend === 'up' ? 'text-[#388e3c] bg-[#e8f5e9]' : 'text-red-700 bg-red-100'
-                  }`}>
-                    {stat.trend === 'up' ? <ArrowUpRight className="w-4 h-4 mr-1" /> : <ArrowDownRight className="w-4 h-4 mr-1" />}
-                    {stat.change}
+                  <div>
+                    <h3 className="text-sm font-medium text-[#5D3A00] mb-1">{stat.title}</h3>
+                    <p className={`text-2xl font-bold ${stat.textColor}`}>{stat.value}</p>
                   </div>
                 </div>
-                <div>
-                  <h3 className="text-sm font-medium text-[#5D3A00] mb-1">{stat.title}</h3>
-                  <p className={`text-2xl font-bold ${stat.textColor}`}>{stat.value}</p>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
 
-        {/* --- Main Content --- */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Main Content Section */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8">
 
-          {/* --- Recent Activities --- */}
-          <div className=" bg-white rounded-2xl p-6 border border-[#f3f3f3] max-w-xl w-full animate-fade-in">
+          {/* Recent Activities Card */}
+          <div className="bg-white rounded-2xl p-6 lg:p-8 border border-[#f3f3f3] shadow-[0_0_16px_2px_rgba(93,58,0,0.15)] animate-fade-in">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-[#5D3A00] flex items-center gap-2">
                 <Zap className="w-5 h-5 text-[#D87C5A]" />
@@ -160,11 +157,11 @@ const Dashboard = () => {
               </button>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               {recentActivities.map((activity) => (
                 <div
                   key={activity.id}
-                  className="flex items-start space-x-4 p-4 rounded-xl transition duration-300 border border-transparent  hover:bg-[#FFF5E1] hover:shadow-lg hover:scale-[1.01] animate-fade-in"
+                  className="flex items-start space-x-4 p-4 rounded-xl transition duration-300 border border-transparent hover:bg-[#FFF5E1] hover:shadow-lg hover:scale-[1.01] animate-fade-in"
                 >
                   <div className="flex-shrink-0">
                     <div className={`w-10 h-10 ${activity.bgColor} rounded-xl flex items-center justify-center shadow-md`}>
@@ -185,13 +182,15 @@ const Dashboard = () => {
                   </div>
                 </div>
               ))}
+            </div>
           </div>
-        </div>
 
-          {/* --- Quick Actions --- */}
-          <div className="bg-white rounded-2xl shadow-xl  border border-[#f3f3f3] p-6 max-w-xl w-full animate-fade-in">
+          {/* Quick Actions Card */}
+          <div className="bg-white rounded-2xl shadow-[0_0_16px_2px_rgba(93,58,0,0.15)] border border-[#f3f3f3] p-6 lg:p-8 animate-fade-in">
             <h2 className="text-xl font-bold text-[#5D3A00] mb-6">Quick Actions</h2>
-            <div className="space-y-4">
+            
+            {/* Action Buttons */}
+            <div className="space-y-4 mb-8">
               <button className="w-full bg-[#5D3A00] text-white py-3 px-4 rounded-xl hover:bg-[#472d00] transition shadow-md hover:shadow-lg text-sm font-medium transform hover:scale-105 duration-300">
                 Add New Product
               </button>
@@ -206,28 +205,26 @@ const Dashboard = () => {
               </button>
             </div>
 
-            {/* --- Overview Section --- */}
-            <div className="mt-8 pt-6 border-t border-[#FFD95A]">
+            {/* Today's Overview Section */}
+            <div className="pt-6 border-t border-[#FFD95A]/30">
               <h3 className="text-lg font-bold text-[#5D3A00] mb-4">Today's Overview</h3>
               <div className="space-y-3">
-                <div className="flex justify-between items-center p-3 bg-[#FFF5E1] rounded-lg">
+                <div className="flex justify-between items-center p-4 bg-[#FFF5E1] rounded-xl border border-[#FFD95A]/20">
                   <span className="text-sm text-[#5D3A00] font-medium">Orders</span>
                   <span className="text-lg font-bold text-[#5D3A00]">12</span>
                 </div>
-                <div className="flex justify-between items-center p-3 bg-[#FFE4D6] rounded-lg">
+                <div className="flex justify-between items-center p-4 bg-[#FFE4D6] rounded-xl border border-[#D87C5A]/20">
                   <span className="text-sm text-[#5D3A00] font-medium">Revenue</span>
-                  <span className="text-lg font-bold text-[#5D3A00]">$1,247</span>
+                  <span className="text-lg font-bold text-[#5D3A00]">Rs. 28,500</span>
                 </div>
-                <div className="flex justify-between items-center p-3 bg-[#E8F5E9] rounded-lg">
+                <div className="flex justify-between items-center p-4 bg-[#E8F5E9] rounded-xl border border-green-200">
                   <span className="text-sm text-[#5D3A00] font-medium">New Customers</span>
                   <span className="text-lg font-bold text-[#5D3A00]">3</span>
                 </div>
               </div>
             </div>
-
           </div>
         </div>
-
       </div>
     </div>
   );
