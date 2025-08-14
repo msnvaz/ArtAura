@@ -14,8 +14,7 @@ import {
   ChevronDown,
   ChevronUp
 } from 'lucide-react';
-import { useCurrency } from '../../context/CurrencyContext';
-import CurrencySelector from '../../components/common/CurrencySelector';
+
 import adminUserApi from '../../services/adminUserApi';
 
 const UsersManagement = () => {
@@ -25,7 +24,6 @@ const UsersManagement = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [expandedRow, setExpandedRow] = useState(null);
   const [expandType, setExpandType] = useState(null); // 'details' or 'confirm'
-  const { formatPrice } = useCurrency();
   const [isLoaded, setIsLoaded] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
 
@@ -194,7 +192,7 @@ const UsersManagement = () => {
     
     return (
       <tr>
-        <td colSpan="7" className="px-0 py-0">
+        <td colSpan="6" className="px-0 py-0">
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-400 mx-4 my-2 rounded-lg">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
@@ -325,7 +323,7 @@ const UsersManagement = () => {
 
     return (
       <tr>
-        <td colSpan="7" className="px-0 py-0">
+        <td colSpan="6" className="px-0 py-0">
           <div className={`bg-gradient-to-r ${bgColor} border-l-4 ${borderColor} mx-4 my-2 rounded-lg`}>
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
@@ -514,7 +512,6 @@ const UsersManagement = () => {
             <Users size={24} />
             Users ({filteredUsers.length} users)
           </h2>
-          <CurrencySelector className="flex-shrink-0" />
         </div>
 
         {/* Search and Filters */}
@@ -578,7 +575,6 @@ const UsersManagement = () => {
                     <th className="px-3 py-3 text-left text-sm font-semibold whitespace-nowrap" style={{color: '#5D3A00'}}>Status</th>
                     <th className="px-3 py-3 text-left text-sm font-semibold whitespace-nowrap" style={{color: '#5D3A00'}}>Join Date</th>
                     <th className="px-3 py-3 text-left text-sm font-semibold whitespace-nowrap" style={{color: '#5D3A00'}}>Artworks</th>
-                    <th className="px-3 py-3 text-left text-sm font-semibold whitespace-nowrap" style={{color: '#5D3A00'}}>Revenue/Spent</th>
                     <th className="px-4 py-3 text-left text-sm font-semibold whitespace-nowrap" style={{color: '#5D3A00'}}>Actions</th>
                   </tr>
                 </thead>
@@ -615,16 +611,6 @@ const UsersManagement = () => {
                             {user.userType === 'artist' ? (user.total_artworks || 0) : '-'}
                           </span>
                         </td>
-                        <td className="px-3 py-4 text-sm whitespace-nowrap" style={{color: '#5D3A00'}}>
-                          <div className="text-center">
-                            <div className="font-medium" style={{color: '#D87C5A'}}>
-                              {formatPrice(user.userType === 'artist' ? (user.revenue || 0) : (user.spent || 0), "LKR")}
-                            </div>
-                            <div className="text-xs opacity-75">
-                              {user.userType === 'artist' ? (user.totalSales || 0) : (user.totalPurchases || 0)} {user.userType === 'artist' ? "sales" : "purchases"}
-                            </div>
-                          </div>
-                        </td>
                         <td className="px-4 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-1">
                             <button
@@ -658,7 +644,7 @@ const UsersManagement = () => {
                               }}
                               title={user.status === 'Suspended' ? 'Unblock User' : 'Block User'}
                             >
-                              {user.status === 'Suspended' ? <UserCheck size={14} /> : <UserX size={14} />}
+                              {user.status === 'Suspended' ? <UserX size={14} /> : <UserCheck size={14} />}
                             </button>
                             <button
                               className="p-2 rounded-lg transition-colors"
