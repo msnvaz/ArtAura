@@ -112,15 +112,6 @@ const OrderConfirmationPage = () => {
                         })}`}
                   </span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-[#7f5539]">Tax</span>
-                  <span className="font-medium text-[#7f5539]">
-                    LKR{" "}
-                    {orderSummary.tax.toLocaleString(undefined, {
-                      maximumFractionDigits: 2,
-                    })}
-                  </span>
-                </div>
                 <hr className="border-[#FFE4D6]" />
                 <div className="flex justify-between text-lg">
                   <span className="font-semibold text-[#7f5539]">
@@ -144,10 +135,10 @@ const OrderConfirmationPage = () => {
                 </div>
                 <p className="text-sm text-[#7f5539]/70 capitalize">
                   {paymentMethod === "credit"
-                    ? "Credit Card"
+                    ? "Credit Card (Stripe)"
                     : paymentMethod === "debit"
-                    ? "Debit Card"
-                    : "PayPal"}
+                    ? "Debit Card (Stripe)"
+                    : "Stripe"}
                 </p>
               </div>
             </div>
