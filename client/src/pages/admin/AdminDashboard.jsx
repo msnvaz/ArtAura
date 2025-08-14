@@ -9,6 +9,7 @@ import {
   Image,
   User,
   Settings,
+  Truck,
 } from "lucide-react";
 
 // Import separate components
@@ -18,6 +19,7 @@ import ArtworkManagement from "./Artwork";
 import Financial from "./Financial";
 import ComplaintsReports from "./ComplaintsReports";
 import UserVerification from "./UserVerification";
+import DeliveryManagement from "./DeliveryManagement";
 import { CurrencyProvider } from "../../context/CurrencyContext";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -39,6 +41,7 @@ const AdminDashboard = () => {
     { id: "overview", label: "Overview", icon: BarChart3 },
     { id: "users", label: "Users", icon: Users },
     { id: "artwork", label: "Artworks", icon: Image },
+    { id: "delivery", label: "Delivery Management", icon: Truck },
     { id: "financial", label: "Financial", icon: DollarSign },
     { id: "complaints", label: "Complaints & Reports", icon: AlertTriangle },
     { id: "verification", label: "User Verification", icon: Shield },
@@ -52,6 +55,8 @@ const AdminDashboard = () => {
         return <UsersManagement />;
       case "artwork":
         return <ArtworkManagement />;
+      case "delivery":
+        return <DeliveryManagement />;
       case "financial":
         return <Financial />;
       case "complaints":

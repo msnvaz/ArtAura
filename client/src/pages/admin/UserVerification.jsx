@@ -156,30 +156,6 @@ const UserVerification = () => {
     }
   };
 
-  // Helper function to get correct image URL
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return null;
-    
-    // If it starts with src/, convert to import
-    if (imagePath.startsWith('src/')) {
-      // Convert src/assets/images/nic/bg3.jpg to /src/assets/images/nic/bg3.jpg
-      return `/${imagePath}`;
-    }
-    
-    // If it starts with http or https, use as is
-    if (imagePath.startsWith('http')) {
-      return imagePath;
-    }
-    
-    // If it starts with /, use as is (public folder)
-    if (imagePath.startsWith('/')) {
-      return imagePath;
-    }
-    
-    // Otherwise, assume it's in public folder
-    return `/${imagePath}`;
-  };
-
   // Artist Verification Card Component
   const ArtistVerificationCard = ({ request }) => (
     <div className="bg-white rounded-lg shadow-sm border verification-request-card" style={{borderColor: '#FFE4D6'}}>
@@ -220,29 +196,14 @@ const UserVerification = () => {
             {request.nicImageUrl ? (
               <>
                 <img 
-                  src={getImageUrl(request.nicImageUrl)} 
+                  src={request.nicImageUrl} 
                   alt="NIC Document" 
                   className="w-full h-48 object-cover rounded-lg border"
                   style={{borderColor: '#FFE4D6'}}
-                  onError={(e) => {
-                    console.error('Image failed to load:', request.nicImageUrl);
-                    e.target.style.display = 'none';
-                    e.target.nextSibling.style.display = 'flex';
-                  }}
                 />
-                <div 
-                  className="w-full h-48 rounded-lg border items-center justify-center"
-                  style={{borderColor: '#FFE4D6', backgroundColor: '#FFF5E1', display: 'none'}}
-                >
-                  <div className="text-center">
-                    <ImageIcon size={48} className="mx-auto mb-2 opacity-50" style={{color: '#D87C5A'}} />
-                    <p className="text-sm" style={{color: '#8B4513'}}>Failed to load NIC image</p>
-                    <p className="text-xs" style={{color: '#8B4513'}}>Path: {request.nicImageUrl}</p>
-                  </div>
-                </div>
                 <button 
                   className="absolute top-2 right-2 p-2 rounded-lg bg-white bg-opacity-90 hover:bg-opacity-100 transition-all"
-                  onClick={() => window.open(getImageUrl(request.nicImageUrl), '_blank')}
+                  onClick={() => window.open(request.nicImageUrl, '_blank')}
                 >
                   <Eye size={16} style={{color: '#D87C5A'}} />
                 </button>
@@ -350,54 +311,25 @@ const UserVerification = () => {
           </span>
         </div>
 
-        {/* NIC Image Display for Shop */}
+        {/* NIC Image Display */}
         <div className="mb-4">
           <h4 className="text-sm font-semibold mb-2 flex items-center gap-2" style={{color: '#5D3A00'}}>
             <ImageIcon size={16} />
             Owner NIC Image
           </h4>
           <div className="relative">
-            {request.nicImageUrl ? (
-              <>
-                <img 
-                  src={getImageUrl(request.nicImageUrl)} 
-                  alt="Owner NIC Document" 
-                  className="w-full h-48 object-cover rounded-lg border"
-                  style={{borderColor: '#FFE4D6'}}
-                  onError={(e) => {
-                    console.error('Image failed to load:', request.nicImageUrl);
-                    e.target.style.display = 'none';
-                    e.target.nextSibling.style.display = 'flex';
-                  }}
-                />
-                <div 
-                  className="w-full h-48 rounded-lg border items-center justify-center"
-                  style={{borderColor: '#FFE4D6', backgroundColor: '#FFF5E1', display: 'none'}}
-                >
-                  <div className="text-center">
-                    <ImageIcon size={48} className="mx-auto mb-2 opacity-50" style={{color: '#D87C5A'}} />
-                    <p className="text-sm" style={{color: '#8B4513'}}>Failed to load NIC image</p>
-                    <p className="text-xs" style={{color: '#8B4513'}}>Path: {request.nicImageUrl}</p>
-                  </div>
-                </div>
-                <button 
-                  className="absolute top-2 right-2 p-2 rounded-lg bg-white bg-opacity-90 hover:bg-opacity-100 transition-all"
-                  onClick={() => window.open(getImageUrl(request.nicImageUrl), '_blank')}
-                >
-                  <Eye size={16} style={{color: '#D87C5A'}} />
-                </button>
-              </>
-            ) : (
-              <div 
-                className="w-full h-48 rounded-lg border flex items-center justify-center"
-                style={{borderColor: '#FFE4D6', backgroundColor: '#FFF5E1'}}
-              >
-                <div className="text-center">
-                  <ImageIcon size={48} className="mx-auto mb-2 opacity-50" style={{color: '#D87C5A'}} />
-                  <p className="text-sm" style={{color: '#8B4513'}}>No NIC image uploaded</p>
-                </div>
-              </div>
-            )}
+            <img 
+              src={request.nicImageUrl} 
+              alt="Owner NIC Document" 
+              className="w-full h-48 object-cover rounded-lg border"
+              style={{borderColor: '#FFE4D6'}}
+            />
+            <button 
+              className="absolute top-2 right-2 p-2 rounded-lg bg-white bg-opacity-90 hover:bg-opacity-100 transition-all"
+              onClick={() => window.open(request.nicImageUrl, '_blank')}
+            >
+              <Eye size={16} style={{color: '#D87C5A'}} />
+            </button>
           </div>
         </div>
 
