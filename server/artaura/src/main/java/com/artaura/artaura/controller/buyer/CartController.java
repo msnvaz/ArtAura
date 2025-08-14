@@ -26,6 +26,13 @@ public class CartController {
         return ResponseEntity.ok().build();
     }
 
+    @DeleteMapping("/items/{artworkId}")
+    public ResponseEntity<?> removeFromCartByPath(@PathVariable Long artworkId, Authentication authentication) {
+        Long buyerId = extractUserIdFromAuth(authentication);
+        cartService.removeFromCart(buyerId, artworkId);
+        return ResponseEntity.ok().build();
+    }
+
     @PutMapping("/update")
     public ResponseEntity<?> updateQuantity(@RequestBody CartItemRequest request, Authentication authentication) {
         Long buyerId = extractUserIdFromAuth(authentication);

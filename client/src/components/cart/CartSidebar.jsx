@@ -23,20 +23,98 @@ const CartSidebar = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Helper to get a valid cart item id
+  const getCartItemId = (item) => item.id ?? item.artwork_id ?? item.artworkId;
+
+  // Update quantity and sync with backend
+  const handleUpdateQuantity = async (id, newQuantity) => {
+    if (newQuantity <= 0) {
+      handleRemoveClick(id);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8080";
+      await axios.put(
+        `${apiUrl}/api/cart/update`,
+        {
+          artworkId: id,
+          quantity: newQuantity,
+        },
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        }
+      );
+      // Fetch latest cart from backend after update
+      const refreshed = await axios.get(`${apiUrl}/api/cart/items`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (refreshed.data) {
+        const mapped = refreshed.data.map(item => ({ ...item, id: item.artwork_id }));
+        updateQuantity(id, newQuantity); // update local state for immediate feedback
+        // Replace all cart items with backend response for accuracy
+        if (typeof window !== 'undefined') {
+          // If you have setCartItems in context, use it here
+          if (typeof window.setCartItems === 'function') {
+            window.setCartItems(mapped);
+          }
+        }
+      }
+    } catch (err) {
+      setError("Failed to update quantity");
+      console.error("Error updating quantity:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleCheckout = () => {
     toggleCart();
     navigate("/cart");
   };
 
   const handleRemoveClick = (id) => {
-    setItemToRemove(id);
+    const validId = id ?? null;
+    if (!validId) {
+      setError("No item selected for removal.");
+      return;
+    }
+    setItemToRemove(validId);
     setModalOpen(true);
   };
 
-  const handleConfirmRemove = () => {
-    removeFromCart(itemToRemove);
-    setModalOpen(false);
-    setItemToRemove(null);
+  const handleConfirmRemove = async () => {
+    console.log("handleConfirmRemove called, itemToRemove:", itemToRemove);
+    if (!itemToRemove) {
+      setError("No item selected for removal.");
+      console.error("No item selected for removal.");
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8080";
+      console.log(
+        "Sending DELETE request to:",
+        `${apiUrl}/api/cart/items/${itemToRemove}`
+      );
+      const response = await axios.delete(
+        `${apiUrl}/api/cart/items/${itemToRemove}`,
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        }
+      );
+      console.log("Backend response:", response);
+      removeFromCart(itemToRemove);
+      setModalOpen(false);
+      setItemToRemove(null);
+    } catch (err) {
+      setError("Failed to remove item from cart");
+      console.error("Error removing item from cart:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCancelRemove = () => {
@@ -57,7 +135,7 @@ const CartSidebar = () => {
         });
         if (response.data) {
           // If you want to replace local cart, update context here
-          // setCartItems(response.data);
+          // setCartItems(response.data.map(item => ({ ...item, id: item.artwork_id })));
         }
       } catch (err) {
         setError("Failed to load cart items");
@@ -108,28 +186,31 @@ const CartSidebar = () => {
             </div>
           ) : (
             <div className="space-y-4">
-              {cartItems.map((item) => (
+              {cartItems.map((item, index) => (
                 <div
-                  key={item.id}
+                  key={getCartItemId(item) ?? index}
                   className="flex gap-4 p-4 bg-[#FFF5E1] rounded-lg border border-[#FFE4D6]"
                 >
                   <img
-                    src={item.image}
-                    alt={item.name}
+                    src={item.image_url}
+                    alt={item.title}
                     className="w-16 h-16 object-cover rounded-lg"
                   />
                   <div className="flex-1">
                     <h4 className="font-semibold text-[#7f5539] text-sm mb-1">
-                      {item.name}
+                      {item.title}
                     </h4>
                     <p className="text-xs text-[#7f5539]/70 mb-2">
-                      {item.shopName}
+                      {item.artist_name}
                     </p>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() =>
-                            updateQuantity(item.id, item.quantity - 1)
+                            handleUpdateQuantity(
+                              getCartItemId(item),
+                              item.quantity - 1
+                            )
                           }
                           className="p-1 hover:bg-[#FFD95A] rounded transition-colors"
                         >
@@ -140,7 +221,10 @@ const CartSidebar = () => {
                         </span>
                         <button
                           onClick={() =>
-                            updateQuantity(item.id, item.quantity + 1)
+                            handleUpdateQuantity(
+                              getCartItemId(item),
+                              item.quantity + 1
+                            )
                           }
                           className="p-1 hover:bg-[#FFD95A] rounded transition-colors"
                         >
@@ -152,7 +236,7 @@ const CartSidebar = () => {
                           LKR {(item.price * item.quantity).toLocaleString()}
                         </span>
                         <button
-                          onClick={() => handleRemoveClick(item.id)}
+                          onClick={() => handleRemoveClick(getCartItemId(item))}
                           className="p-1 hover:bg-red-100 hover:text-red-600 rounded transition-colors"
                         >
                           <Trash2 className="w-3 h-3" />

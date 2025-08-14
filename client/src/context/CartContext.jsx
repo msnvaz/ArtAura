@@ -31,7 +31,12 @@ export const CartProvider = ({ children }) => {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (response.data) {
-        setCartItems(response.data);
+        // Map artworkId to id for consistency
+        const mapped = response.data.map((item) => ({
+          ...item,
+          id: item.id || item.artworkId,
+        }));
+        setCartItems(mapped);
       }
     } catch (err) {
       // Optionally handle error (e.g. show toast)
