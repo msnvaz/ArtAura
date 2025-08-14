@@ -106,11 +106,37 @@ const ShopProductsPage = () => {
     setFilteredProducts(filtered);
   }, [products, searchTerm, selectedCategory, priceRange, sortBy]);
 
-  const handleAddToCart = (productId) => {
-    const product = products.find((p) => p.id === productId);
-    if (product && product.inStock) {
-      addToCart(product);
+  const handleAddToCart = async (productId) => {
+    const product = products.find(
+      (p) => p.id === productId || p.artworkId === productId
+    );
+    if (!product) {
+      alert("Product not found.");
+      return;
+    }
+    if (product.inStock === false || product.stock === 0) {
+      alert("This product is out of stock.");
+      return;
+    }
+    const token = localStorage.getItem("token");
+    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8080";
+    try {
+      await axios.post(
+        `${apiUrl}/api/cart/add`,
+        {
+          artworkId: product.id || product.artworkId,
+          quantity: 1,
+        },
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        }
+      );
+      addToCart(product); // update local cart
       toggleCart(); // Open cart sidebar
+      alert("Added to cart!");
+    } catch (err) {
+      alert("Failed to add to cart. Please check your login and try again.");
+      console.error("Failed to add to cart", err);
     }
   };
 
@@ -210,7 +236,7 @@ const ShopProductsPage = () => {
         </div>
 
         <button
-          // You may want to implement a real add to cart logic for artworks
+          onClick={() => handleAddToCart(product.artworkId || product.id)}
           className="w-full py-2 px-4 rounded-lg font-medium transition-colors bg-[#D87C5A] hover:bg-[#7f5539] text-white"
         >
           <ShoppingCart className="w-4 h-4 inline mr-2" />

@@ -3,6 +3,8 @@ import { X, Plus, Minus, ShoppingCart, Trash2 } from "lucide-react";
 import { useCart } from "../../context/CartContext";
 import { useNavigate } from "react-router-dom";
 import ConfirmModal from "../common/ConfirmModal";
+import axios from "axios";
+import { useAuth } from "../../context/AuthContext";
 
 const CartSidebar = () => {
   const {
@@ -17,6 +19,9 @@ const CartSidebar = () => {
   const navigate = useNavigate();
   const [modalOpen, setModalOpen] = useState(false);
   const [itemToRemove, setItemToRemove] = useState(null);
+  const { token } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const handleCheckout = () => {
     toggleCart();
@@ -38,6 +43,30 @@ const CartSidebar = () => {
     setModalOpen(false);
     setItemToRemove(null);
   };
+
+  // Fetch cart items from backend when sidebar opens
+  React.useEffect(() => {
+    if (!isCartOpen) return;
+    const fetchCartItems = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8080";
+        const response = await axios.get(`${apiUrl}/api/cart/items`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (response.data) {
+          // If you want to replace local cart, update context here
+          // setCartItems(response.data);
+        }
+      } catch (err) {
+        setError("Failed to load cart items");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCartItems();
+  }, [isCartOpen, token]);
 
   if (!isCartOpen) return null;
 
