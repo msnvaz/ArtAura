@@ -43,6 +43,26 @@ export const CartProvider = ({ children }) => {
     }
   };
 
+  // Always sync cart with backend after any change
+  const syncCartWithBackend = async () => {
+    if (!token) return;
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8080";
+      const response = await axios.get(`${apiUrl}/api/cart/items`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (response.data) {
+        const mapped = response.data.map((item) => ({
+          ...item,
+          id: item.artwork_id || item.artworkId || item.id,
+        }));
+        setCartItems(mapped);
+      }
+    } catch (err) {
+      // Optionally handle error
+    }
+  };
+
   // Fetch cart from backend when token changes (e.g. after login or refresh)
   useEffect(() => {
     if (token) {
@@ -75,6 +95,12 @@ export const CartProvider = ({ children }) => {
     );
   };
 
+  // Wrap removeFromCart to sync with backend
+  const removeFromCartAndSync = async (productId) => {
+    removeFromCart(productId);
+    await syncCartWithBackend();
+  };
+
   const updateQuantity = (productId, quantity) => {
     if (quantity <= 0) {
       removeFromCart(productId);
@@ -86,6 +112,12 @@ export const CartProvider = ({ children }) => {
         item.id === productId ? { ...item, quantity } : item
       )
     );
+  };
+
+  // Wrap updateQuantity to sync with backend
+  const updateQuantityAndSync = async (productId, quantity) => {
+    updateQuantity(productId, quantity);
+    await syncCartWithBackend();
   };
 
   const clearCart = () => {
@@ -110,15 +142,16 @@ export const CartProvider = ({ children }) => {
   const value = {
     cartItems,
     addToCart,
-    removeFromCart,
-    updateQuantity,
+    removeFromCart: removeFromCartAndSync,
+    updateQuantity: updateQuantityAndSync,
     clearCart,
     getCartTotal,
     getCartItemsCount,
     isCartOpen,
     toggleCart,
     setIsCartOpen,
-    fetchCartFromBackend, // <-- Expose to consumers
+    fetchCartFromBackend,
+    syncCartWithBackend,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
