@@ -8,4 +8,5 @@ public interface CartDao {
         void removeFromCart(Long buyerId, Long artworkId);
         void updateQuantity(Long buyerId, Long artworkId, Integer quantity);
         List<?> getCartItems(Long buyerId);
+        void clearCart(Long buyerId);
 }

@@ -12,6 +12,7 @@ import Navbar from "../components/common/Navbar";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import { CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import { useCart } from "../context/CartContext";
 
 const stripePromise = loadStripe(
   "pk_test_51Rw2UhQcGakY3xP2bNoe6cwyMYCMihyNol4EJZLWWUd1D0jvQj627YPHlE01WzhFWJ12UU340FCcAkMFnnQQFmLp00EZMIL15R"
@@ -76,7 +77,7 @@ function StripePaymentForm({ billingInfo, orderSummary, onSuccess }) {
       result.paymentIntent.status === "succeeded"
     ) {
       setIsProcessing(false);
-      onSuccess();
+      onSuccess(result.paymentIntent.id);
     } else {
       setError("Payment could not be completed. Please try again.");
       setIsProcessing(false);
@@ -114,6 +115,7 @@ const PaymentPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { billingInfo, orderSummary } = location.state || {};
+  const { clearCart, cartItems } = useCart();
 
   const [paymentInfo, setPaymentInfo] = useState({
     cardNumber: "",
@@ -132,7 +134,54 @@ const PaymentPage = () => {
     return null;
   }
 
-  const handleStripeSuccess = () => {
+  const handleStripeSuccess = async (stripePaymentId) => {
+    clearCart();
+    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8080";
+    const token = localStorage.getItem("token");
+    try {
+      await fetch(`${apiUrl}/api/cart/clear`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    } catch (err) {}
+
+    // Prepare order payload
+    const userId = localStorage.getItem("userId"); // Or get from context
+    const orderPayload = {
+      buyerId: userId,
+      status: "paid",
+      orderDate: new Date().toISOString(),
+      billingFirstName: billingInfo.firstName,
+      billingLastName: billingInfo.lastName,
+      billingEmail: billingInfo.email,
+      billingPhone: billingInfo.phone,
+      billingAddress: billingInfo.address,
+      billingCity: billingInfo.city,
+      billingState: billingInfo.state,
+      billingZipCode: billingInfo.zipCode,
+      billingCountry: billingInfo.country,
+      paymentMethod: "stripe",
+      stripePaymentId: stripePaymentId,
+      totalAmount: orderSummary.total,
+      items: cartItems.map((item) => ({
+        artworkId: item.id,
+        quantity: item.quantity,
+        price: item.price,
+        title: item.title,
+        artistId: item.artistId || item.artist_id,
+      })),
+    };
+    await fetch(`${apiUrl}/api/orders/create`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(orderPayload),
+    });
     const orderId = `ORD-${Date.now()}`;
     navigate("/order-confirmation", {
       state: {
