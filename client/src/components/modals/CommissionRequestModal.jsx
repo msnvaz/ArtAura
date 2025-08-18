@@ -161,15 +161,41 @@ const CommissionRequestModal = ({ isOpen, onClose, artist }) => {
     try {
       setLoading(true);
 
+      // 1. Upload inspiration images if any
+      let imageUrls = [];
+      if (formData.inspirationImages.length > 0) {
+        const API_URL = import.meta.env.VITE_API_URL;
+        for (const file of formData.inspirationImages) {
+          const imgForm = new FormData();
+          imgForm.append("image", file);
+          // You should have an endpoint for image upload, e.g. /api/uploads/image
+          const imgRes = await axios.post(
+            `${API_URL}/api/uploads/image`,
+            imgForm,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "multipart/form-data",
+              },
+            }
+          );
+          if (imgRes.data && imgRes.data.imageUrl) {
+            imageUrls.push(imgRes.data.imageUrl);
+          }
+        }
+      }
+
+      // 2. Prepare commission request data
       const commissionData = {
         ...formData,
         artistId: artist.id,
         clientId: userId,
         status: "pending",
         submittedAt: new Date().toISOString(),
+        imageUrls, // pass uploaded image URLs
       };
 
-      // API call to submit commission request
+      // 3. API call to submit commission request
       const API_URL = import.meta.env.VITE_API_URL;
       const response = await axios.post(
         `${API_URL}/api/commissions/request`,
@@ -183,7 +209,6 @@ const CommissionRequestModal = ({ isOpen, onClose, artist }) => {
       );
 
       if (response.status === 200 || response.status === 201) {
-        // Success - show confirmation
         alert("Commission request submitted successfully!");
         onClose();
         resetForm();

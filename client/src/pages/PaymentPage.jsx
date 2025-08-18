@@ -114,8 +114,13 @@ function StripePaymentForm({ billingInfo, orderSummary, onSuccess }) {
 const PaymentPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { billingInfo, orderSummary } = location.state || {};
-  const { clearCart, cartItems } = useCart();
+  const {
+    billingInfo,
+    orderSummary,
+    cartItems: locationCartItems,
+  } = location.state || {};
+  // Use cartItems from location.state for order creation
+  const { clearCart } = useCart();
 
   const [paymentInfo, setPaymentInfo] = useState({
     cardNumber: "",
@@ -166,7 +171,7 @@ const PaymentPage = () => {
       paymentMethod: "stripe",
       stripePaymentId: stripePaymentId,
       totalAmount: orderSummary.total,
-      items: cartItems.map((item) => ({
+      items: (locationCartItems || []).map((item) => ({
         artworkId: item.id,
         quantity: item.quantity,
         price: item.price,

@@ -29,7 +29,8 @@ const OrderConfirmationPage = () => {
   // Clear cart after order confirmation
   useEffect(() => {
     clearCart();
-  }, [clearCart]);
+    // eslint-disable-next-line
+  }, []);
 
   const estimatedDelivery = new Date();
   estimatedDelivery.setDate(estimatedDelivery.getDate() + 5); // 5 days from now

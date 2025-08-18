@@ -53,8 +53,12 @@ const CheckoutPage = () => {
   useEffect(() => {
     if (useAccountDetails && profileData) {
       setBillingInfo({
-        firstName: profileData?.name?.split(" ")[0] || profileData?.firstName || "",
-        lastName: profileData?.name?.split(" ").slice(1).join(" ") || profileData?.lastName || "",
+        firstName:
+          profileData?.name?.split(" ")[0] || profileData?.firstName || "",
+        lastName:
+          profileData?.name?.split(" ").slice(1).join(" ") ||
+          profileData?.lastName ||
+          "",
         email: profileData?.email || "",
         phone: profileData?.contactNo || profileData?.phone || "",
         address: profileData?.streetAddress || profileData?.address || "",
@@ -137,6 +141,7 @@ const CheckoutPage = () => {
           state: {
             billingInfo,
             orderSummary: { subtotal, shipping, total },
+            cartItems, // Pass cartItems to PaymentPage
           },
         });
       }, 1000);
