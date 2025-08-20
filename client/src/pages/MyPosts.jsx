@@ -55,7 +55,7 @@ const MyPosts = () => {
         return;
       }
       try {
-        const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8081";
+        const API_URL = import.meta.env.VITE_API_URL;
         // Fetch exhibition posts for the logged-in user from backend
         const response = await axios.get(
           `${API_URL}/api/buyer/exhibitions/user/${userId}`,
@@ -167,7 +167,7 @@ const MyPosts = () => {
   const confirmDeletePost = async () => {
     setDeleteLoading(true);
     try {
-      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8081";
+      const API_URL = import.meta.env.VITE_API_URL;
       await axios.delete(`${API_URL}/api/buyer/exhibitions/${deletingPostId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -200,7 +200,7 @@ const MyPosts = () => {
 
   const handleSavePost = async (updatedPost) => {
     try {
-      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8081";
+      const API_URL = import.meta.env.VITE_API_URL;
       const response = await axios.put(
         `${API_URL}/api/buyer/exhibitions/${updatedPost.id}`,
         updatedPost,

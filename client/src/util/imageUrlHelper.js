@@ -2,7 +2,7 @@
  * Utility functions for handling image URLs
  */
 
-const BASE_URL = 'http://localhost:8081';
+const BASE_URL = import.meta.env.VITE_API_URL;
 
 /**
  * Convert a relative image URL to an absolute URL

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = 'http://localhost:8081/api';
+const BASE_URL = `${import.meta.env.VITE_API_URL}/api`;
 
 // Create axios instance with default config
 const axiosInstance = axios.create({
@@ -27,7 +27,7 @@ axiosInstance.interceptors.response.use(
       // Server responded with error status
       const status = error.response.status;
       const message = error.response.data?.message || error.message;
-      
+
       switch (status) {
         case 401:
           console.error('Authentication required. Please log in.');
@@ -45,14 +45,14 @@ axiosInstance.interceptors.response.use(
         default:
           console.error(`Error ${status}: ${message}`);
       }
-      
+
       error.message = `${status}: ${message}`;
     } else if (error.request) {
       // Network error
       console.error('Network error. Please check your connection.');
       error.message = 'Network error. Please check your connection.';
     }
-    
+
     return Promise.reject(error);
   }
 );

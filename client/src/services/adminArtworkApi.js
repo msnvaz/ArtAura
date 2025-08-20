@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = 'http://localhost:8081/api/admin/artworks';
+const BASE_URL = `${import.meta.env.VITE_API_URL}/api/admin/artworks`;
 
 // Create axios instance with default config
 const apiClient = axios.create({
@@ -27,7 +27,7 @@ apiClient.interceptors.response.use(
       // Server responded with error status
       const status = error.response.status;
       const message = error.response.data?.message || error.message;
-      
+
       switch (status) {
         case 401:
           console.error('Authentication required. Please log in.');
@@ -45,14 +45,14 @@ apiClient.interceptors.response.use(
         default:
           console.error(`Error ${status}: ${message}`);
       }
-      
+
       error.message = `${status}: ${message}`;
     } else if (error.request) {
       // Network error
       console.error('Network error. Please check your connection.');
       error.message = 'Network error. Please check your connection.';
     }
-    
+
     return Promise.reject(error);
   }
 );
@@ -69,9 +69,9 @@ export const adminArtworkApi = {
         sortOrder: filters.sortOrder || 'DESC',
         ...filters
       };
-      
+
       const response = await apiClient.get('', { params });
-      
+
       // Transform response to match expected structure
       return {
         content: response.data.artworks || [],
@@ -182,7 +182,7 @@ export const adminArtworkApi = {
       console.log('API: updateArtworkStatus called with id:', id, 'status:', status);
       console.log('API: Sending PUT request to:', `/${id}/status`);
       console.log('API: Request body:', { status });
-      
+
       const response = await apiClient.put(`/${id}/status`, { status });
       console.log('API: Response received:', response.data);
       return response.data;
