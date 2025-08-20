@@ -22,6 +22,9 @@ const ArtworkDetailModal = ({
     onToggleFeature,
     onMarkAsSold
 }) => {
+    // Get API URL from environment variable
+    const API_URL = import.meta.env.VITE_API_URL;
+
     if (!isOpen || !artwork) return null;
 
     const handleToggleFeature = () => {
@@ -79,7 +82,7 @@ const ArtworkDetailModal = ({
 
                             <div className="relative">
                                 <ImageZoomLens
-                                    src={artwork.imageUrl?.startsWith('http') ? artwork.imageUrl : `http://localhost:8081${encodeURI(artwork.imageUrl || artwork.image || '')}`}
+                                    src={artwork.imageUrl?.startsWith('http') ? artwork.imageUrl : `${API_URL}${encodeURI(artwork.imageUrl || artwork.image || '')}`}
                                     zoom={5}
                                     lensSize={180}
                                     className="w-full rounded-lg shadow-lg"

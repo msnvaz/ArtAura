@@ -19,6 +19,9 @@ const EditArtworkModal = ({
     onSave,
     onCancel
 }) => {
+    // Get API URL from environment variable
+    const API_URL = import.meta.env.VITE_API_URL;
+
     const { showError } = useNotification();
     const [formData, setFormData] = useState({
         title: '',
@@ -51,7 +54,7 @@ const EditArtworkModal = ({
                 status: artwork.status || 'Available',
                 featured: artwork.featured || false
             });
-            setImagePreview(artwork.imageUrl ? `http://localhost:8081${artwork.imageUrl}` : '');
+            setImagePreview(artwork.imageUrl ? `${API_URL}${artwork.imageUrl}` : '');
 
             // IMPORTANT: Clear any previously selected image file when switching artworks
             setImageFile(null);
@@ -162,7 +165,7 @@ const EditArtworkModal = ({
                                             type="button"
                                             onClick={() => {
                                                 setImageFile(null);
-                                                setImagePreview(artwork.imageUrl ? `http://localhost:8081${artwork.imageUrl}` : '');
+                                                setImagePreview(artwork.imageUrl ? `${API_URL}${artwork.imageUrl}` : '');
                                             }}
                                             className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 transition-colors"
                                         >

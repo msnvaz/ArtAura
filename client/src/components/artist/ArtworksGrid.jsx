@@ -8,6 +8,9 @@ const ArtworksGrid = ({
     onOrderArtwork,
     isPublicView = false
 }) => {
+    // Get API URL from environment variable
+    const API_URL = import.meta.env.VITE_API_URL;
+
     if (artworks.length === 0) {
         return (
             <div className="text-center py-12">
@@ -31,7 +34,7 @@ const ArtworksGrid = ({
                 >
                     <div className="relative">
                         <img
-                            src={artwork.imageUrl?.startsWith('http') ? artwork.imageUrl : `http://localhost:8081${encodeURI(artwork.imageUrl || '')}`}
+                            src={artwork.imageUrl?.startsWith('http') ? artwork.imageUrl : `${API_URL}${encodeURI(artwork.imageUrl || '')}`}
                             alt={artwork.title}
                             className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                             onError={(e) => {

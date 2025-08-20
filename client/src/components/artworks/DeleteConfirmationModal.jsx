@@ -9,6 +9,9 @@ const DeleteConfirmationModal = ({
     onCancel,
     isLoading = false
 }) => {
+    // Get API URL from environment variable
+    const API_URL = import.meta.env.VITE_API_URL;
+
     if (!isOpen || !artwork) return null;
 
     return (
@@ -49,7 +52,7 @@ const DeleteConfirmationModal = ({
                                 <div className="flex items-center space-x-3">
                                     {artwork.imageUrl && (
                                         <img
-                                            src={`http://localhost:8081${artwork.imageUrl}`}
+                                            src={`${API_URL}${artwork.imageUrl}`}
                                             alt={artwork.title}
                                             className="w-16 h-16 rounded-lg object-cover"
                                         />

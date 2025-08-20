@@ -4,12 +4,12 @@ import Navbar from '../../components/Navbar'; // Changed import
 import Toast from '../../components/Toast';
 import { useToast } from '../../hooks/useToast';
 
-import { 
-  Search, 
-  Plus, 
-  Filter, 
-  Edit3, 
-  Trash2, 
+import {
+  Search,
+  Plus,
+  Filter,
+  Edit3,
+  Trash2,
   Eye,
   Package,
   AlertTriangle,
@@ -22,6 +22,9 @@ import {
 
 const CatalogManagement = () => {
   const { toast, showToast, hideToast } = useToast();
+
+  // Get API URL from environment variable
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -100,13 +103,13 @@ const CatalogManagement = () => {
           // Create canvas to compress image
           const canvas = document.createElement('canvas');
           const ctx = canvas.getContext('2d');
-          
+
           // Set dimensions for database storage
           const maxWidth = 200;
           const maxHeight = 200;
-          
+
           let { width, height } = img;
-          
+
           // Calculate new dimensions
           if (width > height) {
             if (width > maxWidth) {
@@ -119,14 +122,14 @@ const CatalogManagement = () => {
               height = maxHeight;
             }
           }
-          
+
           canvas.width = width;
           canvas.height = height;
-          
+
           // Draw and compress for database storage
           ctx.drawImage(img, 0, 0, width, height);
           const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.3); // 30% quality
-          
+
           if (imageModalType === 'add') {
             setNewProduct({ ...newProduct, image: compressedDataUrl });
           } else if (imageModalType === 'edit') {
@@ -154,8 +157,8 @@ const CatalogManagement = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-      
-      const response = await fetch("http://localhost:8081/api/products", {
+
+      const response = await fetch(`${API_URL}/api/products`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -170,7 +173,7 @@ const CatalogManagement = () => {
       const data = await response.json();
       setProducts(data);
       setError(null);
-      
+
       // Show success message only when manually refreshing
       if (showSuccessMessage && data.length > 0) {
         showToast("📦 Products refreshed successfully!", "success", 2000);
@@ -212,7 +215,7 @@ const CatalogManagement = () => {
         sales: 0
       };
 
-      const response = await fetch("http://localhost:8081/api/products/add", {
+      const response = await fetch(`${API_URL}/api/products/add`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -271,7 +274,7 @@ const CatalogManagement = () => {
         sales: parseInt(productToEdit.sales) || 0
       };
 
-      const response = await fetch(`http://localhost:8081/api/products/update/${productToEdit.id}`, {
+      const response = await fetch(`${API_URL}/api/products/update/${productToEdit.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -307,8 +310,8 @@ const CatalogManagement = () => {
 
     try {
       const productName = productToDelete.name;
-      
-      const response = await fetch(`http://localhost:8081/api/products/delete/${productToDelete.id}`, {
+
+      const response = await fetch(`${API_URL}/api/products/delete/${productToDelete.id}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -345,7 +348,7 @@ const CatalogManagement = () => {
 
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.sku.toLowerCase().includes(searchTerm.toLowerCase());
+      product.sku.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
@@ -354,7 +357,7 @@ const CatalogManagement = () => {
 
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      
+
       {/* Toast Notification - Auto closes, no manual close button */}
       <Toast
         message={toast.message}
@@ -363,7 +366,7 @@ const CatalogManagement = () => {
         onClose={hideToast}
         duration={toast.duration}
       />
-      
+
       {/* Main Content Container */}
       <div className="pt-4 px-0 sm:px-1 lg:px-2 max-w-full mx-0">
         {/* Header Section */}
@@ -401,16 +404,16 @@ const CatalogManagement = () => {
 
             <div className="flex items-center gap-3">
               {/* Refresh Button */}
-              <button 
+              <button
                 onClick={() => fetchProducts(true)} // Show success message when manually refreshing
                 className="bg-white border border-[#FFE4D6] text-[#5D3A00] px-4 py-3 rounded-xl font-semibold hover:bg-[#FFF5E1] hover:border-[#D87C5A] transition-all duration-300 flex items-center gap-2"
               >
                 <Package className="w-4 h-4" />
                 Refresh
               </button>
-              
+
               {/* Add Product Button */}
-              <button 
+              <button
                 onClick={() => setShowAddModal(true)}
                 className="bg-gradient-to-r from-[#D87C5A] to-[#5D3A00] text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
               >
@@ -446,7 +449,7 @@ const CatalogManagement = () => {
               </div>
               <h3 className="text-xl font-bold text-red-600 mb-2">Error Loading Products</h3>
               <p className="text-red-500 text-sm mb-4">{error}</p>
-              <button 
+              <button
                 onClick={fetchProducts}
                 className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
               >
@@ -462,8 +465,8 @@ const CatalogManagement = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 mb-4">
 
             {filteredProducts.map((product, index) => (
-              <div 
-                key={product.id} 
+              <div
+                key={product.id}
                 className="bg-white rounded-xl shadow-lg border border-[#FFE4D6] overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105 group animate-fade-in"
                 style={{ animationDelay: `${index * 0.1}s`, animationFillMode: 'both' }}
               >
@@ -478,7 +481,7 @@ const CatalogManagement = () => {
                   </div>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </div>
-                
+
                 <div className="p-3">
                   <h3 className="font-bold text-[#5D3A00] text-base mb-1 line-clamp-2 group-hover:text-[#D87C5A] transition-colors duration-300">
                     {product.name}
@@ -486,9 +489,9 @@ const CatalogManagement = () => {
                   <div className="flex items-center space-x-1 mb-1">
                     <div className="flex items-center">
                       {[...Array(5)].map((_, i) => (
-                        <Star 
-                          key={i} 
-                          className={`w-3 h-3 ${i < Math.floor(product.rating) ? 'text-[#FFD95A] fill-current' : 'text-gray-300'}`} 
+                        <Star
+                          key={i}
+                          className={`w-3 h-3 ${i < Math.floor(product.rating) ? 'text-[#FFD95A] fill-current' : 'text-gray-300'}`}
                         />
                       ))}
                     </div>
@@ -510,8 +513,8 @@ const CatalogManagement = () => {
                   </div>
 
                   <div className="flex justify-start items-center gap-2 mt-3">
-                    <button 
-                      onClick={() => setSelectedProduct(product)} 
+                    <button
+                      onClick={() => setSelectedProduct(product)}
 
                       className="w-fit bg-[#D87C5A] text-white py-1.5 px-2 rounded-lg hover:bg-[#c06949] text-xs font-semibold shadow hover:shadow-md transition-all duration-300 flex items-center space-x-1"
                     >
@@ -519,7 +522,7 @@ const CatalogManagement = () => {
                       <Eye className="w-3 h-3" />
                       <span>View</span>
                     </button>
-                    <button 
+                    <button
                       onClick={() => openEditModal(product)}
 
                       className="w-fit bg-[#FFF5E1] text-[#5D3A00] py-1.5 px-2 rounded-lg hover:bg-[#FFE4D6] text-xs font-semibold shadow hover:shadow-md transition-all duration-300 flex items-center space-x-1"
@@ -528,17 +531,17 @@ const CatalogManagement = () => {
                       <Edit3 className="w-3 h-3" />
                       <span>Edit</span>
                     </button>
-                    <button 
+                    <button
                       onClick={() => openDeleteModal(product)}
 
                       className="w-fit bg-red-100 text-red-600 py-1.5 px-2 rounded-lg hover:bg-red-200 text-xs font-semibold shadow hover:shadow-md transition-all duration-300 flex items-center space-x-1"
                     >
 
-                      <Trash2 className="w-4 h-4" />       
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
-              </div> 
+              </div>
             ))}
           </div>
         )}
@@ -564,30 +567,30 @@ const CatalogManagement = () => {
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center border-b border-[#FFE4D6] p-6">
                 <h2 className="text-2xl font-bold text-[#5D3A00]">Product Details</h2>
-                <button 
-                  onClick={() => setSelectedProduct(null)} 
+                <button
+                  onClick={() => setSelectedProduct(null)}
                   className="text-[#5D3A00] hover:text-[#D87C5A] transition-colors"
                 >
                   <X className="w-6 h-6" />
                 </button>
               </div>
-              
+
               <div className="p-6">
                 <div className="flex flex-col md:flex-row gap-6">
                   <div className="flex-shrink-0">
-                    <img 
-                      src={selectedProduct.image} 
+                    <img
+                      src={selectedProduct.image}
                       alt={selectedProduct.name}
                       className="w-full md:w-48 h-48 object-cover rounded-xl border border-[#FFE4D6]"
                     />
                   </div>
-                  
+
                   <div className="flex-1 space-y-4">
                     <div>
                       <h3 className="text-xl font-bold text-[#5D3A00] mb-2">{selectedProduct.name}</h3>
                       <div className="mb-3">{getStatusBadge(selectedProduct.status)}</div>
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
                         <p className="text-[#5D3A00]/70 font-semibold">SKU</p>
@@ -630,14 +633,14 @@ const CatalogManagement = () => {
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center border-b border-[#FFE4D6] p-6">
                 <h2 className="text-2xl font-bold text-[#5D3A00]">Add New Product</h2>
-                <button 
-                  onClick={() => setShowAddModal(false)} 
+                <button
+                  onClick={() => setShowAddModal(false)}
                   className="text-[#5D3A00] hover:text-[#D87C5A] transition-colors"
                 >
                   <X className="w-6 h-6" />
                 </button>
               </div>
-              
+
               <form onSubmit={handleAddProduct} className="p-6 space-y-4">
                 {/* Product Image Section */}
                 <div>
@@ -645,9 +648,9 @@ const CatalogManagement = () => {
                   <div className="flex items-center gap-4">
                     <div className="w-20 h-20 border-2 border-dashed border-[#FFE4D6] rounded-lg flex items-center justify-center overflow-hidden">
                       {newProduct.image ? (
-                        <img 
-                          src={newProduct.image} 
-                          alt="Product preview" 
+                        <img
+                          src={newProduct.image}
+                          alt="Product preview"
                           className="w-full h-full object-cover"
                         />
                       ) : (
@@ -667,7 +670,7 @@ const CatalogManagement = () => {
 
                 <div>
                   <label className="block text-sm font-semibold text-[#5D3A00] mb-2">Product Name</label>
-                  <input 
+                  <input
                     type="text"
                     value={newProduct.name}
                     onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
@@ -679,7 +682,7 @@ const CatalogManagement = () => {
 
                 <div>
                   <label className="block text-sm font-semibold text-[#5D3A00] mb-2">SKU</label>
-                  <input 
+                  <input
                     type="text"
                     value={newProduct.sku}
                     onChange={(e) => setNewProduct({ ...newProduct, sku: e.target.value })}
@@ -691,7 +694,7 @@ const CatalogManagement = () => {
 
                 <div>
                   <label className="block text-sm font-semibold text-[#5D3A00] mb-2">Category</label>
-                  <select 
+                  <select
                     value={newProduct.category}
                     onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
                     className="w-full border border-[#FFE4D6] px-3 py-2 rounded-lg focus:border-[#D87C5A] focus:ring-0 outline-none"
@@ -705,7 +708,7 @@ const CatalogManagement = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-[#5D3A00] mb-2">Price</label>
-                    <input 
+                    <input
                       type="number"
                       step="0.01"
                       value={newProduct.price}
@@ -718,7 +721,7 @@ const CatalogManagement = () => {
 
                   <div>
                     <label className="block text-sm font-semibold text-[#5D3A00] mb-2">Stock</label>
-                    <input 
+                    <input
                       type="number"
                       value={newProduct.stock}
                       onChange={(e) => setNewProduct({ ...newProduct, stock: e.target.value })}
@@ -730,14 +733,14 @@ const CatalogManagement = () => {
                 </div>
 
                 <div className="flex gap-3 pt-4">
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     onClick={() => setShowAddModal(false)}
                     className="flex-1 border border-[#FFE4D6] text-[#5D3A00] px-4 py-2 rounded-lg hover:bg-[#FFF5E1] transition-colors"
                   >
                     Cancel
                   </button>
-                  <button 
+                  <button
                     type="submit"
                     className="flex-1 bg-gradient-to-r from-[#D87C5A] to-[#5D3A00] text-white px-4 py-2 rounded-lg hover:shadow-lg transition-all"
                   >
@@ -755,14 +758,14 @@ const CatalogManagement = () => {
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center border-b border-[#FFE4D6] p-6">
                 <h2 className="text-2xl font-bold text-[#5D3A00]">Edit Product</h2>
-                <button 
-                  onClick={() => setShowEditModal(false)} 
+                <button
+                  onClick={() => setShowEditModal(false)}
                   className="text-[#5D3A00] hover:text-[#D87C5A] transition-colors"
                 >
                   <X className="w-6 h-6" />
                 </button>
               </div>
-              
+
               <form onSubmit={handleEditProduct} className="p-6 space-y-4">
                 {/* Product Image Section */}
                 <div>
@@ -770,9 +773,9 @@ const CatalogManagement = () => {
                   <div className="flex items-center gap-4">
                     <div className="w-20 h-20 border-2 border-dashed border-[#FFE4D6] rounded-lg flex items-center justify-center overflow-hidden">
                       {productToEdit.image ? (
-                        <img 
-                          src={productToEdit.image} 
-                          alt="Product preview" 
+                        <img
+                          src={productToEdit.image}
+                          alt="Product preview"
                           className="w-full h-full object-cover"
                         />
                       ) : (
@@ -792,31 +795,31 @@ const CatalogManagement = () => {
 
                 <div>
                   <label className="block text-sm font-semibold text-[#5D3A00] mb-2">Product Name</label>
-                  <input 
+                  <input
                     type="text"
                     value={productToEdit.name}
-                    onChange={(e) => setProductToEdit({...productToEdit, name: e.target.value})}
+                    onChange={(e) => setProductToEdit({ ...productToEdit, name: e.target.value })}
                     className="w-full border border-[#FFE4D6] px-3 py-2 rounded-lg focus:border-[#D87C5A] focus:ring-0 outline-none"
                     required
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-semibold text-[#5D3A00] mb-2">SKU</label>
-                  <input 
+                  <input
                     type="text"
                     value={productToEdit.sku}
-                    onChange={(e) => setProductToEdit({...productToEdit, sku: e.target.value})}
+                    onChange={(e) => setProductToEdit({ ...productToEdit, sku: e.target.value })}
                     className="w-full border border-[#FFE4D6] px-3 py-2 rounded-lg focus:border-[#D87C5A] focus:ring-0 outline-none"
                     required
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-semibold text-[#5D3A00] mb-2">Category</label>
-                  <select 
+                  <select
                     value={productToEdit.category}
-                    onChange={(e) => setProductToEdit({...productToEdit, category: e.target.value})}
+                    onChange={(e) => setProductToEdit({ ...productToEdit, category: e.target.value })}
                     className="w-full border border-[#FFE4D6] px-3 py-2 rounded-lg focus:border-[#D87C5A] focus:ring-0 outline-none"
                   >
                     {categories.filter(cat => cat !== 'all').map(category => (
@@ -824,26 +827,26 @@ const CatalogManagement = () => {
                     ))}
                   </select>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-[#5D3A00] mb-2">Price</label>
-                    <input 
+                    <input
                       type="number"
                       step="0.01"
                       value={productToEdit.price}
-                      onChange={(e) => setProductToEdit({...productToEdit, price: e.target.value})}
+                      onChange={(e) => setProductToEdit({ ...productToEdit, price: e.target.value })}
                       className="w-full border border-[#FFE4D6] px-3 py-2 rounded-lg focus:border-[#D87C5A] focus:ring-0 outline-none"
                       required
                     />
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-semibold text-[#5D3A00] mb-2">Stock</label>
-                    <input 
+                    <input
                       type="number"
                       value={productToEdit.stock}
-                      onChange={(e) => setProductToEdit({...productToEdit, stock: e.target.value})}
+                      onChange={(e) => setProductToEdit({ ...productToEdit, stock: e.target.value })}
                       className="w-full border border-[#FFE4D6] px-3 py-2 rounded-lg focus:border-[#D87C5A] focus:ring-0 outline-none"
                       required
                     />
@@ -853,37 +856,37 @@ const CatalogManagement = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-[#5D3A00] mb-2">Rating</label>
-                    <input 
+                    <input
                       type="number"
                       step="0.1"
                       min="0"
                       max="5"
                       value={productToEdit.rating}
-                      onChange={(e) => setProductToEdit({...productToEdit, rating: e.target.value})}
+                      onChange={(e) => setProductToEdit({ ...productToEdit, rating: e.target.value })}
                       className="w-full border border-[#FFE4D6] px-3 py-2 rounded-lg focus:border-[#D87C5A] focus:ring-0 outline-none"
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-semibold text-[#5D3A00] mb-2">Sales</label>
-                    <input 
+                    <input
                       type="number"
                       value={productToEdit.sales}
-                      onChange={(e) => setProductToEdit({...productToEdit, sales: e.target.value})}
+                      onChange={(e) => setProductToEdit({ ...productToEdit, sales: e.target.value })}
                       className="w-full border border-[#FFE4D6] px-3 py-2 rounded-lg focus:border-[#D87C5A] focus:ring-0 outline-none"
                     />
                   </div>
                 </div>
-                
+
                 <div className="flex gap-3 pt-4">
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     onClick={() => setShowEditModal(false)}
                     className="flex-1 border border-[#FFE4D6] text-[#5D3A00] px-4 py-2 rounded-lg hover:bg-[#FFF5E1] transition-colors"
                   >
                     Cancel
                   </button>
-                  <button 
+                  <button
                     type="submit"
                     className="flex-1 bg-gradient-to-r from-[#D87C5A] to-[#5D3A00] text-white px-4 py-2 rounded-lg hover:shadow-lg transition-all"
                   >
@@ -901,14 +904,14 @@ const CatalogManagement = () => {
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
               <div className="flex justify-between items-center border-b border-[#FFE4D6] p-6">
                 <h2 className="text-2xl font-bold text-[#5D3A00]">Add Product Image</h2>
-                <button 
-                  onClick={() => setShowImageModal(false)} 
+                <button
+                  onClick={() => setShowImageModal(false)}
                   className="text-[#5D3A00] hover:text-[#D87C5A] transition-colors"
                 >
                   <X className="w-6 h-6" />
                 </button>
               </div>
-              
+
               <div className="p-6 space-y-6">
                 {/* Upload from Device */}
                 <div>
@@ -980,8 +983,8 @@ const CatalogManagement = () => {
                 </div>
 
                 <div className="flex gap-3 pt-4">
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     onClick={() => setShowImageModal(false)}
                     className="flex-1 border border-[#FFE4D6] text-[#5D3A00] px-4 py-2 rounded-lg hover:bg-[#FFF5E1] transition-colors"
                   >
@@ -1001,20 +1004,20 @@ const CatalogManagement = () => {
                 <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Trash2 className="w-8 h-8 text-red-600" />
                 </div>
-                
+
                 <h2 className="text-2xl font-bold text-[#5D3A00] mb-2">Delete Product</h2>
                 <p className="text-[#5D3A00]/70 mb-6">
                   Are you sure you want to delete "<span className="font-semibold">{productToDelete.name}</span>"? This action cannot be undone.
                 </p>
-                
+
                 <div className="flex gap-3">
-                  <button 
+                  <button
                     onClick={() => setShowDeleteModal(false)}
                     className="flex-1 border border-[#FFE4D6] text-[#5D3A00] px-4 py-2 rounded-lg hover:bg-[#FFF5E1] transition-colors"
                   >
                     Cancel
                   </button>
-                  <button 
+                  <button
                     onClick={handleDeleteProduct}
                     className="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
                   >
