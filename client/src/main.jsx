@@ -8,6 +8,9 @@ import { CartProvider } from "./context/CartContext"; // ✅ Import CartProvider
 import { NotificationProvider } from "./context/NotificationContext"; // ✅ Import NotificationProvider
 import "./index.css";
 
+// Polyfill for Node.js global in browser (for sockjs-client)
+window.global = window;
+
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <NotificationProvider>

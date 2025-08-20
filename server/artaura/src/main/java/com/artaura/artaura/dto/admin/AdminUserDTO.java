@@ -34,10 +34,6 @@ public class AdminUserDTO {
     private Integer total_artworks; // Total sales made by the artist
     private Integer totalSales;
 
-    private Integer revenue;
-    private Integer spent;
-    private Integer totalPurchases;
-    
     // Constructors
     public AdminUserDTO() {}
     
@@ -128,17 +124,9 @@ public class AdminUserDTO {
     public Integer getTotalSales() { return totalSales; }
     public void setTotalSales(Integer totalSales) { this.totalSales = totalSales; }
 
-    public Integer getRevenue() {return revenue;}
-    public void setRevenue(Integer revenue) { this.revenue = revenue; }
-
     public Integer gettotal_artworks() {return total_artworks;}
     public void settotal_artworks(Integer total_artworks) { this.total_artworks = total_artworks; }
 
-    public Integer getSpent() {return spent;}
-    public void setSpent(Integer spent) { this.spent = spent; }
-
-    public Integer getTotalPurchases() {return totalPurchases;}
-    public void setTotalPurchases(Integer totalPurchases) { this.totalPurchases = totalPurchases; }
     // Helper methods
     public String getFullName() {
         if (firstName != null && lastName != null) {

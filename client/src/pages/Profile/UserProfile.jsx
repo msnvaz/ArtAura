@@ -3,73 +3,58 @@ import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/common/Navbar";
 import CartSidebar from "../../components/cart/CartSidebar";
-import { User, Mail, Phone, MapPin, Edit3, Camera, Lock } from "lucide-react";
+import {
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Edit3,
+  Camera,
+  Lock,
+  CheckCircle,
+  XCircle,
+} from "lucide-react";
 import EditProfileModal from "../../components/Profile/EditProfileModal";
 import ChangePasswordModal from "../../components/Profile/ChangePasswordModal";
 import axios from "axios";
 
 const UserProfile = () => {
-  const { auth } = useAuth();
+  const { token, userId, authLoading } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [profileData, setProfileData] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
+  const [deactivateAttempts, setDeactivateAttempts] = useState(0);
+  const [showDeactivatePrompt, setShowDeactivatePrompt] = useState(false);
+  const [showFinalDeactivateConfirm, setShowFinalDeactivateConfirm] =
+    useState(false);
+  const [deactivateSuccess, setDeactivateSuccess] = useState(false);
+  const [deactivateError, setDeactivateError] = useState("");
 
   useEffect(() => {
-    // Comment out auth check for now since backend is not ready
-    // if (!auth.token) {
-    //   navigate('/login');
-    //   return;
-    // }
+    if (authLoading) return; // Wait for auth to finish loading
+    if (!token) {
+      navigate("/");
+      return;
+    }
     fetchUserProfile();
-  }, [navigate]); // Removed auth.token dependency
+  }, [token, navigate, authLoading]);
 
   const fetchUserProfile = async () => {
     try {
-      // Comment out API call since backend is not ready
-      // const API_URL = import.meta.env.VITE_API_URL;
-      // const response = await axios.get(`${API_URL}/api/user/profile`, {
-      //   headers: {
-      //     Authorization: `Bearer ${auth.token}`
-      //   }
-      // });
-      // setProfileData(response.data);
-
-      // Use mock data for now
-      setProfileData({
-        id: auth?.userId || 1,
-        firstName: "Pawani",
-        lastName: "Kumari",
-        email: "pawani.kumari@gmail.com",
-        phone: "+94 77 123 4567",
-        streetAddress: "No. 45, Pinnawala",
-        city: "Rambukkana",
-        state: "Kegalle",
-        postalCode: "71100",
-        joinDate: "2024-01-15",
-        role: auth?.role || "buyer",
-        avatar: "https://randomuser.me/api/portraits/women/42.jpg",
-        bio: "Art enthusiast and collector from Sri Lanka.",
+      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+      if (!token || !userId) {
+        throw new Error("No auth token or userId found");
+      }
+      const response = await axios.get(`${API_URL}/api/users/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
+      setProfileData(response.data);
     } catch (error) {
       console.error("Error fetching profile:", error);
-      // Use mock data for now
-      setProfileData({
-        id: auth?.userId || 1,
-        firstName: "Pawani",
-        lastName: "Kumari",
-        email: "pawani.kumari@gmail.com",
-        phone: "+94 77 123 4567",
-        streetAddress: "No. 45, Pinnawala",
-        city: "Rambukkana",
-        state: "Kegalle",
-        postalCode: "71100",
-        joinDate: "2024-01-15",
-        role: auth?.role || "buyer",
-        avatar: "https://randomuser.me/api/portraits/women/42.jpg",
-        bio: "Art enthusiast and collector from Sri Lanka.",
-      });
     } finally {
       setLoading(false);
     }
@@ -77,6 +62,42 @@ const UserProfile = () => {
 
   const handleProfileUpdate = (updatedData) => {
     setProfileData((prev) => ({ ...prev, ...updatedData }));
+  };
+
+  const handleDeactivateClick = () => {
+    if (deactivateAttempts < 2) {
+      setDeactivateAttempts(deactivateAttempts + 1);
+      setShowDeactivatePrompt(true);
+    } else {
+      setShowFinalDeactivateConfirm(true);
+    }
+  };
+
+  const handleDeactivateAccount = async () => {
+    setDeactivateError("");
+    setShowFinalDeactivateConfirm(false);
+    setLoading(true);
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+      await axios.put(
+        `${API_URL}/api/users/${userId}/deactivate`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setDeactivateSuccess(true);
+      setTimeout(() => {
+        setDeactivateSuccess(false);
+        navigate("/");
+      }, 2000);
+    } catch (error) {
+      setDeactivateError("Failed to deactivate account. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (loading) {
@@ -116,7 +137,13 @@ const UserProfile = () => {
                 <div className="text-center">
                   <div className="relative inline-block mb-4">
                     <img
-                      src={profileData.avatar}
+                      src={
+                        profileData?.image
+                          ? `${import.meta.env.VITE_API_URL}${
+                              profileData.image
+                            }`
+                          : "/default-avatar.png"
+                      }
                       alt="Profile"
                       className="w-32 h-32 rounded-full border-4 border-[#FFD95A] shadow-lg object-cover"
                     />
@@ -129,10 +156,14 @@ const UserProfile = () => {
                   </div>
 
                   <h2 className="text-2xl font-bold text-[#362625] mb-2">
-                    {profileData.firstName} {profileData.lastName}
+                    {/* Split name into first and last name */}
+                    {profileData?.name?.split(" ")[0] || ""}{" "}
+                    {profileData?.name?.split(" ").slice(1).join(" ") || ""}
                   </h2>
 
-                  <p className="text-[#362625]/70 mb-4">{profileData.bio}</p>
+                  <p className="text-[#362625]/70 mb-4">
+                    {profileData?.bio || ""}
+                  </p>
 
                   <button
                     onClick={() => setShowEditModal(true)}
@@ -167,10 +198,11 @@ const UserProfile = () => {
                   <div className="space-y-4">
                     <div>
                       <label className="text-sm font-medium text-[#362625]/70">
-                        First Name
+                        Full Name
                       </label>
                       <p className="p-3 bg-[#FFF5E1] rounded-lg text-[#362625] font-medium">
-                        {profileData.firstName}
+                        {/* First Name */}
+                        {profileData?.name?.split(" ")[0] || ""}
                       </p>
                     </div>
 
@@ -180,7 +212,7 @@ const UserProfile = () => {
                       </label>
                       <p className="p-3 bg-[#FFF5E1] rounded-lg text-[#362625] flex items-center gap-2">
                         <Mail className="w-4 h-4 text-[#D87C5A]" />
-                        {profileData.email}
+                        {profileData?.email || ""}
                       </p>
                     </div>
 
@@ -190,7 +222,7 @@ const UserProfile = () => {
                       </label>
                       <p className="p-3 bg-[#FFF5E1] rounded-lg text-[#362625] flex items-center gap-2">
                         <Phone className="w-4 h-4 text-[#D87C5A]" />
-                        {profileData.phone}
+                        {profileData?.contactNo || ""}
                       </p>
                     </div>
                   </div>
@@ -201,7 +233,8 @@ const UserProfile = () => {
                         Last Name
                       </label>
                       <p className="p-3 bg-[#FFF5E1] rounded-lg text-[#362625] font-medium">
-                        {profileData.lastName}
+                        {/* Last Name */}
+                        {profileData?.name?.split(" ").slice(1).join(" ") || ""}
                       </p>
                     </div>
 
@@ -211,8 +244,15 @@ const UserProfile = () => {
                       </label>
                       <p className="p-3 bg-[#FFF5E1] rounded-lg text-[#362625] flex items-center gap-2">
                         <MapPin className="w-4 h-4 text-[#D87C5A]" />
-                        {profileData.streetAddress}, {profileData.city},{" "}
-                        {profileData.state} {profileData.postalCode}
+                        {[
+                          profileData?.streetAddress,
+                          profileData?.city,
+                          profileData?.state,
+                          profileData?.zipCode,
+                          profileData?.country,
+                        ]
+                          .filter(Boolean)
+                          .join(", ")}
                       </p>
                     </div>
 
@@ -221,7 +261,7 @@ const UserProfile = () => {
                         Bio
                       </label>
                       <p className="p-3 bg-[#FFF5E1] rounded-lg text-[#362625]">
-                        {profileData.bio}
+                        {profileData?.bio || ""}
                       </p>
                     </div>
                   </div>
@@ -244,7 +284,130 @@ const UserProfile = () => {
                   <Lock className="w-4 h-4" />
                   Change Password
                 </button>
+                <button
+                  onClick={handleDeactivateClick}
+                  className="flex items-center justify-center gap-2 bg-red-600 text-white px-3 py-2 rounded-md mt-3 hover:bg-red-700 transition text-sm w-fit mx-auto"
+                  style={{ minWidth: 0 }}
+                >
+                  <Lock className="w-4 h-4" />
+                  Deactivate Account
+                </button>
               </div>
+
+              {/* Deactivate Prompt Modal */}
+              {showDeactivatePrompt && (
+                <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+                  <div className="bg-white rounded-xl shadow-2xl p-8 max-w-sm w-full text-center animate-fade-in">
+                    <h2 className="text-2xl font-bold text-[#362625] mb-2">
+                      Wait! Don't leave us yet!
+                    </h2>
+                    <p className="text-[#362625]/80 mb-6">
+                      ArtAura is constantly improving. You might miss out on new
+                      features, exclusive art, and community events. Would you
+                      like to stay and explore more?
+                    </p>
+                    <div className="flex gap-4 justify-center">
+                      <button
+                        onClick={() => setShowDeactivatePrompt(false)}
+                        className="px-6 py-2 rounded-lg bg-[#FFD95A] text-[#362625] font-semibold hover:bg-[#D87C5A] hover:text-white transition"
+                      >
+                        I'll Stay!
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowDeactivatePrompt(false);
+                          handleDeactivateClick();
+                        }}
+                        className="px-6 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition"
+                      >
+                        Still Deactivate
+                      </button>
+                    </div>
+                  </div>
+                  <style>{`
+                    @keyframes fade-in {
+                      from { opacity: 0; transform: translateY(20px); }
+                      to { opacity: 1; transform: translateY(0); }
+                    }
+                    .animate-fade-in { animation: fade-in 0.5s ease; }
+                  `}</style>
+                </div>
+              )}
+
+              {/* Final Deactivate Confirmation Modal */}
+              {showFinalDeactivateConfirm && (
+                <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+                  <div className="bg-white rounded-xl shadow-2xl p-8 max-w-sm w-full text-center animate-fade-in">
+                    <h2 className="text-2xl font-bold text-[#362625] mb-2">
+                      Are you sure?
+                    </h2>
+                    <p className="text-[#362625]/80 mb-6">
+                      This is your last chance to stay with ArtAura. If you
+                      deactivate, your account will be disabled and you'll be
+                      logged out.
+                    </p>
+                    <div className="flex gap-4 justify-center">
+                      <button
+                        onClick={() => setShowFinalDeactivateConfirm(false)}
+                        className="px-6 py-2 rounded-lg bg-[#FFD95A] text-[#362625] font-semibold hover:bg-[#D87C5A] hover:text-white transition"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleDeactivateAccount}
+                        className="px-6 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition"
+                      >
+                        Yes, Deactivate
+                      </button>
+                    </div>
+                  </div>
+                  <style>{`
+                    @keyframes fade-in {
+                      from { opacity: 0; transform: translateY(20px); }
+                      to { opacity: 1; transform: translateY(0); }
+                    }
+                    .animate-fade-in { animation: fade-in 0.5s ease; }
+                  `}</style>
+                </div>
+              )}
+
+              {/* Success Message */}
+              {deactivateSuccess && (
+                <div className="fixed bottom-8 right-8 z-50 animate-fade-in">
+                  <div className="flex items-center gap-3 bg-gradient-to-r from-[#FFD95A] to-[#D87C5A] text-[#362625] px-6 py-4 rounded-xl shadow-2xl border border-[#FFD95A]">
+                    <CheckCircle className="w-6 h-6 text-green-600" />
+                    <span className="font-semibold text-lg">
+                      Account deactivated successfully!
+                    </span>
+                  </div>
+                  <style>{`
+                    @keyframes fade-in {
+                      from { opacity: 0; transform: translateY(20px); }
+                      to { opacity: 1; transform: translateY(0); }
+                    }
+                    .animate-fade-in { animation: fade-in 0.5s ease; }
+                  `}</style>
+                </div>
+              )}
+
+              {/* Error Message */}
+              {deactivateError && (
+                <div className="fixed bottom-8 right-8 z-50 animate-fade-in">
+                  <div className="flex items-center gap-3 bg-red-100 text-red-700 px-6 py-4 rounded-xl shadow-2xl border border-red-300">
+                    <XCircle className="w-6 h-6 text-red-600" />
+                    <span className="font-semibold text-lg">
+                      {deactivateError}
+                    </span>
+                  </div>
+                  <style>{`
+                    @keyframes fade-in {
+                      from { opacity: 0; transform: translateY(20px); }
+                      to { opacity: 1; transform: translateY(0); }
+                    }
+                    .animate-fade-in { animation: fade-in 0.5s ease; }
+                  `}</style>
+                </div>
+              )}
             </div>
           </div>
 
@@ -263,7 +426,8 @@ const UserProfile = () => {
             <ChangePasswordModal
               isOpen={showChangePasswordModal}
               onClose={() => setShowChangePasswordModal(false)}
-              userId={profileData.id}
+              userId={userId}
+              token={token}
             />
           )}
         </div>

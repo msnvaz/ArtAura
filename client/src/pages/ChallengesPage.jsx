@@ -23,7 +23,10 @@ import {
 } from "lucide-react";
 import Navbar from "../components/common/Navbar";
 import CartSidebar from "../components/cart/CartSidebar";
-import { useAuth } from "../context/AuthContext"; // Import AuthContext
+import { useAuth } from "../context/AuthContext";
+import axios from "axios";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8081/api";
 
 const ChallengesPage = () => {
   const navigate = useNavigate();
@@ -33,79 +36,7 @@ const ChallengesPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [viewMode, setViewMode] = useState("grid");
-
-  // Sri Lankan themed mock challenges
-  const mockActiveChallenges = [
-    {
-      id: 1,
-      title: "Kolam Mask Design Contest",
-      description:
-        "Design a traditional Kolam mask reflecting Sri Lankan folklore and cultural symbolism.",
-      category: "Traditional Art",
-      startDate: "2025-07-01",
-      endDate: "2025-07-31",
-      prize: "Rs. 500,000",
-      participants: 120,
-      submissions: 80,
-      difficulty: "Intermediate",
-      status: "active",
-      timeLeft: "13 days",
-      rules: [
-        "Original designs only",
-        "Must reflect Sri Lankan traditions",
-        "Submit high-resolution artwork",
-      ],
-      image: "/mask.jpg", // public image
-      organizer: "Department of Cultural Affairs",
-      tags: ["kolam", "culture", "traditional"],
-    },
-    {
-      id: 2,
-      title: "Rural Life Through the Lens",
-      description:
-        "Capture the heart of rural Sri Lanka — farming, traditions, and everyday life.",
-      category: "Photography",
-      startDate: "2025-07-15",
-      endDate: "2025-08-15",
-      prize: "Rs. 300,000",
-      participants: 98,
-      submissions: 64,
-      difficulty: "Beginner",
-      status: "active",
-      timeLeft: "28 days",
-      rules: [
-        "Photos must be taken in Sri Lanka",
-        "No heavy editing",
-        "Submit in JPG or RAW format",
-      ],
-      image: "/ruralLife.jpeg", // public image
-      organizer: "Lanka Art Collective",
-      tags: ["rural", "culture", "photography"],
-    },
-    {
-      id: 3,
-      title: "Temple Wall Mural Art",
-      description:
-        "Showcase your mural skills by reimagining Buddhist temple paintings with a modern twist.",
-      category: "Religious Art",
-      startDate: "2025-07-10",
-      endDate: "2025-08-10",
-      prize: "Rs. 400,000",
-      participants: 74,
-      submissions: 45,
-      difficulty: "Advanced",
-      status: "active",
-      timeLeft: "23 days",
-      rules: [
-        "Themes must reflect Buddhist stories or Jataka tales",
-        "Wall-sized format sketches required",
-        "Include a concept note",
-      ],
-      image: "/templeWall.jpeg", // public image
-      organizer: "Ministry of Heritage and Arts",
-      tags: ["mural", "temple", "heritage"],
-    },
-  ];
+  const [error, setError] = useState(null);
 
   const categories = [
     "All Categories",
@@ -118,11 +49,55 @@ const ChallengesPage = () => {
   ];
 
   useEffect(() => {
-    setTimeout(() => {
-      setChallenges(mockActiveChallenges);
-      setLoading(false);
-    }, 1000);
+    const fetchChallenges = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const token = localStorage.getItem("token");
+        const response = await axios.get(
+          `${API_URL}/api/buyer/challenges/active`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        const mapped = (response.data || []).map((challenge, idx) => ({
+          id: challenge.id || idx,
+          title: challenge.title,
+          description: challenge.description,
+          category: challenge.category,
+          startDate: challenge.publishDateTime,
+          endDate: challenge.deadlineDateTime,
+          participants: 0, // Placeholder
+          submissions: 0, // Placeholder
+          timeLeft: getTimeLeft(challenge.deadlineDateTime),
+          image: undefined, // No image in DB
+        }));
+        setChallenges(mapped);
+      } catch (err) {
+        setError("Failed to load challenges.");
+        setChallenges([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchChallenges();
   }, []);
+
+  function getTimeLeft(deadline) {
+    if (!deadline) return "N/A";
+    const now = new Date();
+    const end = new Date(deadline);
+    const diff = end - now;
+    if (diff <= 0) return "Expired";
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    if (days > 0) return `${days} days`;
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    if (hours > 0) return `${hours} hours`;
+    const minutes = Math.floor(diff / (1000 * 60));
+    return `${minutes} minutes`;
+  }
 
   const getDifficultyColor = (difficulty) => {
     switch (difficulty) {
@@ -161,67 +136,71 @@ const ChallengesPage = () => {
   };
 
   const ChallengeCard = ({ challenge }) => (
-    <div className="bg-white rounded-xl shadow-md border border-[#FFD95A] overflow-hidden hover:shadow-lg transition-all duration-300 hover:scale-105">
-      <div className="relative">
-        <img
-          src={challenge.image}
-          alt={challenge.title}
-          className="w-full h-48 object-cover"
-        />
-        <div className="absolute top-4 right-4 bg-[#D87C5A] text-white px-3 py-1 rounded-full text-sm font-bold">
-          {challenge.prize}
-        </div>
-        <div className="absolute bottom-4 left-4 bg-black bg-opacity-60 text-white px-3 py-1 rounded-full text-sm">
-          {challenge.timeLeft} left
-        </div>
-      </div>
-
-      <div className="p-6">
-        <div className="flex items-center gap-2 mb-3">
+    <div className="bg-white rounded-xl shadow-md border border-[#FFD95A] overflow-hidden hover:shadow-lg transition-all duration-300 hover:scale-105 flex flex-col min-h-0">
+      {/* Header with category only, removed timeLeft */}
+      <div className="bg-gradient-to-br from-[#FFD95A] to-[#D87C5A] p-2 flex items-center">
+        <div className="flex items-center gap-2">
           {getCategoryIcon(challenge.category)}
-          <span className="text-sm text-[#7f5539]/70">
+          <span className="text-xs font-semibold text-[#7f5539] truncate max-w-[80px]">
             {challenge.category}
           </span>
         </div>
-
-        <h3 className="font-bold text-[#7f5539] text-lg mb-2">
+      </div>
+      {/* Title */}
+      <div className="px-3 pt-2 pb-1 flex-1 flex flex-col">
+        <h3 className="font-bold text-[#7f5539] text-base mb-1 line-clamp-2 min-h-[2.2rem]">
           {challenge.title}
         </h3>
-        <p className="text-[#7f5539]/80 text-sm mb-4 line-clamp-2">
+        <p className="text-[#7f5539]/70 text-xs mb-1 line-clamp-2">
           {challenge.description}
         </p>
-
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="flex items-center gap-2">
-            <Users className="w-4 h-4 text-[#D87C5A]" />
-            <span className="text-sm text-[#7f5539]">
-              {challenge.participants} joined
+        {/* Stats */}
+        <div className="flex justify-between items-center gap-2 mb-1">
+          <div className="flex items-center gap-1 bg-[#FFF5E1] rounded px-2 py-1">
+            <Users className="w-3 h-3 text-[#D87C5A]" />
+            <span className="text-xs font-semibold text-[#7f5539]">
+              {challenge.participants}
             </span>
           </div>
-          <div className="flex items-center gap-2">
-            <Target className="w-4 h-4 text-[#D87C5A]" />
-            <span className="text-sm text-[#7f5539]">
-              {challenge.submissions} submissions
+          <div className="flex items-center gap-1 bg-[#FFF5E1] rounded px-2 py-1">
+            <Target className="w-3 h-3 text-[#D87C5A]" />
+            <span className="text-xs font-semibold text-[#7f5539]">
+              {challenge.submissions}
             </span>
           </div>
         </div>
-
-        <div className="flex items-center gap-2 mb-4">
-          <Calendar className="w-4 h-4 text-[#7f5539]/70" />
-          <span className="text-sm text-[#7f5539]/70">
-            {new Date(challenge.startDate).toLocaleDateString()} -{" "}
-            {new Date(challenge.endDate).toLocaleDateString()}
+        {/* Date */}
+        <div className="flex items-center gap-1 text-xs text-[#7f5539]/80 mb-1">
+          <Calendar className="w-3 h-3 text-[#D87C5A]" />
+          <span>
+            {(() => {
+              const start = challenge.startDate
+                ? new Date(Date.parse(challenge.startDate))
+                : null;
+              const end = challenge.endDate
+                ? new Date(Date.parse(challenge.endDate))
+                : null;
+              return start && end
+                ? `${start.toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                  })} - ${end.toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                  })}`
+                : "";
+            })()}
           </span>
         </div>
-
-        <div className="flex gap-2">
+        {/* Actions */}
+        <div className="flex gap-2 mt-1 mb-0">
           <button
             onClick={() => handleJoinChallenge(challenge.id)}
             disabled={role === "buyer"}
-            className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
+            className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${
               role === "buyer"
-                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                : "bg-[#D87C5A] hover:bg-[#7f5539] text-white"
+                ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                : "bg-gradient-to-r from-[#D87C5A] to-[#7f5539] hover:from-[#7f5539] hover:to-[#5a3b28] text-white"
             }`}
             title={
               role === "buyer"
@@ -229,13 +208,14 @@ const ChallengesPage = () => {
                 : "Join this challenge"
             }
           >
-            {role === "buyer" ? "View Only" : "Join Challenge"}
+            {role === "buyer" ? "View" : "Join"}
           </button>
           <button
             onClick={() => handleViewSubmissions(challenge.id)}
-            className="flex items-center justify-center w-12 h-10 border-2 border-[#FFD95A] text-[#D87C5A] rounded-lg hover:bg-[#FFD95A] hover:text-[#7f5539] transition-colors"
+            className="flex items-center justify-center w-8 h-8 border-2 border-[#FFD95A] text-[#D87C5A] rounded-lg hover:bg-[#FFD95A] hover:text-[#7f5539] transition-all"
+            title="View submissions"
           >
-            <Eye className="w-4 h-4" />
+            <Eye className="w-3 h-3" />
           </button>
         </div>
       </div>
@@ -331,11 +311,7 @@ const ChallengesPage = () => {
             </div>
           ) : (
             <div
-              className={`${
-                viewMode === "grid"
-                  ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                  : "space-y-4"
-              }`}
+              className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6`}
             >
               {filteredChallenges.map((challenge) => (
                 <ChallengeCard key={challenge.id} challenge={challenge} />
