@@ -20,7 +20,7 @@ const EditPostModal = ({ isOpen, post, onClose, onSave }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8081";
+      const API_URL = import.meta.env.VITE_API_URL;
       const token = localStorage.getItem("token");
       const response = await fetch(
         `${API_URL}/api/buyer/exhibitions/${formData.id}`,

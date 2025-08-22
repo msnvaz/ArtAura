@@ -13,6 +13,10 @@ import {
 const ArtistSubmissionPage = () => {
   const { challengeId } = useParams();
   const navigate = useNavigate();
+
+  // Get API URL from environment variable
+  const API_URL = import.meta.env.VITE_API_URL;
+
   const [challenge, setChallenge] = useState(null);
   const [formData, setFormData] = useState({
     title: "",
@@ -31,7 +35,7 @@ const ArtistSubmissionPage = () => {
   const fetchChallengeDetails = async () => {
     try {
       const response = await fetch(
-        `http://localhost:8081/api/challenges/${challengeId}`
+        `${API_URL}/api/challenges/${challengeId}`
       );
       if (response.ok) {
         const data = await response.json();
@@ -206,9 +210,8 @@ const ArtistSubmissionPage = () => {
                 name="title"
                 value={formData.title}
                 onChange={handleInputChange}
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent ${
-                  errors.title ? "border-red-300" : "border-gray-300"
-                }`}
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent ${errors.title ? "border-red-300" : "border-gray-300"
+                  }`}
                 placeholder="Enter your artwork title"
               />
               {errors.title && (
@@ -225,9 +228,8 @@ const ArtistSubmissionPage = () => {
                 value={formData.description}
                 onChange={handleInputChange}
                 rows={4}
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent ${
-                  errors.description ? "border-red-300" : "border-gray-300"
-                }`}
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent ${errors.description ? "border-red-300" : "border-gray-300"
+                  }`}
                 placeholder="Describe your artwork, inspiration, techniques used..."
               />
               {errors.description && (
@@ -242,9 +244,8 @@ const ArtistSubmissionPage = () => {
                 Artwork Image *
               </label>
               <div
-                className={`border-2 border-dashed rounded-lg p-6 text-center ${
-                  errors.artwork ? "border-red-300" : "border-gray-300"
-                }`}
+                className={`border-2 border-dashed rounded-lg p-6 text-center ${errors.artwork ? "border-red-300" : "border-gray-300"
+                  }`}
               >
                 <input
                   type="file"

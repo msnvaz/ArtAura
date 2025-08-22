@@ -26,7 +26,7 @@ import CartSidebar from "../components/cart/CartSidebar";
 import { useAuth } from "../context/AuthContext";
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8081/api";
+const API_URL = import.meta.env.VITE_API_URL;
 
 const ChallengesPage = () => {
   const navigate = useNavigate();
@@ -182,12 +182,12 @@ const ChallengesPage = () => {
                 : null;
               return start && end
                 ? `${start.toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                  })} - ${end.toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                  })}`
+                  month: "short",
+                  day: "numeric",
+                })} - ${end.toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                })}`
                 : "";
             })()}
           </span>
@@ -197,11 +197,10 @@ const ChallengesPage = () => {
           <button
             onClick={() => handleJoinChallenge(challenge.id)}
             disabled={role === "buyer"}
-            className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${
-              role === "buyer"
+            className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${role === "buyer"
                 ? "bg-gray-200 text-gray-500 cursor-not-allowed"
                 : "bg-gradient-to-r from-[#D87C5A] to-[#7f5539] hover:from-[#7f5539] hover:to-[#5a3b28] text-white"
-            }`}
+              }`}
             title={
               role === "buyer"
                 ? "Only artists can join challenges"
@@ -282,21 +281,19 @@ const ChallengesPage = () => {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setViewMode("grid")}
-                  className={`p-2 rounded-lg ${
-                    viewMode === "grid"
+                  className={`p-2 rounded-lg ${viewMode === "grid"
                       ? "bg-[#D87C5A] text-white"
                       : "bg-[#FFD95A] text-[#7f5539]"
-                  }`}
+                    }`}
                 >
                   <Grid className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => setViewMode("list")}
-                  className={`p-2 rounded-lg ${
-                    viewMode === "list"
+                  className={`p-2 rounded-lg ${viewMode === "list"
                       ? "bg-[#D87C5A] text-white"
                       : "bg-[#FFD95A] text-[#7f5539]"
-                  }`}
+                    }`}
                 >
                   <List className="w-4 h-4" />
                 </button>
