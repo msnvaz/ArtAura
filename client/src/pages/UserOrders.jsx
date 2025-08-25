@@ -14,41 +14,73 @@ import {
 } from "lucide-react";
 import Navbar from "../components/common/Navbar";
 import OrderDetailsModal from "../components/OrderDetailsModal";
+import CommissionOrderDetailsModal from "../components/modals/CommissionOrderDetailsModal";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+const fetchCommissionOrders = async (setCommissionOrders, setLoading) => {
+  setLoading(true);
+  try {
+    const token = localStorage.getItem("token");
+    const response = await axios.get(`${API_URL}/api/commissions/my-requests`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Cache-Control": "no-cache",
+      },
+    });
+    setCommissionOrders(Array.isArray(response.data) ? response.data : []);
+  } catch (error) {
+    setCommissionOrders([]);
+  } finally {
+    setLoading(false);
+  }
+};
+
 const UserOrders = () => {
-  const [orders, setOrders] = useState([]);
+  const [orders, setOrders] = useState([]); // Artwork orders
+  const [commissionOrders, setCommissionOrders] = useState([]); // Commissioned requests
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showOrderModal, setShowOrderModal] = useState(false);
+  const [activeTab, setActiveTab] = useState("artwork"); // 'artwork' or 'commission'
+  const [showCommissionOrderModal, setShowCommissionOrderModal] =
+    useState(false);
+  const [selectedCommissionOrder, setSelectedCommissionOrder] = useState(null);
 
   useEffect(() => {
-    const fetchOrders = async () => {
-      setLoading(true);
-      try {
-        const token = localStorage.getItem("token");
-        const response = await axios.get(
-          `${API_URL}/api/orders/artworks/buyer`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Cache-Control": "no-cache",
-            },
-          }
-        );
-        // Fix mapping: backend returns array directly, not in 'data' field
-        setOrders(Array.isArray(response.data) ? response.data : []);
-      } catch (error) {
-        console.error("Error fetching artwork orders:", error);
-        setOrders([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchOrders();
+    fetchArtworkOrders();
   }, []);
+
+  const fetchArtworkOrders = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const artworkRes = await axios.get(
+        `${API_URL}/api/orders/artworks/buyer`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Cache-Control": "no-cache",
+          },
+        }
+      );
+      setOrders(Array.isArray(artworkRes.data) ? artworkRes.data : []);
+    } catch (error) {
+      setOrders([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    if (tab === "artwork") {
+      if (orders.length === 0) fetchArtworkOrders();
+    } else {
+      fetchCommissionOrders(setCommissionOrders, setLoading);
+    }
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -87,6 +119,7 @@ const UserOrders = () => {
 
   // Remove search filter for now to display all orders
   const filteredArtworkOrders = orders;
+  const filteredCommissionOrders = commissionOrders;
   console.log("filteredArtworkOrders:", filteredArtworkOrders);
 
   const handleViewOrder = (order) => {
@@ -97,6 +130,16 @@ const UserOrders = () => {
   const handleCloseModal = () => {
     setShowOrderModal(false);
     setSelectedOrder(null);
+  };
+
+  const handleViewCommissionOrder = (order) => {
+    setSelectedCommissionOrder(order);
+    setShowCommissionOrderModal(true);
+  };
+
+  const handleCloseCommissionOrderModal = () => {
+    setShowCommissionOrderModal(false);
+    setSelectedCommissionOrder(null);
   };
 
   const renderStars = (rating = 5) => {
@@ -140,8 +183,32 @@ const UserOrders = () => {
               My Orders
             </h1>
             <p className="text-[#7f5539]/70">
-              Track and manage your artwork purchases
+              Track and manage your artwork purchases and commissions
             </p>
+          </div>
+
+          {/* Tab Buttons */}
+          <div className="flex gap-4 mb-8">
+            <button
+              className={`px-6 py-2 rounded-lg font-semibold transition-colors border ${
+                activeTab === "artwork"
+                  ? "bg-[#D87C5A] text-white border-[#D87C5A]"
+                  : "bg-white text-[#7f5539] border-[#FFD95A]"
+              }`}
+              onClick={() => handleTabChange("artwork")}
+            >
+              Artwork Orders
+            </button>
+            <button
+              className={`px-6 py-2 rounded-lg font-semibold transition-colors border ${
+                activeTab === "commission"
+                  ? "bg-[#D87C5A] text-white border-[#D87C5A]"
+                  : "bg-white text-[#7f5539] border-[#FFD95A]"
+              }`}
+              onClick={() => handleTabChange("commission")}
+            >
+              Commissioned Orders
+            </button>
           </div>
 
           {/* Search and Filters */}
@@ -160,102 +227,208 @@ const UserOrders = () => {
             </div>
           </div>
 
-          {/* Orders List */}
-          <div className="space-y-4">
-            {/* Artwork Orders Only */}
-            {filteredArtworkOrders.length === 0 ? (
-              <div className="bg-white rounded-xl shadow-md p-12 text-center">
-                <Package className="w-16 h-16 text-[#7f5539]/30 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-[#7f5539] mb-2">
-                  No Artwork Orders Found
-                </h3>
-                <p className="text-[#7f5539]/70">
-                  {searchTerm
-                    ? "Try adjusting your search criteria"
-                    : "You haven't placed any artwork orders yet"}
-                </p>
-              </div>
-            ) : (
-              filteredArtworkOrders.map((order) => (
-                <div
-                  key={order.id}
-                  className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow"
-                >
-                  <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-                    {/* Order Info */}
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-3">
-                        <h3 className="text-lg font-semibold text-[#7f5539]">
-                          Order {order.id}
-                        </h3>
-                        <span
-                          className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1 ${getStatusColor(
-                            order.status
-                          )}`}
-                        >
-                          {getStatusIcon(order.status)}
-                          {order.status.charAt(0).toUpperCase() +
-                            order.status.slice(1)}
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-[#7f5539]/70">
-                        <div>
-                          <span className="font-medium">Order Date:</span>
-                          <br />
-                          {order.orderDate
-                            ? new Date(order.orderDate).toLocaleDateString()
-                            : ""}
-                        </div>
-                        <div>
-                          <span className="font-medium">Total Amount:</span>
-                          <br />
-                          <span className="text-[#D87C5A] font-semibold">
-                            LKR {order.totalAmount?.toLocaleString()}
+          {/* Orders Section */}
+          {activeTab === "artwork" ? (
+            <div className="space-y-4 mb-10">
+              {orders.length === 0 ? (
+                <div className="bg-white rounded-xl shadow-md p-12 text-center">
+                  <Package className="w-16 h-16 text-[#7f5539]/30 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-[#7f5539] mb-2">
+                    No Artwork Orders Found
+                  </h3>
+                  <p className="text-[#7f5539]/70">
+                    {searchTerm
+                      ? "Try adjusting your search criteria"
+                      : "You haven't placed any artwork orders yet"}
+                  </p>
+                </div>
+              ) : (
+                orders.map((order) => (
+                  // ...existing artwork order card...
+                  <div
+                    key={order.id}
+                    className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow"
+                  >
+                    <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+                      {/* Order Info */}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-3">
+                          <h3 className="text-lg font-semibold text-[#7f5539]">
+                            Order {order.id}
+                          </h3>
+                          <span
+                            className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1 ${getStatusColor(
+                              order.status
+                            )}`}
+                          >
+                            {getStatusIcon(order.status)}
+                            {order.status.charAt(0).toUpperCase() +
+                              order.status.slice(1)}
                           </span>
                         </div>
-                        <div>
-                          <span className="font-medium">Items:</span>
-                          <br />
-                          {order.items.length} item
-                          {order.items.length !== 1 ? "s" : ""}
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-[#7f5539]/70">
+                          <div>
+                            <span className="font-medium">Order Date:</span>
+                            <br />
+                            {order.orderDate
+                              ? new Date(order.orderDate).toLocaleDateString()
+                              : ""}
+                          </div>
+                          <div>
+                            <span className="font-medium">Total Amount:</span>
+                            <br />
+                            <span className="text-[#D87C5A] font-semibold">
+                              LKR {order.totalAmount?.toLocaleString()}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="font-medium">Items:</span>
+                            <br />
+                            {order.items.length} item
+                            {order.items.length !== 1 ? "s" : ""}
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Order Items Preview */}
-                    <div className="flex items-center gap-3">
-                      {order.items && order.items.length > 0 ? (
-                        order.items.slice(0, 3).map((item, index) => (
-                          <div
-                            key={index}
-                            className="w-12 h-12 rounded-lg bg-[#FFF5E1] border border-[#FFD95A] flex items-center justify-center text-[#7f5539] text-xs font-medium"
-                          >
-                            {item.title || "No Image"}
+                      {/* Order Items Preview */}
+                      <div className="flex items-center gap-3">
+                        {order.items && order.items.length > 0 ? (
+                          order.items.slice(0, 3).map((item, index) => (
+                            <div
+                              key={index}
+                              className="w-12 h-12 rounded-lg bg-[#FFF5E1] border border-[#FFD95A] flex items-center justify-center text-[#7f5539] text-xs font-medium"
+                            >
+                              {item.title || "No Image"}
+                            </div>
+                          ))
+                        ) : (
+                          <div className="w-12 h-12 rounded-lg bg-[#FFF5E1] border border-[#FFD95A] flex items-center justify-center text-[#7f5539] text-xs font-medium">
+                            No Items
                           </div>
-                        ))
-                      ) : (
-                        <div className="w-12 h-12 rounded-lg bg-[#FFF5E1] border border-[#FFD95A] flex items-center justify-center text-[#7f5539] text-xs font-medium">
-                          No Items
-                        </div>
-                      )}
-                    </div>
+                        )}
+                      </div>
 
-                    {/* Actions */}
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleViewOrder(order)}
-                        className="bg-[#D87C5A] hover:bg-[#7f5539] text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
-                      >
-                        <Eye className="w-4 h-4" />
-                        View Details
-                      </button>
+                      {/* Actions */}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleViewOrder(order)}
+                          className="bg-[#D87C5A] hover:bg-[#7f5539] text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
+                        >
+                          <Eye className="w-4 h-4" />
+                          View Details
+                        </button>
+                      </div>
                     </div>
                   </div>
+                ))
+              )}
+            </div>
+          ) : (
+            <div className="space-y-4 mb-10">
+              {commissionOrders.length === 0 ? (
+                <div className="bg-white rounded-xl shadow-md p-12 text-center">
+                  <Package className="w-16 h-16 text-[#7f5539]/30 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-[#7f5539] mb-2">
+                    No Commissioned Orders Found
+                  </h3>
+                  <p className="text-[#7f5539]/70">
+                    {searchTerm
+                      ? "Try adjusting your search criteria"
+                      : "You haven't placed any commissioned orders yet"}
+                  </p>
                 </div>
-              ))
-            )}
-          </div>
+              ) : (
+                commissionOrders.map((order) => (
+                  <div
+                    key={order.orderId || order.id}
+                    className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow"
+                  >
+                    <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+                      {/* Commission Info */}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-3">
+                          <h3 className="text-lg font-semibold text-[#7f5539]">
+                            Commission {order.orderId || order.id}
+                          </h3>
+                          <span
+                            className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1 ${getStatusColor(
+                              order.status
+                            )}`}
+                          >
+                            {getStatusIcon(order.status)}
+                            {order.status?.charAt(0).toUpperCase() +
+                              order.status?.slice(1)}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-[#7f5539]/70">
+                          <div>
+                            <span className="font-medium">Requested Date:</span>
+                            <br />
+                            {order.createdAt
+                              ? new Date(order.createdAt).toLocaleDateString()
+                              : order.submittedAt
+                              ? new Date(order.submittedAt).toLocaleDateString()
+                              : ""}
+                          </div>
+                          <div>
+                            <span className="font-medium">Budget:</span>
+                            <br />
+                            <span className="text-[#D87C5A] font-semibold">
+                              LKR {order.budget?.toLocaleString()}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="font-medium">Title:</span>
+                            <br />
+                            {order.title}
+                          </div>
+                        </div>
+                      </div>
+                      {/* Commission Preview */}
+                      <div className="flex items-center gap-3">
+                        {order.imageUrls && order.imageUrls.length > 0 ? (
+                          order.imageUrls
+                            .slice(0, 3)
+                            .map((img, idx) => (
+                              <img
+                                key={idx}
+                                src={
+                                  img.startsWith("/uploads/")
+                                    ? `${API_URL}${img}`
+                                    : img
+                                }
+                                alt="Reference"
+                                className="w-12 h-12 rounded-lg object-cover border border-[#FFD95A]"
+                              />
+                            ))
+                        ) : (
+                          <div className="w-12 h-12 rounded-lg bg-[#FFF5E1] border border-[#FFD95A] flex items-center justify-center text-[#7f5539] text-xs font-medium">
+                            No Images
+                          </div>
+                        )}
+                      </div>
+                      {/* Actions */}
+                      <div className="flex gap-2">
+                        {/* Pay Now Button for Accepted Orders */}
+                        {order.status === "accepted" && (
+                          <button className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm font-medium transition-colors">
+                            Pay
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleViewCommissionOrder(order)}
+                          className="bg-[#D87C5A] hover:bg-[#7f5539] text-white px-3 py-2 rounded text-sm font-medium transition-colors"
+                        >
+                          View
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -264,6 +437,11 @@ const UserOrders = () => {
         order={selectedOrder}
         isOpen={showOrderModal}
         onClose={handleCloseModal}
+      />
+      <CommissionOrderDetailsModal
+        order={selectedCommissionOrder}
+        isOpen={showCommissionOrderModal}
+        onClose={handleCloseCommissionOrderModal}
       />
     </div>
   );
