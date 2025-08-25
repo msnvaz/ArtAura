@@ -5,6 +5,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import com.artaura.artaura.dto.buyer.AWOrderDto;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -18,5 +21,11 @@ public class BuyerOrderController {
         // orderRequest.setBuyerId(Long.valueOf(authentication.getName()));
         Long orderId = orderService.saveOrder(orderRequest);
         return ResponseEntity.ok(orderId);
+    }
+
+    @GetMapping("/artworks/buyer")
+    public List<AWOrderDto> getOrdersForCurrentBuyer(Authentication authentication) {
+        Long buyerId = Long.valueOf(authentication.getName());
+        return orderService.getOrdersByBuyerId(buyerId);
     }
 }

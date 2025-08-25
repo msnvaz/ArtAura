@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 import {
   Package,
   Truck,
@@ -7,7 +8,6 @@ import {
   XCircle,
   Eye,
   Search,
-  Filter,
   Calendar,
   ArrowLeft,
   Star,
@@ -15,126 +15,39 @@ import {
 import Navbar from "../components/common/Navbar";
 import OrderDetailsModal from "../components/OrderDetailsModal";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 const UserOrders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showOrderModal, setShowOrderModal] = useState(false);
 
-  // Mock order data - replace with actual API call
   useEffect(() => {
-    const mockOrders = [
-      {
-        id: "ORD-001",
-        date: "2024-01-15",
-        status: "delivered",
-        total: 125000.0,
-        items: [
+    const fetchOrders = async () => {
+      setLoading(true);
+      try {
+        const token = localStorage.getItem("token");
+        const response = await axios.get(
+          `${API_URL}/api/orders/artworks/buyer`,
           {
-            id: 1,
-            title: "Abstract Ocean Painting",
-            artist: "Sanduni Fernando",
-            price: 125000.0,
-            image:
-              "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=300&h=300&fit=crop&crop=center",
-            quantity: 1,
-          },
-        ],
-        shipping: {
-          address: "No. 25, Colombo Road, Pinnawala, Kegalle 71120",
-          method: "Premium Insured Delivery",
-          trackingNumber: "SL123456789",
-        },
-        payment: {
-          method: "Credit Card",
-          last4: "4242",
-        },
-      },
-      {
-        id: "ORD-002",
-        date: "2024-01-10",
-        status: "shipped",
-        total: 285000.0,
-        items: [
-          {
-            id: 2,
-            title: "Limited Edition Art Print Set",
-            artist: "Kasun Silva",
-            price: 142500.0,
-            image:
-              "https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=300&h=300&fit=crop&crop=center",
-            quantity: 2,
-          },
-        ],
-        shipping: {
-          address: "No. 25, Colombo Road, Pinnawala, Kegalle 71120",
-          method: "Express Insured Delivery",
-          trackingNumber: "SL987654321",
-        },
-        payment: {
-          method: "Bank Transfer",
-          last4: null,
-        },
-      },
-      {
-        id: "ORD-003",
-        date: "2024-01-05",
-        status: "processing",
-        total: 450000.0,
-        items: [
-          {
-            id: 3,
-            title: "Custom Portrait Commission - Oil on Canvas",
-            artist: "Priya Jayasuriya",
-            price: 450000.0,
-            image: "/art3.jpeg", // public image
-            quantity: 1,
-          },
-        ],
-        shipping: {
-          address: "No. 25, Colombo Road, Pinnawala, Kegalle 71120",
-          method: "White Glove Delivery",
-          trackingNumber: null,
-        },
-        payment: {
-          method: "Credit Card",
-          last4: "1234",
-        },
-      },
-      {
-        id: "ORD-004",
-        date: "2023-12-28",
-        status: "pending",
-        total: 175000.0,
-        items: [
-          {
-            id: 4,
-            title: "Premium Watercolor Landscape Collection",
-            artist: "Dilshan Gamage",
-            price: 175000.0,
-            image:
-              "https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=300&h=300&fit=crop&crop=center",
-            quantity: 1,
-          },
-        ],
-        shipping: {
-          address: "No. 25, Colombo Road, Pinnawala, Kegalle 71120",
-          method: "Premium Insured Delivery",
-          trackingNumber: null,
-        },
-        payment: {
-          method: "Credit Card",
-          last4: "5678",
-        },
-      },
-    ];
-
-    setTimeout(() => {
-      setOrders(mockOrders);
-      setLoading(false);
-    }, 1000);
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Cache-Control": "no-cache",
+            },
+          }
+        );
+        // Fix mapping: backend returns array directly, not in 'data' field
+        setOrders(Array.isArray(response.data) ? response.data : []);
+      } catch (error) {
+        console.error("Error fetching artwork orders:", error);
+        setOrders([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOrders();
   }, []);
 
   const getStatusColor = (status) => {
@@ -172,18 +85,9 @@ const UserOrders = () => {
     }
   };
 
-  const filteredOrders = orders.filter((order) => {
-    const matchesStatus =
-      statusFilter === "all" || order.status === statusFilter;
-    const matchesSearch =
-      order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.items.some(
-        (item) =>
-          item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.artist.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    return matchesStatus && matchesSearch;
-  });
+  // Remove search filter for now to display all orders
+  const filteredArtworkOrders = orders;
+  console.log("filteredArtworkOrders:", filteredArtworkOrders);
 
   const handleViewOrder = (order) => {
     setSelectedOrder(order);
@@ -253,40 +157,26 @@ const UserOrders = () => {
                   className="w-full pl-10 pr-4 py-2 border border-[#FFD95A] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D87C5A] focus:border-transparent"
                 />
               </div>
-              <div className="relative">
-                <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-[#7f5539]/50 w-4 h-4" />
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="pl-10 pr-8 py-2 border border-[#FFD95A] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D87C5A] appearance-none bg-white min-w-[150px]"
-                >
-                  <option value="all">All Orders</option>
-                  <option value="pending">Pending</option>
-                  <option value="processing">Processing</option>
-                  <option value="shipped">Shipped</option>
-                  <option value="delivered">Delivered</option>
-                  <option value="cancelled">Cancelled</option>
-                </select>
-              </div>
             </div>
           </div>
 
           {/* Orders List */}
           <div className="space-y-4">
-            {filteredOrders.length === 0 ? (
+            {/* Artwork Orders Only */}
+            {filteredArtworkOrders.length === 0 ? (
               <div className="bg-white rounded-xl shadow-md p-12 text-center">
                 <Package className="w-16 h-16 text-[#7f5539]/30 mx-auto mb-4" />
                 <h3 className="text-xl font-semibold text-[#7f5539] mb-2">
-                  No Orders Found
+                  No Artwork Orders Found
                 </h3>
                 <p className="text-[#7f5539]/70">
-                  {searchTerm || statusFilter !== "all"
-                    ? "Try adjusting your search or filter criteria"
-                    : "You haven't placed any orders yet"}
+                  {searchTerm
+                    ? "Try adjusting your search criteria"
+                    : "You haven't placed any artwork orders yet"}
                 </p>
               </div>
             ) : (
-              filteredOrders.map((order) => (
+              filteredArtworkOrders.map((order) => (
                 <div
                   key={order.id}
                   className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow"
@@ -313,13 +203,15 @@ const UserOrders = () => {
                         <div>
                           <span className="font-medium">Order Date:</span>
                           <br />
-                          {new Date(order.date).toLocaleDateString()}
+                          {order.orderDate
+                            ? new Date(order.orderDate).toLocaleDateString()
+                            : ""}
                         </div>
                         <div>
                           <span className="font-medium">Total Amount:</span>
                           <br />
                           <span className="text-[#D87C5A] font-semibold">
-                            LKR {order.total.toLocaleString()}
+                            LKR {order.totalAmount?.toLocaleString()}
                           </span>
                         </div>
                         <div>
@@ -333,17 +225,18 @@ const UserOrders = () => {
 
                     {/* Order Items Preview */}
                     <div className="flex items-center gap-3">
-                      {order.items.slice(0, 3).map((item, index) => (
-                        <img
-                          key={index}
-                          src={item.image}
-                          alt={item.title}
-                          className="w-12 h-12 rounded-lg object-cover border border-[#FFD95A]"
-                        />
-                      ))}
-                      {order.items.length > 3 && (
+                      {order.items && order.items.length > 0 ? (
+                        order.items.slice(0, 3).map((item, index) => (
+                          <div
+                            key={index}
+                            className="w-12 h-12 rounded-lg bg-[#FFF5E1] border border-[#FFD95A] flex items-center justify-center text-[#7f5539] text-xs font-medium"
+                          >
+                            {item.title || "No Image"}
+                          </div>
+                        ))
+                      ) : (
                         <div className="w-12 h-12 rounded-lg bg-[#FFF5E1] border border-[#FFD95A] flex items-center justify-center text-[#7f5539] text-xs font-medium">
-                          +{order.items.length - 3}
+                          No Items
                         </div>
                       )}
                     </div>
