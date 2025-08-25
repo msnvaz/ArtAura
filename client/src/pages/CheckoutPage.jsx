@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import {
   ArrowLeft,
   ArrowRight,
@@ -7,13 +8,18 @@ import {
   User,
   Mail,
   Phone,
+  CheckCircle,
 } from "lucide-react";
 import { useCart } from "../context/CartContext";
+import { useUser } from "../context/UserContext";
+import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/common/Navbar";
 
 const CheckoutPage = () => {
   const { cartItems, getCartTotal, getCartItemsCount } = useCart();
+  const { user } = useUser();
+  const { token, userId } = useAuth();
   const navigate = useNavigate();
 
   const [billingInfo, setBillingInfo] = useState({
@@ -28,13 +34,63 @@ const CheckoutPage = () => {
     country: "Sri Lanka",
   });
 
+  const [useAccountDetails, setUseAccountDetails] = useState(false);
   const [errors, setErrors] = useState({});
   const [isProcessing, setIsProcessing] = useState(false);
+  const [profileData, setProfileData] = useState(null);
+
+  useEffect(() => {
+    if (!token || !userId) return;
+    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+    axios
+      .get(`${API_URL}/api/users/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => setProfileData(res.data))
+      .catch(() => setProfileData(null));
+  }, [token, userId]);
+
+  useEffect(() => {
+    if (useAccountDetails && profileData) {
+      setBillingInfo({
+        firstName:
+          profileData?.name?.split(" ")[0] || profileData?.firstName || "",
+        lastName:
+          profileData?.name?.split(" ").slice(1).join(" ") ||
+          profileData?.lastName ||
+          "",
+        email: profileData?.email || "",
+        phone: profileData?.contactNo || profileData?.phone || "",
+        address: profileData?.streetAddress || profileData?.address || "",
+        city: profileData?.city || "",
+        state: profileData?.state || "",
+        zipCode: profileData?.zipCode || "",
+        country: profileData?.country || "Sri Lanka",
+      });
+    } else if (!useAccountDetails) {
+      setBillingInfo({
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+        address: "",
+        city: "",
+        state: "",
+        zipCode: "",
+        country: "Sri Lanka",
+      });
+    }
+  }, [useAccountDetails, profileData]);
+
+  useEffect(() => {
+    if (cartItems.length === 0) {
+      navigate("/cart");
+    }
+  }, [cartItems, navigate]);
 
   const subtotal = getCartTotal();
-  const shipping = subtotal > 5000 ? 0 : 800; // Free shipping over LKR 5,000, else LKR 800
-  const tax = subtotal * 0.08; // 8% tax
-  const total = subtotal + shipping + tax;
+  const shipping = 0; // Free shipping for now
+  const total = subtotal + shipping;
 
   const handleInputChange = (field, value) => {
     setBillingInfo((prev) => ({
@@ -84,7 +140,8 @@ const CheckoutPage = () => {
         navigate("/payment", {
           state: {
             billingInfo,
-            orderSummary: { subtotal, shipping, tax, total },
+            orderSummary: { subtotal, shipping, total },
+            cartItems, // Pass cartItems to PaymentPage
           },
         });
       }, 1000);
@@ -95,10 +152,7 @@ const CheckoutPage = () => {
     navigate("/cart");
   };
 
-  if (cartItems.length === 0) {
-    navigate("/cart");
-    return null;
-  }
+  if (cartItems.length === 0) return null;
 
   return (
     <div className="min-h-screen bg-[#FFF5E1]">
@@ -129,6 +183,22 @@ const CheckoutPage = () => {
                   <User className="w-5 h-5" />
                   Billing Information
                 </h2>
+                {/* Checkbox for autofill */}
+                <div className="mb-4 flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="useAccountDetails"
+                    checked={useAccountDetails}
+                    onChange={() => setUseAccountDetails((prev) => !prev)}
+                    className="accent-[#FFD95A] w-5 h-5"
+                  />
+                  <label
+                    htmlFor="useAccountDetails"
+                    className="text-[#7f5539] font-medium cursor-pointer flex items-center gap-1"
+                  >
+                    Use my account details for billing
+                  </label>
+                </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -349,16 +419,26 @@ const CheckoutPage = () => {
                 {/* Items */}
                 <div className="space-y-3 mb-6">
                   {cartItems.map((item) => (
-                    <div key={item.id} className="flex gap-3">
+                    <div key={item.artwork_id} className="flex gap-3">
                       <img
-                        src={item.image}
-                        alt={item.name}
+                        src={item.image_url}
+                        alt={item.title}
                         className="w-12 h-12 object-cover rounded-lg border border-[#FFE4D6]"
                       />
                       <div className="flex-1">
                         <h4 className="font-medium text-[#7f5539] text-sm">
-                          {item.name}
+                          {item.title}
                         </h4>
+                        <div className="flex items-center gap-2 mb-1">
+                          <img
+                            src={item.artist_image}
+                            alt={item.artist_name}
+                            className="w-5 h-5 rounded-full border border-[#FFD95A]"
+                          />
+                          <span className="text-xs text-[#7f5539]/80 font-medium">
+                            {item.artist_name}
+                          </span>
+                        </div>
                         <p className="text-xs text-[#7f5539]/70">
                           Qty: {item.quantity}
                         </p>
@@ -369,9 +449,7 @@ const CheckoutPage = () => {
                     </div>
                   ))}
                 </div>
-
                 <hr className="border-[#FFE4D6] mb-4" />
-
                 <div className="space-y-2 mb-6">
                   <div className="flex justify-between text-sm">
                     <span className="text-[#7f5539]">Subtotal</span>
@@ -383,17 +461,8 @@ const CheckoutPage = () => {
                     <span className="text-[#7f5539]">Shipping</span>
                     <span className="font-medium text-[#7f5539]">
                       {shipping === 0
-                        ? "FREE"
+                        ? "To be decided"
                         : `LKR ${shipping.toLocaleString()}`}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-[#7f5539]">Tax</span>
-                    <span className="font-medium text-[#7f5539]">
-                      LKR{" "}
-                      {tax.toLocaleString(undefined, {
-                        maximumFractionDigits: 2,
-                      })}
                     </span>
                   </div>
                   <hr className="border-[#FFE4D6]" />

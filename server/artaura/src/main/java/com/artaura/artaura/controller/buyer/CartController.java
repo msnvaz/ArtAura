@@ -48,6 +48,13 @@ public class CartController {
         return ResponseEntity.ok(items);
     }
 
+    @PostMapping("/clear")
+    public ResponseEntity<?> clearCart(Authentication authentication) {
+        Long buyerId = extractUserIdFromAuth(authentication);
+        cartService.clearCart(buyerId);
+        return ResponseEntity.ok().build();
+    }
+
     private Long extractUserIdFromAuth(Authentication authentication) {
         // If using standard Spring Security, userId may be in authentication.getName()
         // If using JWT with custom claims, extract from principal or claims

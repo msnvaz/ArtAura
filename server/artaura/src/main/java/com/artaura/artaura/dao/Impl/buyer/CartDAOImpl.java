@@ -63,4 +63,10 @@ public class CartDAOImpl implements CartDao {
                 "WHERE ci.cart_id = (SELECT cart_id FROM carts WHERE buyer_id = ?)";
         return jdbcTemplate.queryForList(sql, buyerId);
     }
+
+    @Override
+    public void clearCart(Long buyerId) {
+        String sql = "DELETE FROM cart_items WHERE cart_id = (SELECT cart_id FROM carts WHERE buyer_id = ?)";
+        jdbcTemplate.update(sql, buyerId);
+    }
 }

@@ -18,4 +18,10 @@ public class BuyerArtistController {
         List<ArtistListDTO> artists = artistService.getAllArtistsForList();
         return ResponseEntity.ok(artists);
     }
+
+    @PostMapping("/{id}/follow")
+    public ResponseEntity<?> followArtist(@PathVariable Long id, @RequestHeader("Authorization") String token) {
+        artistService.followArtist(id, token);
+        return ResponseEntity.ok().build();
+    }
 }
