@@ -13,7 +13,7 @@ public class BArtistDAOImpl implements BArtistDAO {
     private JdbcTemplate jdbc;
     @Override
     public List<ArtistListDTO> getAllArtistsForList() {
-        String sql = "SELECT artist_id AS id, CONCAT(first_name, ' ', last_name) AS name, specialization, bio, rate, total_followers, total_sales, avatar_url, location FROM artists";
+        String sql = "SELECT artist_id AS id, CONCAT(first_name, ' ', last_name) AS name, specialization, bio, rate, total_followers, total_sales, avatar_url, location, badge, contactNo, email, cover_image_url FROM artists";
         return jdbc.query(sql, (rs, rowNum) -> new ArtistListDTO(
                 rs.getLong("id"),
                 rs.getString("name"),
@@ -23,7 +23,17 @@ public class BArtistDAOImpl implements BArtistDAO {
                 rs.getInt("total_followers"),
                 rs.getInt("total_sales"),
                 rs.getString("avatar_url"),
-                rs.getString("location")
+                rs.getString("location"),
+                rs.getString("badge"),
+                rs.getString("contactNo"),
+                rs.getString("email"),
+                rs.getString("cover_image_url")
         ));
+    }
+
+    @Override
+    public void incrementFollowers(Long artistId) {
+        String sql = "UPDATE artists SET total_followers = total_followers + 1 WHERE artist_id = ?";
+        jdbc.update(sql, artistId);
     }
 }
