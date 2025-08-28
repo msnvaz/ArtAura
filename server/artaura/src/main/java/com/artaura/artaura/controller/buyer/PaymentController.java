@@ -12,7 +12,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/payment")
 public class PaymentController {
-    @Value("${stripe.secret.key}")
+    @Value("${STRIPE_SECRET_KEY}")
     private String stripeSecretKey;
 
     @PostConstruct
