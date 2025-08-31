@@ -12,10 +12,13 @@
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",
     "@stomp/stompjs": "^7.1.1",
+    "@stripe/react-stripe-js": "^3.9.2",
+    "@stripe/stripe-js": "^7.9.0",
     "axios": "^1.10.0",
     "bootstrap": "^5.3.7",
     "daisyui": "^5.0.43",
     "date-fns": "^4.1.0",
+    "esbuild": "^0.25.9",
     "lucide-react": "^0.522.0",
     "react": "^19.1.0",
     "react-bootstrap": "^2.10.10",
