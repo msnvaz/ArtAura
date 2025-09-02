@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import axios from "axios";
 import {
   ArrowLeft,
   Eye,
@@ -30,160 +31,165 @@ const ChallengeSubmissionsPage = () => {
   const [viewMode, setViewMode] = useState("grid");
   const [sortBy, setSortBy] = useState("newest");
   const [selectedSubmission, setSelectedSubmission] = useState(null);
-  const [userVotes, setUserVotes] = useState({}); // Track user's votes
-
-  // Mock challenge data
-  const mockChallenge = {
-    id: 1,
-    title: "Digital Heritage Lanka 2025",
-    description:
-      "Create stunning digital artwork inspired by Sri Lankan cultural heritage, temples, and traditional motifs using any digital medium",
-    category: "Digital Art",
-    startDate: "2025-07-01",
-    endDate: "2025-07-31",
-    prize: "LKR 15,000",
-    participants: 234,
-    submissions: 156,
-    status: "active",
-    timeLeft: "13 days",
-    organizer: "Digital Arts Collective Sri Lanka",
-    image:
-      "/heritage.jpeg",
-  };
-
-  // Mock submissions data
-  const mockSubmissions = [
-    {
-      id: 1,
-      title: "Temple of the Sacred Tooth",
-      artist: {
-        name: "Sanduni Perera",
-        avatar: "https://randomuser.me/api/portraits/women/44.jpg",
-        followers: 1254,
-      },
-      image: "/kandyTemple.jpeg", // public image
-      description:
-        "A vibrant digital interpretation of the sacred Temple of the Tooth in Kandy, blending traditional architecture with modern artistic vision",
-      votes: 156,
-      submittedAt: "2025-07-18T10:30:00Z",
-      tags: ["temple", "kandy", "heritage"],
-      software: "Photoshop",
-      timeSpent: "12 hours",
-    },
-    {
-      id: 2,
-      title: "Lankan Tea Gardens",
-      artist: {
-        name: "Kasun Fernando",
-        avatar: "https://randomuser.me/api/portraits/men/32.jpg",
-        followers: 892,
-      },
-      image: "/teaPlants.jpeg", // public image
-      description:
-        "An emotional journey through the misty tea gardens of Nuwara Eliya, capturing the essence of Ceylon's hill country heritage",
-      votes: 89,
-      submittedAt: "2025-07-17T14:20:00Z",
-      tags: ["tea", "hills", "nuwara-eliya"],
-      software: "Procreate",
-      timeSpent: "8 hours",
-    },
-    {
-      id: 3,
-      title: "Ancient Sigiriya Rock",
-      artist: {
-        name: "Priya Jayasinghe",
-        avatar: "https://randomuser.me/api/portraits/women/68.jpg",
-        followers: 2156,
-      },
-      image: "/sigiriya.jpeg", // public image
-      description:
-        "A majestic digital artwork showcasing the iconic Sigiriya Rock Fortress with traditional Kandyan artistic elements",
-      votes: 234,
-      submittedAt: "2025-07-16T09:00:00Z",
-      tags: ["sigiriya", "fortress", "ancient"],
-      software: "Blender + Photoshop",
-      timeSpent: "24 hours",
-    },
-    {
-      id: 4,
-      title: "Galle Fort Heritage",
-      artist: {
-        name: "Dilshan Silva",
-        avatar: "https://randomuser.me/api/portraits/men/15.jpg",
-        followers: 743,
-      },
-      image: "/galleFort.jpeg", // public image
-      description:
-        "Blending Dutch colonial architecture of Galle Fort with vibrant Sri Lankan cultural motifs and tropical elements",
-      votes: 127,
-      submittedAt: "2025-07-15T16:45:00Z",
-      tags: ["galle", "colonial", "heritage"],
-      software: "Adobe Illustrator",
-      timeSpent: "15 hours",
-    },
-    {
-      id: 5,
-      title: "Colombo Street Life",
-      artist: {
-        name: "Nimali Wickramasinghe",
-        avatar: "https://randomuser.me/api/portraits/women/25.jpg",
-        followers: 567,
-      },
-      image: "/colomboLife.jpeg", // public image
-      description:
-        "A vibrant portrayal of modern Colombo's bustling street life, featuring tuk-tuks, vendors, and the multicultural energy of the capital",
-      votes: 98,
-      submittedAt: "2025-07-14T11:20:00Z",
-      tags: ["colombo", "street", "urban"],
-      software: "Digital Paint",
-      timeSpent: "10 hours",
-    },
-    {
-      id: 6,
-      title: "Kandyan Dancer",
-      artist: {
-        name: "Amara Rathnayake",
-        avatar: "https://randomuser.me/api/portraits/women/33.jpg",
-        followers: 1089,
-      },
-      image: "/kandyanDancer.jpeg", // public image
-      description:
-        "Traditional Kandyan dancer captured in dynamic motion, celebrating our rich cultural dance heritage with digital artistry",
-      votes: 145,
-      submittedAt: "2025-07-13T08:15:00Z",
-      tags: ["dance", "traditional", "culture"],
-      software: "Clip Studio Paint",
-      timeSpent: "18 hours",
-    },
-  ];
+  const [votingInProgress, setVotingInProgress] = useState(new Set()); // Track which submissions are being voted on
 
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setChallenge(mockChallenge);
-      setSubmissions(mockSubmissions);
-      setLoading(false);
-    }, 1000);
-  }, [challengeId]);
+    fetchSubmissions();
+    fetchChallengeDetails();
+  }, [challengeId, sortBy]);
 
-  const handleVote = (submissionId) => {
-    // Check if user has already voted
-    if (userVotes[submissionId]) {
-      // Remove vote
-      setSubmissions((prev) =>
-        prev.map((sub) =>
-          sub.id === submissionId ? { ...sub, votes: sub.votes - 1 } : sub
-        )
+  const fetchChallengeDetails = async () => {
+    // TODO: Add API endpoint to fetch challenge details
+    // For now, set a basic challenge structure
+    setChallenge({
+      id: challengeId,
+      title: "Challenge Details",
+      description: "Loading challenge details...",
+      category: "Digital Art",
+      prize: "TBD",
+      participants: 0,
+      submissions: 0,
+      status: "active",
+      timeLeft: "Loading...",
+      image: "/heritage.jpeg",
+    });
+  };
+
+  const fetchSubmissions = async () => {
+    try {
+      setLoading(true);
+
+      // Get JWT token from localStorage
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("No authentication token found");
+        setLoading(false);
+        return;
+      }
+
+      const headers = { Authorization: `Bearer ${token}` };
+
+      // Fetch challenge submissions from backend
+      const submissionsResponse = await axios.get(
+        `${
+          import.meta.env.VITE_API_URL
+        }/api/buyer/challenges/${challengeId}/submissions`,
+        {
+          params: { sortBy },
+          headers,
+        }
       );
-      setUserVotes((prev) => ({ ...prev, [submissionId]: false }));
-    } else {
-      // Add vote
-      setSubmissions((prev) =>
-        prev.map((sub) =>
-          sub.id === submissionId ? { ...sub, votes: sub.votes + 1 } : sub
-        )
+
+      // Transform API response to match frontend format
+      const transformedSubmissions = submissionsResponse.data.map(
+        (submission) => ({
+          id: submission.submissionId,
+          title: submission.title,
+          artist: {
+            name: submission.artistName,
+            avatar:
+              submission.artistAvatar ||
+              "https://randomuser.me/api/portraits/women/44.jpg",
+            followers: submission.artistFollowers || 0,
+          },
+          image: submission.imageUrl,
+          description: submission.description,
+          votes: submission.votesCount || 0,
+          submittedAt: submission.submittedAt,
+          tags: submission.tags || [],
+          software: submission.softwareUsed || "Unknown",
+          timeSpent: submission.timeSpent || "N/A",
+          userHasVoted: submission.userHasVoted || false,
+        })
       );
-      setUserVotes((prev) => ({ ...prev, [submissionId]: true }));
+
+      setSubmissions(transformedSubmissions);
+    } catch (error) {
+      console.error("Error fetching submissions:", error);
+
+      if (error.response?.status === 401) {
+        console.error("Authentication failed - token may be invalid");
+        // Redirect to login page
+        navigate("/");
+        return;
+      } else if (error.response?.status === 403) {
+        console.error("Access forbidden - insufficient permissions");
+      }
+
+      // Set empty submissions on error
+      setSubmissions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVote = async (submissionId) => {
+    // Prevent multiple simultaneous votes for the same submission
+    if (votingInProgress.has(submissionId)) {
+      console.log("Vote already in progress for submission", submissionId);
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("No authentication token found");
+        return;
+      }
+
+      // Add to voting progress set
+      setVotingInProgress((prev) => new Set(prev).add(submissionId));
+
+      // Make API call to vote endpoint
+      const response = await axios.post(
+        `${
+          import.meta.env.VITE_API_URL
+        }/api/buyer/challenges/submissions/${submissionId}/vote`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.data.success) {
+        const { voted } = response.data;
+
+        // Update only the specific submission with server response
+        setSubmissions((prev) =>
+          prev.map((sub) =>
+            sub.id === submissionId
+              ? {
+                  ...sub,
+                  userHasVoted: voted,
+                  votes: voted ? sub.votes + 1 : Math.max(sub.votes - 1, 0),
+                }
+              : sub
+          )
+        );
+
+        console.log(
+          voted ? "Vote added successfully" : "Vote removed successfully"
+        );
+      }
+    } catch (error) {
+      console.error("Error voting:", error);
+
+      if (error.response?.status === 401) {
+        console.error("Authentication failed - redirecting to login");
+        navigate("/login");
+      } else if (error.response?.status === 403) {
+        console.error("Access forbidden - insufficient permissions");
+      } else {
+        console.error(
+          "Vote operation failed:",
+          error.response?.data?.message || error.message
+        );
+      }
+    } finally {
+      // Remove from voting progress set
+      setVotingInProgress((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(submissionId);
+        return newSet;
+      });
     }
   };
 
@@ -197,23 +203,6 @@ const ChallengeSubmissionsPage = () => {
     } else {
       const diffInDays = Math.floor(diffInHours / 24);
       return `${diffInDays}d ago`;
-    }
-  };
-
-  const sortSubmissions = (submissions, sortBy) => {
-    switch (sortBy) {
-      case "newest":
-        return [...submissions].sort(
-          (a, b) => new Date(b.submittedAt) - new Date(a.submittedAt)
-        );
-      case "oldest":
-        return [...submissions].sort(
-          (a, b) => new Date(a.submittedAt) - new Date(b.submittedAt)
-        );
-      case "mostVoted":
-        return [...submissions].sort((a, b) => b.votes - a.votes);
-      default:
-        return submissions;
     }
   };
 
@@ -262,14 +251,14 @@ const ChallengeSubmissionsPage = () => {
             <button
               onClick={() => handleVote(submission.id)}
               className={`flex items-center gap-1 transition-colors ${
-                userVotes[submission.id]
+                submission.userHasVoted
                   ? "text-[#7f5539] bg-[#FFD95A] px-2 py-1 rounded-full"
                   : "text-[#D87C5A] hover:text-[#7f5539]"
               }`}
             >
               <Star
                 className={`w-4 h-4 ${
-                  userVotes[submission.id] ? "fill-current" : ""
+                  submission.userHasVoted ? "fill-current" : ""
                 }`}
               />
               <span className="text-sm">{submission.votes}</span>
@@ -287,95 +276,113 @@ const ChallengeSubmissionsPage = () => {
     </div>
   );
 
-  const SubmissionModal = ({ submission, onClose }) => (
-    <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="relative">
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-70 transition-colors z-10"
-          >
-            ✕
-          </button>
-          <img
-            src={submission.image}
-            alt={submission.title}
-            className="w-full h-96 object-cover"
-          />
-        </div>
+  const SubmissionModal = ({ submission, onClose }) => {
+    // Get the current submission data from the main submissions array
+    // This ensures the modal shows updated vote status and counts
+    const currentSubmission =
+      submissions.find((s) => s.id === submission.id) || submission;
 
-        <div className="p-6">
-          <div className="flex items-center gap-4 mb-4">
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="relative">
+            <button
+              onClick={onClose}
+              className="absolute top-4 right-4 bg-black bg-opacity-50 text-white rounded-full p-2 hover:bg-opacity-70 transition-colors z-10"
+            >
+              ✕
+            </button>
             <img
-              src={submission.artist.avatar}
-              alt={submission.artist.name}
-              className="w-12 h-12 rounded-full object-cover"
+              src={currentSubmission.image}
+              alt={currentSubmission.title}
+              className="w-full h-96 object-cover"
             />
-            <div className="flex-1">
-              <h3 className="font-bold text-[#7f5539] text-xl">
-                {submission.title}
-              </h3>
-              <p className="text-[#7f5539]/70">by {submission.artist.name}</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => handleVote(submission.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                  userVotes[submission.id]
-                    ? "bg-[#FFD95A] text-[#7f5539] border-2 border-[#7f5539]"
-                    : "border border-[#FFD95A] text-[#7f5539] hover:bg-[#FFD95A]"
-                }`}
-              >
-                <Star
-                  className={`w-4 h-4 ${
-                    userVotes[submission.id] ? "fill-current" : ""
+          </div>
+
+          <div className="p-6">
+            <div className="flex items-center gap-4 mb-4">
+              <img
+                src={currentSubmission.artist.avatar}
+                alt={currentSubmission.artist.name}
+                className="w-12 h-12 rounded-full object-cover"
+              />
+              <div className="flex-1">
+                <h3 className="font-bold text-[#7f5539] text-xl">
+                  {currentSubmission.title}
+                </h3>
+                <p className="text-[#7f5539]/70">
+                  by {currentSubmission.artist.name}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleVote(currentSubmission.id)}
+                  disabled={votingInProgress.has(currentSubmission.id)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                    currentSubmission.userHasVoted
+                      ? "bg-[#FFD95A] text-[#7f5539] border-2 border-[#7f5539]"
+                      : "border border-[#FFD95A] text-[#7f5539] hover:bg-[#FFD95A]"
+                  } ${
+                    votingInProgress.has(currentSubmission.id)
+                      ? "opacity-50 cursor-not-allowed"
+                      : ""
                   }`}
-                />
-                Vote ({submission.votes})
-              </button>
+                >
+                  <Star
+                    className={`w-4 h-4 ${
+                      currentSubmission.userHasVoted ? "fill-current" : ""
+                    }`}
+                  />
+                  {votingInProgress.has(currentSubmission.id)
+                    ? "Voting..."
+                    : `Vote (${currentSubmission.votes})`}
+                </button>
+              </div>
             </div>
-          </div>
 
-          <p className="text-[#7f5539] mb-4">{submission.description}</p>
+            <p className="text-[#7f5539] mb-4">
+              {currentSubmission.description}
+            </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <div className="text-center p-3 bg-[#FFF5E1] rounded-lg">
-              <Star className="w-5 h-5 text-[#D87C5A] mx-auto mb-1" />
-              <p className="text-sm font-medium text-[#7f5539]">
-                {submission.votes}
-              </p>
-              <p className="text-xs text-[#7f5539]/60">Votes</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div className="text-center p-3 bg-[#FFF5E1] rounded-lg">
+                <Star className="w-5 h-5 text-[#D87C5A] mx-auto mb-1" />
+                <p className="text-sm font-medium text-[#7f5539]">
+                  {currentSubmission.votes}
+                </p>
+                <p className="text-xs text-[#7f5539]/60">Votes</p>
+              </div>
+              <div className="text-center p-3 bg-[#FFF5E1] rounded-lg">
+                <Clock className="w-5 h-5 text-[#D87C5A] mx-auto mb-1" />
+                <p className="text-sm font-medium text-[#7f5539]">
+                  {currentSubmission.timeSpent}
+                </p>
+                <p className="text-xs text-[#7f5539]/60">Time Spent</p>
+              </div>
+              <div className="text-center p-3 bg-[#FFF5E1] rounded-lg">
+                <Calendar className="w-5 h-5 text-[#D87C5A] mx-auto mb-1" />
+                <p className="text-sm font-medium text-[#7f5539]">
+                  {formatTimeAgo(currentSubmission.submittedAt)}
+                </p>
+                <p className="text-xs text-[#7f5539]/60">Submitted</p>
+              </div>
             </div>
-            <div className="text-center p-3 bg-[#FFF5E1] rounded-lg">
-              <Clock className="w-5 h-5 text-[#D87C5A] mx-auto mb-1" />
-              <p className="text-sm font-medium text-[#7f5539]">
-                {submission.timeSpent}
-              </p>
-              <p className="text-xs text-[#7f5539]/60">Time Spent</p>
-            </div>
-            <div className="text-center p-3 bg-[#FFF5E1] rounded-lg">
-              <Calendar className="w-5 h-5 text-[#D87C5A] mx-auto mb-1" />
-              <p className="text-sm font-medium text-[#7f5539]">
-                {formatTimeAgo(submission.submittedAt)}
-              </p>
-              <p className="text-xs text-[#7f5539]/60">Submitted</p>
-            </div>
-          </div>
 
-          <div className="flex flex-wrap gap-2">
-            {submission.tags.map((tag, index) => (
-              <span
-                key={index}
-                className="bg-[#FFD95A] text-[#7f5539] px-3 py-1 rounded-full text-sm"
-              >
-                #{tag}
-              </span>
-            ))}
+            <div className="flex flex-wrap gap-2">
+              {currentSubmission.tags.map((tag, index) => (
+                <span
+                  key={index}
+                  className="bg-[#FFD95A] text-[#7f5539] px-3 py-1 rounded-full text-sm"
+                >
+                  #{tag}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   if (loading) {
     return (
@@ -388,8 +395,6 @@ const ChallengeSubmissionsPage = () => {
       </div>
     );
   }
-
-  const sortedSubmissions = sortSubmissions(submissions, sortBy);
 
   return (
     <div className="min-h-screen bg-[#FFF5E1]">
@@ -497,7 +502,7 @@ const ChallengeSubmissionsPage = () => {
                 : "space-y-4"
             }`}
           >
-            {sortedSubmissions.map((submission) => (
+            {submissions.map((submission) => (
               <SubmissionCard key={submission.id} submission={submission} />
             ))}
           </div>
