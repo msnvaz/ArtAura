@@ -192,6 +192,9 @@ const ArtistPortfolio = () => {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [portfolioPosts, setPortfolioPosts] = useState([]);
   const [postImageIndex, setPostImageIndex] = useState({}); // Track current image index for each post
+
+  // Get API URL from environment variable
+  const API_URL = import.meta.env.VITE_API_URL;
   const [artistProfile, setArtistProfile] = useState(null);
   const [achievementsCount, setAchievementsCount] = useState(0);
   const [recentAchievements, setRecentAchievements] = useState([]);
@@ -217,7 +220,7 @@ const ArtistPortfolio = () => {
       try {
         setLoading(true);
         const response = await axios.get(
-          `http://localhost:8081/api/artist/profile/${userId}`,
+          `${API_URL}/api/artist/profile/${userId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -229,8 +232,8 @@ const ArtistPortfolio = () => {
         const profileData = response.data;
         console.log('Profile data received:', profileData);
 
-        const avatarUrl = profileData.avatarUrl ? `http://localhost:8081${profileData.avatarUrl}?t=${Date.now()}` : 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=200';
-        const coverUrl = profileData.coverImageUrl ? `http://localhost:8081${profileData.coverImageUrl}?t=${Date.now()}` : 'https://images.pexels.com/photos/1070981/pexels-photo-1070981.jpeg?auto=compress&cs=tinysrgb&w=800';
+        const avatarUrl = profileData.avatarUrl ? `${API_URL}${profileData.avatarUrl}?t=${Date.now()}` : 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=200';
+        const coverUrl = profileData.coverImageUrl ? `${API_URL}${profileData.coverImageUrl}?t=${Date.now()}` : 'https://images.pexels.com/photos/1070981/pexels-photo-1070981.jpeg?auto=compress&cs=tinysrgb&w=800';
 
         console.log('Avatar URL:', avatarUrl);
         console.log('Cover URL:', coverUrl);
@@ -297,7 +300,7 @@ const ArtistPortfolio = () => {
         };
       }
 
-      const response = await axios.get(`http://localhost:8081/api/achievements/artist/${userId}`, config);
+      const response = await axios.get(`${API_URL}/api/achievements/artist/${userId}`, config);
 
       const achievements = response.data || [];
       console.log('Achievements loaded:', achievements.length);
@@ -363,7 +366,7 @@ const ArtistPortfolio = () => {
     }
 
     try {
-      const response = await axios.get(`http://localhost:8081/api/exhibitions/artist/${userId}`, {
+      const response = await axios.get(`${API_URL}/api/exhibitions/artist/${userId}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -394,7 +397,7 @@ const ArtistPortfolio = () => {
       setLoadingOrders(true);
 
       // Fetch orders
-      const ordersResponse = await axios.get(`http://localhost:8081/api/orders/artist`, {
+      const ordersResponse = await axios.get(`${API_URL}/api/orders/artist`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -405,7 +408,7 @@ const ArtistPortfolio = () => {
       }
 
       // Fetch orders count
-      const countResponse = await axios.get(`http://localhost:8081/api/orders/artist/count`, {
+      const countResponse = await axios.get(`${API_URL}/api/orders/artist/count`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -416,7 +419,7 @@ const ArtistPortfolio = () => {
       }
 
       // Fetch pending orders count
-      const pendingResponse = await axios.get(`http://localhost:8081/api/orders/artist/pending-count`, {
+      const pendingResponse = await axios.get(`${API_URL}/api/orders/artist/pending-count`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -452,9 +455,8 @@ const ArtistPortfolio = () => {
       }
 
       try {
-        const API_URL = import.meta.env.VITE_API_URL;
         const response = await axios.get(
-          `http://localhost:8081/api/posts/${role}/${userId}`,
+          `${API_URL}/api/posts/${role}/${userId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -501,7 +503,7 @@ const ArtistPortfolio = () => {
         const token = localStorage.getItem('token');
         console.log('Token available:', !!token);
 
-        const response = await axios.get(`http://localhost:8081/api/artworks/artist/${userId}`, {
+        const response = await axios.get(`${API_URL}/api/artworks/artist/${userId}`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -638,7 +640,7 @@ const ArtistPortfolio = () => {
       console.log('Updating profile:', updateData);
 
       const response = await axios.put(
-        `http://localhost:8081/api/artist/profile/${userId}`,
+        `${API_URL}/api/artist/profile/${userId}`,
         updateData,
         {
           headers: {
@@ -760,7 +762,7 @@ const ArtistPortfolio = () => {
         formData.append('image', updatedArtworkData.imageFile);
 
         response = await axios.put(
-          `http://localhost:8081/api/artworks/${artworkId}/upload`,
+          `${API_URL}/api/artworks/${artworkId}/upload`,
           formData,
           {
             headers: {
@@ -782,7 +784,7 @@ const ArtistPortfolio = () => {
         });
 
         response = await axios.put(
-          `http://localhost:8081/api/artworks/${artworkId}`,
+          `${API_URL}/api/artworks/${artworkId}`,
           jsonData,
           {
             headers: {
@@ -843,7 +845,7 @@ const ArtistPortfolio = () => {
       const artworkId = selectedArtwork.artwork_id || selectedArtwork.artworkId || selectedArtwork.id;
 
       await axios.delete(
-        `http://localhost:8081/api/artworks/${artworkId}`,
+        `${API_URL}/api/artworks/${artworkId}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -933,7 +935,7 @@ const ArtistPortfolio = () => {
 
     try {
       const response = await axios.post(
-        'http://localhost:8081/api/posts/create',
+        `${API_URL}/api/posts/create`,
         formData,
         {
           headers: {
@@ -958,7 +960,7 @@ const ArtistPortfolio = () => {
       // Refresh posts from the server to get the latest data
       try {
         const postsResponse = await axios.get(
-          `http://localhost:8081/api/posts/${role}/${userId}`,
+          `${API_URL}/api/posts/${role}/${userId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -1046,7 +1048,7 @@ const ArtistPortfolio = () => {
       }
 
       const response = await axios.post(
-        'http://localhost:8081/api/artworks/create',
+        `${API_URL}/api/artworks/create`,
         formData,
         {
           headers: {
@@ -1127,7 +1129,7 @@ const ArtistPortfolio = () => {
       }
 
       // Call backend delete API with Authorization header
-      await axios.delete(`http://localhost:8081/api/posts/${postId}`, {
+      await axios.delete(`${API_URL}/api/posts/${postId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -1173,7 +1175,7 @@ const ArtistPortfolio = () => {
 
       // The backend expects @RequestPart, so send as multipart/form-data
       const response = await axios.put(
-        `http://localhost:8081/api/posts/${updatedPost.post_id}`,
+        `${API_URL}/api/posts/${updatedPost.post_id}`,
         formData,
         {
           headers: {
@@ -1315,7 +1317,7 @@ const ArtistPortfolio = () => {
 
       // Make API call to update the backend
       const response = await axios.put(
-        `http://localhost:8081/api/artworks/${artworkId}`,
+        `${API_URL}/api/artworks/${artworkId}`,
         updatedData,
         {
           headers: {
@@ -1357,7 +1359,7 @@ const ArtistPortfolio = () => {
 
       // Make API call to update the backend
       const response = await axios.put(
-        `http://localhost:8081/api/artworks/${artworkId}`,
+        `${API_URL}/api/artworks/${artworkId}`,
         updatedData,
         {
           headers: {
@@ -1402,7 +1404,7 @@ const ArtistPortfolio = () => {
       formData.append('image', newCoverImage);
 
       const response = await axios.post(
-        `http://localhost:8081/api/artist/profile/${userId}/cover`,
+        `${API_URL}/api/artist/profile/${userId}/cover`,
         formData,
         {
           headers: {
@@ -1416,7 +1418,7 @@ const ArtistPortfolio = () => {
 
       // Update the local artist profile state with new cover image
       const newImageUrl = response.data.imageUrl;
-      const fullImageUrl = `http://localhost:8081${newImageUrl}?t=${Date.now()}`;
+      const fullImageUrl = `${API_URL}${newImageUrl}?t=${Date.now()}`;
 
       setArtistProfile(prevProfile => ({
         ...prevProfile,
@@ -1447,7 +1449,7 @@ const ArtistPortfolio = () => {
       formData.append('image', avatarFile);
 
       const response = await axios.post(
-        `http://localhost:8081/api/artist/profile/${userId}/avatar`,
+        `${API_URL}/api/artist/profile/${userId}/avatar`,
         formData,
         {
           headers: {
@@ -1461,7 +1463,7 @@ const ArtistPortfolio = () => {
 
       // Update the local artist profile state with new avatar
       const newImageUrl = response.data.imageUrl;
-      const fullImageUrl = `http://localhost:8081${newImageUrl}?t=${Date.now()}`;
+      const fullImageUrl = `${API_URL}${newImageUrl}?t=${Date.now()}`;
 
       console.log('New avatar URL:', fullImageUrl);
 
@@ -1893,7 +1895,7 @@ const ArtistPortfolio = () => {
                           <img
                             src={post.images[getCurrentImageIndex(post.post_id)]?.startsWith('http')
                               ? post.images[getCurrentImageIndex(post.post_id)]
-                              : `http://localhost:8081${encodeURI(post.images[getCurrentImageIndex(post.post_id)] || '')}`}
+                              : `${API_URL}${encodeURI(post.images[getCurrentImageIndex(post.post_id)] || '')}`}
                             alt={`Post ${post.post_id} - Image ${getCurrentImageIndex(post.post_id) + 1}`}
                             className="w-full h-[32rem] object-cover"
                             onError={(e) => {
@@ -1951,7 +1953,7 @@ const ArtistPortfolio = () => {
                         // Fallback: Show single image if images array is empty but image field exists
                         post.image && (
                           <img
-                            src={post.image?.startsWith('http') ? post.image : `http://localhost:8081${encodeURI(post.image || '')}`}
+                            src={post.image?.startsWith('http') ? post.image : `${API_URL}${encodeURI(post.image || '')}`}
                             alt={`Post ${post.post_id}`}
                             className="w-full h-[32rem] object-cover"
                             onError={(e) => {
@@ -2036,7 +2038,7 @@ const ArtistPortfolio = () => {
                     {Array.isArray(artworks) && artworks.slice(0, 4).map((artwork, index) => (
                       <div key={artwork.artworkId || `featured-${index}-${artwork.title || 'unknown'}`} className="flex items-center space-x-3">
                         <img
-                          src={artwork.imageUrl?.startsWith('http') ? artwork.imageUrl : `http://localhost:8081${encodeURI(artwork.imageUrl || '')}`}
+                          src={artwork.imageUrl?.startsWith('http') ? artwork.imageUrl : `${API_URL}${encodeURI(artwork.imageUrl || '')}`}
                           alt={artwork.title}
                           className="w-12 h-12 rounded-lg object-cover"
                           onError={(e) => {
@@ -2209,7 +2211,7 @@ const ArtistPortfolio = () => {
                   <div key={artwork.artworkId || `artwork-${index}-${artwork.title || 'unknown'}`} className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-lg transition-all duration-300 group">
                     <div className="relative">
                       <img
-                        src={artwork.imageUrl?.startsWith('http') ? artwork.imageUrl : `http://localhost:8081${encodeURI(artwork.imageUrl || '')}`}
+                        src={artwork.imageUrl?.startsWith('http') ? artwork.imageUrl : `${API_URL}${encodeURI(artwork.imageUrl || '')}`}
                         alt={artwork.title}
                         className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                         onError={(e) => {
@@ -2333,7 +2335,7 @@ const ArtistPortfolio = () => {
                           <div className="flex items-start space-x-4">
                             {order.referenceImageUrl && (
                               <img
-                                src={`http://localhost:8081${order.referenceImageUrl}`}
+                                src={`${API_URL}${order.referenceImageUrl}`}
                                 alt="Reference"
                                 className="w-16 h-16 object-cover rounded-lg"
                               />
@@ -2642,7 +2644,7 @@ const ArtistPortfolio = () => {
                               {index + 1}
                             </div>
                             <img
-                              src={artwork.imageUrl?.startsWith('http') ? artwork.imageUrl : `http://localhost:8081${encodeURI(artwork.imageUrl || '')}`}
+                              src={artwork.imageUrl?.startsWith('http') ? artwork.imageUrl : `${API_URL}${encodeURI(artwork.imageUrl || '')}`}
                               alt={artwork.title}
                               className="w-12 h-12 rounded-lg object-cover"
                               onError={(e) => {
@@ -2684,8 +2686,8 @@ const ArtistPortfolio = () => {
                             </div>
                             <img
                               src={post.images && post.images.length > 0 ?
-                                (post.images[0]?.startsWith('http') ? post.images[0] : `http://localhost:8081${encodeURI(post.images[0] || '')}`) :
-                                (post.image?.startsWith('http') ? post.image : `http://localhost:8081${encodeURI(post.image || '')}`)}
+                                (post.images[0]?.startsWith('http') ? post.images[0] : `${API_URL}${encodeURI(post.images[0] || '')}`) :
+                                (post.image?.startsWith('http') ? post.image : `${API_URL}${encodeURI(post.image || '')}`)}
                               alt={`Post ${post.id}`}
                               className="w-12 h-12 rounded-lg object-cover"
                               onError={(e) => {

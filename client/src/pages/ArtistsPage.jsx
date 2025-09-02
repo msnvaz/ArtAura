@@ -19,6 +19,10 @@ import {
 import Navbar from "../components/common/Navbar";
 import CartSidebar from "../components/cart/CartSidebar";
 import CommissionRequestModal from "../components/modals/CommissionRequestModal";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import ArtistProfileModal from "../components/modals/ArtistProfileModal";
+const API_URL = import.meta.env.VITE_API_URL;
 
 const ArtistsPage = () => {
   const [artists, setArtists] = useState([]);
@@ -35,167 +39,40 @@ const ArtistsPage = () => {
   const [showCommissionModal, setShowCommissionModal] = useState(false);
   const [selectedArtist, setSelectedArtist] = useState(null);
 
-  // Mock data for artists
-  const mockArtists = [
-    {
-      id: 1,
-      name: "Sanduni Fernando",
-      avatar: "https://randomuser.me/api/portraits/women/44.jpg",
-      specialty: "Digital Art",
-      location: "Colombo, Sri Lanka",
-      rating: 4.9,
-      reviews: 156,
-      followers: 2840,
-      artworks: 45,
-      joinDate: "2023-01-15",
-      bio: "Passionate digital artist specializing in character design and concept art for games and animation.",
-      featured: true,
-      verified: true,
-      badges: ["Top Rated", "Featured Artist"],
-      portfolioImages: [
-        "https://images.pexels.com/photos/1545743/pexels-photo-1545743.jpeg?auto=compress&cs=tinysrgb&w=300",
-        "https://images.pexels.com/photos/1269968/pexels-photo-1269968.jpeg?auto=compress&cs=tinysrgb&w=300",
-        "https://images.pexels.com/photos/1053924/pexels-photo-1053924.jpeg?auto=compress&cs=tinysrgb&w=300",
-      ],
-    },
-    {
-      id: 2,
-      name: "Kasun Silva",
-      avatar: "https://randomuser.me/api/portraits/men/32.jpg",
-      specialty: "Sculpture",
-      location: "Kandy, Sri Lanka",
-      rating: 4.8,
-      reviews: 98,
-      followers: 1950,
-      artworks: 32,
-      joinDate: "2023-03-22",
-      bio: "Contemporary sculptor working with wood and stone to create thought-provoking installations inspired by Sri Lankan heritage.",
-      featured: false,
-      verified: true,
-      badges: ["Rising Star"],
-      portfolioImages: [
-        "https://images.pexels.com/photos/1053924/pexels-photo-1053924.jpeg?auto=compress&cs=tinysrgb&w=300",
-        "https://images.pexels.com/photos/1269968/pexels-photo-1269968.jpeg?auto=compress&cs=tinysrgb&w=300",
-      ],
-    },
-    {
-      id: 3,
-      name: "Priya Jayasuriya",
-      avatar: "https://randomuser.me/api/portraits/women/68.jpg",
-      specialty: "Photography",
-      location: "Galle, Sri Lanka",
-      rating: 4.7,
-      reviews: 124,
-      followers: 3200,
-      artworks: 78,
-      joinDate: "2022-11-08",
-      bio: "Fine art photographer capturing the beauty of Sri Lankan landscapes, culture, and human emotions.",
-      featured: true,
-      verified: true,
-      badges: ["Featured Artist", "Top Photographer"],
-      portfolioImages: [
-        "https://images.pexels.com/photos/1269968/pexels-photo-1269968.jpeg?auto=compress&cs=tinysrgb&w=300",
-        "https://images.pexels.com/photos/1545743/pexels-photo-1545743.jpeg?auto=compress&cs=tinysrgb&w=300",
-        "https://images.pexels.com/photos/1053924/pexels-photo-1053924.jpeg?auto=compress&cs=tinysrgb&w=300",
-      ],
-    },
-    {
-      id: 4,
-      name: "Dilshan Gamage",
-      avatar: "https://randomuser.me/api/portraits/men/25.jpg",
-      specialty: "Painting",
-      location: "Negombo, Sri Lanka",
-      rating: 4.6,
-      reviews: 87,
-      followers: 1620,
-      artworks: 56,
-      joinDate: "2023-05-12",
-      bio: "Oil painter exploring abstract expressionism and traditional Sri Lankan themes through vivid colors.",
-      featured: false,
-      verified: false,
-      badges: ["New Artist"],
-      portfolioImages: [
-        "https://images.pexels.com/photos/1545743/pexels-photo-1545743.jpeg?auto=compress&cs=tinysrgb&w=300",
-        "https://images.pexels.com/photos/1053924/pexels-photo-1053924.jpeg?auto=compress&cs=tinysrgb&w=300",
-      ],
-    },
-    {
-      id: 5,
-      name: "Tharushi Wickramasinghe",
-      avatar: "https://randomuser.me/api/portraits/women/35.jpg",
-      specialty: "Mixed Media",
-      location: "Jaffna, Sri Lanka",
-      rating: 4.9,
-      reviews: 203,
-      followers: 4150,
-      artworks: 89,
-      joinDate: "2022-08-30",
-      bio: "Mixed media artist combining traditional Sri Lankan techniques with modern technology to create unique experiences.",
-      featured: true,
-      verified: true,
-      badges: ["Top Rated", "Innovation Award"],
-      portfolioImages: [
-        "https://images.pexels.com/photos/1269968/pexels-photo-1269968.jpeg?auto=compress&cs=tinysrgb&w=300",
-        "https://images.pexels.com/photos/1545743/pexels-photo-1545743.jpeg?auto=compress&cs=tinysrgb&w=300",
-        "https://images.pexels.com/photos/1053924/pexels-photo-1053924.jpeg?auto=compress&cs=tinysrgb&w=300",
-      ],
-    },
-    {
-      id: 6,
-      name: "Chamika Rathnayake",
-      avatar: "https://randomuser.me/api/portraits/men/45.jpg",
-      specialty: "Illustration",
-      location: "Matara, Sri Lanka",
-      rating: 4.5,
-      reviews: 67,
-      followers: 980,
-      artworks: 34,
-      joinDate: "2023-07-01",
-      bio: "Children's book illustrator and comic artist creating whimsical characters inspired by Sri Lankan folklore.",
-      featured: false,
-      verified: true,
-      badges: ["Emerging Talent"],
-      portfolioImages: [
-        "https://images.pexels.com/photos/1053924/pexels-photo-1053924.jpeg?auto=compress&cs=tinysrgb&w=300",
-        "https://images.pexels.com/photos/1269968/pexels-photo-1269968.jpeg?auto=compress&cs=tinysrgb&w=300",
-      ],
-    },
-  ];
+  // Profile modal state
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [profileArtist, setProfileArtist] = useState(null);
 
-  const specialties = [
-    "All Specialties",
-    "Digital Art",
-    "Painting",
-    "Photography",
-    "Sculpture",
-    "Mixed Media",
-    "Illustration",
-    "Graphic Design",
-    "Street Art",
-    "Abstract Art",
-  ];
-
-  const locations = [
-    "All Locations",
-    "Colombo, Sri Lanka",
-    "Kandy, Sri Lanka",
-    "Galle, Sri Lanka",
-    "Negombo, Sri Lanka",
-    "Jaffna, Sri Lanka",
-    "Matara, Sri Lanka",
-    "Anuradhapura, Sri Lanka",
-    "Trincomalee, Sri Lanka",
-    "Batticaloa, Sri Lanka",
-  ];
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setArtists(mockArtists);
-      setFilteredArtists(mockArtists);
-      setLoading(false);
-    }, 1000);
+    const token = localStorage.getItem("token");
+    axios
+      .get(`${API_URL}/api/buyer/artists/list`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((response) => {
+        // Directly use backend data, no mock merge
+        setArtists(response.data);
+        setFilteredArtists(response.data);
+        setLoading(false);
+      })
+      .catch(() => {
+        setArtists([]);
+        setFilteredArtists([]);
+        setLoading(false);
+      });
   }, []);
+
+  // Format followers count with k
+  const formatFollowers = (count) => {
+    if (count >= 1000) {
+      return (count / 1000).toFixed(count % 1000 === 0 ? 0 : 1) + "k";
+    }
+    return count;
+  };
 
   // Filter and search functionality
   useEffect(() => {
@@ -254,9 +131,27 @@ const ArtistsPage = () => {
     // Add follow logic here
   };
 
-  const handleViewProfile = (artistId) => {
-    console.log(`Viewing profile of artist ${artistId}`);
-    // Add navigation logic here
+  const handleViewProfile = async (artist) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(
+        `${API_URL}/api/artist/profile/${artist.id}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setProfileArtist(response.data); // Pass the latest profile to the modal
+      setShowProfileModal(true);
+    } catch (error) {
+      // Optionally show error toast
+      setProfileArtist(artist); // fallback to existing data
+      setShowProfileModal(true);
+    }
+  };
+
+  const handleCloseProfileModal = () => {
+    setShowProfileModal(false);
+    setProfileArtist(null);
   };
 
   const handleOpenCommissionModal = (artist) => {
@@ -334,8 +229,8 @@ const ArtistsPage = () => {
           <div className="flex-1">
             <h3 className="font-bold text-[#7f5539] text-lg">{artist.name}</h3>
             <div className="flex items-center gap-2 text-[#7f5539]/70 text-sm">
-              {getSpecialtyIcon(artist.specialty)}
-              <span>{artist.specialty}</span>
+              {getSpecialtyIcon(artist.specialization)}
+              <span>{artist.specialization}</span>
             </div>
             <div className="flex items-center gap-1 text-[#7f5539]/70 text-sm mt-1">
               <MapPin className="w-3 h-3" />
@@ -354,17 +249,17 @@ const ArtistsPage = () => {
           <div className="text-center">
             <div className="flex items-center justify-center gap-1 text-[#FFD95A] mb-1">
               <Star className="w-4 h-4 fill-current" />
-              <span className="font-bold text-[#7f5539]">{artist.rating}</span>
+              <span className="font-bold text-[#7f5539]">{artist.rate}</span>
             </div>
             <span className="text-xs text-[#7f5539]/70">
-              {artist.reviews} reviews
+              {artist.rate} reviews
             </span>
           </div>
           <div className="text-center">
             <div className="flex items-center justify-center gap-1 mb-1">
               <Users className="w-4 h-4 text-[#D87C5A]" />
               <span className="font-bold text-[#7f5539]">
-                {artist.followers}
+                {formatFollowers(artist.totalFollowers)}
               </span>
             </div>
             <span className="text-xs text-[#7f5539]/70">followers</span>
@@ -373,7 +268,7 @@ const ArtistsPage = () => {
             <div className="flex items-center justify-center gap-1 mb-1">
               <Eye className="w-4 h-4 text-[#D87C5A]" />
               <span className="font-bold text-[#7f5539]">
-                {artist.artworks}
+                {artist.totalSales}
               </span>
             </div>
             <span className="text-xs text-[#7f5539]/70">artworks</span>
@@ -382,9 +277,9 @@ const ArtistsPage = () => {
 
         {/* Badges */}
         <div className="flex flex-wrap gap-2 mb-4">
-          {artist.badges.map((badge, index) => (
+          {(artist.badges || []).map((badge, index) => (
             <span
-              key={index}
+              key={badge + "-" + index}
               className={`text-xs px-2 py-1 rounded-full font-medium ${getBadgeColor(
                 badge
               )}`}
@@ -396,9 +291,9 @@ const ArtistsPage = () => {
 
         {/* Portfolio Preview */}
         <div className="grid grid-cols-3 gap-2 mb-4">
-          {artist.portfolioImages.map((image, index) => (
+          {(artist.portfolioImages || []).map((image, index) => (
             <img
-              key={index}
+              key={image + "-" + index}
               src={image}
               alt={`${artist.name} artwork ${index + 1}`}
               className="w-full h-16 object-cover rounded-lg hover:scale-110 transition-transform cursor-pointer"
@@ -409,7 +304,7 @@ const ArtistsPage = () => {
         {/* Actions */}
         <div className="flex gap-2">
           <button
-            onClick={() => handleViewProfile(artist.id)}
+            onClick={() => handleViewProfile(artist)}
             className="flex-1 bg-[#D87C5A] hover:bg-[#7f5539] text-white py-2 px-4 rounded-lg font-medium transition-colors"
           >
             View Profile
@@ -576,8 +471,11 @@ const ArtistsPage = () => {
                   : "grid-cols-1 max-w-4xl mx-auto"
               }`}
             >
-              {filteredArtists.map((artist) => (
-                <ArtistCard key={artist.id} artist={artist} />
+              {filteredArtists.map((artist, index) => (
+                <ArtistCard
+                  key={artist.id || `artist-${index}`}
+                  artist={artist}
+                />
               ))}
             </div>
           )}
@@ -600,6 +498,13 @@ const ArtistsPage = () => {
         isOpen={showCommissionModal}
         artist={selectedArtist}
         onClose={handleCloseCommissionModal}
+      />
+
+      {/* Artist Profile Modal */}
+      <ArtistProfileModal
+        isOpen={showProfileModal}
+        artist={profileArtist}
+        onClose={handleCloseProfileModal}
       />
     </div>
   );

@@ -1,3 +1,4 @@
+import axios from "axios";
 import {
   Calendar,
   Clock,
@@ -5,10 +6,10 @@ import {
   Plus,
   Send,
   Shield,
-  Trophy,
   Sparkles,
-  Users,
   Target,
+  Trophy,
+  Users,
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -29,18 +30,10 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [requestSponsorship, setRequestSponsorship] = useState(false);
-  const [showSponsorshipSection, setShowSponsorshipSection] = useState(false);
-  const [sponsorshipType, setSponsorshipType] = useState("");
-  const [sponsorshipMessage, setSponsorshipMessage] = useState("");
-  const [isSponsorshipSubmitting, setIsSponsorshipSubmitting] = useState(false);
   const navigate = useNavigate();
 
   const categories = [
-    "Digital Art",
     "Traditional Art",
-    "Photography",
-    "Sculpture",
-    "Mixed Media",
     "Abstract Art",
     "Portrait",
     "Landscape",
@@ -121,20 +114,29 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
         description: formData.description.trim(),
         maxParticipants: parseInt(formData.maxParticipants),
         rewards: formData.rewards.trim(),
-        sponsorshipRequest: requestSponsorship
-          ? {
-              type: sponsorshipType,
-              message: sponsorshipMessage,
-            }
-          : null,
+        requestSponsorship: requestSponsorship,
       };
 
-      if (onSubmit) await onSubmit(challengeData);
+      // Get JWT token from localStorage (adjust key if needed)
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("You are not authenticated. Please log in.");
+        setIsSubmitting(false);
+        return;
+      }
 
-      // Show success message
+      // Send POST request to backend
+      await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/challenges`,
+        challengeData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
       alert("Challenge created successfully!");
-
-      // Reset form
       setFormData({
         title: "",
         publishDate: "",
@@ -146,37 +148,20 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
         maxParticipants: "",
         rewards: "",
       });
-
-      // Navigate back to dashboard
+      setRequestSponsorship(false);
       navigate("/moderatordashboard");
     } catch (error) {
       console.error("Error creating challenge:", error);
-      alert("Error creating challenge. Please try again.");
+      alert(
+        error.response?.data?.message ||
+          "Error creating challenge. Please try again."
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleSponsorshipRequest = async () => {
-    setIsSponsorshipSubmitting(true);
-    try {
-      // You can adjust this payload as needed
-      const sponsorshipData = {
-        challenge: formData, // send the current challenge form data
-        type: sponsorshipType,
-        message: sponsorshipMessage,
-      };
-      // TODO: Replace with your backend call
-      alert("Sponsorship request sent to shops!");
-      setShowSponsorshipSection(false);
-      setSponsorshipType("");
-      setSponsorshipMessage("");
-    } catch (error) {
-      alert("Failed to send sponsorship request.");
-    } finally {
-      setIsSponsorshipSubmitting(false);
-    }
-  };
+
 
   const getCurrentDateTime = () => {
     const now = new Date();
@@ -386,10 +371,12 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
                         <Target size={16} />
                         Category *
                       </label>
-                      <select
+                      <input
+                        list="category-options"
                         name="category"
                         value={formData.category}
                         onChange={handleInputChange}
+                        placeholder="Select or type a category"
                         className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-colors ${
                           errors.category ? "border-red-500" : ""
                         }`}
@@ -398,14 +385,13 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
                           backgroundColor: "white",
                           color: "#5D3A00",
                         }}
-                      >
-                        <option value="">Select a category</option>
+                        autoComplete="off"
+                      />
+                      <datalist id="category-options">
                         {categories.map((category) => (
-                          <option key={category} value={category}>
-                            {category}
-                          </option>
+                          <option key={category} value={category} />
                         ))}
-                      </select>
+                      </datalist>
                       {errors.category && (
                         <p className="mt-1 text-sm text-red-600">
                           {errors.category}
@@ -688,42 +674,8 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
                       onChange={(e) => setRequestSponsorship(e.target.checked)}
                       className="accent-amber-800 h-4 w-4"
                     />
-                    Request Sponsorships for this Challenge?
+                    Request Sponsorship for this Challenge
                   </label>
-                  {requestSponsorship && (
-                    <div className="space-y-4 mt-2">
-                      <div>
-                        <label className="block text-sm font-medium text-amber-800 mb-1">
-                          Expected Sponsorship Type
-                        </label>
-                        <select
-                          value={sponsorshipType}
-                          onChange={(e) => setSponsorshipType(e.target.value)}
-                          className="w-full px-4 py-2 border rounded-lg bg-white text-amber-900 border-amber-300 focus:ring-2 focus:ring-amber-800"
-                        >
-                          <option value="">Select type...</option>
-                          <option value="Monetary">Monetary</option>
-                          <option value="Gift">Gift</option>
-                          <option value="Voucher">Voucher</option>
-                          <option value="Other">Other</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-amber-800 mb-1">
-                          Message to Shops (optional)
-                        </label>
-                        <textarea
-                          value={sponsorshipMessage}
-                          onChange={(e) =>
-                            setSponsorshipMessage(e.target.value)
-                          }
-                          rows={3}
-                          placeholder="Describe what kind of sponsorship you expect, or any special notes..."
-                          className="w-full px-4 py-2 border rounded-lg bg-white text-amber-900 border-amber-300 focus:ring-2 focus:ring-amber-800"
-                        />
-                      </div>
-                    </div>
-                  )}
                 </div>
 
                 {/* Submit Button */}

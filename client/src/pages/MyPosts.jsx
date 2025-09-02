@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-// import axios from "axios";
+import axios from "axios";
 import {
   Calendar,
   Eye,
@@ -24,9 +24,12 @@ import { formatDistanceToNow } from "date-fns";
 import Navbar from "../components/common/Navbar";
 import CartSidebar from "../components/cart/CartSidebar";
 import EditPostModal from "../components/posts/EditPostModal";
+import ConfirmModal from "../components/common/ConfirmModal";
+import { useToast } from "../hooks/useToast";
+import AlertMessage from "../components/AlertMessage";
 
 const MyPosts = () => {
-  const { token, role, userId } = useAuth();
+  const { token, role, userId, authLoading } = useAuth();
   const navigate = useNavigate();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -36,187 +39,43 @@ const MyPosts = () => {
   const [showDropdown, setShowDropdown] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingPost, setEditingPost] = useState(null);
+  const [alert, setAlert] = useState({ type: "", message: "" });
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingPostId, setDeletingPostId] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const toast = useToast();
 
-  // Mock data for development
-  const mockPosts = [
-    {
-      post_id: 1,
-      title: "Digital Art Showcase 2025",
-      description:
-        "🎨 Join us for an exciting digital art exhibition featuring contemporary Sri Lankan artists exploring the intersection of technology and creativity. This showcase will feature interactive installations, digital paintings, and multimedia artworks that celebrate our rich cultural heritage.",
-      location: "Colombo Art Gallery, Colombo",
-      startDate: "2025-02-15",
-      endDate: "2025-02-25",
-      startTime: "10:00",
-      endTime: "18:00",
-      organizer: "Digital Arts Collective Sri Lanka",
-      category: "Digital Art",
-      entryFee: "Free",
-      created_at: "2025-01-15T10:30:00Z",
-      likes: 25,
-      comments: 8,
-      views: 156,
-      verification_status: "verified",
-      artist: {
-        name: "Pawani Kumari",
-        avatar: "https://randomuser.me/api/portraits/women/42.jpg",
-      },
-    },
-    {
-      post_id: 2,
-      title: "Contemporary Sculpture Exhibition",
-      description:
-        "🖼️ An exhibition featuring modern sculptural works by Sri Lankan artists that explore themes of identity, nature, and urban life. Artists will showcase pieces made from various materials including metal, stone, and recycled materials reflecting our island's natural beauty.",
-      location: "National Museum, Kandy",
-      startDate: "2025-03-01",
-      endDate: "2025-03-15",
-      startTime: "09:00",
-      endTime: "17:00",
-      organizer: "Sculpture Society of Sri Lanka",
-      category: "Sculpture",
-      entryFee: "LKR 500",
-      created_at: "2025-01-12T15:45:00Z",
-      likes: 18,
-      comments: 5,
-      views: 89,
-      verification_status: "pending",
-      artist: {
-        name: "Pawani Kumari",
-        avatar: "https://randomuser.me/api/portraits/women/42.jpg",
-      },
-    },
-    {
-      post_id: 3,
-      title: "Photography Workshop & Exhibition",
-      description:
-        "🎉 A unique combination of learning and showcasing! Join our photography workshop focusing on Sri Lankan landscapes and culture, followed by an exhibition of participants' best works. Perfect for both beginners and experienced photographers.",
-      location: "Cultural Center, Galle",
-      startDate: "2025-02-20",
-      endDate: "2025-02-22",
-      startTime: "08:00",
-      endTime: "20:00",
-      organizer: "Galle Photography Club",
-      category: "Photography",
-      entryFee: "LKR 2,500 (Workshop + Exhibition)",
-      created_at: "2025-01-10T08:20:00Z",
-      likes: 42,
-      comments: 12,
-      views: 234,
-      verification_status: "rejected",
-      artist: {
-        name: "Pawani Kumari",
-        avatar: "https://randomuser.me/api/portraits/women/42.jpg",
-      },
-    },
-    {
-      post_id: 4,
-      title: "Traditional & Modern Art Fusion",
-      description:
-        "🌟 Dive into the world where traditional Sri Lankan art meets contemporary expression. This curated exhibition features local artists blending ancient techniques with modern concepts, showcasing the evolution of our artistic heritage.",
-      location: "Modern Art Gallery, Negombo",
-      startDate: "2025-04-05",
-      endDate: "2025-04-20",
-      startTime: "10:00",
-      endTime: "19:00",
-      organizer: "Lanka Modern Artists Association",
-      category: "Traditional Fusion",
-      entryFee: "LKR 750",
-      created_at: "2025-01-08T14:15:00Z",
-      likes: 31,
-      comments: 7,
-      views: 145,
-      verification_status: "verified",
-      artist: {
-        name: "Pawani Kumari",
-        avatar: "https://randomuser.me/api/portraits/women/42.jpg",
-      },
-    },
-    {
-      post_id: 5,
-      title: "Jaffna Cultural Art Fair",
-      description:
-        "🎭 Explore the rich cultural diversity of Northern Sri Lanka through mixed media artworks. This exhibition features innovative pieces combining traditional Tamil art forms with contemporary techniques, celebrating our multicultural heritage.",
-      location: "Art District, Jaffna",
-      startDate: "2025-03-10",
-      endDate: "2025-03-12",
-      startTime: "09:30",
-      endTime: "18:30",
-      organizer: "Northern Arts Council",
-      category: "Cultural Heritage",
-      entryFee: "Free",
-      created_at: "2025-01-05T09:30:00Z",
-      likes: 15,
-      comments: 3,
-      views: 67,
-      verification_status: "pending",
-      artist: {
-        name: "Pawani Kumari",
-        avatar: "https://randomuser.me/api/portraits/women/42.jpg",
-      },
-    },
-    {
-      post_id: 6,
-      title: "Sri Lankan Art Education Summit",
-      description:
-        "✨ A comprehensive event combining educational workshops, panel discussions about Sri Lankan art history, and an exhibition featuring works by local art educators and students. Perfect for anyone interested in preserving and promoting our artistic traditions.",
-      location: "University of the Arts, Colombo",
-      startDate: "2025-05-15",
-      endDate: "2025-05-17",
-      startTime: "08:00",
-      endTime: "20:00",
-      organizer: "Sri Lanka Art Education Foundation",
-      category: "Educational",
-      entryFee: "LKR 3,000 (Full Event Access)",
-      created_at: "2025-01-03T16:20:00Z",
-      likes: 58,
-      comments: 23,
-      views: 312,
-      verification_status: "verified",
-      artist: {
-        name: "Pawani Kumari",
-        avatar: "https://randomuser.me/api/portraits/women/42.jpg",
-      },
-    },
-  ];
-
-  // Fetch user's posts - COMMENTED OUT FOR MOCK DATA
+  // Fetch user's posts
   useEffect(() => {
+    if (authLoading) return; // Wait for auth to finish loading
     const fetchPosts = async () => {
-      // Comment out authentication check for now
-      // if (!role || !userId || !token) {
-      //   console.warn("Missing authentication data. Redirecting to login.");
-      //   navigate("/login");
-      //   return;
-      // }
-
+      if (!role || !userId || !token) {
+        console.warn("Missing authentication data. Redirecting to login.");
+        navigate("/");
+        return;
+      }
       try {
-        // Comment out actual API call
-        // const API_URL = import.meta.env.VITE_API_URL;
-        // const response = await axios.get(
-        //   `${API_URL}/api/posts/${role}/${userId}`,
-        //   {
-        //     headers: {
-        //       Authorization: `Bearer ${token}`,
-        //     },
-        //   }
-        // );
-        // setPosts(response.data);
-
-        // Use mock data instead
-        setTimeout(() => {
-          setPosts(mockPosts);
-          setLoading(false);
-        }, 1000); // Simulate loading time
+        const API_URL = import.meta.env.VITE_API_URL;
+        // Fetch exhibition posts for the logged-in user from backend
+        const response = await axios.get(
+          `${API_URL}/api/buyer/exhibitions/user/${userId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setPosts(response.data);
+        setLoading(false);
       } catch (error) {
         console.error("Error fetching posts:", error);
-        // Set mock data for development
-        setPosts(mockPosts);
+        setPosts([]);
         setLoading(false);
       }
     };
 
     fetchPosts();
-  }, [role, userId, token, navigate, mockPosts]);
+  }, [role, userId, token, navigate, authLoading]);
 
   // Filter posts based on search term and status
   const filteredPosts = posts.filter((post) => {
@@ -225,7 +84,7 @@ const MyPosts = () => {
       post.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       post.location?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus =
-      filterStatus === "all" || post.verification_status === filterStatus;
+      filterStatus === "all" || post.status === filterStatus;
     return matchesSearch && matchesStatus;
   });
 
@@ -279,49 +138,59 @@ const MyPosts = () => {
 
   // Handle post actions
   const handleEdit = (postId) => {
-    const post = posts.find((p) => p.post_id === postId);
-    if (post?.verification_status !== "pending") {
+    const post = posts.find((p) => p.id === postId);
+    if (post?.status !== "pending") {
       alert("You can only edit posts that are pending review.");
       setShowDropdown(null);
       return;
     }
-
-    console.log("Edit post:", postId);
     setShowDropdown(null);
-    // Navigate to edit page or open edit modal
-    // You can navigate to an edit form or open a modal here
-    // navigate(`/edit-post/${postId}`);
     setEditingPost(post);
     setShowEditModal(true);
   };
 
-  const handleDelete = async (postId) => {
-    const post = posts.find((p) => p.post_id === postId);
-    if (post?.verification_status !== "pending") {
-      alert("You can only delete posts that are pending review.");
+  const handleDelete = (postId) => {
+    const post = posts.find((p) => p.id === postId);
+    if (post?.status !== "pending") {
+      setAlert({
+        type: "error",
+        message: "You can only delete posts that are pending review.",
+      });
       setShowDropdown(null);
       return;
     }
-
-    if (window.confirm("Are you sure you want to delete this pending post?")) {
-      try {
-        // Comment out actual API call
-        // const API_URL = import.meta.env.VITE_API_URL;
-        // await axios.delete(`${API_URL}/api/posts/${postId}`, {
-        //   headers: {
-        //     Authorization: `Bearer ${token}`,
-        //   },
-        // });
-
-        // Use mock deletion instead
-        setPosts(posts.filter((post) => post.post_id !== postId));
-        alert("Post deleted successfully!");
-      } catch (error) {
-        console.error("Error deleting post:", error);
-        alert("Failed to delete post. Please try again.");
-      }
-    }
     setShowDropdown(null);
+    setDeletingPostId(postId);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeletePost = async () => {
+    setDeleteLoading(true);
+    try {
+      const API_URL = import.meta.env.VITE_API_URL;
+      await axios.delete(`${API_URL}/api/buyer/exhibitions/${deletingPostId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setPosts(posts.filter((post) => post.id !== deletingPostId));
+      setAlert({ type: "success", message: "Post deleted successfully!" });
+    } catch (error) {
+      console.error("Error deleting post:", error);
+      setAlert({
+        type: "error",
+        message: "Failed to delete post. Please try again.",
+      });
+    }
+    setDeleteLoading(false);
+    setShowDeleteModal(false);
+    setDeletingPostId(null);
+  };
+
+  const cancelDeletePost = () => {
+    setShowDeleteModal(false);
+    setDeletingPostId(null);
+    setDeleteLoading(false);
   };
 
   const handleCloseModal = () => {
@@ -329,12 +198,31 @@ const MyPosts = () => {
     setEditingPost(null);
   };
 
-  const handleSavePost = (updatedPost) => {
-    setPosts((prevPosts) =>
-      prevPosts.map((post) =>
-        post.post_id === updatedPost.post_id ? updatedPost : post
-      )
-    );
+  const handleSavePost = async (updatedPost) => {
+    try {
+      const API_URL = import.meta.env.VITE_API_URL;
+      const response = await axios.put(
+        `${API_URL}/api/buyer/exhibitions/${updatedPost.id}`,
+        updatedPost,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      // Update local state with backend response
+      setPosts((prevPosts) =>
+        prevPosts.map((post) =>
+          post.id === updatedPost.id ? response.data : post
+        )
+      );
+      setAlert({ type: "success", message: "Post updated successfully!" });
+    } catch (error) {
+      setAlert({
+        type: "error",
+        message: "Failed to update post. Please try again.",
+      });
+    }
   };
 
   if (loading) {
@@ -387,10 +275,7 @@ const MyPosts = () => {
                 <div>
                   <p className="text-sm text-[#7f5539]/60 mb-1">Verified</p>
                   <p className="text-3xl font-bold text-green-600">
-                    {
-                      posts.filter((p) => p.verification_status === "verified")
-                        .length
-                    }
+                    {posts.filter((p) => p.status === "verified").length}
                   </p>
                 </div>
                 <div className="p-3 bg-green-100 rounded-full">
@@ -403,10 +288,7 @@ const MyPosts = () => {
                 <div>
                   <p className="text-sm text-[#7f5539]/60 mb-1">Pending</p>
                   <p className="text-3xl font-bold text-yellow-600">
-                    {
-                      posts.filter((p) => p.verification_status === "pending")
-                        .length
-                    }
+                    {posts.filter((p) => p.status === "pending").length}
                   </p>
                 </div>
                 <div className="p-3 bg-yellow-100 rounded-full">
@@ -494,14 +376,12 @@ const MyPosts = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {filteredPosts.map((post) => {
-                const verificationInfo = getVerificationStatus(
-                  post.verification_status
-                );
+                const verificationInfo = getVerificationStatus(post.status);
                 const StatusIcon = verificationInfo.icon;
 
                 return (
                   <div
-                    key={post.post_id}
+                    key={post.id}
                     className="bg-white rounded-xl shadow-sm border border-[#fdf9f4]/20 overflow-hidden hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
                   >
                     <div className="p-6">
@@ -522,28 +402,26 @@ const MyPosts = () => {
                           <button
                             onClick={() =>
                               setShowDropdown(
-                                showDropdown === post.post_id
-                                  ? null
-                                  : post.post_id
+                                showDropdown === post.id ? null : post.id
                               )
                             }
                             className="text-[#7f5539]/60 hover:text-[#7f5539] p-1 rounded-full hover:bg-[#fdf9f4] transition-colors"
                           >
                             <MoreVertical className="w-5 h-5" />
                           </button>
-                          {showDropdown === post.post_id && (
+                          {showDropdown === post.id && (
                             <div className="absolute right-0 top-8 bg-white border border-[#7f5539]/20 rounded-lg shadow-lg py-2 min-w-[120px] z-10">
-                              {post.verification_status === "pending" ? (
+                              {post.status === "pending" ? (
                                 <>
                                   <button
-                                    onClick={() => handleEdit(post.post_id)}
+                                    onClick={() => handleEdit(post.id)}
                                     className="w-full text-left px-4 py-2 text-sm text-[#7f5539] hover:bg-[#fdf9f4] transition-colors flex items-center space-x-2"
                                   >
                                     <Edit3 className="w-4 h-4" />
                                     <span>Edit</span>
                                   </button>
                                   <button
-                                    onClick={() => handleDelete(post.post_id)}
+                                    onClick={() => handleDelete(post.id)}
                                     className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center space-x-2"
                                   >
                                     <Trash2 className="w-4 h-4" />
@@ -556,7 +434,7 @@ const MyPosts = () => {
                                     No actions available
                                   </p>
                                   <p className="text-xs">
-                                    {post.verification_status === "verified"
+                                    {post.status === "verified"
                                       ? "Verified posts cannot be modified"
                                       : "Rejected posts cannot be modified"}
                                   </p>
@@ -577,7 +455,7 @@ const MyPosts = () => {
                         {post.description}
                       </p>
 
-                      {/* Exhibition Details */}
+                      {/* Exhibition Details - show all available details */}
                       <div className="space-y-3 mb-6">
                         {/* Location */}
                         <div className="flex items-center space-x-2">
@@ -624,6 +502,70 @@ const MyPosts = () => {
                             {post.entryFee}
                           </span>
                         </div>
+
+                        {/* Organizer */}
+                        {post.organizer && (
+                          <div className="flex items-center space-x-2">
+                            <div className="p-1 bg-[#7f5539]/10 rounded">
+                              <span className="text-xs font-medium text-[#7f5539]">
+                                👤
+                              </span>
+                            </div>
+                            <span className="text-sm text-[#7f5539]/70 font-medium">
+                              Organizer: {post.organizer}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Contact Info */}
+                        {post.contact && (
+                          <div className="flex items-center space-x-2">
+                            <div className="p-1 bg-[#7f5539]/10 rounded">
+                              <span className="text-xs font-medium text-[#7f5539]">
+                                📞
+                              </span>
+                            </div>
+                            <span className="text-sm text-[#7f5539]/70 font-medium">
+                              Contact: {post.contact}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Website */}
+                        {post.website && (
+                          <div className="flex items-center space-x-2">
+                            <div className="p-1 bg-[#7f5539]/10 rounded">
+                              <span className="text-xs font-medium text-[#7f5539]">
+                                🌐
+                              </span>
+                            </div>
+                            <span className="text-sm text-[#7f5539]/70 font-medium">
+                              Website:{" "}
+                              <a
+                                href={post.website}
+                                className="underline text-blue-600"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                {post.website}
+                              </a>
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Any other details */}
+                        {post.additionalDetails && (
+                          <div className="flex items-center space-x-2">
+                            <div className="p-1 bg-[#7f5539]/10 rounded">
+                              <span className="text-xs font-medium text-[#7f5539]">
+                                📝
+                              </span>
+                            </div>
+                            <span className="text-sm text-[#7f5539]/70 font-medium">
+                              {post.additionalDetails}
+                            </span>
+                          </div>
+                        )}
                       </div>
 
                       {/* Posted Date */}
@@ -632,33 +574,6 @@ const MyPosts = () => {
                         <span className="text-sm text-[#7f5539]/60">
                           Posted {formatDate(post.created_at)}
                         </span>
-                      </div>
-
-                      {/* Post Stats */}
-                      <div className="flex items-center justify-between pt-4 border-t border-[#fdf9f4]/50">
-                        <div className="flex items-center space-x-6">
-                          <div className="flex items-center space-x-1">
-                            <Heart className="w-4 h-4 text-red-500" />
-                            <span className="text-sm text-[#7f5539]/60 font-medium">
-                              {post.likes || 0}
-                            </span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <MessageCircle className="w-4 h-4 text-blue-500" />
-                            <span className="text-sm text-[#7f5539]/60 font-medium">
-                              {post.comments || 0}
-                            </span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <Eye className="w-4 h-4 text-green-500" />
-                            <span className="text-sm text-[#7f5539]/60 font-medium">
-                              {post.views || 0}
-                            </span>
-                          </div>
-                        </div>
-                        <button className="text-[#7f5539]/60 hover:text-[#7f5539] p-2 rounded-full hover:bg-[#fdf9f4] transition-colors">
-                          <Share2 className="w-4 h-4" />
-                        </button>
                       </div>
                     </div>
                   </div>
@@ -676,6 +591,27 @@ const MyPosts = () => {
           post={editingPost}
           onClose={handleCloseModal}
           onSave={handleSavePost}
+        />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        open={showDeleteModal}
+        title="Delete Post"
+        message="Are you sure you want to delete this post? This action cannot be undone."
+        onConfirm={confirmDeletePost}
+        onCancel={cancelDeletePost}
+        confirmText="Delete"
+        cancelText="Cancel"
+        loading={deleteLoading}
+      />
+
+      {/* Alert Message */}
+      {alert.message && (
+        <AlertMessage
+          type={alert.type}
+          message={alert.message}
+          onClose={() => setAlert({ type: "", message: "" })}
         />
       )}
     </div>

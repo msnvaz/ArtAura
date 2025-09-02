@@ -10,6 +10,7 @@ export const AuthProvider = ({ children }) => {
     role: null,
     userId: null,
   });
+  const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -19,6 +20,7 @@ export const AuthProvider = ({ children }) => {
     if (token && role && userId) {
       setAuth({ token, role, userId });
     }
+    setAuthLoading(false);
   }, []);
 
   const login = (token, role, userId) => {
@@ -37,7 +39,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ ...auth, login, logout }}>
+    <AuthContext.Provider value={{ ...auth, login, logout, authLoading }}>
       {children}
     </AuthContext.Provider>
   );

@@ -49,7 +49,7 @@ const Navbar = ({ onToggleSidebar }) => {
                 href="/shop-products"
                 className="text-white font-medium hover:text-[#87CEEB] transition-colors"
               >
-                Shop
+                Artworks
               </a>
               <a
                 href="/artists"
@@ -131,7 +131,7 @@ const Navbar = ({ onToggleSidebar }) => {
               />
             </div>
             <a
-              href="/login"
+              href="/"
               className={`w-full flex justify-center items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl transition ${
                 isSignedIn
                   ? "bg-red-600 hover:bg-red-700"

@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { adminArtworkApi } from '../../services/adminArtworkApi';
 
 const AdminArtworkTestComponent = () => {
+  // Get API URL from environment variable
+  const API_URL = import.meta.env.VITE_API_URL;
+
   const [testResult, setTestResult] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -13,7 +16,7 @@ const AdminArtworkTestComponent = () => {
   const testConnection = async () => {
     setLoading(true);
     setTestResult('Testing connection...');
-    
+
     try {
       // Test basic connection
       const response = await adminArtworkApi.getAllArtworks({ page: 0, size: 5 });
@@ -30,7 +33,7 @@ const AdminArtworkTestComponent = () => {
   const testStatistics = async () => {
     setLoading(true);
     setTestResult('Testing statistics endpoint...');
-    
+
     try {
       const stats = await adminArtworkApi.getArtworkStatistics();
       setTestResult(`Statistics loaded successfully:\n${JSON.stringify(stats, null, 2)}`);
@@ -46,15 +49,15 @@ const AdminArtworkTestComponent = () => {
   const testDirectFetch = async () => {
     setLoading(true);
     setTestResult('Testing direct fetch to backend...');
-    
+
     try {
-      const response = await fetch('http://localhost:8081/api/admin/artworks?page=0&size=5', {
+      const response = await fetch(`${API_URL}/api/admin/artworks?page=0&size=5`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setTestResult(`Direct fetch success!\nStatus: ${response.status}\nData: ${JSON.stringify(data, null, 2)}`);
@@ -72,7 +75,7 @@ const AdminArtworkTestComponent = () => {
   return (
     <div className="p-6 bg-white rounded-lg shadow-sm border border-yellow-200">
       <h3 className="text-xl font-bold mb-4 text-yellow-800">🧪 Admin Artwork API Test (Development Only)</h3>
-      
+
       <div className="space-y-4">
         <div className="flex gap-3 flex-wrap">
           <button
@@ -81,7 +84,7 @@ const AdminArtworkTestComponent = () => {
           >
             Check Auth Token
           </button>
-          
+
           <button
             onClick={testDirectFetch}
             disabled={loading}
@@ -89,7 +92,7 @@ const AdminArtworkTestComponent = () => {
           >
             {loading ? 'Testing...' : 'Test Direct Fetch'}
           </button>
-          
+
           <button
             onClick={testConnection}
             disabled={loading}
@@ -97,7 +100,7 @@ const AdminArtworkTestComponent = () => {
           >
             {loading ? 'Testing...' : 'Test Artworks Endpoint'}
           </button>
-          
+
           <button
             onClick={testStatistics}
             disabled={loading}
@@ -106,7 +109,7 @@ const AdminArtworkTestComponent = () => {
             {loading ? 'Testing...' : 'Test Statistics Endpoint'}
           </button>
         </div>
-        
+
         {testResult && (
           <div className="p-4 bg-gray-50 rounded border">
             <pre className="text-sm whitespace-pre-wrap overflow-auto max-h-96">{testResult}</pre>

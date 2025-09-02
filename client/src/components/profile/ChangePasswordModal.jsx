@@ -4,7 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import axios from "axios";
 
 const ChangePasswordModal = ({ isOpen, onClose }) => {
-  const { auth } = useAuth();
+  const { token, userId } = useAuth();
   const [formData, setFormData] = useState({
     currentPassword: "",
     newPassword: "",
@@ -65,36 +65,37 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
     e.preventDefault();
     setLoading(true);
     setError("");
+    setSuccess(false);
 
     try {
-      // Comment out API call since backend is not ready
-      // const API_URL = import.meta.env.VITE_API_URL;
-      // const response = await axios.put(`${API_URL}/api/user/change-password`, {
-      //   currentPassword,
-      //   newPassword
-      // }, {
-      //   headers: {
-      //     Authorization: `Bearer ${auth.token}`,
-      //     'Content-Type': 'application/json'
-      //   }
-      // });
-
-      // For demo purposes, simulate success
-      if (formData.currentPassword && formData.newPassword) {
-        setFormData({
-          currentPassword: "",
-          newPassword: "",
-          confirmPassword: "",
-        });
+      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+      const response = await axios.put(
+        `${API_URL}/api/users/${userId}/change-password`,
+        {
+          currentPassword: formData.currentPassword,
+          newPassword: formData.newPassword,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      setSuccess(true);
+      setFormData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+      setTimeout(() => {
+        setSuccess(false);
         onClose();
-        // You could show a success message here
-        alert("Password changed successfully!");
-      } else {
-        setError("Please fill in all fields");
-      }
+      }, 1500);
     } catch (error) {
-      console.error("Error changing password:", error);
-      setError("Failed to change password. Please try again.");
+      setError(
+        error.response?.data || "Failed to change password. Please try again."
+      );
     } finally {
       setLoading(false);
     }
