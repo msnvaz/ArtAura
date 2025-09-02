@@ -11,6 +11,7 @@ public class ArtauraApplication {
 		// Load .env file
 		Dotenv dotenv = Dotenv.configure()
 				.directory("./")
+
 				.ignoreIfMissing()
 				.load();
 		

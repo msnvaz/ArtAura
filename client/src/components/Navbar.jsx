@@ -176,7 +176,7 @@ function Navbar() {
 
             {/* Center Section - Desktop Navigation Links with increased spacing */}
             <div className="hidden md:flex items-center space-x-6">
-              {mainLinks.map(({ name, path, icon: Icon }) => (
+              {mainLinks.map(({ name, path, icon }) => (
                 <NavLink
                   key={name}
                   to={path}
@@ -189,7 +189,7 @@ function Navbar() {
                     }`
                   }
                 >
-                  <Icon className="h-4 w-4" />
+                  {icon && <icon className="h-4 w-4" />}
                   <span className="text-sm">{name}</span>
                   {/* Beautiful hover underline */}
                   <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-gradient-to-r from-[#FFD95A] to-[#D87C5A] transition-all duration-300 ${
@@ -319,7 +319,7 @@ function Navbar() {
           <div className="md:hidden bg-[#362625] border-t border-[#FFD95A]/30">
             <div className="px-2 py-3 space-y-1">
               {/* Mobile Navigation Links */}
-              {mainLinks.map(({ name, path, icon: Icon }) => (
+              {mainLinks.map(({ name, path}) => (
                 <NavLink
                   key={name}
                   to={path}

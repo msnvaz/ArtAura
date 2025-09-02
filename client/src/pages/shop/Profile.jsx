@@ -53,123 +53,125 @@ const ProfileDetails = () => {
 
   const [editData, setEditData] = useState(profileData);
 
-  useEffect(() => {
-    const fetchShopProfile = async () => {
-      try {
-        setLoading(true);
-        const token = localStorage.getItem("token");
-        let shopId = localStorage.getItem("shopId");
+  // Move fetchShopProfile outside useEffect so it can be called from anywhere
+  const fetchShopProfile = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+      let shopId = localStorage.getItem("shopId");
+      
+      // Debug: Check what's in localStorage
+      console.log("LocalStorage contents:", {
+        token: localStorage.getItem("token"),
+        shopId: localStorage.getItem("shopId"),
+        userId: localStorage.getItem("userId"),
+        userEmail: localStorage.getItem("userEmail")
+      });
+      
+      // If no shopId, try to get it using email
+      if (!shopId) {
+        const userEmail = localStorage.getItem("userEmail");
         
-        // Debug: Check what's in localStorage
-        console.log("LocalStorage contents:", {
-          token: localStorage.getItem("token"),
-          shopId: localStorage.getItem("shopId"),
-          userId: localStorage.getItem("userId"),
-          userEmail: localStorage.getItem("userEmail")
-        });
-        
-        // If no shopId, try to get it using email
-        if (!shopId) {
-          const userEmail = localStorage.getItem("userEmail");
-          
-          if (!userEmail) {
-            throw new Error("No shop ID or email found. Please log in again.");
-          }
-          
-          console.log("No shopId found, trying to fetch using email:", userEmail);
-          
-          // Try to get shop by email first
-          const emailResponse = await fetch(`http://localhost:8081/api/shop/profile?email=${encodeURIComponent(userEmail)}`, {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          });
-          
-          if (emailResponse.ok) {
-            const shopData = await emailResponse.json();
-            shopId = shopData.shopId;
-            // Store the shopId for future use
-            localStorage.setItem("shopId", shopId);
-            console.log("Found and stored shopId:", shopId);
-          } else {
-            throw new Error("Shop not found for your email. Please contact support.");
-          }
+        if (!userEmail) {
+          throw new Error("No shop ID or email found. Please log in again.");
         }
         
-        console.log("Fetching profile for shop ID:", shopId);
-
-        const response = await fetch(`http://localhost:8081/api/shop/${shopId}`, {
+        console.log("No shopId found, trying to fetch using email:", userEmail);
+        
+        // Try to get shop by email first
+        const emailResponse = await fetch(`http://localhost:8081/api/shop/profile?email=${encodeURIComponent(userEmail)}`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
         });
-
-        console.log("Response status:", response.status);
-        console.log("Response URL:", response.url);
-
-        if (!response.ok) {
-          if (response.status === 404) {
-            throw new Error(`Shop not found for ID: ${shopId}. Please contact support.`);
-          } else if (response.status === 500) {
-            const errorText = await response.text();
-            console.error("Server error:", errorText);
-            throw new Error(`Server error: ${errorText}`);
-          }
-          throw new Error(`HTTP error! status: ${response.status}`);
+        
+        if (emailResponse.ok) {
+          const shopData = await emailResponse.json();
+          shopId = shopData.shopId;
+          // Store the shopId for future use
+          localStorage.setItem("shopId", shopId);
+          console.log("Found and stored shopId:", shopId);
+        } else {
+          throw new Error("Shop not found for your email. Please contact support.");
         }
-
-        const data = await response.json();
-        console.log("Received data from database:", data);
-        
-        // Verify we got the correct shop
-        if (data.shopId != shopId) {
-          console.warn(`Warning: Expected shop ID ${shopId}, but got ${data.shopId}`);
-        }
-        
-        // Make sure all fields exist, provide defaults if needed
-        const formattedData = {
-          shopId: data.shopId || null,
-          userId: data.userId || null,
-          shopName: data.shopName || '',
-          ownerName: data.ownerName || '',
-          email: data.email || '',
-          contactNo: data.contactNo || '',
-          businessType: data.businessType || '',
-          businessLicense: data.businessLicense || '',
-          taxId: data.taxId || '',
-          description: data.description || '',
-          status: data.status || '',
-          agreedTerms: data.agreedTerms || false,
-          createdAt: data.createdAt || null,
-          avatar: '/src/assets/user.png',
-          joinDate: data.createdAt ? new Date(data.createdAt).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-          }) : 'N/A'
-        };
-        
-        console.log("Formatted data for shop ID", shopId, ":", formattedData);
-        
-        setProfileData(formattedData);
-        setEditData(formattedData);
-        setError(null);
-        
-        // Show success message with shop ID
-        showToast(`✅ Profile loaded for Shop ID: ${shopId}`, "success", 2000);
-        
-      } catch (err) {
-        console.error("Error fetching shop profile:", err);
-        setError(err.message);
-        showToast(`❌ ${err.message}`, "error", 4000);
-      } finally {
-        setLoading(false);
       }
-    };
+      
+      console.log("Fetching profile for shop ID:", shopId);
+
+      const response = await fetch(`http://localhost:8081/api/shop/${shopId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      console.log("Response status:", response.status);
+      console.log("Response URL:", response.url);
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error(`Shop not found for ID: ${shopId}. Please contact support.`);
+        } else if (response.status === 500) {
+          const errorText = await response.text();
+          console.error("Server error:", errorText);
+          throw new Error(`Server error: ${errorText}`);
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("Received data from database:", data);
+      
+      // Verify we got the correct shop
+      if (data.shopId != shopId) {
+        console.warn(`Warning: Expected shop ID ${shopId}, but got ${data.shopId}`);
+      }
+      
+      // Make sure all fields exist, provide defaults if needed
+      const formattedData = {
+        shopId: data.shopId || null,
+        userId: data.userId || null,
+        shopName: data.shopName || '',
+        ownerName: data.ownerName || '',
+        email: data.email || '',
+        contactNo: data.contactNo || '',
+        businessType: data.businessType || '',
+        businessLicense: data.businessLicense || '',
+        taxId: data.taxId || '',
+        description: data.description || '',
+        status: data.status || '',
+        agreedTerms: data.agreedTerms || false,
+        createdAt: data.createdAt || null,
+        avatar: '/src/assets/user.png',
+        joinDate: data.createdAt ? new Date(data.createdAt).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        }) : 'N/A'
+      };
+      
+      console.log("Formatted data for shop ID", shopId, ":", formattedData);
+      
+      setProfileData(formattedData);
+      setEditData(formattedData);
+      setError(null);
+      
+      // Show success message with shop ID
+      showToast(`✅ Profile loaded for Shop ID: ${shopId}`, "success", 2000);
+      
+    } catch (err) {
+      console.error("Error fetching shop profile:", err);
+      setError(err.message);
+      showToast(`❌ ${err.message}`, "error", 4000);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchShopProfile();
   }, []); // Only run once on mount
 
