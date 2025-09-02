@@ -92,7 +92,7 @@ const Toast = ({ message, type, isVisible, onClose, duration = 2500 }) => {
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes slide-in {
           from {
             transform: translateX(100%);

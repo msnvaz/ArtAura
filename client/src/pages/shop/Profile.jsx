@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '../../components/Navbar';
 import Toast from '../../components/Toast';
 import { useToast } from '../../hooks/useToast';
@@ -36,6 +36,7 @@ const ProfileDetails = () => {
   
   const [profileData, setProfileData] = useState({
     shopId: null,
+    userId: null,
     shopName: '',
     ownerName: '',
     email: '',
@@ -45,133 +46,132 @@ const ProfileDetails = () => {
     taxId: '',
     description: '',
     status: '',
+    agreedTerms: false,
     createdAt: null,
     avatar: '/src/assets/user.png'
   });
 
   const [editData, setEditData] = useState(profileData);
 
-  // Wrap fetchShopProfile in useCallback to fix dependency issues
-  const fetchShopProfile = useCallback(async () => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem("token");
-      
-      // Get shopId from localStorage
-      let shopId = localStorage.getItem("shopId");
-      
-      // Debug: Check what's in localStorage
-      console.log("LocalStorage contents:", {
-        token: localStorage.getItem("token"),
-        shopId: localStorage.getItem("shopId"),
-        userId: localStorage.getItem("userId"),
-        userEmail: localStorage.getItem("userEmail")
-      });
-      
-      // If no shopId, try to get it using email
-      if (!shopId) {
-        const userEmail = localStorage.getItem("userEmail");
+  useEffect(() => {
+    const fetchShopProfile = async () => {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem("token");
+        let shopId = localStorage.getItem("shopId");
         
-        if (!userEmail) {
-          throw new Error("No shop ID or email found. Please log in again.");
+        // Debug: Check what's in localStorage
+        console.log("LocalStorage contents:", {
+          token: localStorage.getItem("token"),
+          shopId: localStorage.getItem("shopId"),
+          userId: localStorage.getItem("userId"),
+          userEmail: localStorage.getItem("userEmail")
+        });
+        
+        // If no shopId, try to get it using email
+        if (!shopId) {
+          const userEmail = localStorage.getItem("userEmail");
+          
+          if (!userEmail) {
+            throw new Error("No shop ID or email found. Please log in again.");
+          }
+          
+          console.log("No shopId found, trying to fetch using email:", userEmail);
+          
+          // Try to get shop by email first
+          const emailResponse = await fetch(`http://localhost:8081/api/shop/profile?email=${encodeURIComponent(userEmail)}`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          
+          if (emailResponse.ok) {
+            const shopData = await emailResponse.json();
+            shopId = shopData.shopId;
+            // Store the shopId for future use
+            localStorage.setItem("shopId", shopId);
+            console.log("Found and stored shopId:", shopId);
+          } else {
+            throw new Error("Shop not found for your email. Please contact support.");
+          }
         }
         
-        console.log("No shopId found, trying to fetch using email:", userEmail);
-        
-        // Try to get shop by email first
-        const emailResponse = await fetch(`http://localhost:8081/api/shop/profile?email=${encodeURIComponent(userEmail)}`, {
+        console.log("Fetching profile for shop ID:", shopId);
+
+        const response = await fetch(`http://localhost:8081/api/shop/${shopId}`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
         });
+
+        console.log("Response status:", response.status);
+        console.log("Response URL:", response.url);
+
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error(`Shop not found for ID: ${shopId}. Please contact support.`);
+          } else if (response.status === 500) {
+            const errorText = await response.text();
+            console.error("Server error:", errorText);
+            throw new Error(`Server error: ${errorText}`);
+          }
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("Received data from database:", data);
         
-        if (emailResponse.ok) {
-          const shopData = await emailResponse.json();
-          shopId = shopData.shopId;
-          // Store the shopId for future use
-          localStorage.setItem("shopId", shopId);
-          console.log("Found and stored shopId:", shopId);
-        } else {
-          throw new Error("Shop not found for your email. Please contact support.");
+        // Verify we got the correct shop
+        if (data.shopId != shopId) {
+          console.warn(`Warning: Expected shop ID ${shopId}, but got ${data.shopId}`);
         }
+        
+        // Make sure all fields exist, provide defaults if needed
+        const formattedData = {
+          shopId: data.shopId || null,
+          userId: data.userId || null,
+          shopName: data.shopName || '',
+          ownerName: data.ownerName || '',
+          email: data.email || '',
+          contactNo: data.contactNo || '',
+          businessType: data.businessType || '',
+          businessLicense: data.businessLicense || '',
+          taxId: data.taxId || '',
+          description: data.description || '',
+          status: data.status || '',
+          agreedTerms: data.agreedTerms || false,
+          createdAt: data.createdAt || null,
+          avatar: '/src/assets/user.png',
+          joinDate: data.createdAt ? new Date(data.createdAt).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          }) : 'N/A'
+        };
+        
+        console.log("Formatted data for shop ID", shopId, ":", formattedData);
+        
+        setProfileData(formattedData);
+        setEditData(formattedData);
+        setError(null);
+        
+        // Show success message with shop ID
+        showToast(`✅ Profile loaded for Shop ID: ${shopId}`, "success", 2000);
+        
+      } catch (err) {
+        console.error("Error fetching shop profile:", err);
+        setError(err.message);
+        showToast(`❌ ${err.message}`, "error", 4000);
+      } finally {
+        setLoading(false);
       }
-      
-      console.log("Fetching profile for shop ID:", shopId);
-
-      const response = await fetch(`http://localhost:8081/api/shop/${shopId}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      console.log("Response status:", response.status);
-      console.log("Response URL:", response.url);
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error(`Shop not found for ID: ${shopId}. Please contact support.`);
-        } else if (response.status === 500) {
-          const errorText = await response.text();
-          console.error("Server error:", errorText);
-          throw new Error(`Server error: ${errorText}`);
-        }
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log("Received data from database:", data);
-      
-      // Verify we got the correct shop
-      if (data.shopId != shopId) {
-        console.warn(`Warning: Expected shop ID ${shopId}, but got ${data.shopId}`);
-      }
-      
-      // Make sure all fields exist, provide defaults if needed
-      const formattedData = {
-        shopId: data.shopId || null,
-        shopName: data.shopName || 'N/A',
-        ownerName: data.ownerName || 'N/A',
-        email: data.email || 'N/A',
-        contactNo: data.contactNo || 'N/A',
-        businessType: data.businessType || 'N/A',
-        businessLicense: data.businessLicense || 'N/A',
-        taxId: data.taxId || 'N/A',
-        description: data.description || 'No description available',
-        status: data.status || 'Active',
-        agreedTerms: data.agreedTerms || false,
-        avatar: '/src/assets/user.png',
-        joinDate: data.createdAt ? new Date(data.createdAt).toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        }) : 'N/A'
-      };
-      
-      console.log("Formatted data for shop ID", shopId, ":", formattedData);
-      
-      setProfileData(formattedData);
-      setEditData(formattedData);
-      setError(null);
-      
-      // Show success message with shop ID
-      showToast(`✅ Profile loaded for Shop ID: ${shopId}`, "success", 2000);
-      
-    } catch (err) {
-      console.error("Error fetching shop profile:", err);
-      setError(err.message);
-      showToast(`❌ ${err.message}`, "error", 4000);
-    } finally {
-      setLoading(false);
-    }
-  }, [showToast]); // showToast as dependency
-
-  useEffect(() => {
+    };
     fetchShopProfile();
-  }, [fetchShopProfile]); // fetchShopProfile as dependency
+  }, []); // Only run once on mount
 
   const handleEdit = () => {
     setIsEditing(true);
@@ -341,41 +341,6 @@ const ProfileDetails = () => {
               </>
             )}
           </div>
-        </div>
-
-        {/* Temporary Debug Info */}
-        <div className="mb-4 p-4 bg-yellow-100 rounded-lg">
-          <h4 className="font-bold">Debug Info:</h4>
-          <p>Shop ID in localStorage: {localStorage.getItem("shopId")}</p>
-          <p>Current Profile Shop ID: {profileData.shopId}</p>
-          <p>Shop Name: {profileData.shopName}</p>
-          <p>Loading: {loading.toString()}</p>
-          <p>Error: {error}</p>
-        </div>
-
-        {/* Add this in your JSX for debugging (remove after testing) */}
-        <div className="mb-4 p-4 bg-blue-100 rounded-lg">
-          <h4 className="font-bold">Test Actions:</h4>
-          <button 
-            onClick={() => {
-              localStorage.setItem("shopId", "8");
-              localStorage.setItem("userEmail", "test@example.com");
-              console.log("Set test data in localStorage");
-              window.location.reload();
-            }}
-            className="bg-blue-500 text-white px-4 py-2 rounded mr-2"
-          >
-            Set Test Shop ID 8
-          </button>
-          <button 
-            onClick={() => {
-              localStorage.clear();
-              console.log("Cleared localStorage");
-            }}
-            className="bg-red-500 text-white px-4 py-2 rounded"
-          >
-            Clear localStorage
-          </button>
         </div>
 
         {/* Main Content Grid */}

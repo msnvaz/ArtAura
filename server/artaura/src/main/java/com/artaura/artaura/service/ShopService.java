@@ -5,9 +5,7 @@ import com.artaura.artaura.dto.shop.ShopDTO;
 public interface ShopService {
     ShopDTO getShopById(Long shopId);
 
-    ShopDTO getShopByEmail(String email);
+    ShopDTO getShopByUserId(Long userId); // <-- Needed for profile fetch
 
     void updateShop(Long shopId, ShopDTO shop);
-
-    ShopDTO getShopByUserId(Long userId);
 }

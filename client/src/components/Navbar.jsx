@@ -54,36 +54,17 @@ function Navbar() {
       try {
         const token = localStorage.getItem("token");
         let shopId = localStorage.getItem("shopId");
-        
-        // If no shopId, try to get it using email
-        if (!shopId) {
-          const userEmail = localStorage.getItem("userEmail");
-          
-          if (!userEmail) {
-            console.error("No shop ID or email found");
-            setLoading(false);
-            return;
-          }
-          
-          console.log("Fetching shop by email:", userEmail);
-          
-          const emailResponse = await fetch(`http://localhost:8081/api/shop/profile?email=${encodeURIComponent(userEmail)}`, {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          });
-          
-          if (emailResponse.ok) {
-            const emailShopData = await emailResponse.json();
-            shopId = emailShopData.shopId;
-            localStorage.setItem("shopId", shopId);
-          } else {
-            console.error("Failed to fetch shop by email");
-            setLoading(false);
-            return;
-          }
+        let userId = localStorage.getItem("userId");
+        // If shopId is missing or 'null', use userId
+        if (!shopId || shopId === "null") {
+          shopId = userId;
+          localStorage.setItem("shopId", shopId);
+        }
+        // If still no valid shopId, abort fetch
+        if (!shopId || shopId === "null") {
+          console.error("No valid shopId found in localStorage.");
+          setLoading(false);
+          return;
         }
         
         console.log("Fetching shop data for ID:", shopId);

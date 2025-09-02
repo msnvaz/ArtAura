@@ -13,28 +13,16 @@ public class ShopServiceImpl implements ShopService {
 
     @Override
     public ShopDTO getShopById(Long shopId) {
-        try {
-            return shopDAO.findById(shopId);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to fetch shop: " + e.getMessage());
-        }
+        return shopDAO.findById(shopId);
     }
 
     @Override
-    public ShopDTO getShopByEmail(String email) {
-        try {
-            return shopDAO.findByEmail(email);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to fetch shop: " + e.getMessage());
-        }
+    public ShopDTO getShopByUserId(Long userId) {
+        return shopDAO.findByUserId(userId);
     }
 
     @Override
     public void updateShop(Long shopId, ShopDTO shop) {
-        try {
-            shopDAO.updateShop(shopId, shop);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to update shop: " + e.getMessage());
-        }
+        shopDAO.updateShop(shopId, shop);
     }
 }

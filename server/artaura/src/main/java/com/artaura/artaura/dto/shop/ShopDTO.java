@@ -17,14 +17,13 @@ public class ShopDTO {
     private String businessLicense;
     private String taxId;
     private String description;
-    private Boolean agreedTerms;
     private String status;
-    private LocalDateTime createdAt;
+    private Boolean agreedTerms;
+    private Timestamp createdAt;
 
     // Default constructor
     public ShopDTO() {
     }
-    
 
     // Getters and Setters
     public Long getShopId() {
@@ -47,7 +46,7 @@ public class ShopDTO {
     public ShopDTO(Long shopId, String shopName, String ownerName, String email,
             String contactNo, String businessType, String businessLicense,
             String taxId, String description, Boolean agreedTerms,
-            String status, LocalDateTime createdAt) {
+            String status, Timestamp createdAt) {
         this.shopId = shopId;
         this.shopName = shopName;
         this.ownerName = ownerName;
@@ -62,12 +61,9 @@ public class ShopDTO {
         this.createdAt = createdAt;
     }
 
-
     public void setCreatedAt(Timestamp timestamp) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'setCreatedAt'");
+        this.createdAt = timestamp;
     }
-
 
     public void setCreatedAt(LocalDateTime localDateTime) {
         // TODO Auto-generated method stub
