@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
-import Navbar from '../../components/Navbar'; // Changed import
+import React, { useState, useEffect } from 'react';
+import Navbar from '../../components/Navbar';
+import Toast from '../../components/Toast';
+import { useToast } from '../../hooks/useToast';
 import {
   User,
   Mail,
@@ -18,33 +20,203 @@ import {
   EyeOff,
   Palette,
   Award,
-  Star
+  Star,
+  Building,
+  CreditCard,
+  FileText,
+  Briefcase
 } from 'lucide-react';
 
 const ProfileDetails = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [showDeactivateModal, setShowDeactivateModal] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const { toast, showToast, hideToast } = useToast();
+  
   const [profileData, setProfileData] = useState({
-    name: 'Sarah Johnson',
-    email: 'sarah.johnson@artshop.com',
-    phone: '+1 (555) 123-4567',
-    address: '123 Art Street, Creative City, CA 90210',
-    joinDate: 'March 15, 2022',
-    role: 'Shop Owner',
-    bio: 'Passionate about bringing art supplies to creative minds. Running this shop for over 5 years with dedication to quality and customer satisfaction.',
+    shopId: null,
+    userId: null,
+    shopName: '',
+    ownerName: '',
+    email: '',
+    contactNo: '',
+    businessType: '',
+    businessLicense: '',
+    taxId: '',
+    description: '',
+    status: '',
+    agreedTerms: false,
+    createdAt: null,
     avatar: '/src/assets/user.png'
   });
 
   const [editData, setEditData] = useState(profileData);
+
+  // Move fetchShopProfile outside useEffect so it can be called from anywhere
+  const fetchShopProfile = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+      let shopId = localStorage.getItem("shopId");
+      
+      // Debug: Check what's in localStorage
+      console.log("LocalStorage contents:", {
+        token: localStorage.getItem("token"),
+        shopId: localStorage.getItem("shopId"),
+        userId: localStorage.getItem("userId"),
+        userEmail: localStorage.getItem("userEmail")
+      });
+      
+      // If no shopId, try to get it using email
+      if (!shopId) {
+        const userEmail = localStorage.getItem("userEmail");
+        
+        if (!userEmail) {
+          throw new Error("No shop ID or email found. Please log in again.");
+        }
+        
+        console.log("No shopId found, trying to fetch using email:", userEmail);
+        
+        // Try to get shop by email first
+        const emailResponse = await fetch(`http://localhost:8081/api/shop/profile?email=${encodeURIComponent(userEmail)}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        
+        if (emailResponse.ok) {
+          const shopData = await emailResponse.json();
+          shopId = shopData.shopId;
+          // Store the shopId for future use
+          localStorage.setItem("shopId", shopId);
+          console.log("Found and stored shopId:", shopId);
+        } else {
+          throw new Error("Shop not found for your email. Please contact support.");
+        }
+      }
+      
+      console.log("Fetching profile for shop ID:", shopId);
+
+      const response = await fetch(`http://localhost:8081/api/shop/${shopId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      console.log("Response status:", response.status);
+      console.log("Response URL:", response.url);
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error(`Shop not found for ID: ${shopId}. Please contact support.`);
+        } else if (response.status === 500) {
+          const errorText = await response.text();
+          console.error("Server error:", errorText);
+          throw new Error(`Server error: ${errorText}`);
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("Received data from database:", data);
+      
+      // Verify we got the correct shop
+      if (data.shopId != shopId) {
+        console.warn(`Warning: Expected shop ID ${shopId}, but got ${data.shopId}`);
+      }
+      
+      // Make sure all fields exist, provide defaults if needed
+      const formattedData = {
+        shopId: data.shopId || null,
+        userId: data.userId || null,
+        shopName: data.shopName || '',
+        ownerName: data.ownerName || '',
+        email: data.email || '',
+        contactNo: data.contactNo || '',
+        businessType: data.businessType || '',
+        businessLicense: data.businessLicense || '',
+        taxId: data.taxId || '',
+        description: data.description || '',
+        status: data.status || '',
+        agreedTerms: data.agreedTerms || false,
+        createdAt: data.createdAt || null,
+        avatar: '/src/assets/user.png',
+        joinDate: data.createdAt ? new Date(data.createdAt).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        }) : 'N/A'
+      };
+      
+      console.log("Formatted data for shop ID", shopId, ":", formattedData);
+      
+      setProfileData(formattedData);
+      setEditData(formattedData);
+      setError(null);
+      
+      // Show success message with shop ID
+      showToast(`✅ Profile loaded for Shop ID: ${shopId}`, "success", 2000);
+      
+    } catch (err) {
+      console.error("Error fetching shop profile:", err);
+      setError(err.message);
+      showToast(`❌ ${err.message}`, "error", 4000);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchShopProfile();
+  }, []); // Only run once on mount
 
   const handleEdit = () => {
     setIsEditing(true);
     setEditData(profileData);
   };
 
-  const handleSave = () => {
-    setProfileData(editData);
-    setIsEditing(false);
+  const handleSave = async () => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const updateData = {
+        shopName: editData.shopName,
+        ownerName: editData.ownerName,
+        email: editData.email,
+        contactNo: editData.contactNo,
+        businessType: editData.businessType,
+        businessLicense: editData.businessLicense,
+        taxId: editData.taxId,
+        description: editData.description
+      };
+
+      const response = await fetch(`http://localhost:8081/api/shop/update/${profileData.shopId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(updateData),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        showToast(`❌ ${error.message || "Failed to update profile"}`, "error", 3000);
+        return;
+      }
+
+      setProfileData(editData);
+      setIsEditing(false);
+      showToast("✅ Profile updated successfully!", "update", 2500);
+    } catch (err) {
+      console.error("Error updating profile:", err);
+      showToast("❌ Server error. Please try again later.", "error", 3000);
+    }
   };
 
   const handleCancel = () => {
@@ -55,41 +227,84 @@ const ProfileDetails = () => {
   const handleDeactivate = () => {
     setShowDeactivateModal(false);
     // Handle deactivation logic here
-    alert('Profile deactivated successfully');
+    showToast("⚠️ Profile deactivated successfully", "delete", 2500);
   };
 
   const stats = [
     {
-      label: 'Total Orders',
-      value: '1,247',
+      label: 'Shop Status',
+      value: profileData.status || 'Active',
       icon: Award,
+      color: profileData.status === 'Active' ? 'bg-[#66bb6a]' : 'bg-[#ff9800]',
+      textColor: profileData.status === 'Active' ? 'text-[#2e7d32]' : 'text-[#f57c00]'
+    },
+    {
+      label: 'Business Type',
+      value: profileData.businessType || 'N/A',
+      icon: Briefcase,
       color: 'bg-[#D87C5A]',
       textColor: 'text-[#D87C5A]'
     },
     {
-      label: 'Customer Rating',
-      value: '4.9/5',
-      icon: Star,
+      label: 'Member Since',
+      value: profileData.joinDate || 'N/A',
+      icon: Calendar,
       color: 'bg-[#FFD95A]',
       textColor: 'text-[#bfa100]'
-    },
-    {
-      label: 'Years Active',
-      value: '5+',
-      icon: Calendar,
-      color: 'bg-[#66bb6a]',
-      textColor: 'text-[#2e7d32]'
     }
   ];
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="pt-6 px-6">
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#D87C5A]"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="pt-6 px-6">
+          <div className="text-center text-red-600">
+            <p>Error: {error}</p>
+            <button 
+              onClick={fetchShopProfile}
+              className="mt-4 bg-[#D87C5A] text-white px-4 py-2 rounded-lg hover:bg-[#c06949]"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar /> {/* Use Navbar instead of Sidebar */}
-      <div className="pt-6 px-6"> {/* Add top padding instead of left margin */}
+      <Navbar />
+      
+      {/* Toast Notification */}
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={hideToast}
+        duration={toast.duration}
+      />
+      
+      <div className="pt-6 px-6">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
           <div>
-            
+            <h1 className="text-3xl font-bold text-[#5D3A00] mb-2">Shop Profile</h1>
+            <p className="text-[#D87C5A] font-medium">{profileData.shopName}</p>
           </div>
           <div className="flex gap-3">
             {!isEditing ? (
@@ -120,7 +335,7 @@ const ProfileDetails = () => {
                 </button>
                 <button
                   onClick={handleCancel}
-                  className="flex items-center gap-2 text-[#5D3A00] border border-[#FFE4D6] focus:ring-0 outline-none rounded-lg hover:bg-[#FFF5E1] s px-6 py-3   transform hover:scale-105 transition-all duration-300"
+                  className="flex items-center gap-2 text-[#5D3A00] border border-[#FFE4D6] focus:ring-0 outline-none rounded-lg hover:bg-[#FFF5E1] px-6 py-3 transform hover:scale-105 transition-all duration-300"
                 >
                   <X className="w-4 h-4" />
                   Cancel
@@ -149,8 +364,8 @@ const ProfileDetails = () => {
                   )}
                 </div>
                 
-                <h2 className="text-xl font-bold text-[#5D3A00] mb-1">{profileData.name}</h2>
-                <p className="text-[#D87C5A] font-medium mb-4">{profileData.role}</p>
+                <h2 className="text-xl font-bold text-[#5D3A00] mb-1">{profileData.ownerName}</h2>
+                <p className="text-[#D87C5A] font-medium mb-4">Shop Owner</p>
                 
                 {/* Stats Cards */}
                 <div className="space-y-3 mt-6">
@@ -168,7 +383,7 @@ const ProfileDetails = () => {
                             </div>
                             <span className="text-sm font-medium text-[#5D3A00]">{stat.label}</span>
                           </div>
-                          <span className={`text-lg font-bold ${stat.textColor}`}>{stat.value}</span>
+                          <span className={`text-sm font-bold ${stat.textColor}`}>{stat.value}</span>
                         </div>
                       </div>
                     );
@@ -180,25 +395,42 @@ const ProfileDetails = () => {
 
           {/* Right Column (Two Sections) */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Personal Information Card */}
+            {/* Shop Information Card */}
             <div className="rounded-2xl border border-[#FFE4D6] bg-white shadow-xl p-6 animate-fade-in">
               <h3 className="text-xl font-bold text-[#5D3A00] mb-6 flex items-center gap-2">
-                <User className="w-5 h-5 text-[#D87C5A]" />
-                Personal Information
+                <Building className="w-5 h-5 text-[#D87C5A]" />
+                Shop Information
               </h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-[#5D3A00]">Full Name</label>
+                  <label className="text-sm font-medium text-[#5D3A00]">Shop Name</label>
                   {isEditing ? (
                     <input
                       type="text"
-                      value={editData.name}
-                      onChange={(e) => setEditData({...editData, name: e.target.value})}
+                      value={editData.shopName}
+                      onChange={(e) => setEditData({...editData, shopName: e.target.value})}
                       className="w-full p-3 border border-[#FFE4D6] rounded-lg focus:outline-none focus:ring-0 focus:border-[#D87C5A] hover:border-[#D87C5A] text-[#5D3A00]"
                     />
                   ) : (
-                    <p className="p-3 bg-[#FFF5E1] rounded-lg text-[#5D3A00]">{profileData.name}</p>
+                    <p className="p-3 bg-[#FFF5E1] rounded-lg text-[#5D3A00]">{profileData.shopName}</p>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-[#5D3A00]">Owner Name</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editData.ownerName}
+                      onChange={(e) => setEditData({...editData, ownerName: e.target.value})}
+                      className="w-full p-3 border border-[#FFE4D6] rounded-lg focus:outline-none focus:ring-0 focus:border-[#D87C5A] hover:border-[#D87C5A] text-[#5D3A00]"
+                    />
+                  ) : (
+                    <p className="p-3 bg-[#FFF5E1] rounded-lg text-[#5D3A00] flex items-center gap-2">
+                      <User className="w-4 h-4 text-[#D87C5A]" />
+                      {profileData.ownerName}
+                    </p>
                   )}
                 </div>
                 
@@ -220,18 +452,79 @@ const ProfileDetails = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-[#5D3A00]">Phone Number</label>
+                  <label className="text-sm font-medium text-[#5D3A00]">Contact Number</label>
                   {isEditing ? (
                     <input
                       type="tel"
-                      value={editData.phone}
-                      onChange={(e) => setEditData({...editData, phone: e.target.value})}
+                      value={editData.contactNo}
+                      onChange={(e) => setEditData({...editData, contactNo: e.target.value})}
                       className="w-full p-3 border border-[#FFE4D6] rounded-lg focus:outline-none focus:ring-0 focus:border-[#D87C5A] hover:border-[#D87C5A] text-[#5D3A00]"
                     />
                   ) : (
                     <p className="p-3 bg-[#FFF5E1] rounded-lg text-[#5D3A00] flex items-center gap-2">
                       <Phone className="w-4 h-4 text-[#D87C5A]" />
-                      {profileData.phone}
+                      {profileData.contactNo}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Business Details Card */}
+            <div className="rounded-2xl border border-[#FFE4D6] bg-white shadow-xl p-6 animate-fade-in">
+              <h3 className="text-xl font-bold text-[#5D3A00] mb-6 flex items-center gap-2">
+                <Briefcase className="w-5 h-5 text-[#D87C5A]" />
+                Business Details
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-[#5D3A00]">Business Type</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editData.businessType}
+                      onChange={(e) => setEditData({...editData, businessType: e.target.value})}
+                      className="w-full p-3 border border-[#FFE4D6] rounded-lg focus:outline-none focus:ring-0 focus:border-[#D87C5A] hover:border-[#D87C5A] text-[#5D3A00]"
+                    />
+                  ) : (
+                    <p className="p-3 bg-[#FFF5E1] rounded-lg text-[#5D3A00] flex items-center gap-2">
+                      <Briefcase className="w-4 h-4 text-[#D87C5A]" />
+                      {profileData.businessType || 'N/A'}
+                    </p>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-[#5D3A00]">Business License</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editData.businessLicense}
+                      onChange={(e) => setEditData({...editData, businessLicense: e.target.value})}
+                      className="w-full p-3 border border-[#FFE4D6] rounded-lg focus:outline-none focus:ring-0 focus:border-[#D87C5A] hover:border-[#D87C5A] text-[#5D3A00]"
+                    />
+                  ) : (
+                    <p className="p-3 bg-[#FFF5E1] rounded-lg text-[#5D3A00] flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-[#D87C5A]" />
+                      {profileData.businessLicense || 'N/A'}
+                    </p>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-[#5D3A00]">Tax ID</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editData.taxId}
+                      onChange={(e) => setEditData({...editData, taxId: e.target.value})}
+                      className="w-full p-3 border border-[#FFE4D6] rounded-lg focus:outline-none focus:ring-0 focus:border-[#D87C5A] hover:border-[#D87C5A] text-[#5D3A00]"
+                    />
+                  ) : (
+                    <p className="p-3 bg-[#FFF5E1] rounded-lg text-[#5D3A00] flex items-center gap-2">
+                      <CreditCard className="w-4 h-4 text-[#D87C5A]" />
+                      {profileData.taxId || 'N/A'}
                     </p>
                   )}
                 </div>
@@ -246,72 +539,17 @@ const ProfileDetails = () => {
               </div>
               
               <div className="mt-4 space-y-2">
-                <label className="text-sm font-medium text-[#5D3A00]">Address</label>
-                {isEditing ? (
-                  <input
-                    type="text"
-                    value={editData.address}
-                    onChange={(e) => setEditData({...editData, address: e.target.value})}
-                    className="w-full p-3 border border-[#FFE4D6] rounded-lg focus:outline-none focus:ring-0 focus:border-[#D87C5A] hover:border-[#D87C5A] text-[#5D3A00]"
-                  />
-                ) : (
-                  <p className="p-3 bg-[#FFF5E1] rounded-lg text-[#5D3A00] flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-[#D87C5A]" />
-                    {profileData.address}
-                  </p>
-                )}
-              </div>
-              
-              <div className="mt-4 space-y-2">
-                <label className="text-sm font-medium text-[#5D3A00]">Bio</label>
+                <label className="text-sm font-medium text-[#5D3A00]">Description</label>
                 {isEditing ? (
                   <textarea
-                    value={editData.bio}
-                    onChange={(e) => setEditData({...editData, bio: e.target.value})}
+                    value={editData.description}
+                    onChange={(e) => setEditData({...editData, description: e.target.value})}
                     rows={3}
                     className="w-full p-3 border border-[#FFE4D6] rounded-lg focus:outline-none focus:ring-0 focus:border-[#D87C5A] hover:border-[#D87C5A] text-[#5D3A00] resize-none"
                   />
                 ) : (
-                  <p className="p-3 bg-[#FFF5E1] rounded-lg text-[#5D3A00]">{profileData.bio}</p>
+                  <p className="p-3 bg-[#FFF5E1] rounded-lg text-[#5D3A00]">{profileData.description || 'No description available'}</p>
                 )}
-              </div>
-            </div>
-
-            {/* Account Settings Card */}
-            <div className="rounded-2xl border border-[#FFE4D6] bg-white shadow-xl p-6 animate-fade-in">
-              <h3 className="text-xl font-bold text-[#5D3A00] mb-6 flex items-center gap-2">
-                <Shield className="w-5 h-5 text-[#D87C5A]" />
-                Account Settings
-              </h3>
-              
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-[#FFF5E1] rounded-lg border border-[#FFE4D6] hover:shadow-md transition-all">
-                  <div className="flex items-center gap-3">
-                    <Bell className="w-5 h-5 text-[#D87C5A]" />
-                    <div>
-                      <p className="font-medium text-[#5D3A00]">Email Notifications</p>
-                      <p className="text-sm text-[#5D3A00] opacity-70">Receive updates about orders and promotions</p>
-                    </div>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" className="sr-only peer" defaultChecked />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#D87C5A]"></div>
-                  </label>
-                </div>
-                
-                <div className="flex items-center justify-between p-4 bg-[#FFE4D6] rounded-lg border border-[#FFE4D6] hover:shadow-md transition-all">
-                  <div className="flex items-center gap-3">
-                    <Eye className="w-5 h-5 text-[#D87C5A]" />
-                    <div>
-                      <p className="font-medium text-[#5D3A00]">Profile Visibility</p>
-                      <p className="text-sm text-[#5D3A00] opacity-70">Control who can see your profile information</p>
-                    </div>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" className="sr-only peer" />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#D87C5A]"></div>
-                  </label>
-                </div>
               </div>
             </div>
           </div>
@@ -325,7 +563,7 @@ const ProfileDetails = () => {
                 <div className="flex items-center justify-between">
                   <h2 className="text-2xl font-bold text-[#5D3A00] flex items-center gap-2">
                     <AlertTriangle className="w-6 h-6 text-[#D87C5A]" />
-                    Deactivate Account
+                    Deactivate Shop
                   </h2>
                   <button
                     onClick={() => setShowDeactivateModal(false)}
@@ -338,7 +576,7 @@ const ProfileDetails = () => {
 
               <div className="p-6">
                 <p className="text-[#5D3A00] mb-6">
-                  Are you sure you want to deactivate your account? This action will temporarily disable your profile and you won't be able to access the dashboard until you reactivate it.
+                  Are you sure you want to deactivate your shop? This action will temporarily disable your shop profile and you won't be able to manage products until you reactivate it.
                 </p>
                 
                 <div className="flex gap-3">

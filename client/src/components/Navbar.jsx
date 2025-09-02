@@ -17,11 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "./Avatar";
 import { useAuth } from "../context/AuthContext";
 import { useState, useRef, useEffect } from "react";
 
-const mockUser = {
-  name: "Wameesha",
-  image: "/src/assets/user.png",
-};
-
+// Remove mockUser - we'll fetch real data
 const mainLinks = [
   { name: "Dashboard", path: "/shop/dashboard", icon: Home },
   { name: "Orders", path: "/shop/orders", icon: ShoppingCart },
@@ -38,6 +34,80 @@ function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const profileDropdownRef = useRef(null);
+  
+  // Add state for shop data
+  const [shopData, setShopData] = useState({
+    ownerName: 'Loading...',
+    shopName: '',
+    avatar: '/src/assets/user.png'
+  });
+  const [loading, setLoading] = useState(true);
+
+  // Fetch shop data when component mounts
+  useEffect(() => {
+    const fetchShopData = async () => {
+      if (!isSignedIn) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const token = localStorage.getItem("token");
+        let shopId = localStorage.getItem("shopId");
+        let userId = localStorage.getItem("userId");
+        // If shopId is missing or 'null', use userId
+        if (!shopId || shopId === "null") {
+          shopId = userId;
+          localStorage.setItem("shopId", shopId);
+        }
+        // If still no valid shopId, abort fetch
+        if (!shopId || shopId === "null") {
+          console.error("No valid shopId found in localStorage.");
+          setLoading(false);
+          return;
+        }
+        
+        console.log("Fetching shop data for ID:", shopId);
+
+        const response = await fetch(`http://localhost:8081/api/shop/${shopId}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log("Shop data fetched for navbar:", data);
+          
+          setShopData({
+            ownerName: data.ownerName || 'Shop Owner',
+            shopName: data.shopName || 'Unknown Shop',
+            avatar: '/src/assets/user.png' // You can add avatar field to database later
+          });
+        } else {
+          console.error("Failed to fetch shop data:", response.status);
+          setShopData({
+            ownerName: 'Shop Owner',
+            shopName: 'Unknown Shop',
+            avatar: '/src/assets/user.png'
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching shop data:", error);
+        setShopData({
+          ownerName: 'Shop Owner',
+          shopName: 'Unknown Shop',
+          avatar: '/src/assets/user.png'
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchShopData();
+  }, [isSignedIn]);
 
   const handleLogoutClick = (e) => {
     e.preventDefault();
@@ -106,7 +176,7 @@ function Navbar() {
 
             {/* Center Section - Desktop Navigation Links with increased spacing */}
             <div className="hidden md:flex items-center space-x-6">
-              {mainLinks.map(({ name, path, icon: Icon }) => (
+              {mainLinks.map(({ name, path, icon }) => (
                 <NavLink
                   key={name}
                   to={path}
@@ -119,7 +189,7 @@ function Navbar() {
                     }`
                   }
                 >
-                  <Icon className="h-4 w-4" />
+                  {icon && <icon className="h-4 w-4" />}
                   <span className="text-sm">{name}</span>
                   {/* Beautiful hover underline */}
                   <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-gradient-to-r from-[#FFD95A] to-[#D87C5A] transition-all duration-300 ${
@@ -153,11 +223,11 @@ function Navbar() {
                     className="flex items-center space-x-2 p-2 rounded-lg text-[#FFD95A] hover:bg-[#FFE9A0]/20 transition-all duration-200"
                   >
                     <Avatar className="h-8 w-8 ring-2 ring-[#FFD95A] bg-[#362625]">
-                      {mockUser.image ? (
-                        <AvatarImage src={mockUser.image} alt={mockUser.name} />
+                      {shopData.avatar ? (
+                        <AvatarImage src={shopData.avatar} alt={shopData.ownerName} />
                       ) : (
                         <AvatarFallback className="text-[#FFD95A] font-bold text-sm">
-                          {mockUser.name[0]}
+                          {loading ? "..." : shopData.ownerName[0]?.toUpperCase() || "U"}
                         </AvatarFallback>
                       )}
                     </Avatar>
@@ -173,9 +243,11 @@ function Navbar() {
                     <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50">
                       <div className="px-4 py-3 border-b border-gray-100">
                         <p className="text-sm font-medium text-[#362625]">
-                          {mockUser.name}
+                          {loading ? "Loading..." : shopData.ownerName}
                         </p>
-                        <p className="text-xs text-gray-500">Shop Owner</p>
+                        <p className="text-xs text-gray-500">
+                          {loading ? "..." : shopData.shopName}
+                        </p>
                       </div>
 
                       <NavLink
@@ -205,6 +277,12 @@ function Navbar() {
                           Log Out
                         </button>
                       </div>
+
+                      {/* Add this temporarily after the avatar in the dropdown menu for debugging:
+                      <div className="px-4 py-2 text-xs text-gray-400 border-t border-gray-100">
+                        <p>Debug: {JSON.stringify(shopData, null, 2)}</p>
+                      </div>
+                      */}
                     </div>
                   )}
                 </div>
@@ -241,7 +319,7 @@ function Navbar() {
           <div className="md:hidden bg-[#362625] border-t border-[#FFD95A]/30">
             <div className="px-2 py-3 space-y-1">
               {/* Mobile Navigation Links */}
-              {mainLinks.map(({ name, path, icon: Icon }) => (
+              {mainLinks.map(({ name, path}) => (
                 <NavLink
                   key={name}
                   to={path}
@@ -274,19 +352,21 @@ function Navbar() {
                   <div className="px-4 py-2">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-10 w-10 ring-2 ring-[#FFD95A] bg-[#362625]">
-                        {mockUser.image ? (
-                          <AvatarImage src={mockUser.image} alt={mockUser.name} />
+                        {shopData.avatar ? (
+                          <AvatarImage src={shopData.avatar} alt={shopData.ownerName} />
                         ) : (
                           <AvatarFallback className="text-[#FFD95A] font-bold">
-                            {mockUser.name[0]}
+                            {loading ? "..." : shopData.ownerName[0]?.toUpperCase() || "U"}
                           </AvatarFallback>
                         )}
                       </Avatar>
                       <div>
                         <p className="text-sm font-medium text-[#FFD95A]">
-                          {mockUser.name}
+                          {loading ? "Loading..." : shopData.ownerName}
                         </p>
-                        <p className="text-xs text-[#FFD95A]/70">Shop Owner</p>
+                        <p className="text-xs text-[#FFD95A]/70">
+                          {loading ? "..." : shopData.shopName}
+                        </p>
                       </div>
                     </div>
                   </div>
