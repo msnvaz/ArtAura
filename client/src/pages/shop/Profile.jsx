@@ -305,8 +305,7 @@ const ProfileDetails = () => {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-[#5D3A00] mb-2">Shop Profile</h1>
-            <p className="text-[#D87C5A] font-medium">{profileData.shopName}</p>
+          
           </div>
           <div className="flex gap-3">
             {!isEditing ? (

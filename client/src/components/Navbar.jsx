@@ -1,3 +1,4 @@
+import React from "react";
 import {
   Home,
   ShoppingCart,
@@ -189,7 +190,7 @@ function Navbar() {
                     }`
                   }
                 >
-                  {icon && <icon className="h-4 w-4" />}
+                  {icon && React.createElement(icon, { className: "h-4 w-4" })}
                   <span className="text-sm">{name}</span>
                   {/* Beautiful hover underline */}
                   <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-gradient-to-r from-[#FFD95A] to-[#D87C5A] transition-all duration-300 ${
