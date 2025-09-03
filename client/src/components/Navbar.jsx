@@ -259,14 +259,6 @@ function Navbar() {
                         View Profile
                       </NavLink>
 
-                      <NavLink
-                        to="/shop/settings"
-                        onClick={() => setShowProfileDropdown(false)}
-                        className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                      >
-                        <Settings className="h-4 w-4" />
-                        Settings
-                      </NavLink>
 
                       <div className="border-t border-gray-100 mt-2 pt-2">
                         <button
