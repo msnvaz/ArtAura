@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+// Use API_URL constant for base URL from .env
+const API_URL = import.meta.env.VITE_API_URL;
 import Navbar from '../../components/Navbar';
 import Toast from '../../components/Toast';
 import { useToast } from '../../hooks/useToast';
@@ -78,8 +80,8 @@ const ProfileDetails = () => {
         
         console.log("No shopId found, trying to fetch using email:", userEmail);
         
-        // Try to get shop by email first
-        const emailResponse = await fetch(`http://localhost:8081/api/shop/profile?email=${encodeURIComponent(userEmail)}`, {
+    // Try to get shop by email first
+  const emailResponse = await fetch(`${API_URL}/api/shop/profile?email=${encodeURIComponent(userEmail)}`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -100,7 +102,7 @@ const ProfileDetails = () => {
       
       console.log("Fetching profile for shop ID:", shopId);
 
-      const response = await fetch(`http://localhost:8081/api/shop/${shopId}`, {
+  const response = await fetch(`${API_URL}/api/shop/${shopId}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -195,7 +197,7 @@ const ProfileDetails = () => {
         description: editData.description
       };
 
-      const response = await fetch(`http://localhost:8081/api/shop/update/${profileData.shopId}`, {
+  const response = await fetch(`${API_URL}/api/shop/update/${profileData.shopId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -303,8 +305,7 @@ const ProfileDetails = () => {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-[#5D3A00] mb-2">Shop Profile</h1>
-            <p className="text-[#D87C5A] font-medium">{profileData.shopName}</p>
+          
           </div>
           <div className="flex gap-3">
             {!isEditing ? (

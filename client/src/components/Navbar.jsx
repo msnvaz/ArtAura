@@ -1,3 +1,4 @@
+import React from "react";
 import {
   Home,
   ShoppingCart,
@@ -189,7 +190,7 @@ function Navbar() {
                     }`
                   }
                 >
-                  {icon && <icon className="h-4 w-4" />}
+                  {icon && React.createElement(icon, { className: "h-4 w-4" })}
                   <span className="text-sm">{name}</span>
                   {/* Beautiful hover underline */}
                   <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-gradient-to-r from-[#FFD95A] to-[#D87C5A] transition-all duration-300 ${
@@ -259,14 +260,6 @@ function Navbar() {
                         View Profile
                       </NavLink>
 
-                      <NavLink
-                        to="/shop/settings"
-                        onClick={() => setShowProfileDropdown(false)}
-                        className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                      >
-                        <Settings className="h-4 w-4" />
-                        Settings
-                      </NavLink>
 
                       <div className="border-t border-gray-100 mt-2 pt-2">
                         <button
