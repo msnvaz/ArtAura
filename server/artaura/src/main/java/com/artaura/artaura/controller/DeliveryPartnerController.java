@@ -1,13 +1,17 @@
 package com.artaura.artaura.controller;
 
 import com.artaura.artaura.service.DeliveryPartnerService;
+import com.artaura.artaura.service.DeliveryRequestService;
 import com.artaura.artaura.dao.DeliveryPartnerDAO;
 import com.artaura.artaura.dto.auth.DeliveryPartnerDTO;
+import com.artaura.artaura.dto.delivery.DeliveryRequestDTO;
+import com.artaura.artaura.dto.delivery.ArtistPickupAddressDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -18,6 +22,9 @@ public class DeliveryPartnerController {
 
     @Autowired
     private DeliveryPartnerService deliveryPartnerService;
+
+    @Autowired
+    private DeliveryRequestService deliveryRequestService;
 
     @Autowired
     private DeliveryPartnerDAO deliveryPartnerDAO;
@@ -147,6 +154,225 @@ public class DeliveryPartnerController {
         } catch (Exception e) {
             Map<String, Object> response = new HashMap<>();
             response.put("error", "Internal server error: " + e.getMessage());
+            response.put("success", false);
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+    
+    // ===== DELIVERY REQUEST ENDPOINTS =====
+    
+    @GetMapping("/requests/pending")
+    public ResponseEntity<Map<String, Object>> getPendingDeliveryRequests() {
+        try {
+            List<DeliveryRequestDTO> pendingRequests = deliveryRequestService.getAllPendingDeliveryRequests();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("requests", pendingRequests);
+            response.put("success", true);
+            response.put("count", pendingRequests.size());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Failed to fetch pending delivery requests: " + e.getMessage());
+            response.put("success", false);
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+    
+    @GetMapping("/requests/pending/artworks")
+    public ResponseEntity<Map<String, Object>> getPendingArtworkDeliveryRequests() {
+        try {
+            List<DeliveryRequestDTO> pendingRequests = deliveryRequestService.getPendingArtworkOrderDeliveryRequests();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("requests", pendingRequests);
+            response.put("success", true);
+            response.put("count", pendingRequests.size());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Failed to fetch pending artwork delivery requests: " + e.getMessage());
+            response.put("success", false);
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+    
+    @GetMapping("/requests/pending/commissions")
+    public ResponseEntity<Map<String, Object>> getPendingCommissionDeliveryRequests() {
+        try {
+            List<DeliveryRequestDTO> pendingRequests = deliveryRequestService.getPendingCommissionDeliveryRequests();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("requests", pendingRequests);
+            response.put("success", true);
+            response.put("count", pendingRequests.size());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Failed to fetch pending commission delivery requests: " + e.getMessage());
+            response.put("success", false);
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+    
+    @PutMapping("/requests/{requestId}/accept")
+    public ResponseEntity<Map<String, Object>> acceptDeliveryRequest(@PathVariable Long requestId, @RequestBody Map<String, String> request) {
+        try {
+            String requestType = request.get("requestType");
+            if (requestType == null || (!requestType.equals("artwork_order") && !requestType.equals("commission_request"))) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("error", "Invalid request type. Must be 'artwork_order' or 'commission_request'");
+                response.put("success", false);
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            boolean updated = deliveryRequestService.acceptDeliveryRequest(requestId, requestType);
+            
+            Map<String, Object> response = new HashMap<>();
+            if (updated) {
+                response.put("message", "Delivery request accepted successfully");
+                response.put("success", true);
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("error", "Failed to accept delivery request");
+                response.put("success", false);
+                return ResponseEntity.internalServerError().body(response);
+            }
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Internal server error: " + e.getMessage());
+            response.put("success", false);
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+    
+    @PutMapping("/requests/{requestId}/status")
+    public ResponseEntity<Map<String, Object>> updateDeliveryStatus(@PathVariable Long requestId, @RequestBody Map<String, String> request) {
+        try {
+            String requestType = request.get("requestType");
+            String newStatus = request.get("status");
+            
+            if (requestType == null || (!requestType.equals("artwork_order") && !requestType.equals("commission_request"))) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("error", "Invalid request type. Must be 'artwork_order' or 'commission_request'");
+                response.put("success", false);
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            if (newStatus == null || newStatus.trim().isEmpty()) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("error", "Status is required");
+                response.put("success", false);
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            boolean updated = deliveryRequestService.updateDeliveryStatus(requestId, requestType, newStatus);
+            
+            Map<String, Object> response = new HashMap<>();
+            if (updated) {
+                response.put("message", "Delivery status updated successfully");
+                response.put("success", true);
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("error", "Failed to update delivery status");
+                response.put("success", false);
+                return ResponseEntity.internalServerError().body(response);
+            }
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Internal server error: " + e.getMessage());
+            response.put("success", false);
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+    
+    @GetMapping("/requests/{requestId}")
+    public ResponseEntity<Map<String, Object>> getDeliveryRequestById(@PathVariable Long requestId, @RequestParam String requestType) {
+        try {
+            if (requestType == null || (!requestType.equals("artwork_order") && !requestType.equals("commission_request"))) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("error", "Invalid request type. Must be 'artwork_order' or 'commission_request'");
+                response.put("success", false);
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            Optional<DeliveryRequestDTO> deliveryRequest = deliveryRequestService.getDeliveryRequestById(requestId, requestType);
+            
+            Map<String, Object> response = new HashMap<>();
+            if (deliveryRequest.isPresent()) {
+                response.put("request", deliveryRequest.get());
+                response.put("success", true);
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("error", "Delivery request not found");
+                response.put("success", false);
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Internal server error: " + e.getMessage());
+            response.put("success", false);
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+    
+    // ===== ARTIST PICKUP ADDRESS ENDPOINTS =====
+    
+    @GetMapping("/pickup-addresses")
+    public ResponseEntity<Map<String, Object>> getAllPickupAddresses() {
+        try {
+            List<ArtistPickupAddressDTO> pickupAddresses = deliveryRequestService.getAllArtistPickupAddresses();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("addresses", pickupAddresses);
+            response.put("success", true);
+            response.put("count", pickupAddresses.size());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Failed to fetch pickup addresses: " + e.getMessage());
+            response.put("success", false);
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+    
+    @GetMapping("/pickup-addresses/artworks")
+    public ResponseEntity<Map<String, Object>> getArtworkPickupAddresses() {
+        try {
+            List<ArtistPickupAddressDTO> pickupAddresses = deliveryRequestService.getArtworkOrderPickupAddresses();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("addresses", pickupAddresses);
+            response.put("success", true);
+            response.put("count", pickupAddresses.size());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Failed to fetch artwork pickup addresses: " + e.getMessage());
+            response.put("success", false);
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+    
+    @GetMapping("/pickup-addresses/commissions")
+    public ResponseEntity<Map<String, Object>> getCommissionPickupAddresses() {
+        try {
+            List<ArtistPickupAddressDTO> pickupAddresses = deliveryRequestService.getCommissionPickupAddresses();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("addresses", pickupAddresses);
+            response.put("success", true);
+            response.put("count", pickupAddresses.size());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Failed to fetch commission pickup addresses: " + e.getMessage());
             response.put("success", false);
             return ResponseEntity.internalServerError().body(response);
         }
