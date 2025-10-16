@@ -9,8 +9,11 @@ import {
   X,
   Home,
   Bell,
-  Shield
+  Shield,
+  LogOut
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import Layout from '../components/delivery/Layout';
 import DeliveryDashboard from '../components/delivery/DeliveryDashboard';
 import DeliveryRequestsList from '../components/delivery/DeliveryRequestsList';
@@ -19,6 +22,9 @@ import ActiveDeliveries from '../components/delivery/ActiveDeliveries';
 const DeliveryPartnerPage = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const { logout } = useAuth();
+  const navigate = useNavigate();
 
   const navigationItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
@@ -27,6 +33,21 @@ const DeliveryPartnerPage = () => {
     { id: 'history', label: 'Delivery History', icon: History },
     { id: 'profile', label: 'Profile', icon: User },
   ];
+
+  // Logout functionality
+  const handleLogoutClick = () => {
+    setShowLogoutConfirm(true);
+  };
+
+  const confirmLogout = () => {
+    logout();
+    setShowLogoutConfirm(false);
+    navigate("/");
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutConfirm(false);
+  };
 
   const renderContent = () => {
     switch (activeTab) {
@@ -134,14 +155,25 @@ const DeliveryPartnerPage = () => {
                   <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-400 ring-2 ring-white"></span>
                 </button>
                 
-                <div className="flex items-center ml-4">
-                  <div 
-                    className="w-8 h-8 rounded-full flex items-center justify-center"
-                    style={{ backgroundColor: "#FFD95A" }}
-                  >
-                    <User className="h-4 w-4" style={{ color: "#5D3A00" }} />
+                <div className="flex items-center ml-4 gap-3">
+                  <div className="flex items-center">
+                    <div 
+                      className="w-8 h-8 rounded-full flex items-center justify-center"
+                      style={{ backgroundColor: "#FFD95A" }}
+                    >
+                      <User className="h-4 w-4" style={{ color: "#5D3A00" }} />
+                    </div>
+                    <span className="ml-2 text-sm font-medium text-white hidden sm:block">John Doe</span>
                   </div>
-                  <span className="ml-2 text-sm font-medium text-white hidden sm:block">John Doe</span>
+                  
+                  {/* Logout Button */}
+                  <button
+                    onClick={handleLogoutClick}
+                    className="bg-gradient-to-r from-[#e74c3c] to-[#c0392b] text-white px-4 py-2 rounded-lg hover:from-[#c0392b] hover:to-[#a93226] transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2 btn-animate"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span className="hidden sm:inline">Logout</span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -192,6 +224,41 @@ const DeliveryPartnerPage = () => {
             {renderContent()}
           </div>
         </div>
+
+        {/* Logout Confirmation Modal */}
+        {showLogoutConfirm && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full mx-4 transform transition-all duration-300 ease-out scale-100">
+              <div className="text-center">
+                {/* Title */}
+                <h3 className="text-2xl font-bold text-[#362625] mb-2">
+                  Confirm Logout
+                </h3>
+
+                {/* Message */}
+                <p className="text-gray-600 mb-8 text-lg">
+                  Are you sure you want to log out of your delivery partner account?
+                </p>
+
+                {/* Buttons */}
+                <div className="flex gap-4 justify-center">
+                  <button
+                    onClick={cancelLogout}
+                    className="px-6 py-3 bg-gray-100 text-[#362625] rounded-xl hover:bg-gray-200 transition-all duration-200 font-medium border border-gray-200 hover:border-gray-300 min-w-[120px]"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmLogout}
+                    className="px-6 py-3 bg-gradient-to-r from-[#e74c3c] to-[#c0392b] text-white rounded-xl hover:from-[#c0392b] hover:to-[#a93226] transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105 min-w-[120px]"
+                  >
+                    Log Out
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   );
