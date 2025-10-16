@@ -230,4 +230,46 @@ public class DeliveryRequestService {
             throw new RuntimeException("Failed to fetch active commission delivery requests", e);
         }
     }
+    
+    /**
+     * Get all delivered delivery requests from both tables
+     * Delivered requests have delivery_status 'delivered'
+     * @return List of delivered delivery requests
+     */
+    public List<DeliveryRequestDTO> getAllDeliveredDeliveryRequests() {
+        try {
+            return deliveryRequestDAO.getAllDeliveredDeliveryRequests();
+        } catch (Exception e) {
+            System.out.println("❌ DeliveryRequestService: Error fetching all delivered requests: " + e.getMessage());
+            throw new RuntimeException("Failed to fetch delivered delivery requests", e);
+        }
+    }
+
+    /**
+     * Get delivered delivery requests from AW_orders table only
+     * Delivered requests have delivery_status 'delivered'
+     * @return List of delivered artwork order delivery requests
+     */
+    public List<DeliveryRequestDTO> getDeliveredArtworkOrderDeliveryRequests() {
+        try {
+            return deliveryRequestDAO.getDeliveredArtworkOrderDeliveryRequests();
+        } catch (Exception e) {
+            System.out.println("❌ DeliveryRequestService: Error fetching delivered artwork orders: " + e.getMessage());
+            throw new RuntimeException("Failed to fetch delivered artwork order delivery requests", e);
+        }
+    }
+
+    /**
+     * Get delivered delivery requests from commission_requests table only
+     * Delivered requests have delivery_status 'delivered'
+     * @return List of delivered commission delivery requests
+     */
+    public List<DeliveryRequestDTO> getDeliveredCommissionDeliveryRequests() {
+        try {
+            return deliveryRequestDAO.getDeliveredCommissionDeliveryRequests();
+        } catch (Exception e) {
+            System.out.println("❌ DeliveryRequestService: Error fetching delivered commission requests: " + e.getMessage());
+            throw new RuntimeException("Failed to fetch delivered commission delivery requests", e);
+        }
+    }
 }

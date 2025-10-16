@@ -5,12 +5,15 @@ import com.artaura.artaura.service.DeliveryRequestService;
 import com.artaura.artaura.service.DeliveryStatusService;
 import com.artaura.artaura.dao.DeliveryPartnerDAO;
 import com.artaura.artaura.dto.auth.DeliveryPartnerDTO;
+import com.artaura.artaura.dto.auth.PasswordChangeDTO;
+import com.artaura.artaura.dto.auth.PasswordChangeResponseDTO;
 import com.artaura.artaura.dto.delivery.DeliveryRequestDTO;
 import com.artaura.artaura.dto.delivery.DeliveryStatusUpdateDTO;
 import com.artaura.artaura.dto.delivery.ArtistPickupAddressDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.util.HashMap;
 import java.util.List;
@@ -134,7 +137,28 @@ public class DeliveryPartnerController {
     }
 
     @PutMapping("/profile/{partnerId}/password")
-    public ResponseEntity<Map<String, Object>> changePassword(@PathVariable Long partnerId, @RequestBody Map<String, String> request) {
+    public ResponseEntity<PasswordChangeResponseDTO> changePassword(
+            @PathVariable Long partnerId, 
+            @Valid @RequestBody PasswordChangeDTO passwordChangeDTO) {
+        try {
+            // Use the new service method with validation
+            PasswordChangeResponseDTO response = deliveryPartnerService.changePasswordWithValidation(partnerId, passwordChangeDTO);
+            
+            if (response.isSuccess()) {
+                return ResponseEntity.ok(response);
+            } else {
+                return ResponseEntity.badRequest().body(response);
+            }
+        } catch (Exception e) {
+            System.err.println("❌ DeliveryPartnerController: Error changing password for partner " + partnerId + ": " + e.getMessage());
+            return ResponseEntity.internalServerError()
+                    .body(PasswordChangeResponseDTO.failure("An unexpected error occurred while changing password"));
+        }
+    }
+
+    // Legacy endpoint for backward compatibility (without current password validation)
+    @PutMapping("/profile/{partnerId}/password/simple")
+    public ResponseEntity<Map<String, Object>> changePasswordSimple(@PathVariable Long partnerId, @RequestBody Map<String, String> request) {
         try {
             String newPassword = request.get("newPassword");
             if (newPassword == null || newPassword.trim().isEmpty()) {
@@ -618,6 +642,76 @@ public class DeliveryPartnerController {
         } catch (Exception e) {
             Map<String, Object> response = new HashMap<>();
             response.put("error", "Failed to fetch active commission delivery requests: " + e.getMessage());
+            response.put("success", false);
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+    
+    // ===============================
+    // DELIVERED DELIVERY REQUESTS ENDPOINTS
+    // ===============================
+    
+    /**
+     * Get all delivered delivery requests (delivered status)
+     */
+    @GetMapping("/requests/delivered")
+    public ResponseEntity<Map<String, Object>> getDeliveredDeliveryRequests() {
+        try {
+            List<DeliveryRequestDTO> deliveredRequests = deliveryRequestService.getAllDeliveredDeliveryRequests();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("requests", deliveredRequests);
+            response.put("success", true);
+            response.put("count", deliveredRequests.size());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Failed to fetch delivered delivery requests: " + e.getMessage());
+            response.put("success", false);
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+    
+    /**
+     * Get delivered artwork order delivery requests only
+     */
+    @GetMapping("/requests/delivered/artworks")
+    public ResponseEntity<Map<String, Object>> getDeliveredArtworkDeliveryRequests() {
+        try {
+            List<DeliveryRequestDTO> deliveredRequests = deliveryRequestService.getDeliveredArtworkOrderDeliveryRequests();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("requests", deliveredRequests);
+            response.put("success", true);
+            response.put("count", deliveredRequests.size());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Failed to fetch delivered artwork delivery requests: " + e.getMessage());
+            response.put("success", false);
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+    
+    /**
+     * Get delivered commission delivery requests only
+     */
+    @GetMapping("/requests/delivered/commissions")
+    public ResponseEntity<Map<String, Object>> getDeliveredCommissionDeliveryRequests() {
+        try {
+            List<DeliveryRequestDTO> deliveredRequests = deliveryRequestService.getDeliveredCommissionDeliveryRequests();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("requests", deliveredRequests);
+            response.put("success", true);
+            response.put("count", deliveredRequests.size());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Failed to fetch delivered commission delivery requests: " + e.getMessage());
             response.put("success", false);
             return ResponseEntity.internalServerError().body(response);
         }

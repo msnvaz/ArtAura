@@ -423,4 +423,79 @@ public class DeliveryRequestDAOImpl implements DeliveryRequestDAO {
             return new ArrayList<>();
         }
     }
+    
+    @Override
+    public List<DeliveryRequestDTO> getAllDeliveredDeliveryRequests() {
+        List<DeliveryRequestDTO> allRequests = new ArrayList<>();
+        allRequests.addAll(getDeliveredArtworkOrderDeliveryRequests());
+        allRequests.addAll(getDeliveredCommissionDeliveryRequests());
+        return allRequests;
+    }
+
+    @Override
+    public List<DeliveryRequestDTO> getDeliveredArtworkOrderDeliveryRequests() {
+        try {
+            String sql = """
+                SELECT 
+                    ao.id,
+                    ao.buyer_id,
+                    CONCAT(ao.first_name, ' ', ao.last_name) AS buyer_name,
+                    ao.email,
+                    ao.contact_number,
+                    ao.shipping_address,
+                    ao.delivery_status,
+                    ao.order_date,
+                    ao.total_amount,
+                    aoi.title AS artwork_title,
+                    aoi.artist_id,
+                    CONCAT(a.first_name, ' ', a.last_name) AS artist_name
+                FROM AW_orders ao
+                LEFT JOIN AW_order_items aoi ON ao.id = aoi.order_id
+                LEFT JOIN artists a ON aoi.artist_id = a.artist_id
+                WHERE ao.delivery_status = 'delivered'
+                ORDER BY ao.order_date DESC
+            """;
+            
+            return jdbc.query(sql, artworkOrderRowMapper);
+        } catch (Exception e) {
+            System.out.println("🔍 DeliveryRequestDAO: Error fetching delivered artwork orders: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public List<DeliveryRequestDTO> getDeliveredCommissionDeliveryRequests() {
+        try {
+            String sql = """
+                SELECT 
+                    cr.id,
+                    cr.buyer_id,
+                    cr.name,
+                    cr.email,
+                    cr.phone,
+                    cr.shipping_address,
+                    cr.delivery_status,
+                    cr.submitted_at,
+                    cr.title,
+                    cr.artwork_type,
+                    cr.style,
+                    cr.dimensions,
+                    cr.budget,
+                    cr.deadline,
+                    cr.additional_notes,
+                    cr.urgency,
+                    cr.artist_id,
+                    CONCAT(a.first_name, ' ', a.last_name) AS artist_name
+                FROM commission_requests cr
+                LEFT JOIN artists a ON cr.artist_id = a.artist_id
+                WHERE cr.delivery_status = 'delivered'
+                ORDER BY cr.submitted_at DESC
+            """;
+            
+            return jdbc.query(sql, commissionRowMapper);
+        } catch (Exception e) {
+            System.out.println("🔍 DeliveryRequestDAO: Error fetching delivered commission requests: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
 }

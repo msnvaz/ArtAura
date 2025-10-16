@@ -319,24 +319,55 @@ const ActiveDeliveries = () => {
       // Convert request type to match backend expected format
       const orderType = delivery.requestType === 'artwork_order' ? 'artwork' : 'commission';
       
-      // Use the new comprehensive update endpoint
-      const updateData = {
-        orderId: delivery.id,
-        orderType: orderType,
-        deliveryStatus: newStatus === 'picked_up' || newStatus === 'in_transit' ? 'outForDelivery' : newStatus,
-        shippingFee: null, // Don't change shipping fee during status updates
-        deliveryPartnerId: null // Not needed for status updates
-      };
-
-      console.log('Sending update data:', updateData);
+      let apiUrl;
+      let requestData = null;
+      let deliveryStatusToSend;
       
-      // Make API call using the enhanced comprehensive update endpoint
-      const response = await axios.put('http://localhost:8081/api/delivery-status/update-comprehensive', updateData, {
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      // Map the frontend actions to backend delivery status and choose appropriate endpoint
+      if (newStatus === 'picked_up' || newStatus === 'in_transit') {
+        // Use the specific "out-for-delivery" endpoint
+        deliveryStatusToSend = 'outForDelivery';
+        apiUrl = `http://localhost:8081/api/delivery-status/${orderType}/${delivery.id}/out-for-delivery`;
+      } else if (newStatus === 'delivered') {
+        // Use the specific "delivered" endpoint
+        deliveryStatusToSend = 'delivered';
+        apiUrl = `http://localhost:8081/api/delivery-status/${orderType}/${delivery.id}/delivered`;
+      } else {
+        // For other status updates, use the comprehensive update endpoint
+        deliveryStatusToSend = newStatus;
+        apiUrl = 'http://localhost:8081/api/delivery-status/update-comprehensive';
+        requestData = {
+          orderId: delivery.id,
+          orderType: orderType,
+          deliveryStatus: deliveryStatusToSend,
+          shippingFee: null,
+          deliveryPartnerId: null
+        };
+      }
+
+      console.log('API URL:', apiUrl);
+      console.log('Delivery status to send:', deliveryStatusToSend);
+      console.log('Request data:', requestData);
+      
+      // Make API call
+      let response;
+      if (requestData) {
+        // POST/PUT request with body
+        response = await axios.put(apiUrl, requestData, {
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+      } else {
+        // PUT request without body (for specific endpoints)
+        response = await axios.put(apiUrl, {}, {
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+      }
 
       console.log('Status update API Response:', response.data);
 
@@ -350,29 +381,41 @@ const ActiveDeliveries = () => {
               
               // Update progress based on new status
               if (newStatus === 'picked_up' || newStatus === 'in_transit') {
+                // Update the delivery to "in_transit" status for UI
                 updatedProgress.picked_up = { completed: true, time: currentTime };
                 updatedProgress.in_transit = { completed: true, time: currentTime };
+                
+                return {
+                  ...d,
+                  status: 'in_transit', // Frontend status for display
+                  progress: updatedProgress
+                };
               } else if (newStatus === 'delivered') {
                 updatedProgress.delivered = { completed: true, time: currentTime };
-                // If delivered, remove from active deliveries after a delay
+                
+                // Remove from active deliveries after a delay (since it's now completed)
                 setTimeout(() => {
                   setActiveDeliveries(prev => prev.filter(delivery => 
                     !(delivery.id === d.id && delivery.requestType === d.requestType)
                   ));
                 }, 2000);
+                
+                return {
+                  ...d,
+                  status: 'delivered',
+                  progress: updatedProgress
+                };
               }
-              
-              return {
-                ...d,
-                status: newStatus,
-                progress: updatedProgress
-              };
             }
             return d;
           })
         );
 
-        const statusLabel = newStatus.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+        const statusLabel = newStatus === 'picked_up' ? 'Out for Delivery' : 
+                          newStatus === 'in_transit' ? 'In Transit' :
+                          newStatus === 'delivered' ? 'Delivered' :
+                          newStatus.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+        
         alert(`Delivery status updated successfully to: ${statusLabel}\n\nResponse: ${response.data.message}`);
       } else {
         throw new Error(response.data.error || 'Failed to update status');

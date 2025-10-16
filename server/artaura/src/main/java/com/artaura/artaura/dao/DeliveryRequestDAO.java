@@ -86,4 +86,25 @@ public interface DeliveryRequestDAO {
      * @return List of active commission delivery requests
      */
     List<DeliveryRequestDTO> getActiveCommissionDeliveryRequests();
+    
+    /**
+     * Get all delivered delivery requests from both AW_orders and commission_requests tables
+     * Delivered requests have delivery_status 'delivered'
+     * @return List of delivered delivery requests
+     */
+    List<DeliveryRequestDTO> getAllDeliveredDeliveryRequests();
+    
+    /**
+     * Get delivered delivery requests from AW_orders table only
+     * Delivered requests have delivery_status 'delivered'
+     * @return List of delivered artwork order delivery requests
+     */
+    List<DeliveryRequestDTO> getDeliveredArtworkOrderDeliveryRequests();
+    
+    /**
+     * Get delivered delivery requests from commission_requests table only
+     * Delivered requests have delivery_status 'delivered'
+     * @return List of delivered commission delivery requests
+     */
+    List<DeliveryRequestDTO> getDeliveredCommissionDeliveryRequests();
 }
