@@ -2,6 +2,7 @@ package com.artaura.artaura.dao.Impl;
 
 import com.artaura.artaura.dao.DeliveryRequestDAO;
 import com.artaura.artaura.dto.delivery.DeliveryRequestDTO;
+import com.artaura.artaura.dto.delivery.ArtistPickupAddressDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -33,7 +34,7 @@ public class DeliveryRequestDAOImpl implements DeliveryRequestDAO {
         dto.setBuyerPhone(rs.getString("contact_number"));
         dto.setShippingAddress(rs.getString("shipping_address"));
         dto.setDeliveryStatus(rs.getString("delivery_status"));
-        dto.setOrderDate(rs.getTimestamp("order_date").toLocalDateTime());
+        dto.setOrderDate(rs.getTimestamp("order_date") != null ? rs.getTimestamp("order_date").toLocalDateTime() : null);
         dto.setArtworkTitle(rs.getString("artwork_title"));
         dto.setArtworkType("Artwork"); // Default for artwork orders
         dto.setTotalAmount(rs.getBigDecimal("total_amount"));
@@ -53,7 +54,7 @@ public class DeliveryRequestDAOImpl implements DeliveryRequestDAO {
         dto.setBuyerPhone(rs.getString("phone"));
         dto.setShippingAddress(rs.getString("shipping_address"));
         dto.setDeliveryStatus(rs.getString("delivery_status"));
-        dto.setOrderDate(rs.getTimestamp("submitted_at").toLocalDateTime());
+        dto.setOrderDate(rs.getTimestamp("submitted_at") != null ? rs.getTimestamp("submitted_at").toLocalDateTime() : null);
         dto.setArtworkTitle(rs.getString("title"));
         dto.setArtworkType(rs.getString("artwork_type"));
         dto.setArtworkDimensions(rs.getString("dimensions"));
@@ -76,6 +77,31 @@ public class DeliveryRequestDAOImpl implements DeliveryRequestDAO {
             }
         }
         
+        return dto;
+    };
+
+    // Row mapper for artist pickup addresses
+    private RowMapper<ArtistPickupAddressDTO> pickupAddressRowMapper = (rs, rowNum) -> {
+        ArtistPickupAddressDTO dto = new ArtistPickupAddressDTO();
+        dto.setRequestId(rs.getLong("request_id"));
+        dto.setRequestType(rs.getString("request_type"));
+        dto.setArtistId(rs.getLong("artist_id"));
+        dto.setArtistName(rs.getString("artist_name"));
+        dto.setArtistEmail(rs.getString("artist_email"));
+        dto.setArtistContactNo(rs.getString("artist_contact"));
+        dto.setStreetAddress(rs.getString("street_address"));
+        dto.setCity(rs.getString("city"));
+        dto.setState(rs.getString("state"));
+        dto.setCountry(rs.getString("country"));
+        dto.setZipCode(rs.getString("zip_code"));
+        dto.setArtworkTitle(rs.getString("artwork_title"));
+        dto.setArtworkType(rs.getString("artwork_type"));
+        dto.setDeliveryStatus(rs.getString("delivery_status"));
+        dto.setRequestDate(rs.getTimestamp("request_date") != null ? rs.getTimestamp("request_date").toLocalDateTime() : null);
+        dto.setTotalAmount(rs.getBigDecimal("total_amount"));
+        dto.setBuyerName(rs.getString("buyer_name"));
+        dto.setBuyerEmail(rs.getString("buyer_email"));
+        dto.setDeliveryAddress(rs.getString("delivery_address"));
         return dto;
     };
 
@@ -239,6 +265,91 @@ public class DeliveryRequestDAOImpl implements DeliveryRequestDAO {
         } catch (Exception e) {
             System.out.println("🔍 DeliveryRequestDAO: Error fetching delivery request by ID: " + e.getMessage());
             return Optional.empty();
+        }
+    }
+
+    @Override
+    public List<ArtistPickupAddressDTO> getAllArtistPickupAddresses() {
+        List<ArtistPickupAddressDTO> allAddresses = new ArrayList<>();
+        allAddresses.addAll(getArtworkOrderPickupAddresses());
+        allAddresses.addAll(getCommissionPickupAddresses());
+        return allAddresses;
+    }
+
+    @Override
+    public List<ArtistPickupAddressDTO> getArtworkOrderPickupAddresses() {
+        try {
+            String sql = """
+                SELECT 
+                    ao.id AS request_id,
+                    'artwork_order' AS request_type,
+                    a.artist_id,
+                    CONCAT(a.first_name, ' ', a.last_name) AS artist_name,
+                    a.email AS artist_email,
+                    a.contactNo AS artist_contact,
+                    addr.street_address,
+                    addr.city,
+                    addr.state,
+                    addr.country,
+                    addr.zip_code,
+                    aoi.title AS artwork_title,
+                    'Artwork' AS artwork_type,
+                    ao.delivery_status,
+                    ao.order_date AS request_date,
+                    ao.total_amount,
+                    CONCAT(ao.first_name, ' ', ao.last_name) AS buyer_name,
+                    ao.email AS buyer_email,
+                    ao.shipping_address AS delivery_address
+                FROM AW_orders ao
+                LEFT JOIN AW_order_items aoi ON ao.id = aoi.order_id
+                LEFT JOIN artists a ON aoi.artist_id = a.artist_id
+                LEFT JOIN addresses addr ON a.artist_id = addr.artist_id
+                WHERE ao.delivery_status = 'pending' 
+                AND a.artist_id IS NOT NULL
+                ORDER BY ao.order_date DESC
+            """;
+            return jdbc.query(sql, pickupAddressRowMapper);
+        } catch (Exception e) {
+            System.out.println("🔍 DeliveryRequestDAO: Error fetching artwork order pickup addresses: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public List<ArtistPickupAddressDTO> getCommissionPickupAddresses() {
+        try {
+            String sql = """
+                SELECT 
+                    cr.id AS request_id,
+                    'commission_request' AS request_type,
+                    a.artist_id,
+                    CONCAT(a.first_name, ' ', a.last_name) AS artist_name,
+                    a.email AS artist_email,
+                    a.contactNo AS artist_contact,
+                    addr.street_address,
+                    addr.city,
+                    addr.state,
+                    addr.country,
+                    addr.zip_code,
+                    cr.title AS artwork_title,
+                    cr.artwork_type,
+                    cr.delivery_status,
+                    cr.submitted_at AS request_date,
+                    CAST(REGEXP_REPLACE(cr.budget, '[^0-9.]', '') AS DECIMAL(10,2)) AS total_amount,
+                    cr.name AS buyer_name,
+                    cr.email AS buyer_email,
+                    cr.shipping_address AS delivery_address
+                FROM commission_requests cr
+                LEFT JOIN artists a ON cr.artist_id = a.artist_id
+                LEFT JOIN addresses addr ON a.artist_id = addr.artist_id
+                WHERE cr.delivery_status = 'pending' 
+                AND a.artist_id IS NOT NULL
+                ORDER BY cr.submitted_at DESC
+            """;
+            return jdbc.query(sql, pickupAddressRowMapper);
+        } catch (Exception e) {
+            System.out.println("🔍 DeliveryRequestDAO: Error fetching commission pickup addresses: " + e.getMessage());
+            return new ArrayList<>();
         }
     }
 }

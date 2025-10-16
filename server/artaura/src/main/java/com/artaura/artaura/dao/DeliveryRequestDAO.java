@@ -1,6 +1,7 @@
 package com.artaura.artaura.dao;
 
 import com.artaura.artaura.dto.delivery.DeliveryRequestDTO;
+import com.artaura.artaura.dto.delivery.ArtistPickupAddressDTO;
 import java.util.List;
 import java.util.Optional;
 
@@ -46,4 +47,22 @@ public interface DeliveryRequestDAO {
      * @return Optional delivery request
      */
     Optional<DeliveryRequestDTO> getDeliveryRequestById(Long id, String requestType);
+    
+    /**
+     * Get all artist pickup addresses for pending delivery requests
+     * @return List of artist pickup addresses
+     */
+    List<ArtistPickupAddressDTO> getAllArtistPickupAddresses();
+    
+    /**
+     * Get artist pickup addresses for pending artwork orders only
+     * @return List of artist pickup addresses for artwork orders
+     */
+    List<ArtistPickupAddressDTO> getArtworkOrderPickupAddresses();
+    
+    /**
+     * Get artist pickup addresses for pending commission requests only
+     * @return List of artist pickup addresses for commission requests
+     */
+    List<ArtistPickupAddressDTO> getCommissionPickupAddresses();
 }

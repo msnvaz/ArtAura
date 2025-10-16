@@ -5,6 +5,7 @@ import com.artaura.artaura.service.DeliveryRequestService;
 import com.artaura.artaura.dao.DeliveryPartnerDAO;
 import com.artaura.artaura.dto.auth.DeliveryPartnerDTO;
 import com.artaura.artaura.dto.delivery.DeliveryRequestDTO;
+import com.artaura.artaura.dto.delivery.ArtistPickupAddressDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -313,6 +314,65 @@ public class DeliveryPartnerController {
         } catch (Exception e) {
             Map<String, Object> response = new HashMap<>();
             response.put("error", "Internal server error: " + e.getMessage());
+            response.put("success", false);
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+    
+    // ===== ARTIST PICKUP ADDRESS ENDPOINTS =====
+    
+    @GetMapping("/pickup-addresses")
+    public ResponseEntity<Map<String, Object>> getAllPickupAddresses() {
+        try {
+            List<ArtistPickupAddressDTO> pickupAddresses = deliveryRequestService.getAllArtistPickupAddresses();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("addresses", pickupAddresses);
+            response.put("success", true);
+            response.put("count", pickupAddresses.size());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Failed to fetch pickup addresses: " + e.getMessage());
+            response.put("success", false);
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+    
+    @GetMapping("/pickup-addresses/artworks")
+    public ResponseEntity<Map<String, Object>> getArtworkPickupAddresses() {
+        try {
+            List<ArtistPickupAddressDTO> pickupAddresses = deliveryRequestService.getArtworkOrderPickupAddresses();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("addresses", pickupAddresses);
+            response.put("success", true);
+            response.put("count", pickupAddresses.size());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Failed to fetch artwork pickup addresses: " + e.getMessage());
+            response.put("success", false);
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+    
+    @GetMapping("/pickup-addresses/commissions")
+    public ResponseEntity<Map<String, Object>> getCommissionPickupAddresses() {
+        try {
+            List<ArtistPickupAddressDTO> pickupAddresses = deliveryRequestService.getCommissionPickupAddresses();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("addresses", pickupAddresses);
+            response.put("success", true);
+            response.put("count", pickupAddresses.size());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Failed to fetch commission pickup addresses: " + e.getMessage());
             response.put("success", false);
             return ResponseEntity.internalServerError().body(response);
         }

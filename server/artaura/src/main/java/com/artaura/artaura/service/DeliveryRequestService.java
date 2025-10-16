@@ -2,6 +2,7 @@ package com.artaura.artaura.service;
 
 import com.artaura.artaura.dao.DeliveryRequestDAO;
 import com.artaura.artaura.dto.delivery.DeliveryRequestDTO;
+import com.artaura.artaura.dto.delivery.ArtistPickupAddressDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -146,6 +147,45 @@ public class DeliveryRequestService {
         } catch (Exception e) {
             System.out.println("❌ DeliveryRequestService: Error updating delivery status: " + e.getMessage());
             throw new RuntimeException("Failed to update delivery status", e);
+        }
+    }
+
+    /**
+     * Get all artist pickup addresses for pending delivery requests
+     * @return List of artist pickup addresses
+     */
+    public List<ArtistPickupAddressDTO> getAllArtistPickupAddresses() {
+        try {
+            return deliveryRequestDAO.getAllArtistPickupAddresses();
+        } catch (Exception e) {
+            System.out.println("❌ DeliveryRequestService: Error fetching all pickup addresses: " + e.getMessage());
+            throw new RuntimeException("Failed to fetch pickup addresses", e);
+        }
+    }
+
+    /**
+     * Get artist pickup addresses for pending artwork orders only
+     * @return List of artist pickup addresses for artwork orders
+     */
+    public List<ArtistPickupAddressDTO> getArtworkOrderPickupAddresses() {
+        try {
+            return deliveryRequestDAO.getArtworkOrderPickupAddresses();
+        } catch (Exception e) {
+            System.out.println("❌ DeliveryRequestService: Error fetching artwork order pickup addresses: " + e.getMessage());
+            throw new RuntimeException("Failed to fetch artwork order pickup addresses", e);
+        }
+    }
+
+    /**
+     * Get artist pickup addresses for pending commission requests only
+     * @return List of artist pickup addresses for commission requests
+     */
+    public List<ArtistPickupAddressDTO> getCommissionPickupAddresses() {
+        try {
+            return deliveryRequestDAO.getCommissionPickupAddresses();
+        } catch (Exception e) {
+            System.out.println("❌ DeliveryRequestService: Error fetching commission pickup addresses: " + e.getMessage());
+            throw new RuntimeException("Failed to fetch commission pickup addresses", e);
         }
     }
 }

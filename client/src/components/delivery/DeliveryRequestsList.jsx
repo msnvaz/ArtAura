@@ -45,31 +45,54 @@ const DeliveryRequestsList = () => {
         setLoading(true);
         setError(null);
         
-        const response = await axios.get('http://localhost:8081/api/delivery-partner/requests/pending', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        // Fetch both delivery requests and pickup addresses
+        const [requestsResponse, pickupResponse] = await Promise.all([
+          axios.get('http://localhost:8081/api/delivery-partner/requests/pending', {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          axios.get('http://localhost:8081/api/delivery-partner/pickup-addresses', {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+        ]);
         
-        if (response.data.success) {
+        if (requestsResponse.data.success) {
+          // Create a map of pickup addresses by request ID and type
+          const pickupMap = new Map();
+          if (pickupResponse.data.success && pickupResponse.data.addresses) {
+            pickupResponse.data.addresses.forEach(addr => {
+              const key = `${addr.requestType}-${addr.requestId}`;
+              pickupMap.set(key, addr);
+            });
+          }
+          
           // Transform API data to match frontend expected format
-          const transformedRequests = response.data.requests.map(req => ({
+          const transformedRequests = requestsResponse.data.requests.map(req => {
+            const pickupKey = `${req.requestType}-${req.id}`;
+            const pickupData = pickupMap.get(pickupKey);
+            
+            return {
             id: req.id,
             requestType: req.requestType,
             artistId: req.artistId,
             artistName: req.artistName || 'Unknown Artist',
-            artistPhone: req.buyerPhone || 'N/A', // Using buyer phone as contact
-            artistEmail: req.buyerEmail || 'N/A',
+            artistPhone: pickupData?.artistContactNo || req.buyerPhone || 'N/A',
+            artistEmail: pickupData?.artistEmail || req.buyerEmail || 'N/A',
             buyerId: req.buyerId,
             buyerName: req.buyerName,
             buyerPhone: req.buyerPhone,
             buyerEmail: req.buyerEmail,
             pickupAddress: {
-              full: 'Artist Location', // Would need artist address from another API
-              street: 'TBD',
-              city: 'TBD',
-              district: 'TBD',
-              postalCode: 'TBD'
+              full: pickupData ? [
+                pickupData.streetAddress,
+                pickupData.city,
+                pickupData.state,
+                pickupData.country,
+                pickupData.zipCode
+              ].filter(Boolean).join(', ') : 'Address not available',
+              street: pickupData?.streetAddress || 'N/A',
+              city: pickupData?.city || 'N/A',
+              district: pickupData?.state || 'N/A',
+              postalCode: pickupData?.zipCode || 'N/A'
             },
             deliveryAddress: {
               full: req.shippingAddress,
@@ -89,17 +112,19 @@ const DeliveryRequestsList = () => {
             pickupDate: new Date().toISOString().split('T')[0], // Default to today
             preferredTime: '10:00 AM - 6:00 PM',
             requestDate: req.orderDate ? new Date(req.orderDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+            requestDateTime: req.orderDate || new Date().toISOString(), // Keep the full datetime for detailed display
             status: 'pending',
             urgency: req.urgency || 'normal',
             specialInstructions: req.additionalNotes || 'Handle with care',
             distance: 'TBD',
             estimatedFee: 'Rs 2,500',
             deadline: req.deadline ? new Date(req.deadline).toISOString().split('T')[0] : null
-          }));
+          };
+          });
           
           setDeliveryRequests(transformedRequests);
         } else {
-          setError(response.data.error || 'Failed to fetch delivery requests');
+          setError(requestsResponse.data.error || 'Failed to fetch delivery requests');
         }
       } catch (error) {
         console.error('Error fetching delivery requests:', error);
@@ -168,6 +193,35 @@ const DeliveryRequestsList = () => {
     } catch (error) {
       console.error('Error accepting delivery request:', error);
       alert('Failed to accept delivery request. Please try again.');
+    }
+  };
+
+  // Helper function to format dates nicely
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    try {
+      return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch (e) {
+      return dateString;
+    }
+  };
+
+  const formatDateTime = (dateString) => {
+    if (!dateString) return 'N/A';
+    try {
+      return new Date(dateString).toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (e) {
+      return dateString;
     }
   };
 
@@ -326,11 +380,20 @@ const DeliveryRequestsList = () => {
                       <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(request.status)}`}>
                         {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
                       </span>
+                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                        {request.requestType === 'artwork_order' ? 'Artwork Order' : 'Commission'}
+                      </span>
                       <span className={`text-sm font-medium ${getUrgencyColor(request.urgency)}`}>
                         {request.urgency.charAt(0).toUpperCase() + request.urgency.slice(1)} Priority
                       </span>
                     </div>
-                    <p className="text-sm mb-3" style={{ color: '#D87C5A' }}>Request ID: #{request.id}</p>
+                    <div className="flex items-center gap-4 text-sm mb-3" style={{ color: '#D87C5A' }}>
+                      <span>Request ID: #{request.id}</span>
+                      <span>•</span>
+                      <span>
+                        {request.requestType === 'artwork_order' ? 'Ordered' : 'Submitted'}: {formatDate(request.requestDate)}
+                      </span>
+                    </div>
                   </div>
                   <div className="flex gap-2">
                     <button
@@ -383,12 +446,7 @@ const DeliveryRequestsList = () => {
                         <MapPin className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
                         <span>
                           {request.pickupAddress.street}, {request.pickupAddress.city}<br />
-                          {request.pickupAddress.district} {request.pickupAddress.postalCode}
                         </span>
-                      </div>
-                      <div className="flex items-center" style={{ color: '#D87C5A' }}>
-                        <Calendar className="h-4 w-4 mr-2" />
-                        {request.pickupDate} ({request.preferredTime})
                       </div>
                     </div>
                   </div>
@@ -415,10 +473,6 @@ const DeliveryRequestsList = () => {
                           {request.deliveryAddress.district} {request.deliveryAddress.postalCode}
                         </span>
                       </div>
-                      <div className="flex items-center" style={{ color: '#D87C5A' }}>
-                        <FileText className="h-4 w-4 mr-2" />
-                        Distance: {request.distance} ({request.estimatedDuration})
-                      </div>
                     </div>
                   </div>
 
@@ -437,14 +491,10 @@ const DeliveryRequestsList = () => {
                         <Ruler className="h-4 w-4 mr-2" />
                         Size: {request.artwork.size}
                       </div>
-                      <div className="flex items-center" style={{ color: '#D87C5A' }}>
-                        <Package className="h-4 w-4 mr-2" />
-                        Weight: {request.artwork.weight}
-                      </div>
-                      <div className="flex items-center" style={{ color: '#D87C5A' }}>
+                      {/* <div className="flex items-center" style={{ color: '#D87C5A' }}>
                         <DollarSign className="h-4 w-4 mr-2" />
                         Value: {request.artwork.value}
-                      </div>
+                      </div> */}
                       {request.artwork.fragile && (
                         <div className="flex items-center text-red-600">
                           <AlertCircle className="h-4 w-4 mr-2" />
@@ -500,7 +550,20 @@ const DeliveryRequestsList = () => {
                       <span className="font-medium">Request ID:</span> #{selectedRequest.id}
                     </div>
                     <div>
-                      <span className="font-medium">Request Date:</span> {selectedRequest.requestDate}
+                      <span className="font-medium">Request Type:</span> 
+                      <span className="ml-2 px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
+                        {selectedRequest.requestType === 'artwork_order' ? 'Artwork Order' : 'Commission Request'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="font-medium">
+                        {selectedRequest.requestType === 'artwork_order' ? 'Order Date:' : 'Submitted Date:'}
+                      </span> {formatDate(selectedRequest.requestDate)}
+                      {selectedRequest.requestDateTime && (
+                        <span className="text-xs text-gray-500 ml-1">
+                          ({formatDateTime(selectedRequest.requestDateTime)})
+                        </span>
+                      )}
                     </div>
                     <div>
                       <span className="font-medium">Status:</span> 
@@ -545,9 +608,9 @@ const DeliveryRequestsList = () => {
                   You are about to accept the delivery request for "<strong>{selectedRequest.artwork.title}</strong>".
                 </p>
                 <div className="space-y-2 text-sm">
-                  <p><strong>Distance:</strong> {selectedRequest.distance}</p>
-                  <p><strong>Estimated Duration:</strong> {selectedRequest.estimatedDuration}</p>
-                  <p><strong>Pickup Date:</strong> {selectedRequest.pickupDate}</p>
+                  <p><strong>Request Type:</strong> {selectedRequest.requestType === 'artwork_order' ? 'Artwork Order' : 'Commission Request'}</p>
+                  <p><strong>Artwork:</strong> {selectedRequest.artwork.title}</p>
+                  <p><strong>Value:</strong> {selectedRequest.artwork.value}</p>
                 </div>
               </div>
               
