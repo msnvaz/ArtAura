@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "sync-images": "node sync-dev-images.js sync",
+    "clean-images": "node sync-dev-images.js clean",
+    "setup-dev": "npm run sync-images && npm run dev"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",

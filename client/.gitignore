@@ -31,5 +31,7 @@ vite.config.js
 *.sln
 *.sw?
 
+# Development images (copied from server for local development)
+public/uploads/
 
 .env

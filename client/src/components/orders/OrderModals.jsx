@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { useNotification } from '../../context/NotificationContext';
 
-const AcceptOrderModal = ({ order, isOpen, onClose, onSuccess }) => {
+const AcceptOrderModal = ({ order, isOpen, onClose, onSuccess, apiEndpoint = "orders" }) => {
   const [estimatedDays, setEstimatedDays] = useState('');
   const [artistNotes, setArtistNotes] = useState('');
   const [loading, setLoading] = useState(false);
@@ -15,38 +15,68 @@ const AcceptOrderModal = ({ order, isOpen, onClose, onSuccess }) => {
   const { showSuccess, showError } = useNotification();
 
   const handleAccept = async () => {
-    if (!estimatedDays || isNaN(estimatedDays) || parseInt(estimatedDays) <= 0) {
-      showError('Please enter a valid number of days');
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const response = await axios.post(
-        `${API_URL}/api/orders/${order.orderId}/accept`,
-        {
-          estimatedDays: parseInt(estimatedDays),
-          artistNotes: artistNotes
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
+    if (apiEndpoint === "commission-requests") {
+      // For commission requests, we don't need estimated days
+      try {
+        setLoading(true);
+        const response = await axios.post(
+          `${API_URL}/api/commission-requests/${order.id}/accept`,
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
           }
-        }
-      );
+        );
 
-      if (response.data && response.data.success) {
-        showSuccess('Order accepted successfully!');
-        onSuccess();
-        onClose();
-      } else {
-        showError('Failed to accept order');
+        if (response.data && response.data.success) {
+          showSuccess('Commission request accepted successfully!');
+          onSuccess();
+          onClose();
+        } else {
+          showError('Failed to accept commission request');
+        }
+      } catch (error) {
+        console.error('Error accepting commission request:', error);
+        showError('Error accepting commission request: ' + (error.response?.data?.message || error.message));
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Error accepting order:', error);
-      showError('Error accepting order: ' + (error.response?.data?.message || error.message));
-    } finally {
-      setLoading(false);
+    } else {
+      // Original order logic
+      if (!estimatedDays || isNaN(estimatedDays) || parseInt(estimatedDays) <= 0) {
+        showError('Please enter a valid number of days');
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const response = await axios.post(
+          `${API_URL}/api/orders/${order.orderId}/accept`,
+          {
+            estimatedDays: parseInt(estimatedDays),
+            artistNotes: artistNotes
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
+
+        if (response.data && response.data.success) {
+          showSuccess('Order accepted successfully!');
+          onSuccess();
+          onClose();
+        } else {
+          showError('Failed to accept order');
+        }
+      } catch (error) {
+        console.error('Error accepting order:', error);
+        showError('Error accepting order: ' + (error.response?.data?.message || error.message));
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -127,43 +157,73 @@ const AcceptOrderModal = ({ order, isOpen, onClose, onSuccess }) => {
   );
 };
 
-const RejectOrderModal = ({ order, isOpen, onClose, onSuccess }) => {
+const RejectOrderModal = ({ order, isOpen, onClose, onSuccess, apiEndpoint = "orders" }) => {
   const [rejectionReason, setRejectionReason] = useState('');
   const [loading, setLoading] = useState(false);
   const { token } = useAuth();
   const { showSuccess, showError } = useNotification();
 
   const handleReject = async () => {
-    if (!rejectionReason.trim()) {
-      showError('Please provide a rejection reason');
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const response = await axios.post(
-        `${API_URL}/api/orders/${order.orderId}/reject`,
-        rejectionReason,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'text/plain'
+    if (apiEndpoint === "commission-requests") {
+      // For commission requests, we just reject without requiring a reason
+      try {
+        setLoading(true);
+        const response = await axios.post(
+          `${API_URL}/api/commission-requests/${order.id}/reject`,
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
           }
-        }
-      );
+        );
 
-      if (response.data && response.data.success) {
-        showSuccess('Order rejected successfully');
-        onSuccess();
-        onClose();
-      } else {
-        showError('Failed to reject order');
+        if (response.data && response.data.success) {
+          showSuccess('Commission request rejected successfully');
+          onSuccess();
+          onClose();
+        } else {
+          showError('Failed to reject commission request');
+        }
+      } catch (error) {
+        console.error('Error rejecting commission request:', error);
+        showError('Error rejecting commission request: ' + (error.response?.data?.message || error.message));
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Error rejecting order:', error);
-      showError('Error rejecting order: ' + (error.response?.data?.message || error.message));
-    } finally {
-      setLoading(false);
+    } else {
+      // Original order logic
+      if (!rejectionReason.trim()) {
+        showError('Please provide a rejection reason');
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const response = await axios.post(
+          `${API_URL}/api/orders/${order.orderId}/reject`,
+          rejectionReason,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'text/plain'
+            }
+          }
+        );
+
+        if (response.data && response.data.success) {
+          showSuccess('Order rejected successfully');
+          onSuccess();
+          onClose();
+        } else {
+          showError('Failed to reject order');
+        }
+      } catch (error) {
+        console.error('Error rejecting order:', error);
+        showError('Error rejecting order: ' + (error.response?.data?.message || error.message));
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
