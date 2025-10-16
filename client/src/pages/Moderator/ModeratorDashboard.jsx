@@ -454,7 +454,7 @@ const ModeratorDashboard = () => {
                     else if (action.id === "scoring")
                       navigate("/scoring-criteria");
                     else if (action.id === "winner")
-                      navigate("/winner-selection");
+                      setActiveTab("winner"); // Changed to switch to Winners tab
                   }}
                   className="border rounded-lg p-4 text-left h-full btn-animate"
                   style={{

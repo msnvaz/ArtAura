@@ -1,4 +1,4 @@
-import { Award, Calculator, Clock, Crown, Eye, Medal, Search, Settings, Shield, Trophy, Users } from 'lucide-react';
+import { Award, Calculator, Clock, Crown, Eye, Medal, Search, Settings, Shield, Star, Trophy, Users } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -193,11 +193,6 @@ const WinnerSelection = () => {
     }
   ];
 
-  const handleManageCriteria = () => {
-    // Logic to navigate or open criteria management
-    navigate('/scoring-criteria');
-  };
-
   return (
     <>
       {/* CSS styles for button animations */}
@@ -255,19 +250,6 @@ const WinnerSelection = () => {
                     color: '#FFE4D6',
                     backgroundColor: 'rgba(255, 228, 214, 0.1)'
                   }}
-                  onClick={handleManageCriteria}
-                >
-                  <Settings size={14} />
-                  <span className="hidden sm:inline">Manage Criteria</span>
-                  <span className="sm:hidden">Criteria</span>
-                </button>
-                <button
-                  className="border px-3 py-2 rounded-lg font-medium flex items-center space-x-1 whitespace-nowrap btn-animate"
-                  style={{
-                    borderColor: '#FFE4D6',
-                    color: '#FFE4D6',
-                    backgroundColor: 'rgba(255, 228, 214, 0.1)'
-                  }}
                   onClick={() => navigate('/moderatordashboard')}
                 >
                   <Shield size={14} />
@@ -281,61 +263,46 @@ const WinnerSelection = () => {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
           <div className="space-y-6">
-            {/* Scoring Criteria Status - Removed Challenge Selection */}
-            <div className="rounded-lg shadow-sm border h-full relative overflow-hidden" style={{backgroundColor: '#FFF5E1'}}>
-              <div className="p-6">
-                <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{color: '#5D3A00'}}>Scoring Criteria Status</label>
-                    <div className={`p-3 rounded-lg border ${
-                      selectedChallengeData?.hasCriteria 
-                        ? 'bg-green-50 border-green-200 text-green-800' 
-                        : 'bg-red-50 border-red-200 text-red-800'
-                    }`}>
-                      {selectedChallengeData?.hasCriteria ? (
-                        <div className="flex items-center gap-2">
-                          <Trophy size={16} />
-                          <span className="font-medium">Criteria Set - Winners Calculated</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <Settings size={16} />
-                          <span className="font-medium">No Criteria Set - Please Define Scoring</span>
-                        </div>
-                      )}
+            {/* Set Scoring Criteria Button */}
+            <button
+              onClick={() => navigate('/scoring-criteria')}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-lg btn-animate"
+              style={{backgroundColor: '#D87C5A', color: 'white'}}
+            >
+              <Star size={20} />
+              Set Scoring Criteria
+            </button>
+
+            {/* Current Scoring Criteria Display */}
+            {selectedChallengeData?.hasCriteria && (
+              <div className="rounded-lg shadow-sm border h-full relative overflow-hidden" style={{backgroundColor: '#FFF5E1'}}>
+                <div className="p-6">
+                  <h3 className="text-lg font-semibold mb-4" style={{color: '#5D3A00'}}>Current Scoring Weights</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div className="text-center">
+                      <div className="font-semibold" style={{color: '#5D3A00'}}>{scoringCriteria.likesWeight}%</div>
+                      <div style={{color: '#D87C5A'}}>Likes</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="font-semibold" style={{color: '#5D3A00'}}>{scoringCriteria.commentsWeight}%</div>
+                      <div style={{color: '#D87C5A'}}>Comments</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="font-semibold" style={{color: '#5D3A00'}}>{scoringCriteria.buyerPreferenceWeight}%</div>
+                      <div style={{color: '#D87C5A'}}>Buyer Preference</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="font-semibold" style={{color: '#5D3A00'}}>{scoringCriteria.expertPanelWeight}%</div>
+                      <div style={{color: '#D87C5A'}}>Expert Panel</div>
                     </div>
                   </div>
                 </div>
-
-                {/* Current Scoring Criteria Display */}
-                {selectedChallengeData?.hasCriteria && (
-                  <div className="mt-6 p-4 rounded-lg" style={{backgroundColor: '#FFE4D6'}}>
-                    <h3 className="font-medium mb-3" style={{color: '#5D3A00'}}>Current Scoring Weights:</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                      <div className="text-center">
-                        <div className="font-semibold" style={{color: '#5D3A00'}}>{scoringCriteria.likesWeight}%</div>
-                        <div style={{color: '#D87C5A'}}>Likes</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="font-semibold" style={{color: '#5D3A00'}}>{scoringCriteria.commentsWeight}%</div>
-                        <div style={{color: '#D87C5A'}}>Comments</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="font-semibold" style={{color: '#5D3A00'}}>{scoringCriteria.buyerPreferenceWeight}%</div>
-                        <div style={{color: '#D87C5A'}}>Buyer Preference</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="font-semibold" style={{color: '#5D3A00'}}>{scoringCriteria.expertPanelWeight}%</div>
-                        <div style={{color: '#D87C5A'}}>Expert Panel</div>
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
-            </div>
+            )}
 
-            {selectedChallengeData?.hasCriteria ? (
+            {selectedChallengeData?.hasCriteria && (
               <>
+
                 {/* Search and Sort */}
                 <div className="rounded-lg shadow-sm border h-full relative overflow-hidden" style={{backgroundColor: '#FFF5E1'}}>
                   <div className="p-6">
@@ -514,26 +481,6 @@ const WinnerSelection = () => {
                   ))}
                 </div>
               </>
-            ) : (
-              <div className="text-center py-12">
-                <Settings className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No Scoring Criteria Set</h3>
-                <p className="text-gray-500 mb-4">Please define scoring criteria before viewing winners.</p>
-                <button
-                  onClick={() => navigate('/scoring-criteria')}
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-lg transition-colors"
-                  style={{backgroundColor: '#D87C5A', color: 'white'}}
-                  onMouseOver={(e) => {
-                    e.target.style.backgroundColor = '#B85A3A';
-                  }}
-                  onMouseOut={(e) => {
-                    e.target.style.backgroundColor = '#D87C5A';
-                  }}
-                >
-                  <Settings size={20} />
-                  Set Scoring Criteria
-                </button>
-              </div>
             )}
 
             {/* Past Challenges Winners Section (always visible below criteria button) */}
