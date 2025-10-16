@@ -288,7 +288,7 @@ const DeliveryRequestsList = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      {/* <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
           <div className="flex items-center">
             <div 
@@ -349,7 +349,7 @@ const DeliveryRequestsList = () => {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Delivery Requests List */}
       <div className="space-y-6">
