@@ -2,9 +2,11 @@ package com.artaura.artaura.controller;
 
 import com.artaura.artaura.service.DeliveryPartnerService;
 import com.artaura.artaura.service.DeliveryRequestService;
+import com.artaura.artaura.service.DeliveryStatusService;
 import com.artaura.artaura.dao.DeliveryPartnerDAO;
 import com.artaura.artaura.dto.auth.DeliveryPartnerDTO;
 import com.artaura.artaura.dto.delivery.DeliveryRequestDTO;
+import com.artaura.artaura.dto.delivery.DeliveryStatusUpdateDTO;
 import com.artaura.artaura.dto.delivery.ArtistPickupAddressDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +27,9 @@ public class DeliveryPartnerController {
 
     @Autowired
     private DeliveryRequestService deliveryRequestService;
+
+    @Autowired
+    private DeliveryStatusService deliveryStatusService;
 
     @Autowired
     private DeliveryPartnerDAO deliveryPartnerDAO;
@@ -373,6 +378,176 @@ public class DeliveryPartnerController {
         } catch (Exception e) {
             Map<String, Object> response = new HashMap<>();
             response.put("error", "Failed to fetch commission pickup addresses: " + e.getMessage());
+            response.put("success", false);
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+    
+    // ===== NEW DELIVERY STATUS ENDPOINTS =====
+    
+    @PostMapping("/delivery-status/accept")
+    public ResponseEntity<Map<String, Object>> acceptDeliveryWithFee(@RequestBody Map<String, Object> request) {
+        try {
+            String orderType = (String) request.get("orderType");
+            Long orderId = Long.valueOf(request.get("orderId").toString());
+            Object shippingFeeObj = request.get("shippingFee");
+            Long deliveryPartnerId = Long.valueOf(request.get("deliveryPartnerId").toString());
+            
+            if (orderType == null || (!orderType.equals("artwork") && !orderType.equals("commission"))) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("error", "Invalid order type. Must be 'artwork' or 'commission'");
+                response.put("success", false);
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            if (orderId == null || deliveryPartnerId == null) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("error", "Order ID and Delivery Partner ID are required");
+                response.put("success", false);
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            java.math.BigDecimal shippingFee = null;
+            if (shippingFeeObj != null) {
+                if (shippingFeeObj instanceof Number) {
+                    shippingFee = new java.math.BigDecimal(shippingFeeObj.toString());
+                } else if (shippingFeeObj instanceof String) {
+                    try {
+                        shippingFee = new java.math.BigDecimal((String) shippingFeeObj);
+                    } catch (NumberFormatException e) {
+                        Map<String, Object> response = new HashMap<>();
+                        response.put("error", "Invalid shipping fee format");
+                        response.put("success", false);
+                        return ResponseEntity.badRequest().body(response);
+                    }
+                }
+            }
+            
+            boolean updated = deliveryStatusService.acceptDeliveryRequest(orderType, orderId, shippingFee, deliveryPartnerId);
+            
+            Map<String, Object> response = new HashMap<>();
+            if (updated) {
+                response.put("message", "Delivery request accepted successfully with shipping fee");
+                response.put("success", true);
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("error", "Failed to accept delivery request or update shipping fee");
+                response.put("success", false);
+                return ResponseEntity.internalServerError().body(response);
+            }
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Internal server error: " + e.getMessage());
+            response.put("success", false);
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+    
+    @GetMapping("/delivery-status/pending")
+    public ResponseEntity<Map<String, Object>> getAllPendingDeliveries() {
+        try {
+            Map<String, Object> pendingDeliveries = deliveryStatusService.getAllPendingDeliveryRequests();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("data", pendingDeliveries);
+            response.put("success", true);
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Failed to fetch pending deliveries: " + e.getMessage());
+            response.put("success", false);
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+    
+    @PutMapping("/delivery-status/update")
+    public ResponseEntity<Map<String, Object>> updateDeliveryStatusWithFee(@RequestBody DeliveryStatusUpdateDTO updateDTO) {
+        try {
+            boolean updated = deliveryStatusService.updateDeliveryStatus(updateDTO);
+            
+            Map<String, Object> response = new HashMap<>();
+            if (updated) {
+                response.put("message", "Delivery status and shipping fee updated successfully");
+                response.put("success", true);
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("error", "Failed to update delivery status");
+                response.put("success", false);
+                return ResponseEntity.internalServerError().body(response);
+            }
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Internal server error: " + e.getMessage());
+            response.put("success", false);
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+    
+    @PutMapping("/delivery-status/{orderType}/{orderId}/out-for-delivery")
+    public ResponseEntity<Map<String, Object>> markAsOutForDelivery(@PathVariable String orderType, @PathVariable Long orderId) {
+        try {
+            boolean updated = deliveryStatusService.markAsOutForDelivery(orderType, orderId);
+            
+            Map<String, Object> response = new HashMap<>();
+            if (updated) {
+                response.put("message", "Order marked as out for delivery");
+                response.put("success", true);
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("error", "Failed to update delivery status");
+                response.put("success", false);
+                return ResponseEntity.internalServerError().body(response);
+            }
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Internal server error: " + e.getMessage());
+            response.put("success", false);
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+    
+    @PutMapping("/delivery-status/{orderType}/{orderId}/delivered")
+    public ResponseEntity<Map<String, Object>> markAsDelivered(@PathVariable String orderType, @PathVariable Long orderId) {
+        try {
+            boolean updated = deliveryStatusService.markAsDelivered(orderType, orderId);
+            
+            Map<String, Object> response = new HashMap<>();
+            if (updated) {
+                response.put("message", "Order marked as delivered");
+                response.put("success", true);
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("error", "Failed to update delivery status");
+                response.put("success", false);
+                return ResponseEntity.internalServerError().body(response);
+            }
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Internal server error: " + e.getMessage());
+            response.put("success", false);
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+    
+    @GetMapping("/delivery-status/{orderType}/{orderId}")
+    public ResponseEntity<Map<String, Object>> getDeliveryInfo(@PathVariable String orderType, @PathVariable Long orderId) {
+        try {
+            Map<String, Object> deliveryInfo = deliveryStatusService.getDeliveryInfo(orderType, orderId);
+            
+            Map<String, Object> response = new HashMap<>();
+            if (!deliveryInfo.isEmpty()) {
+                response.put("data", deliveryInfo);
+                response.put("success", true);
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("error", "Delivery information not found");
+                response.put("success", false);
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Internal server error: " + e.getMessage());
             response.put("success", false);
             return ResponseEntity.internalServerError().body(response);
         }

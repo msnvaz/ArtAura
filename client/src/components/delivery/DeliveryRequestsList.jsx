@@ -45,7 +45,119 @@ const DeliveryRequestsList = () => {
         setLoading(true);
         setError(null);
         
-        // Fetch both delivery requests and pickup addresses
+        // Try the new delivery status endpoint first
+        try {
+          const pendingResponse = await axios.get('http://localhost:8081/api/delivery-status/pending', {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          
+          if (pendingResponse.data.success) {
+            const { artworkOrders, commissionRequests } = pendingResponse.data.data;
+            
+            // Transform the new API data format
+            const transformedRequests = [
+              ...artworkOrders.map(order => ({
+                id: order.id,
+                requestType: 'artwork_order',
+                artistId: order.artist_id || 'N/A',
+                artistName: 'Artist Name', // You might need to fetch this separately
+                artistPhone: order.contact_number || 'N/A',
+                artistEmail: order.email || 'N/A',
+                buyerId: order.buyer_id,
+                buyerName: `${order.first_name || ''} ${order.last_name || ''}`.trim() || 'Unknown Buyer',
+                buyerPhone: order.contact_number || 'N/A',
+                buyerEmail: order.email || 'N/A',
+                pickupAddress: {
+                  full: 'Pickup address to be confirmed',
+                  street: 'TBD',
+                  city: 'TBD',
+                  district: 'TBD',
+                  postalCode: 'TBD'
+                },
+                deliveryAddress: {
+                  full: order.shipping_address || 'Address not provided',
+                  street: order.shipping_address?.split(',')[0] || '',
+                  city: order.shipping_address?.split(',')[1] || '',
+                  district: order.shipping_address?.split(',')[2] || '',
+                  postalCode: order.shipping_address?.split(',')[3] || ''
+                },
+                artwork: {
+                  title: `Artwork Order #${order.id}`,
+                  type: 'Artwork',
+                  size: 'N/A',
+                  weight: 'TBD',
+                  fragile: true,
+                  value: `Rs ${order.total_amount || 0}`
+                },
+                pickupDate: new Date().toISOString().split('T')[0],
+                preferredTime: '10:00 AM - 6:00 PM',
+                requestDate: order.order_date ? new Date(order.order_date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+                requestDateTime: order.order_date || new Date().toISOString(),
+                status: order.delivery_status === 'accepted' ? 'accepted' : 'pending',
+                urgency: 'normal',
+                specialInstructions: 'Handle with care',
+                distance: 'TBD',
+                estimatedFee: 'Rs 2,500',
+                deadline: null,
+                acceptedFee: order.shipping_fee ? `Rs ${order.shipping_fee}` : null,
+                acceptedDate: order.delivery_status === 'accepted' ? new Date().toISOString().split('T')[0] : null
+              })),
+              ...commissionRequests.map(commission => ({
+                id: commission.id,
+                requestType: 'commission_request',
+                artistId: commission.artist_id,
+                artistName: 'Artist Name', // You might need to fetch this separately
+                artistPhone: commission.phone || 'N/A',
+                artistEmail: commission.email || 'N/A',
+                buyerId: commission.buyer_id,
+                buyerName: commission.name || 'Unknown Buyer',
+                buyerPhone: commission.phone || 'N/A',
+                buyerEmail: commission.email || 'N/A',
+                pickupAddress: {
+                  full: 'Pickup address to be confirmed',
+                  street: 'TBD',
+                  city: 'TBD',
+                  district: 'TBD',
+                  postalCode: 'TBD'
+                },
+                deliveryAddress: {
+                  full: commission.shipping_address || 'Address not provided',
+                  street: commission.shipping_address?.split(',')[0] || '',
+                  city: commission.shipping_address?.split(',')[1] || '',
+                  district: commission.shipping_address?.split(',')[2] || '',
+                  postalCode: commission.shipping_address?.split(',')[3] || ''
+                },
+                artwork: {
+                  title: commission.title || `Commission #${commission.id}`,
+                  type: commission.artwork_type || 'Commission',
+                  size: commission.dimensions || 'N/A',
+                  weight: 'TBD',
+                  fragile: true,
+                  value: `Rs ${commission.budget || 0}`
+                },
+                pickupDate: new Date().toISOString().split('T')[0],
+                preferredTime: '10:00 AM - 6:00 PM',
+                requestDate: commission.submitted_at ? new Date(commission.submitted_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+                requestDateTime: commission.submitted_at || new Date().toISOString(),
+                status: commission.delivery_status === 'accepted' ? 'accepted' : 'pending',
+                urgency: commission.urgency || 'normal',
+                specialInstructions: commission.additional_notes || 'Handle with care',
+                distance: 'TBD',
+                estimatedFee: 'Rs 2,500',
+                deadline: commission.deadline ? new Date(commission.deadline).toISOString().split('T')[0] : null,
+                acceptedFee: commission.shipping_fee ? `Rs ${commission.shipping_fee}` : null,
+                acceptedDate: commission.delivery_status === 'accepted' ? new Date().toISOString().split('T')[0] : null
+              }))
+            ];
+            
+            setDeliveryRequests(transformedRequests);
+            return; // Exit early if successful
+          }
+        } catch (newApiError) {
+          console.log('New API not available, falling back to old API:', newApiError);
+        }
+        
+        // Fallback to old API if new one fails
         const [requestsResponse, pickupResponse] = await Promise.all([
           axios.get('http://localhost:8081/api/delivery-partner/requests/pending', {
             headers: { Authorization: `Bearer ${token}` },
@@ -65,7 +177,7 @@ const DeliveryRequestsList = () => {
             });
           }
           
-          // Transform API data to match frontend expected format
+          // Transform API data to match frontend expected format (old format)
           const transformedRequests = requestsResponse.data.requests.map(req => {
             const pickupKey = `${req.requestType}-${req.id}`;
             const pickupData = pickupMap.get(pickupKey);
@@ -167,32 +279,163 @@ const DeliveryRequestsList = () => {
     }
 
     try {
-      // Make API call to accept the delivery request
-      await axios.put(`http://localhost:8081/api/delivery-partner/requests/${selectedRequest.id}/accept`, {
-        requestType: selectedRequest.requestType,
-        deliveryFee: deliveryFee
-      }, {
+      console.log('Starting acceptance process for request:', selectedRequest);
+      
+      // Get current user from localStorage and validate
+      let currentUser;
+      let userId;
+      try {
+        const userStr = localStorage.getItem('user');
+        console.log('Raw user string from localStorage:', userStr);
+        
+        if (!userStr) {
+          throw new Error('No user found in localStorage');
+        }
+        
+        currentUser = JSON.parse(userStr);
+        console.log('Parsed user object:', currentUser);
+        
+        // Try different possible property names for user ID
+        userId = currentUser.userId || currentUser.id || currentUser.UserId || currentUser.user_id;
+        
+        if (!userId) {
+          console.error('No userId found in user object. Available properties:', Object.keys(currentUser));
+          throw new Error('No valid user ID found in user data');
+        }
+        
+        console.log('Found userId:', userId);
+      } catch (userParseError) {
+        console.error('Error parsing user from localStorage:', userParseError);
+        
+        // If localStorage parsing fails, try to extract from JWT token
+        if (token) {
+          try {
+            // Decode JWT token to get user info (basic decode, not verifying signature)
+            const tokenParts = token.split('.');
+            if (tokenParts.length === 3) {
+              const payload = JSON.parse(atob(tokenParts[1]));
+              console.log('JWT payload:', payload);
+              userId = payload.userId || payload.sub || payload.id || payload.UserId;
+              if (userId) {
+                console.log('Extracted userId from JWT:', userId);
+                currentUser = { userId: userId };
+              }
+            }
+          } catch (jwtError) {
+            console.error('Error extracting from JWT:', jwtError);
+          }
+        }
+        
+        if (!userId) {
+          alert('User authentication error. Please log in again.');
+          return;
+        }
+      }
+      
+      // Get current user ID for delivery partner ID
+      let deliveryPartnerId;
+      try {
+        const userResponse = await axios.get(`http://localhost:8081/api/delivery-partner/profile/user/${userId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        deliveryPartnerId = userResponse.data.partnerId;
+        console.log('Got delivery partner ID:', deliveryPartnerId);
+      } catch (userError) {
+        console.error('Error getting delivery partner ID:', userError);
+        // Use the user ID as fallback
+        deliveryPartnerId = userId;
+        console.log('Using fallback delivery partner ID (user ID):', deliveryPartnerId);
+      }
+
+      // Convert request type to match backend expected format
+      const orderType = selectedRequest.requestType === 'artwork_order' ? 'artwork' : 'commission';
+      
+      const requestPayload = {
+        orderType: orderType,
+        orderId: selectedRequest.id,
+        shippingFee: parseFloat(deliveryFee),
+        deliveryPartnerId: deliveryPartnerId
+      };
+      
+      console.log('Making API call with payload:', requestPayload);
+
+      // Make API call to accept the delivery request using the new endpoint
+      const response = await axios.post('http://localhost:8081/api/delivery-status/accept', requestPayload, {
         headers: { 
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
 
-      // Update local state
-      setDeliveryRequests(prev => 
-        prev.map(req => 
-          req.id === selectedRequest.id 
-            ? { ...req, status: 'accepted', acceptedFee: `Rs ${deliveryFee}`, acceptedDate: new Date().toISOString().split('T')[0] }
-            : req
-        )
-      );
+      console.log('API Response:', response.data);
 
-      setShowAcceptModal(false);
-      setDeliveryFee('');
-      alert('Delivery request accepted successfully!');
+      if (response.data.success) {
+        // Update local state
+        setDeliveryRequests(prev => 
+          prev.map(req => 
+            req.id === selectedRequest.id 
+              ? { ...req, status: 'accepted', acceptedFee: `Rs ${deliveryFee}`, acceptedDate: new Date().toISOString().split('T')[0] }
+              : req
+          )
+        );
+
+        setShowAcceptModal(false);
+        setDeliveryFee('');
+        alert('Delivery request accepted successfully and shipping fee updated!');
+      } else {
+        console.error('API returned success=false:', response.data);
+        throw new Error(response.data.error || 'Failed to accept delivery request');
+      }
     } catch (error) {
       console.error('Error accepting delivery request:', error);
-      alert('Failed to accept delivery request. Please try again.');
+      console.error('Error details:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: error.message
+      });
+      
+      // Check if it's a 404 error or new endpoint not available, fallback to old endpoint
+      if (error.response?.status === 404 || error.code === 'ERR_NETWORK') {
+        console.log('Trying fallback to old endpoint...');
+        try {
+          const fallbackResponse = await axios.put(`http://localhost:8081/api/delivery-partner/requests/${selectedRequest.id}/accept`, {
+            requestType: selectedRequest.requestType,
+            deliveryFee: deliveryFee
+          }, {
+            headers: { 
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          console.log('Fallback API Response:', fallbackResponse.data);
+
+          // Update local state
+          setDeliveryRequests(prev => 
+            prev.map(req => 
+              req.id === selectedRequest.id 
+                ? { ...req, status: 'accepted', acceptedFee: `Rs ${deliveryFee}`, acceptedDate: new Date().toISOString().split('T')[0] }
+                : req
+            )
+          );
+
+          setShowAcceptModal(false);
+          setDeliveryFee('');
+          alert('Delivery request accepted successfully using fallback method!');
+        } catch (fallbackError) {
+          console.error('Fallback method also failed:', fallbackError);
+          console.error('Fallback error details:', {
+            status: fallbackError.response?.status,
+            statusText: fallbackError.response?.statusText,
+            data: fallbackError.response?.data,
+            message: fallbackError.message
+          });
+          alert(`Failed to accept delivery request. Error: ${fallbackError.response?.data?.error || fallbackError.message}`);
+        }
+      } else {
+        alert(`Failed to accept delivery request. Error: ${error.response?.data?.error || error.message}`);
+      }
     }
   };
 
@@ -288,7 +531,7 @@ const DeliveryRequestsList = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      {/* <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
           <div className="flex items-center">
             <div 
@@ -349,7 +592,7 @@ const DeliveryRequestsList = () => {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Delivery Requests List */}
       <div className="space-y-6">

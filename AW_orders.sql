@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: mysql-artaura.alwaysdata.net
--- Generation Time: Oct 16, 2025 at 09:39 AM
+-- Generation Time: Oct 16, 2025 at 04:20 PM
 -- Server version: 10.11.14-MariaDB
 -- PHP Version: 7.4.33
 
@@ -49,14 +49,11 @@ CREATE TABLE `AW_orders` (
 --
 
 INSERT INTO `AW_orders` (`id`, `buyer_id`, `first_name`, `last_name`, `email`, `order_date`, `total_amount`, `shipping_fee`, `shipping_address`, `contact_number`, `status`, `delivery_status`, `payment_method`, `stripe_payment_id`) VALUES
-(6, 1, 'pawani2002', 'Kumari2002', 'pawanibuyer@gmail.com', '2025-08-16 00:38:30', 800.00, 0, 'pinnalandawatta, bathamburaya, rambukkana, 71100, Sri Lanka', '0741748684', 'paid', 'outForDelivery', 'stripe', 'pi_3RwSzGQcGakY3xP21449GsCv'),
-(7, 1, 'pawani', 'saman', 'saman@gmail.com', '2025-08-16 00:55:57', 3600.00, NULL, 'staple street, pinnawala, rambukkana, 1225, Sri Lanka', '035225554', 'paid', 'pending', 'stripe', 'pi_3RwTGAQcGakY3xP24wzFgO4N'),
-(8, 1, 'pawani2002', 'Kumari2002', 'pawanibuyer@gmail.com', '2025-08-16 01:01:14', 3000.00, NULL, 'pinnalandawatta, bathamburaya, rambukkana, 71100, Sri Lanka', '0741748684', 'paid', 'pending', 'stripe', 'pi_3RwTLGQcGakY3xP20P2urnI1'),
 (9, 1, 'pawani2002', 'Kumari2002', 'pawanibuyer@gmail.com', '2025-08-16 01:05:38', 7000.00, NULL, 'pinnalandawatta, bathamburaya, rambukkana, 71100, Sri Lanka', '0741748684', 'paid', 'pending', 'stripe', 'pi_3RwTPWQcGakY3xP22rT0KqbV'),
 (10, 1, 'pawani2002', 'Kumari2002', 'pawanibuyer@gmail.com', '2025-08-26 23:22:35', 800.00, NULL, 'pinnalandawatta, bathamburaya, rambukkana, 71100, Sri Lanka', '0741748684', 'paid', 'outForDelivery', 'stripe', 'pi_3S0R2pQcGakY3xP21xfij8pT'),
-(11, 1, 'pawani2002', 'Kumari2002', 'pawanibuyer@gmail.com', '2025-08-28 14:41:23', 800.00, NULL, 'pinnalandawatta, bathamburaya, rambukkana, 71100, Sri Lanka', '0741748684', 'paid', 'pending', 'stripe', 'pi_3S11rYQcGakY3xP228SuGvdF'),
+(11, 1, 'pawani2002', 'Kumari2002', 'pawanibuyer@gmail.com', '2025-08-28 14:41:23', 800.00, NULL, 'pinnalandawatta, bathamburaya, rambukkana, 71100, Sri Lanka', '0741748684', 'paid', 'accepted', 'stripe', 'pi_3S11rYQcGakY3xP228SuGvdF'),
 (12, 1, 'pawani2002', 'Kumari2002', 'pawanibuyer@gmail.com', '2025-09-02 19:35:00', 800.00, NULL, 'pinnalandawatta, bathamburaya, rambukkana, 71100, Sri Lanka', '0741748684', 'paid', NULL, 'stripe', 'pi_3S2upRQcGakY3xP20b2AUOlo'),
-(13, 1, 'pawani2002', 'Kumari', 'pawanibuyer@gmail.com', '2025-09-05 23:31:34', 4500.00, NULL, 'pinnalandawatta, bathamburaya, rambukkana, 71100, Sri Lanka', '0741748684', 'paid', 'pending', 'stripe', 'pi_3S43x0QcGakY3xP22q4iOqtp'),
+(13, 1, 'pawani2002', 'Kumari', 'pawanibuyer@gmail.com', '2025-09-05 23:31:34', 4500.00, NULL, 'pinnalandawatta, bathamburaya, rambukkana, 71100, Sri Lanka', '0741748684', 'paid', 'accepted', 'stripe', 'pi_3S43x0QcGakY3xP22q4iOqtp'),
 (14, 1, 'pawani2002', 'Kumari', 'pawanibuyer@gmail.com', '2025-09-05 23:34:50', 3000.00, NULL, 'pinnalandawatta, bathamburaya, rambukkana, 71100, Sri Lanka', '0741748684', 'paid', 'delivered', 'stripe', 'pi_3S440BQcGakY3xP21O0JvPdN');
 
 --
