@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -258,6 +259,179 @@ public class DeliveryStatusController {
             Map<String, Object> response = new HashMap<>();
             response.put("error", "Internal server error: " + e.getMessage());
             response.put("success", false);
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+
+    /**
+     * Enhanced comprehensive delivery status update endpoint
+     */
+    @PutMapping("/update-comprehensive")
+    public ResponseEntity<Map<String, Object>> updateDeliveryStatusComprehensive(@RequestBody DeliveryStatusUpdateDTO updateDTO) {
+        try {
+            System.out.println("🔄 DeliveryStatusController.updateDeliveryStatusComprehensive called with: " + updateDTO.toString());
+            
+            Map<String, Object> result = deliveryStatusService.updateDeliveryStatusComprehensive(updateDTO);
+            
+            if ((Boolean) result.get("success")) {
+                return ResponseEntity.ok(result);
+            } else {
+                return ResponseEntity.badRequest().body(result);
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Error in updateDeliveryStatusComprehensive: " + e.getMessage());
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("error", "Internal server error: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+
+    /**
+     * Bulk update multiple delivery statuses
+     */
+    @PutMapping("/bulk-update")
+    public ResponseEntity<Map<String, Object>> bulkUpdateDeliveryStatus(@RequestBody List<DeliveryStatusUpdateDTO> updates) {
+        try {
+            System.out.println("🔄 DeliveryStatusController.bulkUpdateDeliveryStatus called with " + updates.size() + " updates");
+            
+            Map<String, Object> result = deliveryStatusService.bulkUpdateDeliveryStatus(updates);
+            
+            if ((Boolean) result.get("success")) {
+                return ResponseEntity.ok(result);
+            } else {
+                return ResponseEntity.badRequest().body(result);
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Error in bulkUpdateDeliveryStatus: " + e.getMessage());
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("error", "Internal server error: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+
+    /**
+     * Enhanced accept delivery request with comprehensive validation
+     */
+    @PostMapping("/accept-enhanced")
+    public ResponseEntity<Map<String, Object>> acceptDeliveryRequestEnhanced(@RequestBody Map<String, Object> request) {
+        try {
+            String orderType = (String) request.get("orderType");
+            Long orderId = Long.valueOf(request.get("orderId").toString());
+            Object shippingFeeObj = request.get("shippingFee");
+            Long deliveryPartnerId = Long.valueOf(request.get("deliveryPartnerId").toString());
+            
+            BigDecimal shippingFee = null;
+            if (shippingFeeObj != null) {
+                if (shippingFeeObj instanceof Number) {
+                    shippingFee = new BigDecimal(shippingFeeObj.toString());
+                } else if (shippingFeeObj instanceof String) {
+                    try {
+                        shippingFee = new BigDecimal((String) shippingFeeObj);
+                    } catch (NumberFormatException e) {
+                        Map<String, Object> response = new HashMap<>();
+                        response.put("error", "Invalid shipping fee format");
+                        response.put("success", false);
+                        return ResponseEntity.badRequest().body(response);
+                    }
+                }
+            }
+            
+            Map<String, Object> result = deliveryStatusService.acceptDeliveryRequestEnhanced(
+                orderType, orderId, shippingFee, deliveryPartnerId
+            );
+            
+            if ((Boolean) result.get("success")) {
+                return ResponseEntity.ok(result);
+            } else {
+                return ResponseEntity.badRequest().body(result);
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Error in acceptDeliveryRequestEnhanced: " + e.getMessage());
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("error", "Internal server error: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+
+    /**
+     * Get delivery status analytics and available transitions
+     */
+    @GetMapping("/analytics/{orderType}/{orderId}")
+    public ResponseEntity<Map<String, Object>> getDeliveryStatusAnalytics(
+            @PathVariable String orderType, 
+            @PathVariable Long orderId) {
+        try {
+            System.out.println("📊 DeliveryStatusController.getDeliveryStatusAnalytics called for: " + orderType + "/" + orderId);
+            
+            Map<String, Object> result = deliveryStatusService.getDeliveryStatusAnalytics(orderType, orderId);
+            
+            if ((Boolean) result.get("success")) {
+                return ResponseEntity.ok(result);
+            } else {
+                return ResponseEntity.badRequest().body(result);
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Error in getDeliveryStatusAnalytics: " + e.getMessage());
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("error", "Internal server error: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+
+    /**
+     * Advanced status update with validation and detailed response
+     */
+    @PutMapping("/update-advanced/{orderType}/{orderId}")
+    public ResponseEntity<Map<String, Object>> updateDeliveryStatusAdvanced(
+            @PathVariable String orderType,
+            @PathVariable Long orderId,
+            @RequestBody Map<String, Object> updateRequest) {
+        try {
+            String deliveryStatus = (String) updateRequest.get("deliveryStatus");
+            Object shippingFeeObj = updateRequest.get("shippingFee");
+            Object deliveryPartnerIdObj = updateRequest.get("deliveryPartnerId");
+            
+            BigDecimal shippingFee = null;
+            if (shippingFeeObj != null) {
+                if (shippingFeeObj instanceof Number) {
+                    shippingFee = new BigDecimal(shippingFeeObj.toString());
+                } else if (shippingFeeObj instanceof String && !((String) shippingFeeObj).isEmpty()) {
+                    try {
+                        shippingFee = new BigDecimal((String) shippingFeeObj);
+                    } catch (NumberFormatException e) {
+                        Map<String, Object> response = new HashMap<>();
+                        response.put("error", "Invalid shipping fee format");
+                        response.put("success", false);
+                        return ResponseEntity.badRequest().body(response);
+                    }
+                }
+            }
+            
+            Long deliveryPartnerId = null;
+            if (deliveryPartnerIdObj != null) {
+                deliveryPartnerId = Long.valueOf(deliveryPartnerIdObj.toString());
+            }
+            
+            DeliveryStatusUpdateDTO updateDTO = new DeliveryStatusUpdateDTO(
+                orderId, orderType, deliveryStatus, shippingFee, deliveryPartnerId
+            );
+            
+            Map<String, Object> result = deliveryStatusService.updateDeliveryStatusComprehensive(updateDTO);
+            
+            if ((Boolean) result.get("success")) {
+                return ResponseEntity.ok(result);
+            } else {
+                return ResponseEntity.badRequest().body(result);
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Error in updateDeliveryStatusAdvanced: " + e.getMessage());
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("error", "Internal server error: " + e.getMessage());
             return ResponseEntity.internalServerError().body(response);
         }
     }

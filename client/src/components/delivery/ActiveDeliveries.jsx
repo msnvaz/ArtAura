@@ -104,43 +104,297 @@ const ActiveDeliveries = () => {
   ];
 
   useEffect(() => {
-    // Simulate API call
-    setLoading(true);
-    setTimeout(() => {
-      setActiveDeliveries(mockActiveDeliveries);
-      setLoading(false);
-    }, 1000);
-  }, []);
-
-  const updateDeliveryStatus = async (deliveryId, newStatus) => {
-    try {
-      // Here you would make an API call to update the delivery status
-      // await axios.patch(`/api/delivery/${deliveryId}/status`, { status: newStatus }, {
-      //   headers: { Authorization: `Bearer ${token}` }
-      // });
-
-      const currentTime = new Date().toLocaleString();
+    const fetchActiveDeliveries = async () => {
+      if (!token) return;
       
-      setActiveDeliveries(prev => 
-        prev.map(delivery => {
-          if (delivery.id === deliveryId) {
-            const updatedProgress = { ...delivery.progress };
-            updatedProgress[newStatus] = { completed: true, time: currentTime };
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // First try the new API endpoint for active deliveries
+        try {
+          const response = await axios.get('http://localhost:8081/api/delivery-partner/requests/active', {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          
+          if (response.data.success && response.data.requests) {
+            // Transform the API data to match the component format
+            const transformedDeliveries = response.data.requests.map(request => ({
+              id: request.id,
+              requestId: `${request.requestType === 'artwork_order' ? 'AW' : 'COM'}-${request.id}`,
+              requestType: request.requestType,
+              artistName: request.artistName || 'Artist Name',
+              artistPhone: request.buyerPhone || 'N/A',
+              buyerName: request.buyerName || 'Unknown Buyer',
+              buyerPhone: request.buyerPhone || 'N/A',
+              artwork: {
+                title: request.artworkTitle || `${request.requestType === 'artwork_order' ? 'Artwork Order' : 'Commission'} #${request.id}`,
+                type: request.artworkType || (request.requestType === 'artwork_order' ? 'Artwork' : 'Commission'),
+                size: request.artworkDimensions || 'N/A',
+                value: `Rs ${request.totalAmount || 0}`
+              },
+              pickupAddress: {
+                street: request.pickupAddress || 'Pickup address to be confirmed',
+                city: request.pickupCity || 'TBD',
+                district: 'TBD',
+                postalCode: 'TBD'
+              },
+              deliveryAddress: {
+                full: request.shippingAddress || 'Address not provided',
+                street: request.shippingAddress?.split(',')[0] || '',
+                city: request.shippingAddress?.split(',')[1] || '',
+                district: request.shippingAddress?.split(',')[2] || '',
+                postalCode: request.shippingAddress?.split(',')[3] || ''
+              },
+              status: request.deliveryStatus === 'accepted' ? 'accepted' : 
+                      request.deliveryStatus === 'outForDelivery' ? 'in_transit' : 'accepted',
+              acceptedFee: 'Fee to be confirmed',
+              pickupDate: request.orderDate ? new Date(request.orderDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+              estimatedDelivery: request.deadline ? 
+                new Date(request.deadline).toISOString().split('T')[0] : 
+                new Date(new Date().getTime() + 24*60*60*1000).toISOString().split('T')[0],
+              distance: 'TBD',
+              progress: {
+                accepted: { 
+                  completed: true, 
+                  time: request.orderDate ? new Date(request.orderDate).toLocaleString() : 'N/A'
+                },
+                picked_up: { 
+                  completed: request.deliveryStatus === 'outForDelivery', 
+                  time: request.deliveryStatus === 'outForDelivery' ? 'Recently' : null
+                },
+                in_transit: { 
+                  completed: request.deliveryStatus === 'outForDelivery', 
+                  time: request.deliveryStatus === 'outForDelivery' ? 'Recently' : null
+                },
+                delivered: { completed: false, time: null }
+              }
+            }));
             
-            return {
-              ...delivery,
-              status: newStatus,
-              progress: updatedProgress
-            };
+            setActiveDeliveries(transformedDeliveries);
+            return; // Success with new API
           }
-          return delivery;
-        })
-      );
+        } catch (newApiError) {
+          console.log('New API not available, falling back to old API:', newApiError.message);
+        }
+        
+        // Fallback to old API endpoint if new one fails
+        const response = await axios.get('http://localhost:8081/api/delivery-status/pending', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        
+        if (response.data.success) {
+          const { artworkOrders, commissionRequests } = response.data.data;
+          
+          // Filter only accepted and outForDelivery statuses for active deliveries
+          const activeArtworkOrders = artworkOrders.filter(order => 
+            order.delivery_status === 'accepted' || order.delivery_status === 'outForDelivery'
+          );
+          
+          const activeCommissionRequests = commissionRequests.filter(commission => 
+            commission.delivery_status === 'accepted' || commission.delivery_status === 'outForDelivery'
+          );
+          
+          // Transform the API data to match the component format (old API structure)
+          const transformedDeliveries = [
+            ...activeArtworkOrders.map(order => ({
+              id: order.id,
+              requestId: `AW-${order.id}`,
+              requestType: 'artwork_order',
+              artistName: 'Artist Name', // You might need to fetch this separately
+              artistPhone: order.contact_number || 'N/A',
+              buyerName: `${order.first_name || ''} ${order.last_name || ''}`.trim() || 'Unknown Buyer',
+              buyerPhone: order.contact_number || 'N/A',
+              artwork: {
+                title: `Artwork Order #${order.id}`,
+                type: 'Artwork',
+                size: 'N/A',
+                value: `Rs ${order.total_amount || 0}`
+              },
+              pickupAddress: {
+                street: 'Pickup address to be confirmed',
+                city: 'TBD',
+                district: 'TBD',
+                postalCode: 'TBD'
+              },
+              deliveryAddress: {
+                full: order.shipping_address || 'Address not provided',
+                street: order.shipping_address?.split(',')[0] || '',
+                city: order.shipping_address?.split(',')[1] || '',
+                district: order.shipping_address?.split(',')[2] || '',
+                postalCode: order.shipping_address?.split(',')[3] || ''
+              },
+              status: order.delivery_status === 'accepted' ? 'accepted' : 
+                      order.delivery_status === 'outForDelivery' ? 'in_transit' : 'accepted',
+              acceptedFee: order.shipping_fee ? `Rs ${order.shipping_fee}` : 'Fee not set',
+              pickupDate: order.order_date ? new Date(order.order_date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+              estimatedDelivery: order.order_date ? new Date(new Date(order.order_date).getTime() + 24*60*60*1000).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+              distance: 'TBD',
+              progress: {
+                accepted: { 
+                  completed: true, 
+                  time: order.order_date ? new Date(order.order_date).toLocaleString() : 'N/A'
+                },
+                picked_up: { 
+                  completed: order.delivery_status === 'outForDelivery', 
+                  time: order.delivery_status === 'outForDelivery' ? 'Recently' : null
+                },
+                in_transit: { 
+                  completed: order.delivery_status === 'outForDelivery', 
+                  time: order.delivery_status === 'outForDelivery' ? 'Recently' : null
+                },
+                delivered: { completed: false, time: null }
+              }
+            })),
+            ...activeCommissionRequests.map(commission => ({
+              id: commission.id,
+              requestId: `COM-${commission.id}`,
+              requestType: 'commission_request',
+              artistName: 'Artist Name', // You might need to fetch this separately
+              artistPhone: commission.phone || 'N/A',
+              buyerName: commission.name || 'Unknown Buyer',
+              buyerPhone: commission.phone || 'N/A',
+              artwork: {
+                title: commission.title || `Commission #${commission.id}`,
+                type: commission.artwork_type || 'Commission',
+                size: commission.dimensions || 'N/A',
+                value: `Rs ${commission.budget || 0}`
+              },
+              pickupAddress: {
+                street: 'Pickup address to be confirmed',
+                city: 'TBD',
+                district: 'TBD',
+                postalCode: 'TBD'
+              },
+              deliveryAddress: {
+                full: commission.shipping_address || 'Address not provided',
+                street: commission.shipping_address?.split(',')[0] || '',
+                city: commission.shipping_address?.split(',')[1] || '',
+                district: commission.shipping_address?.split(',')[2] || '',
+                postalCode: commission.shipping_address?.split(',')[3] || ''
+              },
+              status: commission.delivery_status === 'accepted' ? 'accepted' : 
+                      commission.delivery_status === 'outForDelivery' ? 'in_transit' : 'accepted',
+              acceptedFee: commission.shipping_fee ? `Rs ${commission.shipping_fee}` : 'Fee not set',
+              pickupDate: commission.submitted_at ? new Date(commission.submitted_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+              estimatedDelivery: commission.deadline ? new Date(commission.deadline).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+              distance: 'TBD',
+              progress: {
+                accepted: { 
+                  completed: true, 
+                  time: commission.submitted_at ? new Date(commission.submitted_at).toLocaleString() : 'N/A'
+                },
+                picked_up: { 
+                  completed: commission.delivery_status === 'outForDelivery', 
+                  time: commission.delivery_status === 'outForDelivery' ? 'Recently' : null
+                },
+                in_transit: { 
+                  completed: commission.delivery_status === 'outForDelivery', 
+                  time: commission.delivery_status === 'outForDelivery' ? 'Recently' : null
+                },
+                delivered: { completed: false, time: null }
+              }
+            }))
+          ];
+          
+          setActiveDeliveries(transformedDeliveries);
+        } else {
+          setError(response.data.error || 'Failed to fetch active deliveries');
+        }
+      } catch (error) {
+        console.error('Error fetching active deliveries:', error);
+        setError('Failed to fetch active deliveries. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-      alert(`Delivery status updated to: ${newStatus.replace('_', ' ')}`);
+    fetchActiveDeliveries();
+  }, [token]);
+
+  const updateDeliveryStatus = async (delivery, newStatus) => {
+    try {
+      console.log('Updating delivery status:', { delivery, newStatus });
+      
+      // Convert request type to match backend expected format
+      const orderType = delivery.requestType === 'artwork_order' ? 'artwork' : 'commission';
+      
+      // Use the new comprehensive update endpoint
+      const updateData = {
+        orderId: delivery.id,
+        orderType: orderType,
+        deliveryStatus: newStatus === 'picked_up' || newStatus === 'in_transit' ? 'outForDelivery' : newStatus,
+        shippingFee: null, // Don't change shipping fee during status updates
+        deliveryPartnerId: null // Not needed for status updates
+      };
+
+      console.log('Sending update data:', updateData);
+      
+      // Make API call using the enhanced comprehensive update endpoint
+      const response = await axios.put('http://localhost:8081/api/delivery-status/update-comprehensive', updateData, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('Status update API Response:', response.data);
+
+      if (response.data.success) {
+        const currentTime = new Date().toLocaleString();
+        
+        setActiveDeliveries(prev => 
+          prev.map(d => {
+            if (d.id === delivery.id && d.requestType === delivery.requestType) {
+              const updatedProgress = { ...d.progress };
+              
+              // Update progress based on new status
+              if (newStatus === 'picked_up' || newStatus === 'in_transit') {
+                updatedProgress.picked_up = { completed: true, time: currentTime };
+                updatedProgress.in_transit = { completed: true, time: currentTime };
+              } else if (newStatus === 'delivered') {
+                updatedProgress.delivered = { completed: true, time: currentTime };
+                // If delivered, remove from active deliveries after a delay
+                setTimeout(() => {
+                  setActiveDeliveries(prev => prev.filter(delivery => 
+                    !(delivery.id === d.id && delivery.requestType === d.requestType)
+                  ));
+                }, 2000);
+              }
+              
+              return {
+                ...d,
+                status: newStatus,
+                progress: updatedProgress
+              };
+            }
+            return d;
+          })
+        );
+
+        const statusLabel = newStatus.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+        alert(`Delivery status updated successfully to: ${statusLabel}\n\nResponse: ${response.data.message}`);
+      } else {
+        throw new Error(response.data.error || 'Failed to update status');
+      }
     } catch (error) {
       console.error('Error updating delivery status:', error);
-      alert('Failed to update delivery status. Please try again.');
+      
+      // Enhanced error handling
+      let errorMessage = 'Failed to update delivery status.';
+      if (error.response) {
+        errorMessage += ` Status: ${error.response.status}`;
+        if (error.response.data && error.response.data.error) {
+          errorMessage += `\nError: ${error.response.data.error}`;
+        }
+        if (error.response.data && error.response.data.details) {
+          errorMessage += `\nDetails: ${error.response.data.details}`;
+        }
+      } else if (error.message) {
+        errorMessage += ` Error: ${error.message}`;
+      }
+      
+      alert(errorMessage);
     }
   };
 
@@ -267,7 +521,7 @@ const ActiveDeliveries = () => {
                     </div>
                     {nextAction && (
                       <button
-                        onClick={() => updateDeliveryStatus(delivery.id, nextAction.action)}
+                        onClick={() => updateDeliveryStatus(delivery, nextAction.action)}
                         className="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors duration-200 flex items-center gap-2"
                         style={{ backgroundColor: '#D87C5A' }}
                         onMouseOver={(e) => e.target.style.backgroundColor = '#5D3A00'}

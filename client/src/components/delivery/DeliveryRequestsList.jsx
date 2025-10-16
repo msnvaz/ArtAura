@@ -14,7 +14,8 @@ import {
     Home,
     FileText,
     AlertCircle,
-    Search
+    Search,
+    Truck
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
@@ -93,7 +94,9 @@ const DeliveryRequestsList = () => {
                 preferredTime: '10:00 AM - 6:00 PM',
                 requestDate: order.order_date ? new Date(order.order_date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
                 requestDateTime: order.order_date || new Date().toISOString(),
-                status: order.delivery_status === 'accepted' ? 'accepted' : 'pending',
+                status: order.delivery_status === 'accepted' ? 'accepted' : 
+                        order.delivery_status === 'outForDelivery' ? 'in_progress' :
+                        order.delivery_status === 'delivered' ? 'completed' : 'pending',
                 urgency: 'normal',
                 specialInstructions: 'Handle with care',
                 distance: 'TBD',
@@ -139,7 +142,9 @@ const DeliveryRequestsList = () => {
                 preferredTime: '10:00 AM - 6:00 PM',
                 requestDate: commission.submitted_at ? new Date(commission.submitted_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
                 requestDateTime: commission.submitted_at || new Date().toISOString(),
-                status: commission.delivery_status === 'accepted' ? 'accepted' : 'pending',
+                status: commission.delivery_status === 'accepted' ? 'accepted' : 
+                        commission.delivery_status === 'outForDelivery' ? 'in_progress' :
+                        commission.delivery_status === 'delivered' ? 'completed' : 'pending',
                 urgency: commission.urgency || 'normal',
                 specialInstructions: commission.additional_notes || 'Handle with care',
                 distance: 'TBD',
@@ -272,6 +277,80 @@ const DeliveryRequestsList = () => {
     setShowAcceptModal(true);
   };
 
+  const handleMarkInTransit = async (request) => {
+    try {
+      console.log('Marking as in transit for request:', request);
+      
+      // Convert request type to match backend expected format
+      const orderType = request.requestType === 'artwork_order' ? 'artwork' : 'commission';
+      
+      // Make API call to mark as out for delivery
+      const response = await axios.put(`http://localhost:8081/api/delivery-status/${orderType}/${request.id}/out-for-delivery`, {}, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('Mark in transit API Response:', response.data);
+
+      if (response.data.success) {
+        // Update local state
+        setDeliveryRequests(prev => 
+          prev.map(req => 
+            req.id === request.id 
+              ? { ...req, status: 'in_progress' }
+              : req
+          )
+        );
+
+        alert('Order marked as in transit successfully!');
+      } else {
+        throw new Error(response.data.error || 'Failed to mark as in transit');
+      }
+    } catch (error) {
+      console.error('Error marking as in transit:', error);
+      alert(`Failed to mark as in transit. Error: ${error.response?.data?.error || error.message}`);
+    }
+  };
+
+  const handleMarkDelivered = async (request) => {
+    try {
+      console.log('Marking as delivered for request:', request);
+      
+      // Convert request type to match backend expected format
+      const orderType = request.requestType === 'artwork_order' ? 'artwork' : 'commission';
+      
+      // Make API call to mark as delivered
+      const response = await axios.put(`http://localhost:8081/api/delivery-status/${orderType}/${request.id}/delivered`, {}, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('Mark delivered API Response:', response.data);
+
+      if (response.data.success) {
+        // Update local state
+        setDeliveryRequests(prev => 
+          prev.map(req => 
+            req.id === request.id 
+              ? { ...req, status: 'completed' }
+              : req
+          )
+        );
+
+        alert('Order marked as delivered successfully!');
+      } else {
+        throw new Error(response.data.error || 'Failed to mark as delivered');
+      }
+    } catch (error) {
+      console.error('Error marking as delivered:', error);
+      alert(`Failed to mark as delivered. Error: ${error.response?.data?.error || error.message}`);
+    }
+  };
+
   const handleSubmitAcceptance = async () => {
     if (!deliveryFee || isNaN(deliveryFee) || parseFloat(deliveryFee) <= 0) {
       alert('Please enter a valid delivery fee');
@@ -359,8 +438,8 @@ const DeliveryRequestsList = () => {
       
       console.log('Making API call with payload:', requestPayload);
 
-      // Make API call to accept the delivery request using the new endpoint
-      const response = await axios.post('http://localhost:8081/api/delivery-status/accept', requestPayload, {
+      // Make API call to accept the delivery request using the new enhanced endpoint
+      const response = await axios.post('http://localhost:8081/api/delivery-status/accept-enhanced', requestPayload, {
         headers: { 
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -370,18 +449,34 @@ const DeliveryRequestsList = () => {
       console.log('API Response:', response.data);
 
       if (response.data.success) {
-        // Update local state
+        // Update local state with enhanced response data
         setDeliveryRequests(prev => 
           prev.map(req => 
             req.id === selectedRequest.id 
-              ? { ...req, status: 'accepted', acceptedFee: `Rs ${deliveryFee}`, acceptedDate: new Date().toISOString().split('T')[0] }
+              ? { 
+                  ...req, 
+                  status: 'accepted', 
+                  acceptedFee: `Rs ${deliveryFee}`, 
+                  acceptedDate: new Date().toISOString().split('T')[0],
+                  lastUpdated: response.data.timestamp,
+                  deliveryPartnerId: deliveryPartnerId
+                }
               : req
           )
         );
 
         setShowAcceptModal(false);
         setDeliveryFee('');
-        alert('Delivery request accepted successfully and shipping fee updated!');
+        
+        // Enhanced success message with more details
+        alert(`✅ Delivery request accepted successfully!\n\n` +
+              `Order ID: ${selectedRequest.id}\n` +
+              `Order Type: ${orderType}\n` +
+              `Delivery Fee: Rs ${deliveryFee}\n` +
+              `Status: ${response.data.newStatus}\n` +
+              `${response.data.message || 'Request has been accepted and is ready for pickup.'}\n\n` +
+              `Previous Status: ${response.data.previousStatus}\n` +
+              `Updated At: ${new Date(response.data.timestamp).toLocaleString()}`);
       } else {
         console.error('API returned success=false:', response.data);
         throw new Error(response.data.error || 'Failed to accept delivery request');
@@ -397,19 +492,16 @@ const DeliveryRequestsList = () => {
       
       // Check if it's a 404 error or new endpoint not available, fallback to old endpoint
       if (error.response?.status === 404 || error.code === 'ERR_NETWORK') {
-        console.log('Trying fallback to old endpoint...');
+        console.log('Enhanced endpoint not available, trying standard endpoint...');
         try {
-          const fallbackResponse = await axios.put(`http://localhost:8081/api/delivery-partner/requests/${selectedRequest.id}/accept`, {
-            requestType: selectedRequest.requestType,
-            deliveryFee: deliveryFee
-          }, {
+          const fallbackResponse = await axios.post('http://localhost:8081/api/delivery-status/accept', requestPayload, {
             headers: { 
               Authorization: `Bearer ${token}`,
               'Content-Type': 'application/json'
             }
           });
 
-          console.log('Fallback API Response:', fallbackResponse.data);
+          console.log('Standard API Response:', fallbackResponse.data);
 
           // Update local state
           setDeliveryRequests(prev => 
@@ -422,19 +514,86 @@ const DeliveryRequestsList = () => {
 
           setShowAcceptModal(false);
           setDeliveryFee('');
-          alert('Delivery request accepted successfully using fallback method!');
+          alert('Delivery request accepted successfully using standard method!');
         } catch (fallbackError) {
-          console.error('Fallback method also failed:', fallbackError);
-          console.error('Fallback error details:', {
-            status: fallbackError.response?.status,
-            statusText: fallbackError.response?.statusText,
-            data: fallbackError.response?.data,
-            message: fallbackError.message
-          });
-          alert(`Failed to accept delivery request. Error: ${fallbackError.response?.data?.error || fallbackError.message}`);
+          console.error('Standard endpoint also failed, trying legacy endpoint:', fallbackError);
+          try {
+            const legacyResponse = await axios.put(`http://localhost:8081/api/delivery-partner/requests/${selectedRequest.id}/accept`, {
+              requestType: selectedRequest.requestType,
+              deliveryFee: deliveryFee
+            }, {
+              headers: { 
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            });
+
+            console.log('Legacy API Response:', legacyResponse.data);
+
+            // Update local state
+            setDeliveryRequests(prev => 
+              prev.map(req => 
+                req.id === selectedRequest.id 
+                  ? { ...req, status: 'accepted', acceptedFee: `Rs ${deliveryFee}`, acceptedDate: new Date().toISOString().split('T')[0] }
+                  : req
+              )
+            );
+
+            setShowAcceptModal(false);
+            setDeliveryFee('');
+            alert('Delivery request accepted successfully using legacy method!');
+          } catch (legacyError) {
+            console.error('All endpoints failed:', legacyError);
+            
+            // Enhanced error message for complete failure
+            let errorMessage = 'Failed to accept delivery request on all available endpoints.';
+            
+            if (legacyError.response) {
+              errorMessage += ` Status: ${legacyError.response.status}`;
+              if (legacyError.response.data && legacyError.response.data.error) {
+                errorMessage += `\nError: ${legacyError.response.data.error}`;
+              }
+              if (legacyError.response.data && legacyError.response.data.details) {
+                errorMessage += `\nDetails: ${legacyError.response.data.details}`;
+              }
+            } else {
+              errorMessage += `\nError: ${legacyError.message}`;
+            }
+            
+            errorMessage += '\n\nPlease check your network connection and try again, or contact support.';
+            alert(errorMessage);
+          }
         }
       } else {
-        alert(`Failed to accept delivery request. Error: ${error.response?.data?.error || error.message}`);
+        // Enhanced error handling for non-404 errors
+        let errorMessage = 'Failed to accept delivery request.';
+        
+        if (error.response) {
+          errorMessage += ` Status: ${error.response.status}`;
+          if (error.response.data && error.response.data.error) {
+            errorMessage += `\nError: ${error.response.data.error}`;
+          }
+          if (error.response.data && error.response.data.details) {
+            errorMessage += `\nDetails: ${error.response.data.details}`;
+          }
+          
+          // Specific handling for common errors
+          if (error.response.status === 400) {
+            errorMessage += '\n\nPlease check that all required fields are provided correctly.';
+          } else if (error.response.status === 401) {
+            errorMessage += '\n\nAuthentication failed. Please log in again.';
+          } else if (error.response.status === 403) {
+            errorMessage += '\n\nAccess denied. You may not have permission to accept this request.';
+          } else if (error.response.status >= 500) {
+            errorMessage += '\n\nServer error. Please try again later or contact support.';
+          }
+        } else if (error.request) {
+          errorMessage += '\n\nNetwork error: Unable to connect to server. Please check your connection.';
+        } else {
+          errorMessage += `\nError: ${error.message}`;
+        }
+        
+        alert(errorMessage);
       }
     }
   };
@@ -652,6 +811,8 @@ const DeliveryRequestsList = () => {
                       <Eye className="h-4 w-4 inline mr-1" />
                       View Details
                     </button>
+                    
+                    {/* Show different buttons based on status */}
                     {request.status === 'pending' && (
                       <button
                         onClick={() => handleAcceptRequest(request)}
@@ -665,6 +826,42 @@ const DeliveryRequestsList = () => {
                         <Check className="h-4 w-4 inline mr-1" />
                         Accept
                       </button>
+                    )}
+                    
+                    {request.status === 'accepted' && (
+                      <button
+                        onClick={() => handleMarkInTransit(request)}
+                        className="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors duration-200"
+                        style={{
+                          backgroundColor: '#2563eb'
+                        }}
+                        onMouseOver={(e) => e.target.style.backgroundColor = '#1d4ed8'}
+                        onMouseOut={(e) => e.target.style.backgroundColor = '#2563eb'}
+                      >
+                        <Truck className="h-4 w-4 inline mr-1" />
+                        Mark In Transit
+                      </button>
+                    )}
+                    
+                    {request.status === 'in_progress' && (
+                      <button
+                        onClick={() => handleMarkDelivered(request)}
+                        className="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors duration-200"
+                        style={{
+                          backgroundColor: '#16a34a'
+                        }}
+                        onMouseOver={(e) => e.target.style.backgroundColor = '#15803d'}
+                        onMouseOut={(e) => e.target.style.backgroundColor = '#16a34a'}
+                      >
+                        <Check className="h-4 w-4 inline mr-1" />
+                        Mark Delivered
+                      </button>
+                    )}
+                    
+                    {request.status === 'completed' && (
+                      <span className="px-4 py-2 text-sm font-medium text-green-800 bg-green-100 rounded-lg">
+                        ✓ Delivered
+                      </span>
                     )}
                   </div>
                 </div>
@@ -759,6 +956,22 @@ const DeliveryRequestsList = () => {
                   <div className="mt-4 p-3 rounded-lg" style={{ backgroundColor: '#FFE4D6' }}>
                     <p className="text-sm" style={{ color: '#5D3A00' }}>
                       <strong>Accepted on {request.acceptedDate}</strong> - Delivery Fee: {request.acceptedFee}
+                    </p>
+                  </div>
+                )}
+
+                {request.status === 'in_progress' && (
+                  <div className="mt-4 p-3 rounded-lg" style={{ backgroundColor: '#DBEAFE' }}>
+                    <p className="text-sm" style={{ color: '#1E3A8A' }}>
+                      <strong>🚚 In Transit</strong> - Order is on the way to delivery location
+                    </p>
+                  </div>
+                )}
+
+                {request.status === 'completed' && (
+                  <div className="mt-4 p-3 rounded-lg" style={{ backgroundColor: '#DCFCE7' }}>
+                    <p className="text-sm" style={{ color: '#14532D' }}>
+                      <strong>✅ Delivered</strong> - Order has been successfully delivered
                     </p>
                   </div>
                 )}
