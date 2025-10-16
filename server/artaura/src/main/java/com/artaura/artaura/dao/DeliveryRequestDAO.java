@@ -65,4 +65,25 @@ public interface DeliveryRequestDAO {
      * @return List of artist pickup addresses for commission requests
      */
     List<ArtistPickupAddressDTO> getCommissionPickupAddresses();
+    
+    /**
+     * Get all active delivery requests from both AW_orders and commission_requests tables
+     * Active requests have delivery_status 'accepted' or 'outForDelivery'
+     * @return List of active delivery requests
+     */
+    List<DeliveryRequestDTO> getAllActiveDeliveryRequests();
+    
+    /**
+     * Get active delivery requests from AW_orders table only
+     * Active requests have delivery_status 'accepted' or 'outForDelivery'
+     * @return List of active artwork order delivery requests
+     */
+    List<DeliveryRequestDTO> getActiveArtworkOrderDeliveryRequests();
+    
+    /**
+     * Get active delivery requests from commission_requests table only
+     * Active requests have delivery_status 'accepted' or 'outForDelivery'
+     * @return List of active commission delivery requests
+     */
+    List<DeliveryRequestDTO> getActiveCommissionDeliveryRequests();
 }

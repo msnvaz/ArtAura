@@ -9,10 +9,6 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -349,6 +345,81 @@ public class DeliveryRequestDAOImpl implements DeliveryRequestDAO {
             return jdbc.query(sql, pickupAddressRowMapper);
         } catch (Exception e) {
             System.out.println("🔍 DeliveryRequestDAO: Error fetching commission pickup addresses: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+    
+    @Override
+    public List<DeliveryRequestDTO> getAllActiveDeliveryRequests() {
+        List<DeliveryRequestDTO> allRequests = new ArrayList<>();
+        allRequests.addAll(getActiveArtworkOrderDeliveryRequests());
+        allRequests.addAll(getActiveCommissionDeliveryRequests());
+        return allRequests;
+    }
+
+    @Override
+    public List<DeliveryRequestDTO> getActiveArtworkOrderDeliveryRequests() {
+        try {
+            String sql = """
+                SELECT 
+                    ao.id,
+                    ao.buyer_id,
+                    CONCAT(ao.first_name, ' ', ao.last_name) AS buyer_name,
+                    ao.email,
+                    ao.contact_number,
+                    ao.shipping_address,
+                    ao.delivery_status,
+                    ao.order_date,
+                    ao.total_amount,
+                    aoi.title AS artwork_title,
+                    aoi.artist_id,
+                    CONCAT(a.first_name, ' ', a.last_name) AS artist_name
+                FROM AW_orders ao
+                LEFT JOIN AW_order_items aoi ON ao.id = aoi.order_id
+                LEFT JOIN artists a ON aoi.artist_id = a.artist_id
+                WHERE ao.delivery_status IN ('accepted', 'outForDelivery')
+                ORDER BY ao.order_date DESC
+            """;
+            
+            return jdbc.query(sql, artworkOrderRowMapper);
+        } catch (Exception e) {
+            System.out.println("🔍 DeliveryRequestDAO: Error fetching active artwork orders: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public List<DeliveryRequestDTO> getActiveCommissionDeliveryRequests() {
+        try {
+            String sql = """
+                SELECT 
+                    cr.id,
+                    cr.buyer_id,
+                    cr.name,
+                    cr.email,
+                    cr.phone,
+                    cr.shipping_address,
+                    cr.delivery_status,
+                    cr.submitted_at,
+                    cr.title,
+                    cr.artwork_type,
+                    cr.style,
+                    cr.dimensions,
+                    cr.budget,
+                    cr.deadline,
+                    cr.additional_notes,
+                    cr.urgency,
+                    cr.artist_id,
+                    CONCAT(a.first_name, ' ', a.last_name) AS artist_name
+                FROM commission_requests cr
+                LEFT JOIN artists a ON cr.artist_id = a.artist_id
+                WHERE cr.delivery_status IN ('accepted', 'outForDelivery')
+                ORDER BY cr.submitted_at DESC
+            """;
+            
+            return jdbc.query(sql, commissionRowMapper);
+        } catch (Exception e) {
+            System.out.println("🔍 DeliveryRequestDAO: Error fetching active commission requests: " + e.getMessage());
             return new ArrayList<>();
         }
     }

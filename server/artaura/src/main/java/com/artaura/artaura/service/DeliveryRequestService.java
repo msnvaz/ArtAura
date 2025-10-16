@@ -188,4 +188,46 @@ public class DeliveryRequestService {
             throw new RuntimeException("Failed to fetch commission pickup addresses", e);
         }
     }
+    
+    /**
+     * Get all active delivery requests from both tables
+     * Active requests have delivery_status 'accepted' or 'outForDelivery'
+     * @return List of active delivery requests
+     */
+    public List<DeliveryRequestDTO> getAllActiveDeliveryRequests() {
+        try {
+            return deliveryRequestDAO.getAllActiveDeliveryRequests();
+        } catch (Exception e) {
+            System.out.println("❌ DeliveryRequestService: Error fetching all active requests: " + e.getMessage());
+            throw new RuntimeException("Failed to fetch active delivery requests", e);
+        }
+    }
+
+    /**
+     * Get active delivery requests from AW_orders table only
+     * Active requests have delivery_status 'accepted' or 'outForDelivery'
+     * @return List of active artwork order delivery requests
+     */
+    public List<DeliveryRequestDTO> getActiveArtworkOrderDeliveryRequests() {
+        try {
+            return deliveryRequestDAO.getActiveArtworkOrderDeliveryRequests();
+        } catch (Exception e) {
+            System.out.println("❌ DeliveryRequestService: Error fetching active artwork orders: " + e.getMessage());
+            throw new RuntimeException("Failed to fetch active artwork order delivery requests", e);
+        }
+    }
+
+    /**
+     * Get active delivery requests from commission_requests table only
+     * Active requests have delivery_status 'accepted' or 'outForDelivery'
+     * @return List of active commission delivery requests
+     */
+    public List<DeliveryRequestDTO> getActiveCommissionDeliveryRequests() {
+        try {
+            return deliveryRequestDAO.getActiveCommissionDeliveryRequests();
+        } catch (Exception e) {
+            System.out.println("❌ DeliveryRequestService: Error fetching active commission requests: " + e.getMessage());
+            throw new RuntimeException("Failed to fetch active commission delivery requests", e);
+        }
+    }
 }

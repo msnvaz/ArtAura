@@ -552,4 +552,74 @@ public class DeliveryPartnerController {
             return ResponseEntity.internalServerError().body(response);
         }
     }
+    
+    // ===============================
+    // ACTIVE DELIVERY REQUESTS ENDPOINTS
+    // ===============================
+    
+    /**
+     * Get all active delivery requests (accepted or outForDelivery status)
+     */
+    @GetMapping("/requests/active")
+    public ResponseEntity<Map<String, Object>> getActiveDeliveryRequests() {
+        try {
+            List<DeliveryRequestDTO> activeRequests = deliveryRequestService.getAllActiveDeliveryRequests();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("requests", activeRequests);
+            response.put("success", true);
+            response.put("count", activeRequests.size());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Failed to fetch active delivery requests: " + e.getMessage());
+            response.put("success", false);
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+    
+    /**
+     * Get active artwork order delivery requests only
+     */
+    @GetMapping("/requests/active/artworks")
+    public ResponseEntity<Map<String, Object>> getActiveArtworkDeliveryRequests() {
+        try {
+            List<DeliveryRequestDTO> activeRequests = deliveryRequestService.getActiveArtworkOrderDeliveryRequests();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("requests", activeRequests);
+            response.put("success", true);
+            response.put("count", activeRequests.size());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Failed to fetch active artwork delivery requests: " + e.getMessage());
+            response.put("success", false);
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+    
+    /**
+     * Get active commission delivery requests only
+     */
+    @GetMapping("/requests/active/commissions")
+    public ResponseEntity<Map<String, Object>> getActiveCommissionDeliveryRequests() {
+        try {
+            List<DeliveryRequestDTO> activeRequests = deliveryRequestService.getActiveCommissionDeliveryRequests();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("requests", activeRequests);
+            response.put("success", true);
+            response.put("count", activeRequests.size());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Failed to fetch active commission delivery requests: " + e.getMessage());
+            response.put("success", false);
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
 }
