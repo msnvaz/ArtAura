@@ -36,137 +36,106 @@ const DeliveryRequestsList = () => {
   const [showAcceptModal, setShowAcceptModal] = useState(false);
   const [deliveryFee, setDeliveryFee] = useState('');
 
-  // Mock data for delivery requests (would be fetched from API)
-  const mockDeliveryRequests = [
-    {
-      id: 1,
-      artistId: 'ART001',
-      artistName: 'Saman Kumara',
-      artistPhone: '+94 77 123 4567',
-      artistEmail: 'saman.kumara@email.com',
-      pickupAddress: {
-        street: '123 Temple Road',
-        city: 'Kandy',
-        district: 'Central Province',
-        postalCode: '20000'
-      },
-      buyerId: 'BUY001',
-      buyerName: 'Nimal Silva',
-      buyerPhone: '+94 71 987 6543',
-      buyerEmail: 'nimal.silva@email.com',
-      deliveryAddress: {
-        street: '456 Galle Road',
-        city: 'Colombo',
-        district: 'Western Province',
-        postalCode: '00300'
-      },
-      artwork: {
-        title: 'Sunset over Sigiriya',
-        type: 'Oil Painting',
-        size: '24" x 36"',
-        weight: '2.5 kg',
-        fragile: true,
-        value: 'LKR 75,000'
-      },
-      pickupDate: '2024-08-15',
-      preferredTime: '10:00 AM - 2:00 PM',
-      requestDate: '2024-08-10',
-      status: 'pending',
-      urgency: 'normal',
-      specialInstructions: 'Handle with extreme care. Artwork is framed and glass-protected.',
-      distance: '115 km',
-      estimatedDuration: '3-4 hours'
-    },
-    {
-      id: 2,
-      artistId: 'ART002',
-      artistName: 'Priya Jayawardena',
-      artistPhone: '+94 76 555 1234',
-      artistEmail: 'priya.jay@email.com',
-      pickupAddress: {
-        street: '789 Beach Road',
-        city: 'Galle',
-        district: 'Southern Province',
-        postalCode: '80000'
-      },
-      buyerId: 'BUY002',
-      buyerName: 'Ravi Perera',
-      buyerPhone: '+94 72 444 5678',
-      buyerEmail: 'ravi.perera@email.com',
-      deliveryAddress: {
-        street: '321 Lake View',
-        city: 'Nugegoda',
-        district: 'Western Province',
-        postalCode: '10250'
-      },
-      artwork: {
-        title: 'Traditional Mask Collection',
-        type: 'Wood Sculpture',
-        size: '12" x 8" (Set of 3)',
-        weight: '1.8 kg',
-        fragile: true,
-        value: 'LKR 45,000'
-      },
-      pickupDate: '2024-08-16',
-      preferredTime: '2:00 PM - 6:00 PM',
-      requestDate: '2024-08-11',
-      status: 'accepted',
-      urgency: 'high',
-      specialInstructions: 'Pack individually. Each mask needs separate protective wrapping.',
-      distance: '145 km',
-      estimatedDuration: '4-5 hours',
-      acceptedFee: 'LKR 3,500',
-      acceptedDate: '2024-08-11'
-    },
-    {
-      id: 3,
-      artistId: 'ART003',
-      artistName: 'Chaminda Fernando',
-      artistPhone: '+94 78 999 7777',
-      artistEmail: 'chaminda.f@email.com',
-      pickupAddress: {
-        street: '555 Hill Street',
-        city: 'Nuwara Eliya',
-        district: 'Central Province',
-        postalCode: '22200'
-      },
-      buyerId: 'BUY003',
-      buyerName: 'Malini Wickramasinghe',
-      buyerPhone: '+94 75 333 2222',
-      buyerEmail: 'malini.w@email.com',
-      deliveryAddress: {
-        street: '777 Marine Drive',
-        city: 'Mount Lavinia',
-        district: 'Western Province',
-        postalCode: '10370'
-      },
-      artwork: {
-        title: 'Tea Plantation Landscape',
-        type: 'Watercolor',
-        size: '18" x 24"',
-        weight: '1.2 kg',
-        fragile: false,
-        value: 'LKR 35,000'
-      },
-      pickupDate: '2024-08-17',
-      preferredTime: '9:00 AM - 1:00 PM',
-      requestDate: '2024-08-12',
-      status: 'pending',
-      urgency: 'normal',
-      specialInstructions: 'Can be rolled for transport if needed.',
-      distance: '180 km',
-      estimatedDuration: '5-6 hours'
-    }
-  ];
-
+  // Fetch delivery requests from API
   useEffect(() => {
-    // Simulate API call
-    setLoading(true);
-    setTimeout(() => {
-      setDeliveryRequests(mockDeliveryRequests);
-      setLoading(false);
-    }, 1000);
-  }, []);
+    const fetchDeliveryRequests = async () => {
+      if (!token) return;
+      
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Fetch both delivery requests and pickup addresses
+        const [requestsResponse, pickupResponse] = await Promise.all([
+          axios.get('http://localhost:8081/api/delivery-partner/requests/pending', {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          axios.get('http://localhost:8081/api/delivery-partner/pickup-addresses', {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+        ]);
+        
+        if (requestsResponse.data.success) {
+          // Create a map of pickup addresses by request ID and type
+          const pickupMap = new Map();
+          if (pickupResponse.data.success && pickupResponse.data.addresses) {
+            pickupResponse.data.addresses.forEach(addr => {
+              const key = `${addr.requestType}-${addr.requestId}`;
+              pickupMap.set(key, addr);
+            });
+          }
+          
+          // Transform API data to match frontend expected format
+          const transformedRequests = requestsResponse.data.requests.map(req => {
+            const pickupKey = `${req.requestType}-${req.id}`;
+            const pickupData = pickupMap.get(pickupKey);
+            
+            return {
+            id: req.id,
+            requestType: req.requestType,
+            artistId: req.artistId,
+            artistName: req.artistName || 'Unknown Artist',
+            artistPhone: pickupData?.artistContactNo || req.buyerPhone || 'N/A',
+            artistEmail: pickupData?.artistEmail || req.buyerEmail || 'N/A',
+            buyerId: req.buyerId,
+            buyerName: req.buyerName,
+            buyerPhone: req.buyerPhone,
+            buyerEmail: req.buyerEmail,
+            pickupAddress: {
+              full: pickupData ? [
+                pickupData.streetAddress,
+                pickupData.city,
+                pickupData.state,
+                pickupData.country,
+                pickupData.zipCode
+              ].filter(Boolean).join(', ') : 'Address not available',
+              street: pickupData?.streetAddress || 'N/A',
+              city: pickupData?.city || 'N/A',
+              district: pickupData?.state || 'N/A',
+              postalCode: pickupData?.zipCode || 'N/A'
+            },
+            deliveryAddress: {
+              full: req.shippingAddress,
+              street: req.shippingAddress?.split(',')[0] || '',
+              city: req.shippingAddress?.split(',')[1] || '',
+              district: req.shippingAddress?.split(',')[2] || '',
+              postalCode: req.shippingAddress?.split(',')[3] || ''
+            },
+            artwork: {
+              title: req.artworkTitle,
+              type: req.artworkType || 'Artwork',
+              size: req.artworkDimensions || 'N/A',
+              weight: 'TBD',
+              fragile: true, // Assume fragile for artwork
+              value: `Rs ${req.totalAmount || 0}`
+            },
+            pickupDate: new Date().toISOString().split('T')[0], // Default to today
+            preferredTime: '10:00 AM - 6:00 PM',
+            requestDate: req.orderDate ? new Date(req.orderDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+            requestDateTime: req.orderDate || new Date().toISOString(), // Keep the full datetime for detailed display
+            status: 'pending',
+            urgency: req.urgency || 'normal',
+            specialInstructions: req.additionalNotes || 'Handle with care',
+            distance: 'TBD',
+            estimatedFee: 'Rs 2,500',
+            deadline: req.deadline ? new Date(req.deadline).toISOString().split('T')[0] : null
+          };
+          });
+          
+          setDeliveryRequests(transformedRequests);
+        } else {
+          setError(requestsResponse.data.error || 'Failed to fetch delivery requests');
+        }
+      } catch (error) {
+        console.error('Error fetching delivery requests:', error);
+        setError('Failed to fetch delivery requests. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDeliveryRequests();
+  }, [token]);
 
   // Filter requests based on search term and status
   const filteredRequests = deliveryRequests.filter(request => {
@@ -198,16 +167,22 @@ const DeliveryRequestsList = () => {
     }
 
     try {
-      // Here you would make an API call to accept the delivery request
-      // await axios.post(`/api/delivery/accept/${selectedRequest.id}`, { fee: deliveryFee }, {
-      //   headers: { Authorization: `Bearer ${token}` }
-      // });
+      // Make API call to accept the delivery request
+      await axios.put(`http://localhost:8081/api/delivery-partner/requests/${selectedRequest.id}/accept`, {
+        requestType: selectedRequest.requestType,
+        deliveryFee: deliveryFee
+      }, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
 
       // Update local state
       setDeliveryRequests(prev => 
         prev.map(req => 
           req.id === selectedRequest.id 
-            ? { ...req, status: 'accepted', acceptedFee: `LKR ${deliveryFee}`, acceptedDate: new Date().toISOString().split('T')[0] }
+            ? { ...req, status: 'accepted', acceptedFee: `Rs ${deliveryFee}`, acceptedDate: new Date().toISOString().split('T')[0] }
             : req
         )
       );
@@ -218,6 +193,35 @@ const DeliveryRequestsList = () => {
     } catch (error) {
       console.error('Error accepting delivery request:', error);
       alert('Failed to accept delivery request. Please try again.');
+    }
+  };
+
+  // Helper function to format dates nicely
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    try {
+      return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch (e) {
+      return dateString;
+    }
+  };
+
+  const formatDateTime = (dateString) => {
+    if (!dateString) return 'N/A';
+    try {
+      return new Date(dateString).toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (e) {
+      return dateString;
     }
   };
 
@@ -376,11 +380,20 @@ const DeliveryRequestsList = () => {
                       <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(request.status)}`}>
                         {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
                       </span>
+                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                        {request.requestType === 'artwork_order' ? 'Artwork Order' : 'Commission'}
+                      </span>
                       <span className={`text-sm font-medium ${getUrgencyColor(request.urgency)}`}>
                         {request.urgency.charAt(0).toUpperCase() + request.urgency.slice(1)} Priority
                       </span>
                     </div>
-                    <p className="text-sm mb-3" style={{ color: '#D87C5A' }}>Request ID: #{request.id}</p>
+                    <div className="flex items-center gap-4 text-sm mb-3" style={{ color: '#D87C5A' }}>
+                      <span>Request ID: #{request.id}</span>
+                      <span>•</span>
+                      <span>
+                        {request.requestType === 'artwork_order' ? 'Ordered' : 'Submitted'}: {formatDate(request.requestDate)}
+                      </span>
+                    </div>
                   </div>
                   <div className="flex gap-2">
                     <button
@@ -433,12 +446,7 @@ const DeliveryRequestsList = () => {
                         <MapPin className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
                         <span>
                           {request.pickupAddress.street}, {request.pickupAddress.city}<br />
-                          {request.pickupAddress.district} {request.pickupAddress.postalCode}
                         </span>
-                      </div>
-                      <div className="flex items-center" style={{ color: '#D87C5A' }}>
-                        <Calendar className="h-4 w-4 mr-2" />
-                        {request.pickupDate} ({request.preferredTime})
                       </div>
                     </div>
                   </div>
@@ -465,10 +473,6 @@ const DeliveryRequestsList = () => {
                           {request.deliveryAddress.district} {request.deliveryAddress.postalCode}
                         </span>
                       </div>
-                      <div className="flex items-center" style={{ color: '#D87C5A' }}>
-                        <FileText className="h-4 w-4 mr-2" />
-                        Distance: {request.distance} ({request.estimatedDuration})
-                      </div>
                     </div>
                   </div>
 
@@ -487,14 +491,10 @@ const DeliveryRequestsList = () => {
                         <Ruler className="h-4 w-4 mr-2" />
                         Size: {request.artwork.size}
                       </div>
-                      <div className="flex items-center" style={{ color: '#D87C5A' }}>
-                        <Package className="h-4 w-4 mr-2" />
-                        Weight: {request.artwork.weight}
-                      </div>
-                      <div className="flex items-center" style={{ color: '#D87C5A' }}>
+                      {/* <div className="flex items-center" style={{ color: '#D87C5A' }}>
                         <DollarSign className="h-4 w-4 mr-2" />
                         Value: {request.artwork.value}
-                      </div>
+                      </div> */}
                       {request.artwork.fragile && (
                         <div className="flex items-center text-red-600">
                           <AlertCircle className="h-4 w-4 mr-2" />
@@ -550,7 +550,20 @@ const DeliveryRequestsList = () => {
                       <span className="font-medium">Request ID:</span> #{selectedRequest.id}
                     </div>
                     <div>
-                      <span className="font-medium">Request Date:</span> {selectedRequest.requestDate}
+                      <span className="font-medium">Request Type:</span> 
+                      <span className="ml-2 px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
+                        {selectedRequest.requestType === 'artwork_order' ? 'Artwork Order' : 'Commission Request'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="font-medium">
+                        {selectedRequest.requestType === 'artwork_order' ? 'Order Date:' : 'Submitted Date:'}
+                      </span> {formatDate(selectedRequest.requestDate)}
+                      {selectedRequest.requestDateTime && (
+                        <span className="text-xs text-gray-500 ml-1">
+                          ({formatDateTime(selectedRequest.requestDateTime)})
+                        </span>
+                      )}
                     </div>
                     <div>
                       <span className="font-medium">Status:</span> 
@@ -595,9 +608,9 @@ const DeliveryRequestsList = () => {
                   You are about to accept the delivery request for "<strong>{selectedRequest.artwork.title}</strong>".
                 </p>
                 <div className="space-y-2 text-sm">
-                  <p><strong>Distance:</strong> {selectedRequest.distance}</p>
-                  <p><strong>Estimated Duration:</strong> {selectedRequest.estimatedDuration}</p>
-                  <p><strong>Pickup Date:</strong> {selectedRequest.pickupDate}</p>
+                  <p><strong>Request Type:</strong> {selectedRequest.requestType === 'artwork_order' ? 'Artwork Order' : 'Commission Request'}</p>
+                  <p><strong>Artwork:</strong> {selectedRequest.artwork.title}</p>
+                  <p><strong>Value:</strong> {selectedRequest.artwork.value}</p>
                 </div>
               </div>
               
