@@ -47,49 +47,6 @@ const CommunityPage = () => {
     return formatDistanceToNow(d, { addSuffix: true });
   };
 
-  // Mock regular posts
-  const mockRegularPosts = [
-    {
-      post_id: 1,
-      type: "regular",
-      artist: {
-        name: "Nimali Perera",
-        avatar: "https://randomuser.me/api/portraits/women/44.jpg",
-      },
-      caption: "My latest Sri Lankan style painting! 🇱🇰🎨✨",
-      image: "/art1.jpeg", // public image
-      created_at: new Date(Date.now() - 15 * 60 * 1000).toISOString(), // 15 minutes ago
-      likes: 34,
-      comments: 5,
-    },
-    {
-      post_id: 2,
-      type: "regular",
-      artist: {
-        name: "Kasun Fernando",
-        avatar: "https://randomuser.me/api/portraits/men/32.jpg",
-      },
-      caption: "My new clay sculpture!",
-      image: "/art2.jpeg", // public image
-      created_at: new Date(Date.now() - 45 * 60 * 1000).toISOString(), // 45 minutes ago
-      likes: 21,
-      comments: 2,
-    },
-    {
-      post_id: 3,
-      type: "regular",
-      artist: {
-        name: "Amaya Jayasinghe",
-        avatar: "https://randomuser.me/api/portraits/women/68.jpg",
-      },
-      caption: "Throwback to my first exhibition! 🇱🇰 #tbt",
-      image: "/art3.jpeg", // public image
-      created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-      likes: 47,
-      comments: 8,
-    },
-  ];
-
   useEffect(() => {
     const fetchExhibitionPosts = async () => {
       setLoading(true);
@@ -111,44 +68,32 @@ const CommunityPage = () => {
       }
     };
 
-    // For demo, keep regular posts as mock
-    setPosts(mockRegularPosts);
     fetchExhibitionPosts();
   }, []);
 
   useEffect(() => {
-    // Fetch user profile and save to localStorage
-    if (!userId || !token) return;
-    fetch(`${API_URL}/api/users/${userId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        const profile = {
-          name:
-            data.name ||
-            `${data.firstName || ""} ${data.lastName || ""}`.trim() ||
-            "Unknown User",
-          avatar: data.avatar || data.avatarUrl || "",
-        };
-        setUserProfile(profile);
-        localStorage.setItem("profile_name", profile.name);
-        localStorage.setItem("profile_avatar", profile.avatar);
-      })
-      .catch(() => {
-        setUserProfile({ name: "Unknown User", avatar: "" });
-        localStorage.setItem("profile_name", "Unknown User");
-        localStorage.setItem("profile_avatar", "");
-      });
-  }, [userId, token]);
+    const fetchArtistPosts = async () => {
+      setLoading(true);
+      try {
+        // Direct fetch using VITE_API_URL
+        const response = await fetch(`${API_URL}/api/aposts/all`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "application/json",
+          },
+        });
+        const data = await response.json();
+        setPosts(data || []);
+      } catch (error) {
+        setPosts([]);
+        console.error("Error fetching artist posts:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Artist posts backend logic commented out
-  // useEffect(() => {
-  //   const fetchArtistPosts = async () => {
-  //     // Backend logic for artist posts
-  //   };
-  //   fetchArtistPosts();
-  // }, []);
+    fetchArtistPosts();
+  }, []);
 
   const handleFilterChange = (filter) => {
     setActiveFilter(filter);
@@ -180,6 +125,45 @@ const CommunityPage = () => {
     const allPosts = getAllPosts();
     if (activeFilter === "all") return allPosts;
     return allPosts.filter((post) => post.type === activeFilter);
+  };
+
+  const safeImageSrc = (src) => {
+    return src && src.trim() !== "" ? src : null;
+  }; // Helper function to prevent empty src
+
+  const handleImageError = (e) => {
+    e.target.alt = "Image not available"; // Set alt attribute to default text
+  };
+
+  const renderPostImage = (imageSrc, altText) => (
+    <img
+      src={imageSrc}
+      alt={altText}
+      onError={handleImageError} // Use handleImageError for error handling
+    />
+  );
+
+  const renderPost = (post) => (
+    <div key={post.postId} className="post">
+      <img src={post.image} alt="Post image" onError={handleImageError} />
+      <div className="post-details">
+        <h3>{post.caption}</h3>
+        <p>Location: {post.location}</p>
+        <p>Likes: {post.likes}</p>
+        <div className="artist-details">
+          <img
+            src={post.artistAvatar}
+            alt="Artist avatar"
+            onError={handleImageError}
+          />
+          <p>Artist: {post.artistName}</p>
+        </div>
+      </div>
+    </div>
+  );
+
+  const handleLike = (postId) => {
+    console.log(`Liked post with ID: ${postId}`);
   };
 
   const filteredPosts = getFilteredPosts();
@@ -291,12 +275,13 @@ const CommunityPage = () => {
                 </div>
               ) : (
                 filteredPosts.map((post, index) => {
+                  console.log("Rendering post:", post);
                   if (post.type === "exhibition" || post.category) {
                     // Use a unique key for each exhibition post
                     return (
                       <ExhibitionPost
-                        key={post.id ? `exh-${post.id}` : `exh-${index}`}
-                        post_id={post.id || post.post_id}
+                        key={post.id || post.postId || `exh-${index}`}
+                        post_id={post.id || post.postId}
                         title={post.title}
                         description={post.description}
                         location={post.location}
@@ -316,30 +301,23 @@ const CommunityPage = () => {
                         comments={post.comments || 0}
                         artist={{
                           name: post.creatorName || "Unknown User",
-                          avatar: "", // You can extend backend to return avatar if needed
+                          avatar: safeImageSrc(post.avatar), // Use safeImageSrc
                         }}
                       />
                     );
                   } else {
-                    const artistName =
-                      post.artist && post.artist.name
-                        ? post.artist.name
-                        : "Unknown Artist";
-                    const artistAvatar =
-                      post.artist && post.artist.avatar
-                        ? post.artist.avatar
-                        : "";
-                    // return (
-                    //   <Post
-                    //     key={`reg-${post.post_id}-${index}`}
-                    //     username={artistName}
-                    //     avatar={artistAvatar}
-                    //     timeAgo={safeFormatDistanceToNow(post.created_at)}
-                    //     image={`http://localhost:8081${post.image}`}
-                    //     likes={post.likes}
-                    //     caption={post.caption}
-                    //   />
-                    // );
+                    return (
+                      <Post
+                        key={post.post_id || `post-${index}`}
+                        username={post.artistName || "Unknown Artist"}
+                        avatar={post.artistAvatar || "/assets/user.png"}
+                        timeAgo={safeFormatDistanceToNow(post.createdAt)}
+                        image={post.image.replace(/\[|\]|"/g, "")}
+                        likes={post.likes || 0}
+                        caption={post.caption}
+                        postId={post.postId}
+                      />
+                    );
                   }
                 })
               )}
