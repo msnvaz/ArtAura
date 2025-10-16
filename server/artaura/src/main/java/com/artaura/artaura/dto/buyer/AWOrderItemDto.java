@@ -1,6 +1,7 @@
 package com.artaura.artaura.dto.buyer;
 
 import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Data
 public class AWOrderItemDto {
@@ -9,6 +10,7 @@ public class AWOrderItemDto {
     private int quantity;
     private double price;
     private String title;
+    @JsonProperty("artist_id")
     private Long artistId;
     private String medium;
     private String size;
