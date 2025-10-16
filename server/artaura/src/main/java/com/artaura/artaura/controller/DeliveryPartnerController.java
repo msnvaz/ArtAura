@@ -1,6 +1,8 @@
 package com.artaura.artaura.controller;
 
 import com.artaura.artaura.service.DeliveryPartnerService;
+import com.artaura.artaura.dao.DeliveryPartnerDAO;
+import com.artaura.artaura.dto.auth.DeliveryPartnerDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,10 +13,14 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/delivery-partner")
+@CrossOrigin(origins = "http://localhost:5173")
 public class DeliveryPartnerController {
 
     @Autowired
     private DeliveryPartnerService deliveryPartnerService;
+
+    @Autowired
+    private DeliveryPartnerDAO deliveryPartnerDAO;
 
     @GetMapping("/name/{partnerId}")
     public ResponseEntity<Map<String, String>> getPartnerName(@PathVariable Long partnerId) {
@@ -59,6 +65,28 @@ public class DeliveryPartnerController {
             response.put("error", "Internal server error: " + e.getMessage());
             response.put("success", false);
             return ResponseEntity.internalServerError().body(response);
+        }
+    }
+
+    @GetMapping("/profile/user/{userId}")
+    public ResponseEntity<?> getDeliveryPartnerProfileByUserId(@PathVariable Long userId) {
+        try {
+            Optional<DeliveryPartnerDTO> deliveryPartner = deliveryPartnerDAO.findByUserId(userId);
+            
+            if (deliveryPartner.isPresent()) {
+                DeliveryPartnerDTO partner = deliveryPartner.get();
+                // Return response compatible with frontend
+                Map<String, Object> response = new HashMap<>();
+                response.put("partnerId", partner.getUserId());
+                response.put("partnerName", partner.getPartnerName());
+                response.put("email", partner.getEmail());
+                return ResponseEntity.ok(response);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                .body("Error fetching delivery partner profile: " + e.getMessage());
         }
     }
 

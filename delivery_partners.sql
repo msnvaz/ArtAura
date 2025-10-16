@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: mysql-artaura.alwaysdata.net
--- Generation Time: Oct 15, 2025 at 09:39 PM
+-- Generation Time: Oct 16, 2025 at 08:58 AM
 -- Server version: 10.11.14-MariaDB
 -- PHP Version: 7.4.33
 
@@ -29,6 +29,7 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `delivery_partners` (
   `partner_id` int(11) NOT NULL,
+  `partner_name` varchar(255) NOT NULL,
   `email` varchar(255) NOT NULL,
   `password` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -37,9 +38,9 @@ CREATE TABLE `delivery_partners` (
 -- Dumping data for table `delivery_partners`
 --
 
-INSERT INTO `delivery_partners` (`partner_id`, `email`, `password`) VALUES
-(1, 'delpart1@gmail.com', '$2a$12$5geVUvoWxM0AaROoTNsH2eLWOBvdOI1PkMv1TFa9aAPYD9Vbnj0o.'),
-(2, 'deli1@gmail.com', '$2a$10$e4C1NqgyjUD1FIg4inSKXe6MIxhpxqNkr8c.TP92U58T.Kjx0Yohy');
+INSERT INTO `delivery_partners` (`partner_id`, `partner_name`, `email`, `password`) VALUES
+(1, 'SkyNet', 'delpart1@gmail.com', '$2a$12$5geVUvoWxM0AaROoTNsH2eLWOBvdOI1PkMv1TFa9aAPYD9Vbnj0o.'),
+(2, 'Domex', 'deli1@gmail.com', '$2a$10$e4C1NqgyjUD1FIg4inSKXe6MIxhpxqNkr8c.TP92U58T.Kjx0Yohy');
 
 --
 -- Indexes for dumped tables
