@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: mysql-artaura.alwaysdata.net
--- Generation Time: Oct 16, 2025 at 09:41 AM
+-- Generation Time: Oct 16, 2025 at 01:51 PM
 -- Server version: 10.11.14-MariaDB
 -- PHP Version: 7.4.33
 
@@ -44,6 +44,7 @@ CREATE TABLE `commission_requests` (
   `shipping_address` varchar(255) DEFAULT NULL,
   `urgency` varchar(20) DEFAULT 'normal',
   `status` varchar(20) DEFAULT 'pending',
+  `payment_status` varchar(255) NOT NULL,
   `delivery_status` enum('pending','accepted','outForDelivery','delivered','N/A') NOT NULL DEFAULT 'N/A',
   `submitted_at` datetime NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -52,10 +53,10 @@ CREATE TABLE `commission_requests` (
 -- Dumping data for table `commission_requests`
 --
 
-INSERT INTO `commission_requests` (`id`, `artist_id`, `buyer_id`, `name`, `email`, `phone`, `title`, `artwork_type`, `style`, `dimensions`, `budget`, `deadline`, `additional_notes`, `shipping_address`, `urgency`, `status`, `delivery_status`, `submitted_at`) VALUES
-(7, 11, 1, 'Nimal Perera', 'nimal.perera@gmail.com', '+94 77 123 4567', 'Portrait of a Family', 'painting', 'oil-painting', '16x20', 'Rs 30,000', '2025-09-15', 'Please include a background of our home.', 'No. 123, Galle Road, Colombo 06, 00600, Sri Lanka', 'normal', 'accepted', 'pending', '2025-08-16 10:00:00'),
-(9, 11, 1, 'Ruwan Silva', 'ruwan.silva@gmail.com', '+94 76 555 1234', 'Pet Sculpture', 'sculpture', 'ceramics', '12x16', 'Rs 50,000', '2025-10-10', 'A ceramic sculpture of our dog.', '45/2, Kandy Road, Kaduwela, 10640, Sri Lanka\"\n', 'low', 'accepted', 'outForDelivery', '2025-08-16 12:00:00'),
-(10, 11, 1, 'pawani saman', 'saman@gmail.com', '+94035225554', 'ele', 'painting', 'oil-painting', '8x10', '2000', '2025-08-23', 'ibdc', '43/2, Kadawatha Road, Ragama, 10240, Sri Lanka', 'normal', 'accepted', 'outForDelivery', '2025-08-18 10:06:29');
+INSERT INTO `commission_requests` (`id`, `artist_id`, `buyer_id`, `name`, `email`, `phone`, `title`, `artwork_type`, `style`, `dimensions`, `budget`, `deadline`, `additional_notes`, `shipping_address`, `urgency`, `status`, `payment_status`, `delivery_status`, `submitted_at`) VALUES
+(7, 11, 1, 'Nimal Perera', 'nimal.perera@gmail.com', '+94 77 123 4567', 'Portrait of a Family', 'painting', 'oil-painting', '16x20', 'Rs 30,000', '2025-09-15', 'Please include a background of our home.', 'No. 123, Galle Road, Colombo 06, 00600, Sri Lanka', 'normal', 'accepted', 'paid', 'pending', '2025-08-16 10:00:00'),
+(9, 11, 1, 'Ruwan Silva', 'ruwan.silva@gmail.com', '+94 76 555 1234', 'Pet Sculpture', 'sculpture', 'ceramics', '12x16', 'Rs 50,000', '2025-10-10', 'A ceramic sculpture of our dog.', '45/2, Kandy Road, Kaduwela, 10640, Sri Lanka\"\n', 'low', 'accepted', 'paid', 'outForDelivery', '2025-08-16 12:00:00'),
+(10, 11, 1, 'pawani saman', 'saman@gmail.com', '+94035225554', 'ele', 'painting', 'oil-painting', '8x10', '2000', '2025-08-23', 'ibdc', '43/2, Kadawatha Road, Ragama, 10240, Sri Lanka', 'normal', 'accepted', '', 'outForDelivery', '2025-08-18 10:06:29');
 
 --
 -- Triggers `commission_requests`
