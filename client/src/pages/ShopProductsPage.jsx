@@ -13,6 +13,8 @@ import {
 import Navbar from "../components/common/Navbar";
 import { useCart } from "../context/CartContext";
 import CartSidebar from "../components/cart/CartSidebar";
+import Toast from "../components/Toast";
+import { useToast } from "../hooks/useToast";
 import axios from "axios";
 
 const ShopProductsPage = () => {
@@ -27,6 +29,19 @@ const ShopProductsPage = () => {
   const [showFilters, setShowFilters] = useState(false);
 
   const { addToCart, toggleCart } = useCart();
+  const { toast, showToast, hideToast } = useToast();
+
+  // Categories for filtering
+  const categories = [
+    "All Categories",
+    "Paintings",
+    "Sculptures",
+    "Digital Art",
+    "Photography",
+    "Drawings",
+    "Mixed Media",
+    "Prints",
+  ];
 
   useEffect(() => {
     // Fetch artworks from backend
@@ -111,11 +126,11 @@ const ShopProductsPage = () => {
       (p) => p.id === productId || p.artworkId === productId
     );
     if (!product) {
-      alert("Product not found.");
+      showToast("Product not found.", "error");
       return;
     }
     if (product.inStock === false || product.stock === 0) {
-      alert("This product is out of stock.");
+      showToast("This product is out of stock.", "error");
       return;
     }
     const token = localStorage.getItem("token");
@@ -133,9 +148,12 @@ const ShopProductsPage = () => {
       );
       addToCart(product); // update local cart
       toggleCart(); // Open cart sidebar
-      alert("Added to cart!");
+      showToast("Added to cart!", "success");
     } catch (err) {
-      alert("Failed to add to cart. Please check your login and try again.");
+      showToast(
+        "Failed to add to cart. Please check your login and try again.",
+        "error"
+      );
       console.error("Failed to add to cart", err);
     }
   };
@@ -250,6 +268,13 @@ const ShopProductsPage = () => {
     <div className="min-h-screen bg-[#FFF5E1]">
       <Navbar />
       <CartSidebar />
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={hideToast}
+        duration={toast.duration}
+      />
 
       <div className="pt-20 pb-10">
         <div className="max-w-7xl mx-auto px-4">

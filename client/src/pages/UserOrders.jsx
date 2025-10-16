@@ -36,6 +36,67 @@ const fetchCommissionOrders = async (setCommissionOrders, setLoading) => {
   }
 };
 
+// Add a delivery tracking visualization component
+const renderTrackingProgress = (deliveryStatus) => {
+  const steps = ["Pending", "Shipped", "OutForDelivery", "Delivered"];
+  const currentStep = steps.indexOf(
+    deliveryStatus?.charAt(0).toUpperCase() + deliveryStatus?.slice(1)
+  );
+
+  return (
+    <div className="flex items-center gap-4 mt-4">
+      {steps.map((step, index) => (
+        <div key={step} className="flex items-center">
+          <div
+            className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
+              index <= currentStep
+                ? "bg-green-600 text-white"
+                : "bg-gray-300 text-gray-600"
+            }`}
+          >
+            {index + 1}
+          </div>
+          {index < steps.length - 1 && (
+            <div
+              className={`h-1 w-12 ${
+                index < currentStep ? "bg-green-600" : "bg-gray-300"
+              }`}
+            ></div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// Add a safeguard to handle undefined or null status
+const renderDeliveryStatus = (status) => {
+  if (!status) {
+    return (
+      <span className="px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+        Unknown
+      </span>
+    );
+  }
+
+  const statusColors = {
+    pending: "bg-yellow-100 text-yellow-800",
+    shipped: "bg-blue-100 text-blue-800",
+    delivered: "bg-green-100 text-green-800",
+    cancelled: "bg-red-100 text-red-800",
+  };
+
+  return (
+    <span
+      className={`px-3 py-1 rounded-full text-sm font-medium ${
+        statusColors[status] || "bg-gray-100 text-gray-800"
+      }`}
+    >
+      {status.charAt(0).toUpperCase() + status.slice(1)}
+    </span>
+  );
+};
+
 const UserOrders = () => {
   const [orders, setOrders] = useState([]); // Artwork orders
   const [commissionOrders, setCommissionOrders] = useState([]); // Commissioned requests
@@ -244,7 +305,6 @@ const UserOrders = () => {
                 </div>
               ) : (
                 orders.map((order) => (
-                  // ...existing artwork order card...
                   <div
                     key={order.id}
                     className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow"
@@ -283,12 +343,16 @@ const UserOrders = () => {
                             </span>
                           </div>
                           <div>
-                            <span className="font-medium">Items:</span>
+                            <span className="font-medium">
+                              Delivery Status:
+                            </span>
                             <br />
-                            {order.items.length} item
-                            {order.items.length !== 1 ? "s" : ""}
+                            {renderDeliveryStatus(order.deliveryStatus)}
                           </div>
                         </div>
+
+                        {/* Tracking Progress */}
+                        {renderTrackingProgress(order.deliveryStatus)}
                       </div>
 
                       {/* Order Items Preview */}
@@ -382,6 +446,14 @@ const UserOrders = () => {
                             <span className="font-medium">Title:</span>
                             <br />
                             {order.title}
+                          </div>
+                          <div>
+                            <span className="font-medium">
+                              Delivery Status:
+                            </span>
+                            <br />
+                            {order.status === "accepted" &&
+                              renderDeliveryStatus(order.deliveryStatus)}
                           </div>
                         </div>
                       </div>

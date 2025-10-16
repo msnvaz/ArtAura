@@ -23,4 +23,5 @@ public class CommissionResponseDTO {
     private String status;
     private String submittedAt;
     private List<String> imageUrls; // Reference images
+    private String deliveryStatus; // Added deliveryStatus field to include delivery status
 }

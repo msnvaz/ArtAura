@@ -76,6 +76,7 @@ public class CommissionRequestDAOImpl implements ComissionRequestDAO {
             dto.setUrgency(rs.getString("urgency"));
             dto.setStatus(rs.getString("status"));
             dto.setSubmittedAt(rs.getString("submitted_at"));
+            dto.setDeliveryStatus(rs.getString("delivery_status")); // Fetch delivery_status from commission_requests table
 
             // Fetch reference images for this commission request
             String imgSql = "SELECT image_url FROM commission_reference_images WHERE commission_request_id = ?";

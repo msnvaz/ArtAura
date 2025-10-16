@@ -34,4 +34,7 @@ public interface CustomOrderDAO {
     
     // Get pending orders count for artist
     int getPendingOrdersCountByArtistId(Long artistId);
+    
+    // Get delivery status for a specific commissioned order
+    Optional<String> getDeliveryStatusByOrderId(Long orderId);
 }
