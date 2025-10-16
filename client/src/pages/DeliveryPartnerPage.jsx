@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   Package, 
   Truck, 
@@ -10,26 +10,21 @@ import {
   Home,
   Bell,
   Shield,
-  Mail,
-  Lock,
-  Eye,
-  EyeOff,
-  Save,
-  Edit3
+  LogOut
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import Layout from '../components/delivery/Layout';
 import DeliveryDashboard from '../components/delivery/DeliveryDashboard';
 import DeliveryRequestsList from '../components/delivery/DeliveryRequestsList';
 import ActiveDeliveries from '../components/delivery/ActiveDeliveries';
-import { useAuth } from '../context/AuthContext';
-import axiosInstance from '../util/axiosInstance';
 
 const DeliveryPartnerPage = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [partnerName, setPartnerName] = useState('John Doe');
-  const [partnerLoading, setPartnerLoading] = useState(true);
-  const { userId } = useAuth();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const { logout } = useAuth();
+  const navigate = useNavigate();
 
   const navigationItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
@@ -39,30 +34,20 @@ const DeliveryPartnerPage = () => {
     { id: 'profile', label: 'Profile', icon: User },
   ];
 
-  // Fetch partner name on component mount
-  useEffect(() => {
-    const fetchPartnerName = async () => {
-      if (userId) {
-        try {
-          setPartnerLoading(true);
-          const response = await axiosInstance.get(`/delivery-partner/name/${userId}`);
-          if (response.data && response.data.partnerName) {
-            setPartnerName(response.data.partnerName);
-          }
-        } catch (error) {
-          console.error('Failed to fetch partner name:', error);
-          setPartnerName('Delivery Partner'); // Fallback name
-        } finally {
-          setPartnerLoading(false);
-        }
-      } else {
-        setPartnerName('Delivery Partner'); // Default fallback
-        setPartnerLoading(false);
-      }
-    };
+  // Logout functionality
+  const handleLogoutClick = () => {
+    setShowLogoutConfirm(true);
+  };
 
-    fetchPartnerName();
-  }, [userId]);
+  const confirmLogout = () => {
+    logout();
+    setShowLogoutConfirm(false);
+    navigate("/");
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutConfirm(false);
+  };
 
   const renderContent = () => {
     switch (activeTab) {
@@ -161,9 +146,7 @@ const DeliveryPartnerPage = () => {
                   <h1 className="text-2xl font-bold text-white">
                     Delivery Partner Dashboard
                   </h1>
-                  <p className="text-gray-200">
-                    {partnerLoading ? 'Loading...' : `Welcome back, ${partnerName}!`}
-                  </p>
+                  <p className="text-gray-200">Welcome back, John Doe!</p>
                 </div>
               </div>
               <div className="mt-4 md:mt-0 flex gap-2 items-center">
@@ -172,16 +155,25 @@ const DeliveryPartnerPage = () => {
                   <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-400 ring-2 ring-white"></span>
                 </button>
                 
-                <div className="flex items-center ml-4">
-                  <div 
-                    className="w-8 h-8 rounded-full flex items-center justify-center"
-                    style={{ backgroundColor: "#FFD95A" }}
-                  >
-                    <User className="h-4 w-4" style={{ color: "#5D3A00" }} />
+                <div className="flex items-center ml-4 gap-3">
+                  <div className="flex items-center">
+                    <div 
+                      className="w-8 h-8 rounded-full flex items-center justify-center"
+                      style={{ backgroundColor: "#FFD95A" }}
+                    >
+                      <User className="h-4 w-4" style={{ color: "#5D3A00" }} />
+                    </div>
+                    <span className="ml-2 text-sm font-medium text-white hidden sm:block">John Doe</span>
                   </div>
-                  <span className="ml-2 text-sm font-medium text-white hidden sm:block">
-                    {partnerLoading ? 'Loading...' : partnerName}
-                  </span>
+                  
+                  {/* Logout Button */}
+                  <button
+                    onClick={handleLogoutClick}
+                    className="bg-gradient-to-r from-[#e74c3c] to-[#c0392b] text-white px-4 py-2 rounded-lg hover:from-[#c0392b] hover:to-[#a93226] transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2 btn-animate"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span className="hidden sm:inline">Logout</span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -232,6 +224,41 @@ const DeliveryPartnerPage = () => {
             {renderContent()}
           </div>
         </div>
+
+        {/* Logout Confirmation Modal */}
+        {showLogoutConfirm && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full mx-4 transform transition-all duration-300 ease-out scale-100">
+              <div className="text-center">
+                {/* Title */}
+                <h3 className="text-2xl font-bold text-[#362625] mb-2">
+                  Confirm Logout
+                </h3>
+
+                {/* Message */}
+                <p className="text-gray-600 mb-8 text-lg">
+                  Are you sure you want to log out of your delivery partner account?
+                </p>
+
+                {/* Buttons */}
+                <div className="flex gap-4 justify-center">
+                  <button
+                    onClick={cancelLogout}
+                    className="px-6 py-3 bg-gray-100 text-[#362625] rounded-xl hover:bg-gray-200 transition-all duration-200 font-medium border border-gray-200 hover:border-gray-300 min-w-[120px]"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmLogout}
+                    className="px-6 py-3 bg-gradient-to-r from-[#e74c3c] to-[#c0392b] text-white rounded-xl hover:from-[#c0392b] hover:to-[#a93226] transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105 min-w-[120px]"
+                  >
+                    Log Out
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   );
@@ -252,335 +279,18 @@ const DeliveryHistory = () => (
   </div>
 );
 
-const DeliveryProfile = () => {
-  const [profileData, setProfileData] = useState({
-    partnerName: '',
-    email: ''
-  });
-  const [isEditing, setIsEditing] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [editedName, setEditedName] = useState('');
-  
-  // Password change state
-  const [showPasswordSection, setShowPasswordSection] = useState(false);
-  const [passwordData, setPasswordData] = useState({
-    newPassword: '',
-    confirmPassword: ''
-  });
-  const [showPasswords, setShowPasswords] = useState({
-    new: false,
-    confirm: false
-  });
-  const [passwordLoading, setPasswordLoading] = useState(false);
-  
-  const { userId } = useAuth();
-
-  // Fetch profile data
-  useEffect(() => {
-    const fetchProfile = async () => {
-      if (userId) {
-        try {
-          setLoading(true);
-          const response = await axiosInstance.get(`/delivery-partner/profile/${userId}`);
-          if (response.data && response.data.profile) {
-            setProfileData(response.data.profile);
-            setEditedName(response.data.profile.partnerName || '');
-          }
-        } catch (error) {
-          console.error('Failed to fetch profile:', error);
-        } finally {
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchProfile();
-  }, [userId]);
-
-  const handleUpdateName = async () => {
-    if (!editedName.trim()) return;
-    
-    try {
-      setSaving(true);
-      const response = await axiosInstance.put(`/delivery-partner/profile/${userId}/name`, {
-        partnerName: editedName.trim()
-      });
-      
-      if (response.data && response.data.success) {
-        setProfileData(prev => ({ ...prev, partnerName: editedName.trim() }));
-        setIsEditing(false);
-        // Show success message (you can add a toast notification here)
-        console.log('Name updated successfully');
-      }
-    } catch (error) {
-      console.error('Failed to update name:', error);
-      // Show error message (you can add a toast notification here)
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleChangePassword = async () => {
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      alert('Passwords do not match');
-      return;
-    }
-    
-    if (passwordData.newPassword.length < 6) {
-      alert('Password must be at least 6 characters long');
-      return;
-    }
-
-    try {
-      setPasswordLoading(true);
-      const response = await axiosInstance.put(`/delivery-partner/profile/${userId}/password`, {
-        newPassword: passwordData.newPassword
-      });
-      
-      if (response.data && response.data.success) {
-        setPasswordData({ newPassword: '', confirmPassword: '' });
-        setShowPasswordSection(false);
-        alert('Password updated successfully');
-      }
-    } catch (error) {
-      console.error('Failed to update password:', error);
-      alert('Failed to update password');
-    } finally {
-      setPasswordLoading(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="p-6 max-w-4xl mx-auto">
-        <div className="bg-white rounded-lg shadow-md p-12 text-center border border-gray-100">
-          <div className="flex justify-center items-center">
-            <div 
-              className="animate-spin rounded-full h-16 w-16 border-b-2"
-              style={{ borderColor: '#5D3A00' }}
-            ></div>
-          </div>
-          <p className="mt-4" style={{ color: '#D87C5A' }}>Loading profile...</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Profile Settings</h1>
-        <p className="text-gray-600">Manage your delivery partner profile and account settings</p>
-      </div>
-
-      {/* Profile Information Card */}
-      <div className="bg-white rounded-lg shadow-md border border-gray-100">
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold" style={{ color: '#5D3A00' }}>Profile Information</h2>
-        </div>
-        
-        <div className="p-6 space-y-6">
-          {/* Email Field (Read-only) */}
-          <div>
-            <label className="block text-sm font-medium mb-2" style={{ color: '#5D3A00' }}>
-              Email Address (Username)
-            </label>
-            <div className="flex items-center p-3 border border-gray-300 rounded-lg bg-gray-50">
-              <Mail className="h-5 w-5 mr-3" style={{ color: '#D87C5A' }} />
-              <span className="text-gray-700">{profileData.email || 'Not available'}</span>
-            </div>
-            <p className="text-sm text-gray-500 mt-1">Email cannot be changed</p>
-          </div>
-
-          {/* Partner Name Field */}
-          <div>
-            <label className="block text-sm font-medium mb-2" style={{ color: '#5D3A00' }}>
-              Partner Name
-            </label>
-            {isEditing ? (
-              <div className="space-y-3">
-                <div className="flex items-center p-3 border border-gray-300 rounded-lg focus-within:border-orange-300">
-                  <User className="h-5 w-5 mr-3" style={{ color: '#D87C5A' }} />
-                  <input
-                    type="text"
-                    value={editedName}
-                    onChange={(e) => setEditedName(e.target.value)}
-                    className="flex-1 outline-none"
-                    placeholder="Enter your partner name"
-                  />
-                </div>
-                <div className="flex space-x-3">
-                  <button
-                    onClick={handleUpdateName}
-                    disabled={saving || !editedName.trim()}
-                    className="flex items-center px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                    style={{
-                      backgroundColor: '#5D3A00',
-                      color: 'white'
-                    }}
-                  >
-                    {saving ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Saving...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="h-4 w-4 mr-2" />
-                        Save
-                      </>
-                    )}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setIsEditing(false);
-                      setEditedName(profileData.partnerName || '');
-                    }}
-                    className="px-4 py-2 rounded-lg font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-200"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center p-3 border border-gray-300 rounded-lg bg-gray-50">
-                <User className="h-5 w-5 mr-3" style={{ color: '#D87C5A' }} />
-                <span className="text-gray-700">{profileData.partnerName || 'Not set'}</span>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Security Settings Card */}
-      <div className="bg-white rounded-lg shadow-md border border-gray-100">
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold" style={{ color: '#5D3A00' }}>Security Settings</h2>
-        </div>
-        
-        <div className="p-6">
-          {!showPasswordSection ? (
-            <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-              <div className="flex items-center">
-                <Lock className="h-5 w-5 mr-3" style={{ color: '#D87C5A' }} />
-                <div>
-                  <h3 className="font-medium" style={{ color: '#5D3A00' }}>Password</h3>
-                  <p className="text-sm text-gray-500">Last updated: Not available</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowPasswordSection(true)}
-                className="px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:scale-105"
-                style={{
-                  backgroundColor: '#FFE4D6',
-                  color: '#5D3A00'
-                }}
-              >
-                Change Password
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <h3 className="font-medium" style={{ color: '#5D3A00' }}>Change Password</h3>
-              
-              {/* New Password */}
-              <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: '#5D3A00' }}>
-                  New Password
-                </label>
-                <div className="flex items-center p-3 border border-gray-300 rounded-lg focus-within:border-orange-300">
-                  <Lock className="h-5 w-5 mr-3" style={{ color: '#D87C5A' }} />
-                  <input
-                    type={showPasswords.new ? "text" : "password"}
-                    value={passwordData.newPassword}
-                    onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
-                    className="flex-1 outline-none"
-                    placeholder="Enter new password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPasswords(prev => ({ ...prev, new: !prev.new }))}
-                    className="ml-2 text-gray-400 hover:text-gray-600"
-                  >
-                    {showPasswords.new ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Confirm Password */}
-              <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: '#5D3A00' }}>
-                  Confirm New Password
-                </label>
-                <div className="flex items-center p-3 border border-gray-300 rounded-lg focus-within:border-orange-300">
-                  <Lock className="h-5 w-5 mr-3" style={{ color: '#D87C5A' }} />
-                  <input
-                    type={showPasswords.confirm ? "text" : "password"}
-                    value={passwordData.confirmPassword}
-                    onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                    className="flex-1 outline-none"
-                    placeholder="Confirm new password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPasswords(prev => ({ ...prev, confirm: !prev.confirm }))}
-                    className="ml-2 text-gray-400 hover:text-gray-600"
-                  >
-                    {showPasswords.confirm ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Password Requirements */}
-              <div className="text-sm text-gray-500">
-                <p>Password requirements:</p>
-                <ul className="list-disc list-inside mt-1 space-y-1">
-                  <li>At least 6 characters long</li>
-                  <li>Should contain a mix of letters and numbers</li>
-                </ul>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex space-x-3 pt-4">
-                <button
-                  onClick={handleChangePassword}
-                  disabled={passwordLoading || !passwordData.newPassword || !passwordData.confirmPassword}
-                  className="flex items-center px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{
-                    backgroundColor: '#5D3A00',
-                    color: 'white'
-                  }}
-                >
-                  {passwordLoading ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Updating...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4 mr-2" />
-                      Update Password
-                    </>
-                  )}
-                </button>
-                <button
-                  onClick={() => {
-                    setShowPasswordSection(false);
-                    setPasswordData({ newPassword: '', confirmPassword: '' });
-                  }}
-                  className="px-4 py-2 rounded-lg font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-200"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+const DeliveryProfile = () => (
+  <div className="p-6 max-w-7xl mx-auto">
+    <div className="mb-8">
+      <h1 className="text-3xl font-bold text-gray-900 mb-2">Profile Settings</h1>
+      <p className="text-gray-600">Manage your delivery partner profile and preferences</p>
     </div>
-  );
-};
+    <div className="bg-white rounded-lg shadow-md p-12 text-center">
+      <User className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+      <h3 className="text-lg font-medium text-gray-900 mb-2">Profile Management</h3>
+      <p className="text-gray-600">This section will contain profile settings, vehicle information, and delivery preferences.</p>
+    </div>
+  </div>
+);
 
 export default DeliveryPartnerPage;
