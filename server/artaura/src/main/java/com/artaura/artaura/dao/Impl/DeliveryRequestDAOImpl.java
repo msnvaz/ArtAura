@@ -36,6 +36,12 @@ public class DeliveryRequestDAOImpl implements DeliveryRequestDAO {
         dto.setTotalAmount(rs.getBigDecimal("total_amount"));
         dto.setArtistId(rs.getLong("artist_id"));
         dto.setArtistName(rs.getString("artist_name"));
+        // Handle shipping fee
+        try {
+            dto.setShippingFee(rs.getBigDecimal("shipping_fee"));
+        } catch (Exception e) {
+            dto.setShippingFee(BigDecimal.ZERO);
+        }
         return dto;
     };
 
@@ -60,6 +66,13 @@ public class DeliveryRequestDAOImpl implements DeliveryRequestDAO {
         dto.setDeadline(rs.getDate("deadline") != null ? rs.getDate("deadline").toLocalDate() : null);
         dto.setAdditionalNotes(rs.getString("additional_notes"));
         dto.setUrgency(rs.getString("urgency"));
+        
+        // Handle shipping fee
+        try {
+            dto.setShippingFee(rs.getBigDecimal("shipping_fee"));
+        } catch (Exception e) {
+            dto.setShippingFee(BigDecimal.ZERO);
+        }
         
         // Parse budget string to BigDecimal
         String budget = rs.getString("budget");
@@ -371,6 +384,7 @@ public class DeliveryRequestDAOImpl implements DeliveryRequestDAO {
                     ao.delivery_status,
                     ao.order_date,
                     ao.total_amount,
+                    ao.shipping_fee,
                     aoi.title AS artwork_title,
                     aoi.artist_id,
                     CONCAT(a.first_name, ' ', a.last_name) AS artist_name
@@ -409,6 +423,7 @@ public class DeliveryRequestDAOImpl implements DeliveryRequestDAO {
                     cr.deadline,
                     cr.additional_notes,
                     cr.urgency,
+                    cr.shipping_fee,
                     cr.artist_id,
                     CONCAT(a.first_name, ' ', a.last_name) AS artist_name
                 FROM commission_requests cr
