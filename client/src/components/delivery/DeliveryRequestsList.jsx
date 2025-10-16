@@ -36,137 +36,81 @@ const DeliveryRequestsList = () => {
   const [showAcceptModal, setShowAcceptModal] = useState(false);
   const [deliveryFee, setDeliveryFee] = useState('');
 
-  // Mock data for delivery requests (would be fetched from API)
-  const mockDeliveryRequests = [
-    {
-      id: 1,
-      artistId: 'ART001',
-      artistName: 'Saman Kumara',
-      artistPhone: '+94 77 123 4567',
-      artistEmail: 'saman.kumara@email.com',
-      pickupAddress: {
-        street: '123 Temple Road',
-        city: 'Kandy',
-        district: 'Central Province',
-        postalCode: '20000'
-      },
-      buyerId: 'BUY001',
-      buyerName: 'Nimal Silva',
-      buyerPhone: '+94 71 987 6543',
-      buyerEmail: 'nimal.silva@email.com',
-      deliveryAddress: {
-        street: '456 Galle Road',
-        city: 'Colombo',
-        district: 'Western Province',
-        postalCode: '00300'
-      },
-      artwork: {
-        title: 'Sunset over Sigiriya',
-        type: 'Oil Painting',
-        size: '24" x 36"',
-        weight: '2.5 kg',
-        fragile: true,
-        value: 'LKR 75,000'
-      },
-      pickupDate: '2024-08-15',
-      preferredTime: '10:00 AM - 2:00 PM',
-      requestDate: '2024-08-10',
-      status: 'pending',
-      urgency: 'normal',
-      specialInstructions: 'Handle with extreme care. Artwork is framed and glass-protected.',
-      distance: '115 km',
-      estimatedDuration: '3-4 hours'
-    },
-    {
-      id: 2,
-      artistId: 'ART002',
-      artistName: 'Priya Jayawardena',
-      artistPhone: '+94 76 555 1234',
-      artistEmail: 'priya.jay@email.com',
-      pickupAddress: {
-        street: '789 Beach Road',
-        city: 'Galle',
-        district: 'Southern Province',
-        postalCode: '80000'
-      },
-      buyerId: 'BUY002',
-      buyerName: 'Ravi Perera',
-      buyerPhone: '+94 72 444 5678',
-      buyerEmail: 'ravi.perera@email.com',
-      deliveryAddress: {
-        street: '321 Lake View',
-        city: 'Nugegoda',
-        district: 'Western Province',
-        postalCode: '10250'
-      },
-      artwork: {
-        title: 'Traditional Mask Collection',
-        type: 'Wood Sculpture',
-        size: '12" x 8" (Set of 3)',
-        weight: '1.8 kg',
-        fragile: true,
-        value: 'LKR 45,000'
-      },
-      pickupDate: '2024-08-16',
-      preferredTime: '2:00 PM - 6:00 PM',
-      requestDate: '2024-08-11',
-      status: 'accepted',
-      urgency: 'high',
-      specialInstructions: 'Pack individually. Each mask needs separate protective wrapping.',
-      distance: '145 km',
-      estimatedDuration: '4-5 hours',
-      acceptedFee: 'LKR 3,500',
-      acceptedDate: '2024-08-11'
-    },
-    {
-      id: 3,
-      artistId: 'ART003',
-      artistName: 'Chaminda Fernando',
-      artistPhone: '+94 78 999 7777',
-      artistEmail: 'chaminda.f@email.com',
-      pickupAddress: {
-        street: '555 Hill Street',
-        city: 'Nuwara Eliya',
-        district: 'Central Province',
-        postalCode: '22200'
-      },
-      buyerId: 'BUY003',
-      buyerName: 'Malini Wickramasinghe',
-      buyerPhone: '+94 75 333 2222',
-      buyerEmail: 'malini.w@email.com',
-      deliveryAddress: {
-        street: '777 Marine Drive',
-        city: 'Mount Lavinia',
-        district: 'Western Province',
-        postalCode: '10370'
-      },
-      artwork: {
-        title: 'Tea Plantation Landscape',
-        type: 'Watercolor',
-        size: '18" x 24"',
-        weight: '1.2 kg',
-        fragile: false,
-        value: 'LKR 35,000'
-      },
-      pickupDate: '2024-08-17',
-      preferredTime: '9:00 AM - 1:00 PM',
-      requestDate: '2024-08-12',
-      status: 'pending',
-      urgency: 'normal',
-      specialInstructions: 'Can be rolled for transport if needed.',
-      distance: '180 km',
-      estimatedDuration: '5-6 hours'
-    }
-  ];
-
+  // Fetch delivery requests from API
   useEffect(() => {
-    // Simulate API call
-    setLoading(true);
-    setTimeout(() => {
-      setDeliveryRequests(mockDeliveryRequests);
-      setLoading(false);
-    }, 1000);
-  }, []);
+    const fetchDeliveryRequests = async () => {
+      if (!token) return;
+      
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const response = await axios.get('http://localhost:8081/api/delivery-partner/requests/pending', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        
+        if (response.data.success) {
+          // Transform API data to match frontend expected format
+          const transformedRequests = response.data.requests.map(req => ({
+            id: req.id,
+            requestType: req.requestType,
+            artistId: req.artistId,
+            artistName: req.artistName || 'Unknown Artist',
+            artistPhone: req.buyerPhone || 'N/A', // Using buyer phone as contact
+            artistEmail: req.buyerEmail || 'N/A',
+            buyerId: req.buyerId,
+            buyerName: req.buyerName,
+            buyerPhone: req.buyerPhone,
+            buyerEmail: req.buyerEmail,
+            pickupAddress: {
+              full: 'Artist Location', // Would need artist address from another API
+              street: 'TBD',
+              city: 'TBD',
+              district: 'TBD',
+              postalCode: 'TBD'
+            },
+            deliveryAddress: {
+              full: req.shippingAddress,
+              street: req.shippingAddress?.split(',')[0] || '',
+              city: req.shippingAddress?.split(',')[1] || '',
+              district: req.shippingAddress?.split(',')[2] || '',
+              postalCode: req.shippingAddress?.split(',')[3] || ''
+            },
+            artwork: {
+              title: req.artworkTitle,
+              type: req.artworkType || 'Artwork',
+              size: req.artworkDimensions || 'N/A',
+              weight: 'TBD',
+              fragile: true, // Assume fragile for artwork
+              value: `Rs ${req.totalAmount || 0}`
+            },
+            pickupDate: new Date().toISOString().split('T')[0], // Default to today
+            preferredTime: '10:00 AM - 6:00 PM',
+            requestDate: req.orderDate ? new Date(req.orderDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+            status: 'pending',
+            urgency: req.urgency || 'normal',
+            specialInstructions: req.additionalNotes || 'Handle with care',
+            distance: 'TBD',
+            estimatedFee: 'Rs 2,500',
+            deadline: req.deadline ? new Date(req.deadline).toISOString().split('T')[0] : null
+          }));
+          
+          setDeliveryRequests(transformedRequests);
+        } else {
+          setError(response.data.error || 'Failed to fetch delivery requests');
+        }
+      } catch (error) {
+        console.error('Error fetching delivery requests:', error);
+        setError('Failed to fetch delivery requests. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDeliveryRequests();
+  }, [token]);
 
   // Filter requests based on search term and status
   const filteredRequests = deliveryRequests.filter(request => {
@@ -198,16 +142,22 @@ const DeliveryRequestsList = () => {
     }
 
     try {
-      // Here you would make an API call to accept the delivery request
-      // await axios.post(`/api/delivery/accept/${selectedRequest.id}`, { fee: deliveryFee }, {
-      //   headers: { Authorization: `Bearer ${token}` }
-      // });
+      // Make API call to accept the delivery request
+      await axios.put(`http://localhost:8081/api/delivery-partner/requests/${selectedRequest.id}/accept`, {
+        requestType: selectedRequest.requestType,
+        deliveryFee: deliveryFee
+      }, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
 
       // Update local state
       setDeliveryRequests(prev => 
         prev.map(req => 
           req.id === selectedRequest.id 
-            ? { ...req, status: 'accepted', acceptedFee: `LKR ${deliveryFee}`, acceptedDate: new Date().toISOString().split('T')[0] }
+            ? { ...req, status: 'accepted', acceptedFee: `Rs ${deliveryFee}`, acceptedDate: new Date().toISOString().split('T')[0] }
             : req
         )
       );
