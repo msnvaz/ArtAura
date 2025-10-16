@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Package, 
   Truck, 
@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import Layout from '../components/delivery/Layout';
 import DeliveryDashboard from '../components/delivery/DeliveryDashboard';
 import DeliveryRequestsList from '../components/delivery/DeliveryRequestsList';
@@ -23,8 +24,34 @@ const DeliveryPartnerPage = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const { logout } = useAuth();
+  const [partnerProfile, setPartnerProfile] = useState(null);
+  const { logout, userId, token } = useAuth();
   const navigate = useNavigate();
+
+  // Fetch delivery partner profile
+  useEffect(() => {
+    const fetchPartnerProfile = async () => {
+      if (!token || !userId) return;
+      
+      try {
+        const response = await axios.get(`http://localhost:8081/api/delivery-partner/profile/user/${userId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        
+        if (response.data) {
+          setPartnerProfile(response.data);
+        }
+      } catch (error) {
+        console.error('Error fetching delivery partner profile:', error);
+        // Fallback to default name if API fails
+        setPartnerProfile({ partnerName: 'Delivery Partner', email: 'partner@example.com' });
+      }
+    };
+
+    fetchPartnerProfile();
+  }, [token, userId]);
 
   const navigationItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
@@ -146,7 +173,9 @@ const DeliveryPartnerPage = () => {
                   <h1 className="text-2xl font-bold text-white">
                     Delivery Partner Dashboard
                   </h1>
-                  <p className="text-gray-200">Welcome back, John Doe!</p>
+                  <p className="text-gray-200">
+                    Welcome back, {partnerProfile?.partnerName || 'Delivery Partner'}!
+                  </p>
                 </div>
               </div>
               <div className="mt-4 md:mt-0 flex gap-2 items-center">
@@ -163,7 +192,9 @@ const DeliveryPartnerPage = () => {
                     >
                       <User className="h-4 w-4" style={{ color: "#5D3A00" }} />
                     </div>
-                    <span className="ml-2 text-sm font-medium text-white hidden sm:block">John Doe</span>
+                    <span className="ml-2 text-sm font-medium text-white hidden sm:block">
+                      {partnerProfile?.partnerName || 'Partner'}
+                    </span>
                   </div>
                   
                   {/* Logout Button */}
