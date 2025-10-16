@@ -33,3 +33,4 @@ vite.config.js
 
 
 .env
+/server/artaura/.env

@@ -1,10 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import axios from "axios";
+import { useAuth } from "./AuthContext";
 
 const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const { token } = useAuth();
 
   // Load cart from localStorage on mount
   useEffect(() => {
@@ -19,18 +22,69 @@ export const CartProvider = ({ children }) => {
     localStorage.setItem("artaura_cart", JSON.stringify(cartItems));
   }, [cartItems]);
 
+  // Fetch cart items from backend and persist in context
+  const fetchCartFromBackend = async () => {
+    if (!token) return;
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8080";
+      const response = await axios.get(`${apiUrl}/api/cart/items`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (response.data) {
+        // Map artworkId to id for consistency
+        const mapped = response.data.map((item) => ({
+          ...item,
+          id: item.id || item.artworkId,
+        }));
+        setCartItems(mapped);
+      }
+    } catch (err) {
+      // Optionally handle error (e.g. show toast)
+    }
+  };
+
+  // Always sync cart with backend after any change
+  const syncCartWithBackend = async () => {
+    if (!token) return;
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8080";
+      const response = await axios.get(`${apiUrl}/api/cart/items`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (response.data) {
+        const mapped = response.data.map((item) => ({
+          ...item,
+          id: item.artwork_id || item.artworkId || item.id,
+        }));
+        setCartItems(mapped);
+      }
+    } catch (err) {
+      // Optionally handle error
+    }
+  };
+
+  // Fetch cart from backend when token changes (e.g. after login or refresh)
+  useEffect(() => {
+    if (token) {
+      fetchCartFromBackend();
+    }
+  }, [token]);
+
   const addToCart = (product, quantity = 1) => {
     setCartItems((prevItems) => {
-      const existingItem = prevItems.find((item) => item.id === product.id);
+      const productId = product.id || product.artworkId;
+      const existingItem = prevItems.find(
+        (item) => (item.id || item.artworkId) === productId
+      );
 
       if (existingItem) {
         return prevItems.map((item) =>
-          item.id === product.id
+          (item.id || item.artworkId) === productId
             ? { ...item, quantity: item.quantity + quantity }
             : item
         );
       } else {
-        return [...prevItems, { ...product, quantity }];
+        return [...prevItems, { ...product, id: productId, quantity }];
       }
     });
   };
@@ -39,6 +93,12 @@ export const CartProvider = ({ children }) => {
     setCartItems((prevItems) =>
       prevItems.filter((item) => item.id !== productId)
     );
+  };
+
+  // Wrap removeFromCart to sync with backend
+  const removeFromCartAndSync = async (productId) => {
+    removeFromCart(productId);
+    await syncCartWithBackend();
   };
 
   const updateQuantity = (productId, quantity) => {
@@ -52,6 +112,12 @@ export const CartProvider = ({ children }) => {
         item.id === productId ? { ...item, quantity } : item
       )
     );
+  };
+
+  // Wrap updateQuantity to sync with backend
+  const updateQuantityAndSync = async (productId, quantity) => {
+    updateQuantity(productId, quantity);
+    await syncCartWithBackend();
   };
 
   const clearCart = () => {
@@ -76,14 +142,16 @@ export const CartProvider = ({ children }) => {
   const value = {
     cartItems,
     addToCart,
-    removeFromCart,
-    updateQuantity,
+    removeFromCart: removeFromCartAndSync,
+    updateQuantity: updateQuantityAndSync,
     clearCart,
     getCartTotal,
     getCartItemsCount,
     isCartOpen,
     toggleCart,
     setIsCartOpen,
+    fetchCartFromBackend,
+    syncCartWithBackend,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

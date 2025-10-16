@@ -15,4 +15,9 @@ public class BArtistService {
     public List<ArtistListDTO> getAllArtistsForList() {
         return bArtistDAO.getAllArtistsForList();
     }
+
+    public void followArtist(Long artistId, String token) {
+        // Validate JWT, get user info if needed
+        bArtistDAO.incrementFollowers(artistId);
+    }
 }

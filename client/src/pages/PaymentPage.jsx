@@ -9,11 +9,118 @@ import {
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Navbar from "../components/common/Navbar";
+import { Elements } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
+import { CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import { useCart } from "../context/CartContext";
+
+const stripePromise = loadStripe(
+  "pk_test_51Rw2UhQcGakY3xP2bNoe6cwyMYCMihyNol4EJZLWWUd1D0jvQj627YPHlE01WzhFWJ12UU340FCcAkMFnnQQFmLp00EZMIL15R"
+);
+
+function StripePaymentForm({ billingInfo, orderSummary, onSuccess }) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsProcessing(true);
+    setError(null);
+    if (!stripe || !elements) {
+      setIsProcessing(false);
+      return;
+    }
+    const cardElement = elements.getElement(CardElement);
+    let clientSecret;
+    try {
+      // Use environment variable for backend URL and send JWT token
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8080";
+      const token = localStorage.getItem("token"); // Or get from context if you use AuthContext
+      const response = await fetch(
+        `${apiUrl}/api/payment/create-payment-intent`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            amount: Math.round(orderSummary.total * 100),
+            currency: "lkr",
+          }),
+        }
+      );
+      const data = await response.json();
+      clientSecret = data.clientSecret;
+    } catch (err) {
+      setError("Failed to initiate payment. Please try again.");
+      setIsProcessing(false);
+      return;
+    }
+    // Confirm card payment with Stripe
+    const result = await stripe.confirmCardPayment(clientSecret, {
+      payment_method: {
+        card: cardElement,
+        billing_details: {
+          name: billingInfo.firstName + " " + billingInfo.lastName,
+          email: billingInfo.email,
+        },
+      },
+    });
+    if (result.error) {
+      setError(result.error.message);
+      setIsProcessing(false);
+    } else if (
+      result.paymentIntent &&
+      result.paymentIntent.status === "succeeded"
+    ) {
+      setIsProcessing(false);
+      onSuccess(result.paymentIntent.id);
+    } else {
+      setError("Payment could not be completed. Please try again.");
+      setIsProcessing(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="bg-[#FFF5E1] border border-[#FFD95A] rounded-lg p-6">
+        <CardElement options={{ style: { base: { fontSize: "16px" } } }} />
+      </div>
+      {error && <div className="text-red-500 text-sm">{error}</div>}
+      <button
+        type="submit"
+        disabled={!stripe || isProcessing}
+        className="bg-[#D87C5A] hover:bg-[#7f5539] text-white px-8 py-3 rounded-lg font-medium transition-colors flex items-center gap-2 disabled:opacity-50"
+      >
+        {isProcessing ? (
+          <>
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            Processing Payment...
+          </>
+        ) : (
+          <>
+            Complete Order
+            <Lock className="w-4 h-4" />
+          </>
+        )}
+      </button>
+    </form>
+  );
+}
 
 const PaymentPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { billingInfo, orderSummary } = location.state || {};
+  const {
+    billingInfo,
+    orderSummary,
+    cartItems: locationCartItems,
+  } = location.state || {};
+  // Use cartItems from location.state for order creation
+  const { clearCart } = useCart();
 
   const [paymentInfo, setPaymentInfo] = useState({
     cardNumber: "",
@@ -32,98 +139,63 @@ const PaymentPage = () => {
     return null;
   }
 
-  const handleInputChange = (field, value) => {
-    setPaymentInfo((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+  const handleStripeSuccess = async (stripePaymentId) => {
+    clearCart();
+    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8080";
+    const token = localStorage.getItem("token");
+    try {
+      await fetch(`${apiUrl}/api/cart/clear`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    } catch (err) {}
 
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors((prev) => ({
-        ...prev,
-        [field]: "",
-      }));
-    }
-  };
-
-  const formatCardNumber = (value) => {
-    // Remove all non-digits
-    const digits = value.replace(/\D/g, "");
-    // Add spaces every 4 digits
-    const formatted = digits.replace(/(\d{4})(?=\d)/g, "$1 ");
-    return formatted.slice(0, 19); // Max 16 digits + 3 spaces
-  };
-
-  const formatExpiryDate = (value) => {
-    // Remove all non-digits
-    const digits = value.replace(/\D/g, "");
-    // Add slash after 2 digits
-    if (digits.length >= 2) {
-      return digits.slice(0, 2) + "/" + digits.slice(2, 4);
-    }
-    return digits;
-  };
-
-  const validateForm = () => {
-    const newErrors = {};
-
-    if (!paymentInfo.cardholderName.trim()) {
-      newErrors.cardholderName = "Cardholder name is required";
-    }
-
-    const cardDigits = paymentInfo.cardNumber.replace(/\D/g, "");
-    if (!cardDigits) {
-      newErrors.cardNumber = "Card number is required";
-    } else if (cardDigits.length < 16) {
-      newErrors.cardNumber = "Card number must be 16 digits";
-    }
-
-    if (!paymentInfo.expiryDate) {
-      newErrors.expiryDate = "Expiry date is required";
-    } else if (!/^\d{2}\/\d{2}$/.test(paymentInfo.expiryDate)) {
-      newErrors.expiryDate = "Invalid expiry date format (MM/YY)";
-    }
-
-    if (!paymentInfo.cvv) {
-      newErrors.cvv = "CVV is required";
-    } else if (paymentInfo.cvv.length < 3) {
-      newErrors.cvv = "CVV must be 3-4 digits";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handlePayment = () => {
-    if (validateForm()) {
-      setIsProcessing(true);
-
-      // Simulate payment processing
-      setTimeout(() => {
-        const orderId = `ORD-${Date.now()}`;
-        navigate("/order-confirmation", {
-          state: {
-            orderId,
-            billingInfo,
-            orderSummary,
-            paymentMethod: paymentInfo.paymentMethod,
-          },
-        });
-      }, 3000);
-    }
-  };
-
-  const handleBackToBilling = () => {
-    navigate("/checkout");
-  };
-
-  const getCardType = (cardNumber) => {
-    const digits = cardNumber.replace(/\D/g, "");
-    if (digits.startsWith("4")) return "Visa";
-    if (digits.startsWith("5")) return "Mastercard";
-    if (digits.startsWith("3")) return "American Express";
-    return "Credit Card";
+    // Prepare order payload
+    const userId = localStorage.getItem("userId"); // Or get from context
+    const orderPayload = {
+      buyerId: userId,
+      status: "paid",
+      orderDate: new Date().toISOString(),
+      billingFirstName: billingInfo.firstName,
+      billingLastName: billingInfo.lastName,
+      billingEmail: billingInfo.email,
+      billingPhone: billingInfo.phone,
+      billingAddress: billingInfo.address,
+      billingCity: billingInfo.city,
+      billingState: billingInfo.state,
+      billingZipCode: billingInfo.zipCode,
+      billingCountry: billingInfo.country,
+      paymentMethod: "stripe",
+      stripePaymentId: stripePaymentId,
+      totalAmount: orderSummary.total,
+      items: (locationCartItems || []).map((item) => ({
+        artworkId: item.id,
+        quantity: item.quantity,
+        price: item.price,
+        title: item.title,
+        artistId: item.artistId || item.artist_id,
+      })),
+    };
+    await fetch(`${apiUrl}/api/orders/create`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(orderPayload),
+    });
+    const orderId = `ORD-${Date.now()}`;
+    navigate("/order-confirmation", {
+      state: {
+        orderId,
+        billingInfo,
+        orderSummary,
+        paymentMethod: "card",
+      },
+    });
   };
 
   return (
@@ -153,240 +225,23 @@ const PaymentPage = () => {
                   <CreditCard className="w-5 h-5" />
                   Payment Information
                 </h2>
-
-                {/* Payment Method Selection */}
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-[#7f5539] mb-3">
-                    Payment Method
-                  </label>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <label className="flex items-center p-3 border-2 border-[#FFE4D6] rounded-lg cursor-pointer hover:border-[#FFD95A] transition-colors">
-                      <input
-                        type="radio"
-                        name="paymentMethod"
-                        value="credit"
-                        checked={paymentInfo.paymentMethod === "credit"}
-                        onChange={(e) =>
-                          handleInputChange("paymentMethod", e.target.value)
-                        }
-                        className="mr-3"
-                      />
-                      <CreditCard className="w-5 h-5 mr-2 text-[#7f5539]" />
-                      <span className="text-[#7f5539] font-medium">
-                        Credit Card
-                      </span>
-                    </label>
-
-                    <label className="flex items-center p-3 border-2 border-[#FFE4D6] rounded-lg cursor-pointer hover:border-[#FFD95A] transition-colors">
-                      <input
-                        type="radio"
-                        name="paymentMethod"
-                        value="debit"
-                        checked={paymentInfo.paymentMethod === "debit"}
-                        onChange={(e) =>
-                          handleInputChange("paymentMethod", e.target.value)
-                        }
-                        className="mr-3"
-                      />
-                      <CreditCard className="w-5 h-5 mr-2 text-[#7f5539]" />
-                      <span className="text-[#7f5539] font-medium">
-                        Debit Card
-                      </span>
-                    </label>
-
-                    <label className="flex items-center p-3 border-2 border-[#FFE4D6] rounded-lg cursor-pointer hover:border-[#FFD95A] transition-colors">
-                      <input
-                        type="radio"
-                        name="paymentMethod"
-                        value="paypal"
-                        checked={paymentInfo.paymentMethod === "paypal"}
-                        onChange={(e) =>
-                          handleInputChange("paymentMethod", e.target.value)
-                        }
-                        className="mr-3"
-                      />
-                      <span className="w-5 h-5 mr-2 bg-[#0070ba] rounded text-white text-xs flex items-center justify-center font-bold">
-                        P
-                      </span>
-                      <span className="text-[#7f5539] font-medium">PayPal</span>
-                    </label>
-                  </div>
-                </div>
-
-                {/* Card Details Form */}
-                {(paymentInfo.paymentMethod === "credit" ||
-                  paymentInfo.paymentMethod === "debit") && (
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-[#7f5539] mb-2">
-                        Cardholder Name *
-                      </label>
-                      <input
-                        type="text"
-                        value={paymentInfo.cardholderName}
-                        onChange={(e) =>
-                          handleInputChange("cardholderName", e.target.value)
-                        }
-                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFD95A] ${
-                          errors.cardholderName
-                            ? "border-red-500"
-                            : "border-[#FFE4D6]"
-                        }`}
-                        placeholder="Enter cardholder name"
-                      />
-                      {errors.cardholderName && (
-                        <p className="text-red-500 text-xs mt-1">
-                          {errors.cardholderName}
-                        </p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-[#7f5539] mb-2">
-                        Card Number *
-                      </label>
-                      <div className="relative">
-                        <input
-                          type="text"
-                          value={paymentInfo.cardNumber}
-                          onChange={(e) =>
-                            handleInputChange(
-                              "cardNumber",
-                              formatCardNumber(e.target.value)
-                            )
-                          }
-                          className={`w-full px-3 py-2 pr-16 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFD95A] ${
-                            errors.cardNumber
-                              ? "border-red-500"
-                              : "border-[#FFE4D6]"
-                          }`}
-                          placeholder="1234 5678 9012 3456"
-                          maxLength="19"
-                        />
-                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs font-medium text-[#7f5539]/70">
-                          {getCardType(paymentInfo.cardNumber)}
-                        </div>
-                      </div>
-                      {errors.cardNumber && (
-                        <p className="text-red-500 text-xs mt-1">
-                          {errors.cardNumber}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-[#7f5539] mb-2">
-                          Expiry Date *
-                        </label>
-                        <input
-                          type="text"
-                          value={paymentInfo.expiryDate}
-                          onChange={(e) =>
-                            handleInputChange(
-                              "expiryDate",
-                              formatExpiryDate(e.target.value)
-                            )
-                          }
-                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFD95A] ${
-                            errors.expiryDate
-                              ? "border-red-500"
-                              : "border-[#FFE4D6]"
-                          }`}
-                          placeholder="MM/YY"
-                          maxLength="5"
-                        />
-                        {errors.expiryDate && (
-                          <p className="text-red-500 text-xs mt-1">
-                            {errors.expiryDate}
-                          </p>
-                        )}
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-[#7f5539] mb-2">
-                          CVV *
-                        </label>
-                        <input
-                          type="text"
-                          value={paymentInfo.cvv}
-                          onChange={(e) =>
-                            handleInputChange(
-                              "cvv",
-                              e.target.value.replace(/\D/g, "").slice(0, 4)
-                            )
-                          }
-                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFD95A] ${
-                            errors.cvv ? "border-red-500" : "border-[#FFE4D6]"
-                          }`}
-                          placeholder="123"
-                          maxLength="4"
-                        />
-                        {errors.cvv && (
-                          <p className="text-red-500 text-xs mt-1">
-                            {errors.cvv}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* PayPal Option */}
-                {paymentInfo.paymentMethod === "paypal" && (
-                  <div className="bg-[#FFF5E1] border border-[#FFD95A] rounded-lg p-6 text-center">
-                    <div className="w-16 h-16 bg-[#0070ba] rounded-full flex items-center justify-center mx-auto mb-4">
-                      <span className="text-white text-2xl font-bold">P</span>
-                    </div>
-                    <h3 className="text-lg font-semibold text-[#7f5539] mb-2">
-                      Pay with PayPal
-                    </h3>
-                    <p className="text-[#7f5539]/70 text-sm">
-                      You'll be redirected to PayPal to complete your payment
-                      securely.
-                    </p>
-                  </div>
-                )}
-
-                {/* Security Notice */}
-                <div className="mt-6 p-4 bg-[#FFF5E1] border border-[#FFD95A] rounded-lg">
+                <div className="mb-6 p-4 bg-[#FFF5E1] border border-[#FFD95A] rounded-lg">
                   <div className="flex items-center gap-2 text-sm text-[#7f5539]">
                     <Lock className="w-4 h-4" />
                     <span className="font-medium">Secure Payment</span>
                   </div>
                   <p className="text-xs text-[#7f5539]/70 mt-1">
-                    Your payment information is encrypted and secure. We never
-                    store your card details.
+                    We use Stripe for secure payments. Your card details are
+                    never stored on our servers.
                   </p>
                 </div>
-
-                <div className="flex justify-between mt-8">
-                  <button
-                    onClick={handleBackToBilling}
-                    className="flex items-center gap-2 text-[#7f5539] hover:text-[#D87C5A] font-medium transition-colors"
-                  >
-                    <ArrowLeft className="w-4 h-4" />
-                    Back to Billing
-                  </button>
-
-                  <button
-                    onClick={handlePayment}
-                    disabled={isProcessing}
-                    className="bg-[#D87C5A] hover:bg-[#7f5539] text-white px-8 py-3 rounded-lg font-medium transition-colors flex items-center gap-2 disabled:opacity-50"
-                  >
-                    {isProcessing ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        Processing Payment...
-                      </>
-                    ) : (
-                      <>
-                        Complete Order
-                        <Lock className="w-4 h-4" />
-                      </>
-                    )}
-                  </button>
-                </div>
+                <Elements stripe={stripePromise}>
+                  <StripePaymentForm
+                    billingInfo={billingInfo}
+                    orderSummary={orderSummary}
+                    onSuccess={handleStripeSuccess}
+                  />
+                </Elements>
               </div>
             </div>
 
@@ -418,15 +273,6 @@ const PaymentPage = () => {
                               maximumFractionDigits: 2,
                             }
                           )}`}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-[#7f5539]">Tax</span>
-                    <span className="font-medium text-[#7f5539]">
-                      LKR{" "}
-                      {orderSummary.tax.toLocaleString(undefined, {
-                        maximumFractionDigits: 2,
-                      })}
                     </span>
                   </div>
                   <hr className="border-[#FFE4D6]" />

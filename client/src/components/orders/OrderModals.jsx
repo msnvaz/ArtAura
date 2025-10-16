@@ -8,6 +8,9 @@ const AcceptOrderModal = ({ order, isOpen, onClose, onSuccess }) => {
   const [estimatedDays, setEstimatedDays] = useState('');
   const [artistNotes, setArtistNotes] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Get API URL from environment variable
+  const API_URL = import.meta.env.VITE_API_URL;
   const { token } = useAuth();
   const { showSuccess, showError } = useNotification();
 
@@ -20,7 +23,7 @@ const AcceptOrderModal = ({ order, isOpen, onClose, onSuccess }) => {
     try {
       setLoading(true);
       const response = await axios.post(
-        `http://localhost:8081/api/orders/${order.orderId}/accept`,
+        `${API_URL}/api/orders/${order.orderId}/accept`,
         {
           estimatedDays: parseInt(estimatedDays),
           artistNotes: artistNotes
@@ -139,7 +142,7 @@ const RejectOrderModal = ({ order, isOpen, onClose, onSuccess }) => {
     try {
       setLoading(true);
       const response = await axios.post(
-        `http://localhost:8081/api/orders/${order.orderId}/reject`,
+        `${API_URL}/api/orders/${order.orderId}/reject`,
         rejectionReason,
         {
           headers: {

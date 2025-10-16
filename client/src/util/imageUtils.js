@@ -2,7 +2,7 @@
  * Utility functions for handling image URLs consistently across the application
  */
 
-const API_BASE_URL = 'http://localhost:8081';
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 const FALLBACK_IMAGE = 'https://images.pexels.com/photos/1070981/pexels-photo-1070981.jpeg?auto=compress&cs=tinysrgb&w=400';
 
 /**
