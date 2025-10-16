@@ -458,7 +458,7 @@ const ShopProductsPage = () => {
               Art Works to Sell
             </h1>
             <p className="text-[#7f5539]/70">
-              Discover amazing art supplies from verified shops
+              Discover amazing arts
             </p>
           </div>
 
