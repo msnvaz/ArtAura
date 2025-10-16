@@ -8,7 +8,6 @@ import {
     DollarSign,
     Check,
     X,
-    Eye,
     Clock,
     User,
     Home,
@@ -33,7 +32,6 @@ const DeliveryRequestsList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedRequest, setSelectedRequest] = useState(null);
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showAcceptModal, setShowAcceptModal] = useState(false);
   const [deliveryFee, setDeliveryFee] = useState('');
 
@@ -266,11 +264,6 @@ const DeliveryRequestsList = () => {
     
     return matchesSearch && matchesStatus;
   });
-
-  const handleViewDetails = (request) => {
-    setSelectedRequest(request);
-    setShowDetailsModal(true);
-  };
 
   const handleAcceptRequest = (request) => {
     setSelectedRequest(request);
@@ -798,20 +791,6 @@ const DeliveryRequestsList = () => {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <button
-                      onClick={() => handleViewDetails(request)}
-                      className="px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200"
-                      style={{
-                        color: '#5D3A00',
-                        backgroundColor: '#FFE4D6'
-                      }}
-                      onMouseOver={(e) => e.target.style.backgroundColor = '#FFD95A'}
-                      onMouseOut={(e) => e.target.style.backgroundColor = '#FFE4D6'}
-                    >
-                      <Eye className="h-4 w-4 inline mr-1" />
-                      View Details
-                    </button>
-                    
                     {/* Show different buttons based on status */}
                     {request.status === 'pending' && (
                       <button
@@ -980,68 +959,6 @@ const DeliveryRequestsList = () => {
           ))
         )}
       </div>
-
-      {/* Details Modal */}
-      {showDetailsModal && selectedRequest && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-gray-900">Delivery Request Details</h2>
-                <button
-                  onClick={() => setShowDetailsModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <X className="h-6 w-6" />
-                </button>
-              </div>
-            </div>
-            <div className="p-6">
-              {/* Detailed view content would go here */}
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-semibold mb-3">Request Information</h3>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="font-medium">Request ID:</span> #{selectedRequest.id}
-                    </div>
-                    <div>
-                      <span className="font-medium">Request Type:</span> 
-                      <span className="ml-2 px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
-                        {selectedRequest.requestType === 'artwork_order' ? 'Artwork Order' : 'Commission Request'}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="font-medium">
-                        {selectedRequest.requestType === 'artwork_order' ? 'Order Date:' : 'Submitted Date:'}
-                      </span> {formatDate(selectedRequest.requestDate)}
-                      {selectedRequest.requestDateTime && (
-                        <span className="text-xs text-gray-500 ml-1">
-                          ({formatDateTime(selectedRequest.requestDateTime)})
-                        </span>
-                      )}
-                    </div>
-                    <div>
-                      <span className="font-medium">Status:</span> 
-                      <span className={`ml-2 px-2 py-1 text-xs rounded-full ${getStatusColor(selectedRequest.status)}`}>
-                        {selectedRequest.status}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="font-medium">Priority:</span> 
-                      <span className={`ml-2 ${getUrgencyColor(selectedRequest.urgency)}`}>
-                        {selectedRequest.urgency}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Additional detailed sections would be added here */}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Accept Request Modal */}
       {showAcceptModal && selectedRequest && (

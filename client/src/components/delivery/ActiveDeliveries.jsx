@@ -54,6 +54,7 @@ const ActiveDeliveries = () => {
       },
       status: 'picked_up',
       acceptedFee: 'LKR 3,500',
+      shippingFee: 3500,
       pickupDate: '2024-08-16',
       estimatedDelivery: '2024-08-16',
       distance: '145 km',
@@ -91,6 +92,7 @@ const ActiveDeliveries = () => {
       },
       status: 'in_transit',
       acceptedFee: 'LKR 2,800',
+      shippingFee: 2800,
       pickupDate: '2024-08-15',
       estimatedDelivery: '2024-08-15',
       distance: '115 km',
@@ -148,7 +150,8 @@ const ActiveDeliveries = () => {
               },
               status: request.deliveryStatus === 'accepted' ? 'accepted' : 
                       request.deliveryStatus === 'outForDelivery' ? 'in_transit' : 'accepted',
-              acceptedFee: 'Fee to be confirmed',
+              acceptedFee: request.shippingFee ? `Rs ${request.shippingFee}` : 'Fee not set',
+              shippingFee: request.shippingFee || 0,
               pickupDate: request.orderDate ? new Date(request.orderDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
               estimatedDelivery: request.deadline ? 
                 new Date(request.deadline).toISOString().split('T')[0] : 
@@ -227,6 +230,7 @@ const ActiveDeliveries = () => {
               status: order.delivery_status === 'accepted' ? 'accepted' : 
                       order.delivery_status === 'outForDelivery' ? 'in_transit' : 'accepted',
               acceptedFee: order.shipping_fee ? `Rs ${order.shipping_fee}` : 'Fee not set',
+              shippingFee: order.shipping_fee || 0,
               pickupDate: order.order_date ? new Date(order.order_date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
               estimatedDelivery: order.order_date ? new Date(new Date(order.order_date).getTime() + 24*60*60*1000).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
               distance: 'TBD',
@@ -276,6 +280,7 @@ const ActiveDeliveries = () => {
               status: commission.delivery_status === 'accepted' ? 'accepted' : 
                       commission.delivery_status === 'outForDelivery' ? 'in_transit' : 'accepted',
               acceptedFee: commission.shipping_fee ? `Rs ${commission.shipping_fee}` : 'Fee not set',
+              shippingFee: commission.shipping_fee || 0,
               pickupDate: commission.submitted_at ? new Date(commission.submitted_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
               estimatedDelivery: commission.deadline ? new Date(commission.deadline).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
               distance: 'TBD',
@@ -513,14 +518,16 @@ const ActiveDeliveries = () => {
         <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
           <div className="flex items-center">
             <div 
-              className="p-3 rounded-full"
-              style={{ backgroundColor: '#FFD95A' }}
+              className="p-3 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: '#FFD95A', width: '56px', height: '56px' }}
             >
-              <DollarSign className="h-8 w-8" style={{ color: '#5D3A00' }} />
+              <span className="text-xl font-bold" style={{ color: '#5D3A00' }}>Rs</span>
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium" style={{ color: '#D87C5A' }}>Total Earnings</p>
-              <p className="text-2xl font-bold" style={{ color: '#5D3A00' }}>LKR 6,300</p>
+              <p className="text-2xl font-bold" style={{ color: '#5D3A00' }}>
+                {activeDeliveries.reduce((total, delivery) => total + (delivery.shippingFee || 0), 0).toLocaleString()}
+              LKR</p>
             </div>
           </div>
         </div>
@@ -693,29 +700,10 @@ const ActiveDeliveries = () => {
                           <strong>Size:</strong> {delivery.artwork.size}
                         </div>
                         <div className="text-gray-600">
-                          <strong>Value:</strong> {delivery.artwork.value}
-                        </div>
-                        <div className="text-gray-600">
                           <strong>Est. Delivery:</strong> {delivery.estimatedDelivery}
                         </div>
                       </div>
                     </div>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="mt-6 flex gap-3">
-                    <button className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors duration-200 flex items-center gap-2">
-                      <Navigation className="h-4 w-4" />
-                      Get Directions
-                    </button>
-                    <button className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200 flex items-center gap-2">
-                      <Phone className="h-4 w-4" />
-                      Contact Artist
-                    </button>
-                    <button className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200 flex items-center gap-2">
-                      <Phone className="h-4 w-4" />
-                      Contact Buyer
-                    </button>
                   </div>
                 </div>
               </div>
