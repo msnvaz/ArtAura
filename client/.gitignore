@@ -35,3 +35,4 @@ vite.config.js
 public/uploads/
 
 .env
+/server/artaura/.env

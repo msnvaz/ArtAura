@@ -27,8 +27,7 @@ const CartPage = () => {
 
   const subtotal = getCartTotal();
   const shipping = subtotal > 5000 ? 0 : 800;
-  const tax = subtotal * 0.08; // 8% tax
-  const total = subtotal + shipping + tax;
+  const total = subtotal + shipping;
 
   const handleCheckout = () => {
     navigate("/checkout");
@@ -122,74 +121,48 @@ const CartPage = () => {
 
                 <div className="divide-y divide-[#FFE4D6]">
                   {cartItems.map((item) => (
-                    <div key={item.id} className="p-6">
+                    <div key={item.artwork_id} className="p-6">
                       <div className="flex gap-4">
                         <img
-                          src={item.image}
-                          alt={item.name}
+                          src={item.image_url}
+                          alt={item.title}
                           className="w-24 h-24 object-cover rounded-lg border border-[#FFE4D6]"
                         />
                         <div className="flex-1">
                           <div className="flex justify-between items-start mb-2">
                             <div>
                               <h3 className="font-semibold text-[#7f5539] mb-1">
-                                {item.name}
+                                {item.title}
                               </h3>
-                              <p className="text-sm text-[#7f5539]/70">
-                                {item.shopName}
-                              </p>
-                              {item.originalPrice && (
-                                <p className="text-xs text-green-600 mt-1">
-                                  Save LKR{" "}
-                                  {(
-                                    item.originalPrice - item.price
-                                  ).toLocaleString()}
-                                </p>
-                              )}
+                              <div className="flex items-center gap-2 mb-1">
+                                <img
+                                  src={item.artist_image}
+                                  alt={item.artist_name}
+                                  className="w-6 h-6 rounded-full border border-[#FFD95A]"
+                                />
+                                <span className="text-sm text-[#7f5539]/80 font-medium">
+                                  {item.artist_name}
+                                </span>
+                              </div>
                             </div>
                             <button
-                              onClick={() => handleRemoveClick(item.id)}
+                              onClick={() => handleRemoveClick(item.artwork_id)}
                               className="p-2 hover:bg-red-100 hover:text-red-600 rounded-lg transition-colors"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
-
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                              <button
-                                onClick={() =>
-                                  updateQuantity(item.id, item.quantity - 1)
-                                }
-                                className="p-2 hover:bg-[#FFD95A] rounded-lg transition-colors"
-                              >
-                                <Minus className="w-4 h-4" />
-                              </button>
-                              <span className="font-medium text-[#7f5539] min-w-[40px] text-center">
-                                {item.quantity}
+                              <span className="font-medium text-[#7f5539] min-w-[40px] text-center bg-[#FFD95A]/30 px-3 py-1 rounded-lg">
+                                Qty: {item.quantity}
                               </span>
-                              <button
-                                onClick={() =>
-                                  updateQuantity(item.id, item.quantity + 1)
-                                }
-                                className="p-2 hover:bg-[#FFD95A] rounded-lg transition-colors"
-                              >
-                                <Plus className="w-4 h-4" />
-                              </button>
                             </div>
                             <div className="text-right">
                               <div className="font-bold text-[#D87C5A]">
                                 LKR{" "}
                                 {(item.price * item.quantity).toLocaleString()}
                               </div>
-                              {item.originalPrice && (
-                                <div className="text-sm text-[#7f5539]/50 line-through">
-                                  LKR{" "}
-                                  {(
-                                    item.originalPrice * item.quantity
-                                  ).toLocaleString()}
-                                </div>
-                              )}
                             </div>
                           </div>
                         </div>
@@ -227,33 +200,21 @@ const CartPage = () => {
                   <div className="flex justify-between">
                     <span className="text-[#7f5539]">Shipping</span>
                     <span className="font-medium text-[#7f5539]">
-                      {shipping === 0
-                        ? "FREE"
-                        : `LKR ${shipping.toLocaleString()}`}
+                      {shipping === 0 ? "To be decided" : `LKR ${shipping.toLocaleString()}`}
                     </span>
                   </div>
-                  {shipping === 0 && (
-                    <p className="text-xs text-green-600">
-                      Free shipping on orders over LKR 5,000!
-                    </p>
-                  )}
-                  <div className="flex justify-between">
-                    <span className="text-[#7f5539]">Tax</span>
-                    <span className="font-medium text-[#7f5539]">
-                      LKR{" "}
-                      {tax.toLocaleString(undefined, {
-                        maximumFractionDigits: 2,
-                      })}
-                    </span>
+                  {/* Meaningful info instead of tax and free shipping */}
+                  <div className="flex items-center gap-2 text-[#7f5539]/80 text-sm">
+                    <span>Need help? <a href="/contact" className="underline text-[#D87C5A]">Contact support</a></span>
+                  </div>
+                  <div className="flex items-center gap-2 text-[#7f5539]/80 text-sm">
+                    <span>Estimated delivery will be provided at checkout.</span>
                   </div>
                   <hr className="border-[#FFE4D6]" />
                   <div className="flex justify-between text-lg">
                     <span className="font-semibold text-[#7f5539]">Total</span>
                     <span className="font-bold text-[#D87C5A]">
-                      LKR{" "}
-                      {total.toLocaleString(undefined, {
-                        maximumFractionDigits: 2,
-                      })}
+                      LKR {total.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                     </span>
                   </div>
                 </div>

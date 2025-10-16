@@ -26,4 +26,8 @@ public class CartService {
     public List<?> getCartItems(Long buyerId) {
         return cartDao.getCartItems(buyerId);
     }
+
+    public void clearCart(Long buyerId) {
+        cartDao.clearCart(buyerId);
+    }
 }

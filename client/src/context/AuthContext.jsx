@@ -28,6 +28,26 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem("role", role);
     localStorage.setItem("userId", userId);
     setAuth({ token, role, userId });
+
+    // Fetch shopId using userId after login and store in localStorage
+    if (userId && token) {
+      fetch(`${import.meta.env.VITE_API_URL}/api/shop/profile/${userId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.shopId) {
+            localStorage.setItem("shopId", data.shopId);
+          }
+        })
+        .catch(err => {
+          console.error("Failed to fetch shopId after login:", err);
+        });
+    }
   };
 
   const logout = () => {

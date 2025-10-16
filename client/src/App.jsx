@@ -106,6 +106,7 @@ function AppWrapper() {
         <Route path="/verify-exhibition" element={<Layout><VerifyExhibition /></Layout>} />
         <Route path="/scoring-criteria" element={<Layout><ScoringCriteria /></Layout>} />
         <Route path="/delivery/dashboard" element={<PageTransition><DeliveryPartnerPage /></PageTransition>} />
+        <Route path="/delivery-partner" element={<PageTransition><DeliveryPartnerPage /></PageTransition>} />
       </Routes>
       {isLargeFooter ? <FooterLarge /> : <Footer />}
     </>

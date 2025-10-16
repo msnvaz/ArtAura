@@ -21,6 +21,7 @@ import CartSidebar from "../components/cart/CartSidebar";
 import CommissionRequestModal from "../components/modals/CommissionRequestModal";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import ArtistProfileModal from "../components/modals/ArtistProfileModal";
 const API_URL = import.meta.env.VITE_API_URL;
 
 const ArtistsPage = () => {
@@ -37,6 +38,10 @@ const ArtistsPage = () => {
   // Commission modal state
   const [showCommissionModal, setShowCommissionModal] = useState(false);
   const [selectedArtist, setSelectedArtist] = useState(null);
+
+  // Profile modal state
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [profileArtist, setProfileArtist] = useState(null);
 
   const navigate = useNavigate();
 
@@ -126,8 +131,27 @@ const ArtistsPage = () => {
     // Add follow logic here
   };
 
-  const handleViewProfile = (artistId) => {
-    navigate(`/artist/${artistId}`);
+  const handleViewProfile = async (artist) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(
+        `${API_URL}/api/artist/profile/${artist.id}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setProfileArtist(response.data); // Pass the latest profile to the modal
+      setShowProfileModal(true);
+    } catch (error) {
+      // Optionally show error toast
+      setProfileArtist(artist); // fallback to existing data
+      setShowProfileModal(true);
+    }
+  };
+
+  const handleCloseProfileModal = () => {
+    setShowProfileModal(false);
+    setProfileArtist(null);
   };
 
   const handleOpenCommissionModal = (artist) => {
@@ -280,7 +304,7 @@ const ArtistsPage = () => {
         {/* Actions */}
         <div className="flex gap-2">
           <button
-            onClick={() => handleViewProfile(artist.id)}
+            onClick={() => handleViewProfile(artist)}
             className="flex-1 bg-[#D87C5A] hover:bg-[#7f5539] text-white py-2 px-4 rounded-lg font-medium transition-colors"
           >
             View Profile
@@ -474,6 +498,13 @@ const ArtistsPage = () => {
         isOpen={showCommissionModal}
         artist={selectedArtist}
         onClose={handleCloseCommissionModal}
+      />
+
+      {/* Artist Profile Modal */}
+      <ArtistProfileModal
+        isOpen={showProfileModal}
+        artist={profileArtist}
+        onClose={handleCloseProfileModal}
       />
     </div>
   );
