@@ -11,6 +11,7 @@ const roleDashboardMap = {
   artist: "/artist/artistportfolio",
   shop: "/shop/dashboard",
   buyer: "/community",
+  delivery_partner: "/delivery-partner",
 };
 
 const Login = () => {
