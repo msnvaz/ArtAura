@@ -622,4 +622,74 @@ public class DeliveryPartnerController {
             return ResponseEntity.internalServerError().body(response);
         }
     }
+    
+    // ===============================
+    // DELIVERED DELIVERY REQUESTS ENDPOINTS
+    // ===============================
+    
+    /**
+     * Get all delivered delivery requests (delivered status)
+     */
+    @GetMapping("/requests/delivered")
+    public ResponseEntity<Map<String, Object>> getDeliveredDeliveryRequests() {
+        try {
+            List<DeliveryRequestDTO> deliveredRequests = deliveryRequestService.getAllDeliveredDeliveryRequests();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("requests", deliveredRequests);
+            response.put("success", true);
+            response.put("count", deliveredRequests.size());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Failed to fetch delivered delivery requests: " + e.getMessage());
+            response.put("success", false);
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+    
+    /**
+     * Get delivered artwork order delivery requests only
+     */
+    @GetMapping("/requests/delivered/artworks")
+    public ResponseEntity<Map<String, Object>> getDeliveredArtworkDeliveryRequests() {
+        try {
+            List<DeliveryRequestDTO> deliveredRequests = deliveryRequestService.getDeliveredArtworkOrderDeliveryRequests();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("requests", deliveredRequests);
+            response.put("success", true);
+            response.put("count", deliveredRequests.size());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Failed to fetch delivered artwork delivery requests: " + e.getMessage());
+            response.put("success", false);
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+    
+    /**
+     * Get delivered commission delivery requests only
+     */
+    @GetMapping("/requests/delivered/commissions")
+    public ResponseEntity<Map<String, Object>> getDeliveredCommissionDeliveryRequests() {
+        try {
+            List<DeliveryRequestDTO> deliveredRequests = deliveryRequestService.getDeliveredCommissionDeliveryRequests();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("requests", deliveredRequests);
+            response.put("success", true);
+            response.put("count", deliveredRequests.size());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Failed to fetch delivered commission delivery requests: " + e.getMessage());
+            response.put("success", false);
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
 }

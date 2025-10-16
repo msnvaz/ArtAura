@@ -7,7 +7,6 @@ import {
   User, 
   Menu, 
   X,
-  Home,
   Bell,
   Shield,
   LogOut
@@ -16,12 +15,12 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Layout from '../components/delivery/Layout';
-import DeliveryDashboard from '../components/delivery/DeliveryDashboard';
 import DeliveryRequestsList from '../components/delivery/DeliveryRequestsList';
 import ActiveDeliveries from '../components/delivery/ActiveDeliveries';
+import DeliveryHistory from '../components/delivery/DeliveryHistory';
 
 const DeliveryPartnerPage = () => {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState('requests');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [partnerProfile, setPartnerProfile] = useState(null);
@@ -54,7 +53,6 @@ const DeliveryPartnerPage = () => {
   }, [token, userId]);
 
   const navigationItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'requests', label: 'Delivery Requests', icon: Package },
     { id: 'active', label: 'Active Deliveries', icon: Truck },
     { id: 'history', label: 'Delivery History', icon: History },
@@ -78,8 +76,6 @@ const DeliveryPartnerPage = () => {
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'dashboard':
-        return <DeliveryDashboard />;
       case 'requests':
         return <DeliveryRequestsList />;
       case 'active':
@@ -89,7 +85,7 @@ const DeliveryPartnerPage = () => {
       case 'profile':
         return <DeliveryProfile />;
       default:
-        return <DeliveryDashboard />;
+        return <DeliveryRequestsList />;
     }
   };
 
@@ -295,21 +291,7 @@ const DeliveryPartnerPage = () => {
   );
 };
 
-// Placeholder components for the remaining sections
-const DeliveryHistory = () => (
-  <div className="p-6 max-w-7xl mx-auto">
-    <div className="mb-8">
-      <h1 className="text-3xl font-bold text-gray-900 mb-2">Delivery History</h1>
-      <p className="text-gray-600">View your completed deliveries and earnings history</p>
-    </div>
-    <div className="bg-white rounded-lg shadow-md p-12 text-center">
-      <History className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-      <h3 className="text-lg font-medium text-gray-900 mb-2">Delivery History</h3>
-      <p className="text-gray-600">This section will show your completed deliveries with filtering and search options.</p>
-    </div>
-  </div>
-);
-
+// Placeholder component for profile section
 const DeliveryProfile = () => (
   <div className="p-6 max-w-7xl mx-auto">
     <div className="mb-8">
