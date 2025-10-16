@@ -161,9 +161,6 @@ const ArtistPortfolio = () => {
   const [requestsCount, setRequestsCount] = useState(0);
   const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
   const [loadingRequests, setLoadingRequests] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState(null);
-  const [isAcceptingOrder, setIsAcceptingOrder] = useState(false);
-  const [isRejectingOrder, setIsRejectingOrder] = useState(false);
 
   const [editedProfile, setEditedProfile] = useState({
     name: '',
@@ -1505,35 +1502,48 @@ const ArtistPortfolio = () => {
   };
 
   // Commission request handler functions
-  const handleAcceptCommissionRequest = (requestId) => {
-    const request = commissionRequests.find(r => r.id === requestId);
-    if (request) {
-      setSelectedOrder(request);
-      setIsAcceptingOrder(true);
+  const handleAcceptCommissionRequest = async (requestId) => {
+    try {
+      const response = await axios.post(`${API_URL}/api/commission-requests/${requestId}/accept`, {}, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.data && response.data.success) {
+        showSuccess('Commission request accepted successfully!');
+        // Refresh the commission requests data
+        await fetchCommissionRequestsData();
+      } else {
+        showError(response.data?.message || 'Failed to accept commission request');
+      }
+    } catch (error) {
+      console.error('Error accepting commission request:', error);
+      showError('An error occurred while accepting the commission request');
     }
   };
 
-  const handleRejectCommissionRequest = (requestId) => {
-    const request = commissionRequests.find(r => r.id === requestId);
-    if (request) {
-      setSelectedOrder(request);
-      setIsRejectingOrder(true);
+  const handleRejectCommissionRequest = async (requestId) => {
+    try {
+      const response = await axios.post(`${API_URL}/api/commission-requests/${requestId}/reject`, {}, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.data && response.data.success) {
+        showSuccess('Commission request rejected successfully!');
+        // Refresh the commission requests data
+        await fetchCommissionRequestsData();
+      } else {
+        showError(response.data?.message || 'Failed to reject commission request');
+      }
+    } catch (error) {
+      console.error('Error rejecting commission request:', error);
+      showError('An error occurred while rejecting the commission request');
     }
-  };
-
-  const handleCommissionRequestActionSuccess = () => {
-    // Refresh commission requests data
-    fetchCommissionRequestsData();
-  };
-
-  const closeAcceptModal = () => {
-    setIsAcceptingOrder(false);
-    setSelectedOrder(null);
-  };
-
-  const closeRejectModal = () => {
-    setIsRejectingOrder(false);
-    setSelectedOrder(null);
   };
 
   // Loading state
@@ -2353,9 +2363,12 @@ const ArtistPortfolio = () => {
                           <div className="flex items-start space-x-4">
                             {request.referenceImages && request.referenceImages.length > 0 && (
                               <img
-                                src={`${API_URL}/uploads/${request.referenceImages[0]}`}
+                                src={`${API_URL}${request.referenceImages[0]}`}
                                 alt="Reference"
                                 className="w-16 h-16 object-cover rounded-lg"
+                                onError={(e) => {
+                                  e.target.style.display = 'none';
+                                }}
                               />
                             )}
                             <div className="flex-1 min-w-0">
@@ -2366,7 +2379,7 @@ const ArtistPortfolio = () => {
                               <div className="flex flex-wrap gap-4 text-sm">
                                 <div className="flex items-center text-[#7f5539]/70">
                                   <DollarSign className="h-4 w-4 mr-1" />
-                                  Budget: LKR {request.budget?.toLocaleString()}
+                                  Budget: LKR {request.budget}
                                 </div>
                                 {request.artworkType && (
                                   <div className="flex items-center text-[#7f5539]/70">
@@ -2389,7 +2402,7 @@ const ArtistPortfolio = () => {
                                 {request.deadline && (
                                   <div className="flex items-center text-[#7f5539]/70">
                                     <Calendar className="h-4 w-4 mr-1" />
-                                    Deadline: {new Date(request.deadline).toLocaleDateString()}
+                                    Deadline: {request.deadline}
                                   </div>
                                 )}
                                 {request.urgency && (
@@ -2437,31 +2450,10 @@ const ArtistPortfolio = () => {
                           {/* Request Date */}
                           <div className="flex items-center text-xs text-[#7f5539]/50">
                             <Clock className="h-3 w-3 mr-1" />
-                            {formatDistanceToNow(new Date(request.submittedAt), { addSuffix: true })}
+                            {request.submittedAt}
                           </div>
                         </div>
                       </div>
-
-                      {/* Artist Response (if accepted) */}
-                      {order.status === 'ACCEPTED' && order.artistNotes && (
-                        <div className="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
-                          <h5 className="font-medium text-green-800 mb-2">Your Response:</h5>
-                          <p className="text-green-700 text-sm mb-2">{order.artistNotes}</p>
-                          {order.artistEstimatedDays && (
-                            <p className="text-green-600 text-sm font-medium">
-                              Estimated completion: {order.artistEstimatedDays} days
-                            </p>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Rejection Reason (if rejected) */}
-                      {order.status === 'REJECTED' && order.artistNotes && (
-                        <div className="mt-4 p-4 bg-red-50 rounded-lg border border-red-200">
-                          <h5 className="font-medium text-red-800 mb-2">Rejection Reason:</h5>
-                          <p className="text-red-700 text-sm">{order.artistNotes}</p>
-                        </div>
-                      )}
                     </div>
                   ))}
                 </div>
@@ -3083,22 +3075,6 @@ const ArtistPortfolio = () => {
           </div>
         </div>
       )}
-
-      {/* Commission Request Modals */}
-      <AcceptOrderModal
-        isOpen={isAcceptingOrder}
-        onClose={closeAcceptModal}
-        order={selectedOrder}
-        onSuccess={handleCommissionRequestActionSuccess}
-        apiEndpoint="commission-requests"
-      />
-      <RejectOrderModal
-        isOpen={isRejectingOrder}
-        onClose={closeRejectModal}
-        order={selectedOrder}
-        onSuccess={handleCommissionRequestActionSuccess}
-        apiEndpoint="commission-requests"
-      />
     </div>
   );
 };

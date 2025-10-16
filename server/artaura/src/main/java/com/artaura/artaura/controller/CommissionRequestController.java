@@ -2,6 +2,7 @@ package com.artaura.artaura.controller;
 
 import com.artaura.artaura.dto.commission.CommissionRequestDTO;
 import com.artaura.artaura.dao.CommissionRequestDAO;
+import com.artaura.artaura.dao.CommissionRequestDAOImpl;
 import com.artaura.artaura.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -19,6 +20,9 @@ public class CommissionRequestController {
 
     @Autowired
     private CommissionRequestDAO commissionRequestDAO;
+
+    @Autowired
+    private CommissionRequestDAOImpl commissionRequestDAOImpl;
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -59,13 +63,16 @@ public class CommissionRequestController {
             String token = authHeader.substring(7); // Remove "Bearer " prefix
             Long artistId = jwtUtil.extractUserId(token);
 
-            List<CommissionRequestDTO> requests = commissionRequestDAO.getCommissionRequestsByArtistId(artistId);
-            int totalCount = requests.size();
-            long pendingCount = requests.stream().filter(r -> "PENDING".equals(r.getStatus())).count();
+            int totalCount = commissionRequestDAOImpl.getCommissionRequestsCountByArtistId(artistId);
+            int pendingCount = commissionRequestDAOImpl.getPendingCommissionRequestsCountByArtistId(artistId);
+
+            Map<String, Object> countData = new HashMap<>();
+            countData.put("total", totalCount);
+            countData.put("pending", pendingCount);
 
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Commission requests count retrieved successfully");
-            response.put("data", Map.of("total", totalCount, "pending", pendingCount));
+            response.put("data", countData);
             response.put("success", true);
 
             return ResponseEntity.ok(response);
@@ -158,7 +165,8 @@ public class CommissionRequestController {
      */
     @PostMapping("/{requestId}/accept")
     public ResponseEntity<Map<String, Object>> acceptCommissionRequest(@PathVariable Long requestId,
-            @RequestHeader("Authorization") String authHeader) {
+            @RequestHeader("Authorization") String authHeader,
+            @RequestBody(required = false) Map<String, Object> requestBody) {
         try {
             String token = authHeader.substring(7); // Remove "Bearer " prefix
             Long artistId = jwtUtil.extractUserId(token);
@@ -213,7 +221,8 @@ public class CommissionRequestController {
      */
     @PostMapping("/{requestId}/reject")
     public ResponseEntity<Map<String, Object>> rejectCommissionRequest(@PathVariable Long requestId,
-            @RequestHeader("Authorization") String authHeader) {
+            @RequestHeader("Authorization") String authHeader,
+            @RequestBody(required = false) Map<String, Object> requestBody) {
         try {
             String token = authHeader.substring(7); // Remove "Bearer " prefix
             Long artistId = jwtUtil.extractUserId(token);

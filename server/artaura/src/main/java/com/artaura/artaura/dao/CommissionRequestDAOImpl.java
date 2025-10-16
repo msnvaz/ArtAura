@@ -30,12 +30,18 @@ public class CommissionRequestDAOImpl implements CommissionRequestDAO {
             dto.setArtworkType(rs.getString("artwork_type"));
             dto.setStyle(rs.getString("style"));
             dto.setDimensions(rs.getString("dimensions"));
-            dto.setBudget(rs.getBigDecimal("budget"));
-            dto.setDeadline(rs.getDate("deadline") != null ? rs.getDate("deadline").toLocalDate() : null);
+            dto.setBudget(rs.getString("budget")); // Changed to String
+            dto.setDeadline(rs.getString("deadline")); // Changed to String
             dto.setAdditionalNotes(rs.getString("additional_notes"));
             dto.setUrgency(rs.getString("urgency"));
             dto.setStatus(rs.getString("status"));
-            dto.setSubmittedAt(rs.getTimestamp("submitted_at") != null ? rs.getTimestamp("submitted_at").toLocalDateTime() : null);
+            dto.setSubmittedAt(rs.getString("submitted_at")); // Changed to String
+
+            // Fetch reference images for this commission request
+            String imgSql = "SELECT image_url FROM commission_reference_images WHERE commission_request_id = ?";
+            List<String> images = jdbcTemplate.query(imgSql, (imgRs, imgRow) -> imgRs.getString("image_url"), dto.getId());
+            dto.setReferenceImages(images);
+
             return dto;
         }
     };
@@ -54,14 +60,14 @@ public class CommissionRequestDAOImpl implements CommissionRequestDAO {
 
     @Override
     public boolean acceptCommissionRequest(Long requestId) {
-        String sql = "UPDATE commission_requests SET status = 'accepted' WHERE id = ?";
+        String sql = "UPDATE commission_requests SET status = 'ACCEPTED' WHERE id = ?";
         int rowsAffected = jdbcTemplate.update(sql, requestId);
         return rowsAffected > 0;
     }
 
     @Override
     public boolean rejectCommissionRequest(Long requestId) {
-        String sql = "UPDATE commission_requests SET status = 'rejected' WHERE id = ?";
+        String sql = "UPDATE commission_requests SET status = 'REJECTED' WHERE id = ?";
         int rowsAffected = jdbcTemplate.update(sql, requestId);
         return rowsAffected > 0;
     }
@@ -75,6 +81,7 @@ public class CommissionRequestDAOImpl implements CommissionRequestDAO {
 
     /**
      * Get commission requests count for a specific artist
+     *
      * @param artistId The ID of the artist
      * @return Count of commission requests
      */
@@ -84,7 +91,19 @@ public class CommissionRequestDAOImpl implements CommissionRequestDAO {
     }
 
     /**
+     * Get pending commission requests count for a specific artist
+     *
+     * @param artistId The ID of the artist
+     * @return Count of pending commission requests
+     */
+    public int getPendingCommissionRequestsCountByArtistId(Long artistId) {
+        String sql = "SELECT COUNT(*) FROM commission_requests WHERE artist_id = ? AND status = 'PENDING'";
+        return jdbcTemplate.queryForObject(sql, Integer.class, artistId);
+    }
+
+    /**
      * Update commission request status
+     *
      * @param requestId The ID of the commission request
      * @param status The new status
      * @return true if updated successfully

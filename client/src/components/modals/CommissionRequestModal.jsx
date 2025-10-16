@@ -163,14 +163,25 @@ const CommissionRequestModal = ({ isOpen, onClose, artist }) => {
       }
 
       // 2. Prepare commission request data
+      console.log("Artist object:", artist);
+      console.log("Artist ID:", artist?.id);
+      console.log("User ID:", userId);
+
+      if (!artist || !artist.id) {
+        alert("Artist information is missing. Please try again.");
+        return;
+      }
+
       const commissionData = {
         ...formData,
         artistId: artist.id,
         clientId: userId,
-        status: "pending",
+        status: "PENDING",
         submittedAt: new Date().toISOString(),
         imageUrls, // pass uploaded image URLs
       };
+
+      console.log("Commission data being sent:", commissionData);
 
       // 3. API call to submit commission request
       const API_URL = import.meta.env.VITE_API_URL;
@@ -186,13 +197,26 @@ const CommissionRequestModal = ({ isOpen, onClose, artist }) => {
       );
 
       if (response.status === 200 || response.status === 201) {
+        console.log("Commission request submitted successfully!");
         alert("Commission request submitted successfully!");
         onClose();
         resetForm();
+      } else {
+        console.error("Unexpected response status:", response.status);
+        alert("Failed to submit commission request. Please try again.");
       }
     } catch (error) {
       console.error("Error submitting commission request:", error);
-      alert("Failed to submit commission request. Please try again.");
+
+      // Show detailed error message
+      let errorMessage = "Failed to submit commission request. Please try again.";
+      if (error.response && error.response.data && error.response.data.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -270,9 +294,8 @@ const CommissionRequestModal = ({ isOpen, onClose, artist }) => {
                   onChange={(e) =>
                     handleInputChange("clientName", e.target.value)
                   }
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFD95A] ${
-                    errors.clientName ? "border-red-500" : "border-[#FFE4D6]"
-                  }`}
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFD95A] ${errors.clientName ? "border-red-500" : "border-[#FFE4D6]"
+                    }`}
                   placeholder="e.g., Nimal Perera, Sanduni Fernando"
                 />
                 {errors.clientName && (
@@ -292,9 +315,8 @@ const CommissionRequestModal = ({ isOpen, onClose, artist }) => {
                   onChange={(e) =>
                     handleInputChange("clientEmail", e.target.value)
                   }
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFD95A] ${
-                    errors.clientEmail ? "border-red-500" : "border-[#FFE4D6]"
-                  }`}
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFD95A] ${errors.clientEmail ? "border-red-500" : "border-[#FFE4D6]"
+                    }`}
                   placeholder="e.g., nimal.perera@gmail.com"
                 />
                 {errors.clientEmail && (
@@ -337,9 +359,8 @@ const CommissionRequestModal = ({ isOpen, onClose, artist }) => {
                   type="text"
                   value={formData.title}
                   onChange={(e) => handleInputChange("title", e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFD95A] ${
-                    errors.title ? "border-red-500" : "border-[#FFE4D6]"
-                  }`}
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFD95A] ${errors.title ? "border-red-500" : "border-[#FFE4D6]"
+                    }`}
                   placeholder="Give your commission a title"
                 />
                 {errors.title && (
@@ -356,9 +377,8 @@ const CommissionRequestModal = ({ isOpen, onClose, artist }) => {
                   onChange={(e) =>
                     handleInputChange("artworkType", e.target.value)
                   }
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFD95A] ${
-                    errors.artworkType ? "border-red-500" : "border-[#FFE4D6]"
-                  }`}
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFD95A] ${errors.artworkType ? "border-red-500" : "border-[#FFE4D6]"
+                    }`}
                 >
                   <option value="">Select artwork type</option>
                   <option value="painting">Painting</option>
@@ -515,9 +535,8 @@ const CommissionRequestModal = ({ isOpen, onClose, artist }) => {
                   type="text"
                   value={formData.budget}
                   onChange={(e) => handleInputChange("budget", e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFD95A] ${
-                    errors.budget ? "border-red-500" : "border-[#FFE4D6]"
-                  }`}
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFD95A] ${errors.budget ? "border-red-500" : "border-[#FFE4D6]"
+                    }`}
                   placeholder="e.g., Rs 25,000 - Rs 50,000"
                 />
                 {errors.budget && (
@@ -536,9 +555,8 @@ const CommissionRequestModal = ({ isOpen, onClose, artist }) => {
                     handleInputChange("deadline", e.target.value)
                   }
                   min={new Date().toISOString().split("T")[0]}
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFD95A] ${
-                    errors.deadline ? "border-red-500" : "border-[#FFE4D6]"
-                  }`}
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFD95A] ${errors.deadline ? "border-red-500" : "border-[#FFE4D6]"
+                    }`}
                 />
                 {errors.deadline && (
                   <p className="text-red-500 text-xs mt-1">{errors.deadline}</p>

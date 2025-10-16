@@ -1,8 +1,5 @@
 package com.artaura.artaura.dto.commission;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 public class CommissionRequestDTO {
@@ -17,12 +14,12 @@ public class CommissionRequestDTO {
     private String artworkType;
     private String style;
     private String dimensions;
-    private BigDecimal budget;
-    private LocalDate deadline;
+    private String budget; // Changed to String to match buyer's structure
+    private String deadline; // Changed to String to match buyer's structure
     private String additionalNotes;
     private String urgency;
     private String status;
-    private LocalDateTime submittedAt;
+    private String submittedAt; // Changed to String to match buyer's structure
     private List<String> referenceImages;
 
     // Default constructor
@@ -32,9 +29,9 @@ public class CommissionRequestDTO {
     // Constructor with all fields
     public CommissionRequestDTO(Long id, Long artistId, Long buyerId, String name, String email,
             String phone, String title, String artworkType, String style,
-            String dimensions, BigDecimal budget, LocalDate deadline,
+            String dimensions, String budget, String deadline,
             String additionalNotes, String urgency, String status,
-            LocalDateTime submittedAt, List<String> referenceImages) {
+            String submittedAt, List<String> referenceImages) {
         this.id = id;
         this.artistId = artistId;
         this.buyerId = buyerId;
@@ -135,19 +132,19 @@ public class CommissionRequestDTO {
         this.dimensions = dimensions;
     }
 
-    public BigDecimal getBudget() {
+    public String getBudget() {
         return budget;
     }
 
-    public void setBudget(BigDecimal budget) {
+    public void setBudget(String budget) {
         this.budget = budget;
     }
 
-    public LocalDate getDeadline() {
+    public String getDeadline() {
         return deadline;
     }
 
-    public void setDeadline(LocalDate deadline) {
+    public void setDeadline(String deadline) {
         this.deadline = deadline;
     }
 
@@ -175,11 +172,11 @@ public class CommissionRequestDTO {
         this.status = status;
     }
 
-    public LocalDateTime getSubmittedAt() {
+    public String getSubmittedAt() {
         return submittedAt;
     }
 
-    public void setSubmittedAt(LocalDateTime submittedAt) {
+    public void setSubmittedAt(String submittedAt) {
         this.submittedAt = submittedAt;
     }
 
