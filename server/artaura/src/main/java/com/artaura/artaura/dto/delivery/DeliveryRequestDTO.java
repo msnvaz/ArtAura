@@ -29,6 +29,10 @@ public class DeliveryRequestDTO {
     private String additionalNotes;
     private String urgency;
     
+    // Artist pickup address fields
+    private String pickupAddress;
+    private String pickupCity;
+    
     // Constructors
     public DeliveryRequestDTO() {}
 
@@ -111,4 +115,10 @@ public class DeliveryRequestDTO {
 
     public String getUrgency() { return urgency; }
     public void setUrgency(String urgency) { this.urgency = urgency; }
+
+    public String getPickupAddress() { return pickupAddress; }
+    public void setPickupAddress(String pickupAddress) { this.pickupAddress = pickupAddress; }
+
+    public String getPickupCity() { return pickupCity; }
+    public void setPickupCity(String pickupCity) { this.pickupCity = pickupCity; }
 }
