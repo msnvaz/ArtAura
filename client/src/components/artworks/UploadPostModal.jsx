@@ -14,6 +14,8 @@ const UploadPostModal = ({
     onCancel,
     onSuccess // New callback for successful upload
 }) => {
+    // Get API URL from environment variable
+    const API_URL = import.meta.env.VITE_API_URL;
     const { showSuccess, showError } = useNotification();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -89,7 +91,7 @@ const UploadPostModal = ({
             console.log('Uploading artwork with FormData...');
 
             const response = await axios.post(
-                `http://localhost:8081/api/artworks/artist/${userId}/upload`,
+                `${API_URL}/api/artworks/artist/${userId}/upload`,
                 formData,
                 {
                     headers: {

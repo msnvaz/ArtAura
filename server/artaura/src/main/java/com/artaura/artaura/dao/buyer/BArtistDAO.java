@@ -7,4 +7,5 @@ import java.util.List;
 public interface BArtistDAO {
     // List all artists for frontend
     List<ArtistListDTO> getAllArtistsForList();
+    void incrementFollowers(Long artistId);
 }

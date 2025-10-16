@@ -19,6 +19,7 @@ public class AuthService {
     @Autowired private ShopOwnerDAO shopDAO;
     @Autowired private ModeratorDAO moderatorDAO;
     @Autowired private AdminDAO adminDAO;
+    @Autowired private DeliveryPartnerDAO deliveryPartnerDAO;
     @Autowired
     private PasswordEncoderUtil encoder;
     @Autowired
@@ -78,6 +79,14 @@ public class AuthService {
             String token = jwtUtil.generateToken(user.get().getUserId(), "moderator");
             System.out.println("✅ Login successful for moderator. Token generated: " + token.substring(0, 20) + "...");
             return new LoginResponse(token, "moderator", user.get().getUserId());
+        }
+
+        // Check delivery partner
+        user = deliveryPartnerDAO.findByEmail(email);
+        if (user.isPresent() && encoder.matches(password, user.get().getPassword())) {
+            String token = jwtUtil.generateToken(user.get().getUserId(), "delivery_partner");
+            System.out.println("✅ Login successful for delivery partner. Token generated: " + token.substring(0, 20) + "...");
+            return new LoginResponse(token, "delivery_partner", user.get().getUserId());
         }
 
         // Check admin (no status restriction)

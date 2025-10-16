@@ -300,12 +300,6 @@ const ModeratorDashboard = () => {
       desc: "Create and manage art challenges",
     },
     {
-      id: "verification",
-      label: "Verification",
-      icon: Shield,
-      desc: "Verify exhibitions and submissions",
-    },
-    {
       id: "scoring",
       label: "Scoring Criteria",
       icon: Star,
@@ -327,31 +321,31 @@ const ModeratorDashboard = () => {
       icon: Trophy,
     },
     {
-      type: "verification",
-      message: "Exhibition verified: Colombo National Art Gallery",
-      time: "4 hours ago",
-      icon: Shield,
-    },
-    {
       type: "winner",
       message: "Winner selected: Kandy Perahera Digital Art Contest",
-      time: "6 hours ago",
+      time: "4 hours ago",
       icon: Award,
     },
     {
       type: "scoring",
       message: "Scoring criteria updated: Ceylon Tea Plantation Landscape Art",
-      time: "8 hours ago",
+      time: "6 hours ago",
       icon: Star,
+    },
+    {
+      type: "challenge",
+      message: "Challenge deadline approaching: Galle Fort Architecture Contest",
+      time: "8 hours ago",
+      icon: Trophy,
     },
   ];
 
   const menuItems = [
     { id: "dashboard", label: "Overview", icon: BarChart3 },
     { id: "challenges", label: "Challenges", icon: Trophy },
-    { id: "verification", label: "Verification", icon: Shield },
     { id: "scoring", label: "Scoring", icon: Star },
     { id: "winner", label: "Winners", icon: Award },
+    { id: "verification", label: "Verification", icon: Shield },
   ];
 
   const renderDashboard = () => (
@@ -457,8 +451,6 @@ const ModeratorDashboard = () => {
                   key={action.id}
                   onClick={() => {
                     if (action.id === "challenges") navigate("/challenges");
-                    else if (action.id === "verification")
-                      navigate("/verify-exhibition");
                     else if (action.id === "scoring")
                       navigate("/scoring-criteria");
                     else if (action.id === "winner")
@@ -538,8 +530,6 @@ const ModeratorDashboard = () => {
         return renderDashboard();
       case 'challenges':
         return <ChallengeList />;
-      case 'verification':
-        return <VerificationList />;
       case 'scoring':
         // Get selected challenge data for scoring
         const selectedScoringChallengeData = challenges.find(c => c.id === parseInt(selectedScoringChallenge));
@@ -874,6 +864,8 @@ const ModeratorDashboard = () => {
             </div>
           </div>
         );
+      case 'verification':
+        return <VerificationList />;
       default:
         return renderDashboard();
     }
@@ -881,114 +873,37 @@ const ModeratorDashboard = () => {
 
   return (
     <>
-      {/* Optimized CSS styles for smoother animations */}
+      {/* Consistent CSS styles for smoother animations and layout (matches AdminDashboard) */}
       <style jsx>{`
         @keyframes smoothFadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(15px) scale(0.98);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-          }
+          from { opacity: 0; transform: translateY(15px) scale(0.98); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
         }
-
         @keyframes slideInFromTop {
-          from {
-            opacity: 0;
-            transform: translateY(-20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+          from { opacity: 0; transform: translateY(-20px); }
+          to { opacity: 1; transform: translateY(0); }
         }
-
         @keyframes popInContent {
-          from {
-            opacity: 0;
-            transform: translateY(10px) scale(0.99);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-          }
+          from { opacity: 0; transform: translateY(10px) scale(0.99); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
         }
-
-        .page-container {
-          animation: smoothFadeIn 0.4s ease-out;
-          opacity: 1;
-        }
-
-        .header-container {
-          animation: slideInFromTop 0.5s ease-out 0.1s both;
-        }
-
-        .nav-container {
-          animation: slideInFromTop 0.5s ease-out 0.2s both;
-        }
-
-        .content-container {
-          animation: popInContent 0.4s ease-out 0.3s both;
-        }
-
-        .menu-item {
-          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-          opacity: 1;
-          transform: translateY(0);
-        }
-
-        .menu-item:hover {
-          transform: translateY(-1px);
-        }
-
-        .smooth-transition {
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .btn-animate {
-          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-          opacity: 1;
-          transform: translateY(0);
-        }
-
-        .btn-animate:hover {
-          transform: translateY(-1px) scale(1.02);
-        }
-
-        .card-animate {
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .card-animate:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Prevent flash of unstyled content */
-        .dashboard-content {
-          min-height: 200px;
-        }
-
-        /* Ensure smooth rendering */
-        * {
-          -webkit-font-smoothing: antialiased;
-          -moz-osx-font-smoothing: grayscale;
-        }
+        .page-container { animation: smoothFadeIn 0.4s ease-out; opacity: 1; }
+        .header-container { animation: slideInFromTop 0.5s ease-out 0.1s both; }
+        .nav-container { animation: slideInFromTop 0.5s ease-out 0.2s both; }
+        .content-container { animation: popInContent 0.4s ease-out 0.3s both; }
+        .menu-item { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); opacity: 1; transform: translateY(0); }
+        .menu-item:hover { transform: translateY(-1px); }
+        .smooth-transition { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .btn-animate { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); opacity: 1; transform: translateY(0); }
+        .btn-animate:hover { transform: translateY(-1px) scale(1.02); }
+        .card-animate { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .card-animate:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .dashboard-content { min-height: 200px; }
+        * { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
       `}</style>
 
-      {/* Bootstrap CSS */}
-      <link
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-        rel="stylesheet"
-      />
-
-      <div
-        className="min-h-screen page-container"
-        style={{ backgroundColor: "#FFF5E1" }}
-      >
-        {/* Full Width Header */}
+      <div className="min-h-screen page-container" style={{ backgroundColor: "#FFF5E1" }}>
+        {/* Header (matches AdminDashboard) */}
         <div
           className="w-full shadow-sm p-6 mb-8 relative header-container"
           style={{
@@ -1002,29 +917,18 @@ const ModeratorDashboard = () => {
           <div className="max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between">
               <div className="flex items-center space-x-4">
-                <div
-                  className="p-3 rounded-full smooth-transition"
-                  style={{ backgroundColor: "#FFD95A" }}
-                >
+                <div className="p-3 rounded-full smooth-transition" style={{ backgroundColor: "#FFD95A" }}>
                   <Shield size={32} style={{ color: "#5D3A00" }} />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-white">
-                    Moderator Dashboard
-                  </h1>
-                  <p className="text-gray-200">
-                    Welcome back! Here's what's happening with your challenges.
-                  </p>
+                  <h1 className="text-2xl font-bold text-white">Moderator Dashboard</h1>
+                  <p className="text-gray-200">Welcome back! Here's what's happening with your challenges.</p>
                 </div>
               </div>
               <div className="mt-4 md:mt-0 flex gap-2 items-center">
                 <button
                   className="border px-3 py-2 rounded-lg font-medium flex items-center space-x-1 whitespace-nowrap btn-animate"
-                  style={{
-                    borderColor: "#FFE4D6",
-                    color: "#FFE4D6",
-                    backgroundColor: "rgba(255, 228, 214, 0.1)",
-                  }}
+                  style={{ borderColor: "#FFE4D6", color: "#FFE4D6", backgroundColor: "rgba(255, 228, 214, 0.1)" }}
                   onClick={() => navigate("/create-challenge")}
                 >
                   <Plus size={14} />
@@ -1033,40 +937,17 @@ const ModeratorDashboard = () => {
                 </button>
                 <button
                   className="border px-3 py-2 rounded-lg font-medium flex items-center space-x-1 whitespace-nowrap btn-animate"
-                  style={{
-                    borderColor: "#FFE4D6",
-                    color: "#FFE4D6",
-                    backgroundColor: "rgba(255, 228, 214, 0.1)",
-                  }}
-                  onClick={() => navigate("/verify-exhibition")}
-                >
-                  <Shield size={14} />
-                  <span className="hidden sm:inline">Verify Exhibition</span>
-                  <span className="sm:hidden">Verify</span>
-                </button>
-                <button
-                  className="border px-3 py-2 rounded-lg font-medium flex items-center space-x-1 whitespace-nowrap btn-animate"
-                  style={{
-                    borderColor: "#FFE4D6",
-                    color: "#FFE4D6",
-                    backgroundColor: "rgba(255, 228, 214, 0.1)",
-                  }}
+                  style={{ borderColor: "#FFE4D6", color: "#FFE4D6", backgroundColor: "rgba(255, 228, 214, 0.1)" }}
                   onClick={() => navigate("/winner-selection")}
                 >
                   <Award size={14} />
                   <span className="hidden sm:inline">Select Winners</span>
                   <span className="sm:hidden">Winners</span>
                 </button>
-
-                {/* Auth Button */}
                 {isSignedIn ? (
                   <button
                     className="px-3 py-2 rounded-lg font-medium flex items-center space-x-1 whitespace-nowrap btn-animate"
-                    style={{
-                      backgroundColor: "#D87C5A",
-                      color: "white",
-                      border: "none",
-                    }}
+                    style={{ backgroundColor: "#D87C5A", color: "white", border: "none" }}
                     onClick={handleLogoutClick}
                   >
                     <User size={14} />
@@ -1076,12 +957,7 @@ const ModeratorDashboard = () => {
                   <a
                     href="/"
                     className="px-3 py-2 rounded-lg font-medium flex items-center space-x-1 whitespace-nowrap btn-animate no-underline"
-                    style={{
-                      backgroundColor: "#D87C5A",
-                      color: "white",
-                      border: "none",
-                      textDecoration: "none",
-                    }}
+                    style={{ backgroundColor: "#D87C5A", color: "white", border: "none", textDecoration: "none" }}
                   >
                     <User size={14} />
                     <span>Login</span>
@@ -1093,7 +969,7 @@ const ModeratorDashboard = () => {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
-          {/* Navigation Tabs */}
+          {/* Navigation Tabs (matches AdminDashboard) */}
           <div className="bg-white rounded-lg shadow-sm mb-8 nav-container">
             <div style={{ borderBottom: "1px solid #FFE4D6" }}>
               <nav className="flex space-x-8 px-6">
@@ -1103,8 +979,7 @@ const ModeratorDashboard = () => {
                     onClick={() => setActiveSection(item.id)}
                     className="py-4 px-2 border-b-2 font-medium text-sm flex items-center gap-2 menu-item"
                     style={{
-                      borderBottomColor:
-                        activeSection === item.id ? "#5D3A00" : "transparent",
+                      borderBottomColor: activeSection === item.id ? "#5D3A00" : "transparent",
                       color: activeSection === item.id ? "#5D3A00" : "#D87C5A",
                     }}
                     onMouseOver={(e) => {
@@ -1127,41 +1002,36 @@ const ModeratorDashboard = () => {
               </nav>
             </div>
           </div>
-
           {/* Content */}
           <div className="content-container dashboard-content">{renderContent()}</div>
         </div>
-      </div>
 
-      {/* Logout Confirmation Modal */}
-      {showLogoutConfirm && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full mx-4 transform transition-all duration-300 ease-out scale-100">
-            <div className="text-center">
-              <h3 className="text-2xl font-bold text-[#362625] mb-2">
-                Confirm Logout
-              </h3>
-              <p className="text-gray-600 mb-8 text-lg">
-                Are you sure you want to log out of your account?
-              </p>
-              <div className="flex gap-4 justify-center">
-                <button
-                  onClick={cancelLogout}
-                  className="px-6 py-3 bg-gray-100 text-[#362625] rounded-xl hover:bg-gray-200 transition-all duration-200 font-medium border border-gray-200 hover:border-gray-300 min-w-[120px]"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={confirmLogout}
-                  className="px-6 py-3 bg-gradient-to-r from-[#e74c3c] to-[#c0392b] text-white rounded-xl hover:from-[#c0392b] hover:to-[#a93226] transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105 min-w-[120px]"
-                >
-                  Log Out
-                </button>
+        {/* Logout Confirmation Modal (matches AdminDashboard) */}
+        {showLogoutConfirm && (
+          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full mx-4 transform transition-all duration-300 ease-out scale-100">
+              <div className="text-center">
+                <h3 className="text-2xl font-bold text-[#362625] mb-2">Confirm Logout</h3>
+                <p className="text-gray-600 mb-8 text-lg">Are you sure you want to log out of your account?</p>
+                <div className="flex gap-4 justify-center">
+                  <button
+                    onClick={cancelLogout}
+                    className="px-6 py-3 bg-gray-100 text-[#362625] rounded-xl hover:bg-gray-200 transition-all duration-200 font-medium border border-gray-200 hover:border-gray-300 min-w-[120px]"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmLogout}
+                    className="px-6 py-3 bg-gradient-to-r from-[#e74c3c] to-[#c0392b] text-white rounded-xl hover:from-[#c0392b] hover:to-[#a93226] transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105 min-w-[120px]"
+                  >
+                    Log Out
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </>
   );
 };

@@ -47,57 +47,34 @@ const CommissionRequestModal = ({ isOpen, onClose, artist }) => {
 
   // Fetch user details when modal opens
   useEffect(() => {
-    if (isOpen && token && userId && role) {
-      fetchUserDetails();
+    if (isOpen && token && userId) {
+      fetchArtistDetails();
     }
-  }, [isOpen, token, userId, role]);
+  }, [isOpen, token, userId]);
 
-  const fetchUserDetails = async () => {
+  const fetchArtistDetails = async () => {
     try {
       setLoading(true);
       const API_URL = import.meta.env.VITE_API_URL;
-
-      // Determine the correct endpoint based on user role
-      let endpoint = "";
-      switch (role) {
-        case "artist":
-          endpoint = `${API_URL}/api/artist/profile/${userId}`;
-          break;
-        case "buyer":
-          endpoint = `${API_URL}/api/buyer/profile/${userId}`;
-          break;
-        case "shop":
-          endpoint = `${API_URL}/api/shop/profile/${userId}`;
-          break;
-        default:
-          console.warn("Unknown role:", role);
-          return;
-      }
-
+      const endpoint = `${API_URL}/api/artist/profile/${userId}`;
       const response = await axios.get(endpoint, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-
       const userData = response.data;
       setUserDetails(userData);
-
-      // Auto-populate form with user data
       setFormData((prev) => ({
         ...prev,
         clientName:
           userData.firstName && userData.lastName
             ? `${userData.firstName} ${userData.lastName}`
-            : userData.name || userData.ownerName || "",
+            : userData.name || "",
         clientEmail: userData.email || "",
         clientPhone: userData.contactNo || userData.phone || "",
       }));
     } catch (error) {
-      console.error("Error fetching user details:", error);
-
-      // Fallback: If API endpoint doesn't exist, use mock data or leave fields empty
-      // This allows users to manually enter their information
+      console.error("Error fetching artist details:", error);
       console.log("Using fallback - user can manually enter information");
     } finally {
       setLoading(false);
@@ -161,15 +138,41 @@ const CommissionRequestModal = ({ isOpen, onClose, artist }) => {
     try {
       setLoading(true);
 
+      // 1. Upload inspiration images if any
+      let imageUrls = [];
+      if (formData.inspirationImages.length > 0) {
+        const API_URL = import.meta.env.VITE_API_URL;
+        for (const file of formData.inspirationImages) {
+          const imgForm = new FormData();
+          imgForm.append("image", file);
+          // You should have an endpoint for image upload, e.g. /api/uploads/image
+          const imgRes = await axios.post(
+            `${API_URL}/api/uploads/image`,
+            imgForm,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "multipart/form-data",
+              },
+            }
+          );
+          if (imgRes.data && imgRes.data.imageUrl) {
+            imageUrls.push(imgRes.data.imageUrl);
+          }
+        }
+      }
+
+      // 2. Prepare commission request data
       const commissionData = {
         ...formData,
         artistId: artist.id,
         clientId: userId,
         status: "pending",
         submittedAt: new Date().toISOString(),
+        imageUrls, // pass uploaded image URLs
       };
 
-      // API call to submit commission request
+      // 3. API call to submit commission request
       const API_URL = import.meta.env.VITE_API_URL;
       const response = await axios.post(
         `${API_URL}/api/commissions/request`,
@@ -183,7 +186,6 @@ const CommissionRequestModal = ({ isOpen, onClose, artist }) => {
       );
 
       if (response.status === 200 || response.status === 201) {
-        // Success - show confirmation
         alert("Commission request submitted successfully!");
         onClose();
         resetForm();

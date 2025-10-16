@@ -20,6 +20,9 @@ import {
 } from 'lucide-react';
 
 const ExhibitionsSection = ({ onExhibitionsCountChange, onRefresh }) => {
+    // Get API URL from environment variable
+    const API_URL = import.meta.env.VITE_API_URL;
+
     const { token, userId } = useAuth();
     const { showSuccess, showError } = useNotification();
     const [exhibitions, setExhibitions] = useState([]);
@@ -73,7 +76,7 @@ const ExhibitionsSection = ({ onExhibitionsCountChange, onRefresh }) => {
 
         try {
             setLoading(true);
-            const response = await axios.get(`http://localhost:8081/api/exhibitions/artist/${userId}`, {
+            const response = await axios.get(`${API_URL}/api/exhibitions/artist/${userId}`, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
@@ -120,7 +123,7 @@ const ExhibitionsSection = ({ onExhibitionsCountChange, onRefresh }) => {
         try {
             setLoading(true);
             const response = await axios.post(
-                'http://localhost:8081/api/exhibitions/create',
+                `${API_URL}/api/exhibitions/create`,
                 formData,
                 {
                     headers: {
@@ -184,7 +187,7 @@ const ExhibitionsSection = ({ onExhibitionsCountChange, onRefresh }) => {
         try {
             setLoading(true);
             const response = await axios.put(
-                `http://localhost:8081/api/exhibitions/${editingExhibition.exhibitionId}`,
+                `${API_URL}/api/exhibitions/${editingExhibition.exhibitionId}`,
                 formData,
                 {
                     headers: {
@@ -231,7 +234,7 @@ const ExhibitionsSection = ({ onExhibitionsCountChange, onRefresh }) => {
         try {
             setLoading(true);
             await axios.delete(
-                `http://localhost:8081/api/exhibitions/${editingExhibition.exhibitionId}`,
+                `${API_URL}/api/exhibitions/${editingExhibition.exhibitionId}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`

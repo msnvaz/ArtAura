@@ -46,7 +46,6 @@ public class AdminUserDAOImpl implements AdminUserDAO {
         dto.setTotalFollowers(rs.getInt("total_followers"));
         dto.settotal_artworks(rs.getInt("total_artworks"));
         dto.setTotalSales(rs.getInt("total_sales"));
-        dto.setRevenue(rs.getInt("revenue"));
         return dto;
     };
 
@@ -62,8 +61,6 @@ public class AdminUserDAOImpl implements AdminUserDAO {
         dto.setCreatedAt(rs.getTimestamp("created_at") != null ? rs.getTimestamp("created_at").toLocalDateTime() : null);
         dto.setAgreedTerms(rs.getBoolean("agreed_terms"));
         dto.setContactNo(rs.getString("contactNo"));
-        dto.setTotalPurchases(rs.getInt("total_purchases"));
-        dto.setSpent(rs.getInt("spent"));
         return dto;
     };
 
@@ -95,8 +92,8 @@ public class AdminUserDAOImpl implements AdminUserDAO {
     @Override
     public List<AdminUserDTO> getAllUsers() {
         List<AdminUserDTO> users = new ArrayList<>();
-        users.addAll(jdbc.query("SELECT a.*, COUNT(aw_all.artwork_id) AS total_artworks, COUNT(aw_sold.artwork_id) AS total_sales, IFNULL(SUM(aw_sold.price), 0) AS revenue FROM artists a LEFT JOIN artworks aw_all ON a.artist_id = aw_all.artist_id LEFT JOIN artworks aw_sold ON a.artist_id = aw_sold.artist_id AND aw_sold.status = 'Sold' GROUP BY a.artist_id", artistMapper));
-        users.addAll(jdbc.query("SELECT b.*, COUNT(p.purchase_id) AS total_purchases, IFNULL(SUM(p.price), 0) AS spent FROM buyers b LEFT JOIN purchases p ON b.buyer_id = p.buyer_id GROUP BY b.buyer_id", buyerMapper));
+        users.addAll(jdbc.query("SELECT a.*, COUNT(aw_all.artwork_id) AS total_artworks, COUNT(aw_sold.artwork_id) AS total_sales FROM artists a LEFT JOIN artworks aw_all ON a.artist_id = aw_all.artist_id LEFT JOIN artworks aw_sold ON a.artist_id = aw_sold.artist_id AND aw_sold.status = 'Sold' GROUP BY a.artist_id", artistMapper));
+        users.addAll(jdbc.query("SELECT * FROM buyers", buyerMapper));
         users.addAll(jdbc.query("SELECT * FROM moderators", moderatorMapper));
         users.addAll(jdbc.query("SELECT * FROM shops", shopMapper));
         return users;
@@ -113,10 +110,10 @@ public class AdminUserDAOImpl implements AdminUserDAO {
         try {
             AdminUserDTO user = null;
             if ("artist".equalsIgnoreCase(userType)) {
-                String sql = "SELECT a.*, COUNT(aw_all.artwork_id) AS total_artworks, COUNT(aw_sold.artwork_id) AS total_sales, IFNULL(SUM(aw_sold.price), 0) AS revenue FROM artists a LEFT JOIN artworks aw_all ON a.artist_id = aw_all.artist_id LEFT JOIN artworks aw_sold ON a.artist_id = aw_sold.artist_id AND aw_sold.status = 'Sold' WHERE a.artist_id = ? GROUP BY a.artist_id";
+                String sql = "SELECT a.*, COUNT(aw_all.artwork_id) AS total_artworks, COUNT(aw_sold.artwork_id) AS total_sales FROM artists a LEFT JOIN artworks aw_all ON a.artist_id = aw_all.artist_id LEFT JOIN artworks aw_sold ON a.artist_id = aw_sold.artist_id AND aw_sold.status = 'Sold' WHERE a.artist_id = ? GROUP BY a.artist_id";
                 user = jdbc.queryForObject(sql, artistMapper, userId);
             } else if ("buyer".equalsIgnoreCase(userType)) {
-                String sql = "SELECT b.*, COUNT(p.purchase_id) AS total_purchases, IFNULL(SUM(p.price), 0) AS spent FROM buyers b LEFT JOIN purchases p ON b.buyer_id = p.buyer_id WHERE b.buyer_id = ? GROUP BY b.buyer_id";
+                String sql = "SELECT * FROM buyers WHERE buyer_id = ?";
                 user = jdbc.queryForObject(sql, buyerMapper, userId);
             } else if ("moderator".equalsIgnoreCase(userType)) {
                 String sql = "SELECT * FROM moderators WHERE moderator_id = ?";

@@ -131,24 +131,109 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
                   )}`}
                 >
                   {getStatusIcon(order.status)}
-                  {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                  {order.status?.charAt(0).toUpperCase() +
+                    order.status?.slice(1)}
                 </div>
               </div>
-
               <div className="bg-[#FFF5E1] rounded-lg p-4">
                 <h3 className="font-semibold text-[#7f5539] mb-2">
                   Order Date
                 </h3>
-                <p className="text-[#7f5539]">{formatDate(order.date)}</p>
+                <p className="text-[#7f5539]">
+                  {order.orderDate
+                    ? new Date(order.orderDate).toLocaleString()
+                    : ""}
+                </p>
               </div>
-
               <div className="bg-[#FFF5E1] rounded-lg p-4">
                 <h3 className="font-semibold text-[#7f5539] mb-2">
                   Total Amount
                 </h3>
                 <p className="text-2xl font-bold text-[#D87C5A]">
-                  LKR {order.total.toLocaleString()}
+                  LKR {order.totalAmount?.toLocaleString()}
                 </p>
+              </div>
+            </div>
+
+            {/* All Order Details */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-[#FFF5E1] rounded-lg p-4">
+                <h3 className="font-semibold text-[#7f5539] mb-2">
+                  Order Info
+                </h3>
+                <div className="space-y-2 text-[#7f5539]/80">
+                  <div>
+                    <span className="font-medium">Order ID:</span> {order.id}
+                  </div>
+                  <div>
+                    <span className="font-medium">Buyer ID:</span>{" "}
+                    {order.buyerId}
+                  </div>
+                  <div>
+                    <span className="font-medium">First Name:</span>{" "}
+                    {order.firstName || "-"}
+                  </div>
+                  <div>
+                    <span className="font-medium">Last Name:</span>{" "}
+                    {order.lastName || "-"}
+                  </div>
+                  <div>
+                    <span className="font-medium">Email:</span>{" "}
+                    {order.email || "-"}
+                  </div>
+                  <div>
+                    <span className="font-medium">Contact Number:</span>{" "}
+                    {order.contactNumber || "-"}
+                  </div>
+                  <div>
+                    <span className="font-medium">Shipping Address:</span>{" "}
+                    {order.shippingAddress || "-"}
+                  </div>
+                  <div>
+                    <span className="font-medium">Shipping Fee:</span> LKR{" "}
+                    {order.shippingFee?.toLocaleString()}
+                  </div>
+                  <div>
+                    <span className="font-medium">Payment Method:</span>{" "}
+                    {order.paymentMethod || "-"}
+                  </div>
+                  <div>
+                    <span className="font-medium">Stripe Payment ID:</span>{" "}
+                    {order.stripePaymentId || "-"}
+                  </div>
+                </div>
+              </div>
+              <div className="bg-[#FFF5E1] rounded-lg p-4">
+                <h3 className="font-semibold text-[#7f5539] mb-2">
+                  Status & Payment
+                </h3>
+                <div className="space-y-2 text-[#7f5539]/80">
+                  <div>
+                    <span className="font-medium">Status:</span> {order.status}
+                  </div>
+                  <div>
+                    <span className="font-medium">Order Date:</span>{" "}
+                    {order.orderDate
+                      ? new Date(order.orderDate).toLocaleString()
+                      : ""}
+                  </div>
+                  <div>
+                    <span className="font-medium">Total Amount:</span> LKR{" "}
+                    {order.totalAmount?.toLocaleString()}
+                  </div>
+                  <div>
+                    <span className="font-medium">Shipping Fee:</span> LKR{" "}
+                    {order.shippingFee?.toLocaleString()}
+                  </div>
+                  <div>
+                    <span className="font-medium">Payment Method:</span>{" "}
+                    {order.paymentMethod || "-"}
+                  </div>
+                  <div>
+                    <span className="font-medium">Stripe Payment ID:</span>{" "}
+                    {order.stripePaymentId || "-"}
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -158,139 +243,68 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
                 Order Items
               </h3>
               <div className="space-y-4">
-                {order.items.map((item, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center gap-4 p-4 border border-[#FFD95A] rounded-lg"
-                  >
-                    <img
-                      src={item.image}
-                      alt={item.title}
-                      className="w-20 h-20 rounded-lg object-cover"
-                    />
-                    <div className="flex-1">
-                      <h4 className="font-medium text-[#7f5539] text-lg">
-                        {item.title}
-                      </h4>
-                      <p className="text-[#7f5539]/70 flex items-center gap-2">
-                        <User className="w-4 h-4" />
-                        by {item.artist}
-                      </p>
-                      <p className="text-sm text-[#7f5539]/70">
-                        Quantity: {item.quantity}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-[#D87C5A] text-lg">
-                        LKR {item.price.toLocaleString()}
-                      </p>
-                      {order.status === "delivered" && (
-                        <button
-                          onClick={() => openReviewModal(item.artist, item.id)}
-                          className="mt-2 bg-[#D87C5A] hover:bg-[#7f5539] text-white px-3 py-1 rounded-lg text-sm font-medium transition-colors flex items-center gap-1"
-                        >
-                          <Star className="w-3 h-3" />
-                          Review Artist
-                        </button>
+                {order.items && order.items.length > 0 ? (
+                  order.items.map((item, index) => (
+                    <div
+                      key={index}
+                      className="flex flex-col md:flex-row gap-4 p-4 border border-[#FFD95A] rounded-lg"
+                    >
+                      {/* Artwork Image */}
+                      {item.imageUrl && (
+                        <img
+                          src={item.imageUrl}
+                          alt={item.title}
+                          className="w-24 h-24 object-cover rounded-lg border border-[#FFD95A] mb-2"
+                        />
                       )}
+                      <div className="flex-1">
+                        <h4 className="font-medium text-[#7f5539] text-lg">
+                          {item.title}
+                        </h4>
+                        <div className="text-[#7f5539]/70 text-sm">
+                          Medium: {item.medium}
+                        </div>
+                        <div className="text-[#7f5539]/70 text-sm">
+                          Size: {item.size}
+                        </div>
+                        <div className="text-[#7f5539]/70 text-sm">
+                          Quantity: {item.quantity}
+                        </div>
+                        <div className="text-[#7f5539]/70 text-sm">
+                          Price: LKR {item.price?.toLocaleString()}
+                        </div>
+                        {/* Artist Info */}
+                        <div className="flex items-center gap-2 mt-2">
+                          {item.artistAvatarUrl && (
+                            <img
+                              src={item.artistAvatarUrl}
+                              alt="Artist Avatar"
+                              className="w-8 h-8 rounded-full border border-[#FFD95A]"
+                            />
+                          )}
+                          <div>
+                            <div className="font-medium text-[#7f5539]">
+                              {item.artistName}
+                            </div>
+                            <div className="text-xs text-[#7f5539]/70">
+                              Email: {item.artistEmail}
+                            </div>
+                            <div className="text-xs text-[#7f5539]/70">
+                              Location: {item.artistLocation}
+                            </div>
+                            <div className="text-xs text-[#7f5539]/70">
+                              Contact: {item.artistContactNo}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
+                  ))
+                ) : (
+                  <div className="text-[#7f5539]/70">
+                    No items in this order.
                   </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Detailed Information Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Shipping Information - Expanded */}
-              <div className="bg-[#FFF5E1] rounded-xl p-6">
-                <h3 className="text-lg font-semibold text-[#7f5539] mb-4 flex items-center gap-2">
-                  <MapPin className="w-5 h-5" />
-                  Shipping Information
-                </h3>
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-sm font-medium text-[#7f5539]/70">
-                      Delivery Address:
-                    </p>
-                    <p className="text-[#7f5539]">{order.shipping.address}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-[#7f5539]/70">
-                      Shipping Method:
-                    </p>
-                    <p className="text-[#7f5539]">{order.shipping.method}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-[#7f5539]/70">
-                      Estimated Delivery:
-                    </p>
-                    <p className="text-[#7f5539]">
-                      {order.status === "delivered"
-                        ? "Delivered"
-                        : order.status === "shipped"
-                        ? "2-3 business days"
-                        : "5-7 business days after processing"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Payment Information - Expanded */}
-              <div className="bg-[#FFF5E1] rounded-xl p-6">
-                <h3 className="text-lg font-semibold text-[#7f5539] mb-4 flex items-center gap-2">
-                  <CreditCard className="w-5 h-5" />
-                  Payment Information
-                </h3>
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-sm font-medium text-[#7f5539]/70">
-                      Payment Method:
-                    </p>
-                    <p className="text-[#7f5539]">{order.payment.method}</p>
-                  </div>
-                  {order.payment.last4 && (
-                    <div>
-                      <p className="text-sm font-medium text-[#7f5539]/70">
-                        Card Number:
-                      </p>
-                      <p className="text-[#7f5539] font-mono">
-                        •••• •••• •••• {order.payment.last4}
-                      </p>
-                    </div>
-                  )}
-                  <div>
-                    <p className="text-sm font-medium text-[#7f5539]/70">
-                      Transaction Status:
-                    </p>
-                    <p className="text-green-600 font-medium">Completed</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-[#7f5539]/70">
-                      Billing Address:
-                    </p>
-                    <p className="text-[#7f5539]">{order.shipping.address}</p>
-                  </div>
-                  <div className="pt-2 border-t border-[#FFD95A]">
-                    <div className="flex justify-between">
-                      <span className="text-[#7f5539]/70">Subtotal:</span>
-                      <span className="text-[#7f5539]">
-                        LKR {(order.total * 0.95).toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[#7f5539]/70">Shipping:</span>
-                      <span className="text-[#7f5539]">
-                        LKR {(order.total * 0.05).toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="flex justify-between font-semibold pt-1 border-t border-[#FFD95A]">
-                      <span className="text-[#7f5539]">Total:</span>
-                      <span className="text-[#D87C5A]">
-                        LKR {order.total.toLocaleString()}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
 
