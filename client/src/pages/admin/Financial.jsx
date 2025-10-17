@@ -28,6 +28,7 @@ import {
 import { useCurrency } from '../../context/CurrencyContext';
 import { useAuth } from '../../context/AuthContext';
 import CurrencySelector from '../../components/common/CurrencySelector';
+import adminPaymentApi from '../../services/adminPaymentApi';
 
 const Financial = () => {
   const { token, role } = useAuth();
@@ -93,59 +94,46 @@ const Financial = () => {
         return;
       }
 
-      console.log('Making API request to:', `http://localhost:8081/api/admin/payments`);
+      console.log('Making API request for payments');
       
-      const params = new URLSearchParams({
-        page: pagination.currentPage.toString(),
-        size: pagination.pageSize.toString(),
+      const params = {
+        page: pagination.currentPage,
+        size: pagination.pageSize,
         sortBy: 'created_at',
         sortOrder: 'DESC'
-      });
+      };
 
       if (filterStatus !== 'all') {
-        params.append('status', filterStatus);
+        params.status = filterStatus;
       }
       if (filterType !== 'all') {
-        params.append('paymentType', filterType);
+        params.paymentType = filterType;
       }
 
-      const response = await fetch(`http://localhost:8081/api/admin/payments?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
+      const data = await adminPaymentApi.getPayments(params);
+      
+      console.log('API Response data:', data);
+      setPayments(data.payments || []);
+      setPagination({
+        currentPage: data.currentPage || 0,
+        totalPages: data.totalPages || 0,
+        totalElements: data.totalElements || 0,
+        pageSize: data.pageSize || 10
       });
-      
-      console.log('API Response status:', response.status);
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log('API Response data:', data);
-        setPayments(data.payments || []);
-        setPagination({
-          currentPage: data.currentPage || 0,
-          totalPages: data.totalPages || 0,
-          totalElements: data.totalElements || 0,
-          pageSize: data.pageSize || 10
-        });
-        setErrorMessage(null); // Clear any previous errors
-      } else if (response.status === 403) {
-        console.log('403 Forbidden - Access denied');
-        setErrorMessage('Access denied - Admin privileges required');
-        loadMockPayments();
-      } else if (response.status === 401) {
-        console.log('401 Unauthorized - Authentication expired');
-        setErrorMessage('Authentication expired - Please log in again');
-        loadMockPayments();
-      } else {
-        console.log('Server error:', response.status);
-        setErrorMessage(`Server error: ${response.status} - Using demo data`);
-        loadMockPayments();
-      }
+      setErrorMessage(null); // Clear any previous errors
     } catch (error) {
       console.error('Error fetching payments:', error);
+      
+      // Handle specific error cases
+      if (error.error && error.error.includes('403')) {
+        setErrorMessage('Access denied - Admin privileges required');
+      } else if (error.error && error.error.includes('401')) {
+        setErrorMessage('Authentication expired - Please log in again');
+      } else {
+        setErrorMessage('Server not available - Using demo data');
+      }
+      
       // Fallback to mock data when server is not available
-      setErrorMessage('Server not available - Using demo data');
       loadMockPayments();
     } finally {
       setLoading(false);
@@ -226,19 +214,8 @@ const Financial = () => {
         return;
       }
 
-      const response = await fetch('http://localhost:8081/api/admin/payments/statistics', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setPaymentStatistics(data);
-      } else {
-        console.error('Failed to fetch payment statistics:', response.status);
-      }
+      const data = await adminPaymentApi.getPaymentStatistics();
+      setPaymentStatistics(data);
     } catch (error) {
       console.error('Error fetching payment statistics:', error);
     }
@@ -278,33 +255,26 @@ const Financial = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:8081/api/admin/payments/search?query=${encodeURIComponent(searchTerm)}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const data = await adminPaymentApi.searchPayments(searchTerm);
       
-      if (response.ok) {
-        const data = await response.json();
-        setPayments(data);
-        setPagination(prev => ({
-          ...prev,
-          currentPage: 0,
-          totalPages: 1,
-          totalElements: data.length
-        }));
-        setErrorMessage(null);
-      } else if (response.status === 403) {
+      setPayments(data);
+      setPagination(prev => ({
+        ...prev,
+        currentPage: 0,
+        totalPages: 1,
+        totalElements: data.length
+      }));
+      setErrorMessage(null);
+    } catch (error) {
+      console.error('Error searching payments:', error);
+      
+      if (error.error && error.error.includes('403')) {
         setErrorMessage('Access denied for search - Admin privileges required');
-      } else if (response.status === 401) {
+      } else if (error.error && error.error.includes('401')) {
         setErrorMessage('Authentication expired - Please log in again');
       } else {
         setErrorMessage('Failed to search payments');
       }
-    } catch (error) {
-      console.error('Error searching payments:', error);
-      setErrorMessage('Error searching payments');
     } finally {
       setLoading(false);
     }
@@ -431,25 +401,11 @@ const Financial = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:8081/api/admin/payments/${paymentId}/status`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          status: 'refunded',
-          reason: reason 
-        }),
-      });
-
-      if (response.ok) {
-        setSuccessMessage(`Refund of ${formatPrice(amount, 'LKR')} processed successfully`);
-        setShowRefundModal(false);
-        fetchPayments(); // Refresh the list
-      } else {
-        setErrorMessage('Failed to process refund');
-      }
+      await adminPaymentApi.updatePaymentStatus(paymentId, 'refunded', reason);
+      
+      setSuccessMessage(`Refund of ${formatPrice(amount, 'LKR')} processed successfully`);
+      setShowRefundModal(false);
+      fetchPayments(); // Refresh the list
     } catch (error) {
       console.error('Error processing refund:', error);
       setErrorMessage('Failed to process refund');
@@ -466,21 +422,10 @@ const Financial = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:8081/api/admin/payments/${paymentId}/status`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status: 'paid' }),
-      });
-
-      if (response.ok) {
-        setSuccessMessage('Escrow funds released successfully');
-        fetchPayments(); // Refresh the list
-      } else {
-        setErrorMessage('Failed to release escrow funds');
-      }
+      await adminPaymentApi.updatePaymentStatus(paymentId, 'paid', '');
+      
+      setSuccessMessage('Escrow funds released successfully');
+      fetchPayments(); // Refresh the list
     } catch (error) {
       console.error('Error releasing escrow:', error);
       setErrorMessage('Failed to release escrow funds');

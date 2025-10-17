@@ -18,6 +18,19 @@ class DeliveryPartnerApi {
   }
 
   /**
+   * Get delivered delivery requests for the delivery partner (delivery history)
+   */
+  async getDeliveredDeliveries() {
+    try {
+      const response = await axiosInstance.get(`${BASE_URL}/requests/delivered`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching delivered deliveries:', error);
+      throw error.response?.data || { success: false, error: 'Failed to fetch delivered deliveries' };
+    }
+  }
+
+  /**
    * Get pending delivery requests (fallback API)
    */
   async getPendingDeliveries() {
