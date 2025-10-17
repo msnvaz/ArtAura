@@ -1,13 +1,46 @@
 import React, { useState } from "react";
-import { Heart, MessageCircle, Share, MoreHorizontal } from "lucide-react";
+import { Heart } from "lucide-react";
+import axios from "axios";
 
-const Post = ({ username, avatar, timeAgo, image, likes, caption }) => {
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+
+const Post = ({
+  username,
+  avatar,
+  timeAgo,
+  image,
+  likes,
+  caption,
+  postId,
+  userId,
+}) => {
   const [isLiked, setIsLiked] = useState(false);
-  const [likesCount, setLikesCount] = useState(likes);
+  const likesCount = likes || 0; // Ensure likes has a default value
+  const [likesCountState, setLikesCountState] = useState(likesCount);
 
-  const handleLike = () => {
-    setIsLiked(!isLiked);
-    setLikesCount(isLiked ? likesCount - 1 : likesCount + 1);
+  const handleLike = async () => {
+    try {
+      const token = localStorage.getItem("token"); // Retrieve the JWT token from localStorage
+      console.log("Sending postId to backend:", postId);
+      const response = await axios.post(
+        `${API_BASE_URL}/api/aposts/toggle-like`,
+        {
+          postId, // Ensure postId is passed as a prop to the component
+          userId, // Ensure userId is passed as a prop to the component
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Include the token in the Authorization header
+          },
+        }
+      );
+
+      const updatedPost = response.data;
+      setLikesCountState(updatedPost.likes); // Update the likes count with the new value from the backend
+      setIsLiked(!isLiked);
+    } catch (error) {
+      console.error("Error toggling like:", error);
+    }
   };
 
   return (
@@ -24,9 +57,6 @@ const Post = ({ username, avatar, timeAgo, image, likes, caption }) => {
             <p className="text-[#7f5539]/60 text-xs">{timeAgo}</p>
           </div>
         </div>
-        <button className="text-[#7f5539]/60 hover:text-[#7f5539] p-2 rounded-full hover:bg-[#ffe4d6]">
-          <MoreHorizontal className="w-5 h-5" />
-        </button>
       </div>
 
       <img
@@ -46,12 +76,6 @@ const Post = ({ username, avatar, timeAgo, image, likes, caption }) => {
             }`}
           >
             <Heart className={`w-5 h-5 ${isLiked ? "fill-current" : ""}`} />
-          </button>
-          <button className="text-[#7f5539]/60 hover:text-[#7f5539] p-2 rounded-full hover:bg-[#ffe4d6]">
-            <MessageCircle className="w-5 h-5" />
-          </button>
-          <button className="text-[#7f5539]/60 hover:text-[#7f5539] p-2 rounded-full hover:bg-[#ffe4d6]">
-            <Share className="w-5 h-5" />
           </button>
         </div>
 

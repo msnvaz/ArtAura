@@ -14,6 +14,7 @@ public class AWOrderDto {
     private LocalDateTime orderDate;
     private double totalAmount;
     private double shippingFee;
+    private String deliveryStatus; // Renamed delivery_status to deliveryStatus for consistency
     private String shippingAddress;
     private String contactNumber;
     private String status;
@@ -21,5 +22,13 @@ public class AWOrderDto {
     private String stripePaymentId;
     private List<AWOrderItemDto> items;
     private String imageUrl;
-    // getters and setters
+
+    // Getter and Setter for deliveryStatus
+    public String getDeliveryStatus() {
+        return deliveryStatus;
+    }
+
+    public void setDeliveryStatus(String deliveryStatus) {
+        this.deliveryStatus = deliveryStatus;
+    }
 }

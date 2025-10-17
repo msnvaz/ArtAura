@@ -24,6 +24,8 @@ public class CommissionResponseDTO {
     private String status;
     private String submittedAt;
     private List<String> imageUrls; // Reference images
+     private String deliveryStatus; // Added deliveryStatus field to include delivery status
+
 
     // Getters and Setters
     public Long getId() {
@@ -161,4 +163,7 @@ public class CommissionResponseDTO {
     public void setImageUrls(List<String> imageUrls) {
         this.imageUrls = imageUrls;
     }
+
+    private String deliveryStatus; // Added deliveryStatus field to include delivery status
+
 }

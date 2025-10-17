@@ -9,84 +9,112 @@ import {
   Star,
   Award,
   Target,
+  ImageOff,
 } from "lucide-react";
+import axios from "axios";
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 const RecentChallenges = () => {
   const navigate = useNavigate();
   const [challenges, setChallenges] = useState([]);
+  const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // Mock data for recent challenges
-  const mockRecentChallenges = [
-    {
-      id: 1,
-      title: "Digital Art Showcase 2025 (Sri Lanka)",
-      description:
-        "Create stunning digital artwork inspired by Sri Lankan culture or landscapes.",
-      category: "Digital Art",
-      prize: "LKR 450,000",
-      participants: 234,
-      timeLeft: "13 days",
-      difficulty: "Intermediate",
-      status: "active",
-      image:
-        "https://images.pexels.com/photos/1545743/pexels-photo-1545743.jpeg?auto=compress&cs=tinysrgb&w=400",
-      featured: true,
-    },
-    {
-      id: 2,
-      title: "Abstract Expression Colombo",
-      description:
-        "Express emotions through abstract art forms with a Sri Lankan twist.",
-      category: "Abstract Art",
-      prize: "LKR 300,000",
-      participants: 189,
-      timeLeft: "28 days",
-      difficulty: "Advanced",
-      status: "active",
-      image:
-        "https://images.pexels.com/photos/1269968/pexels-photo-1269968.jpeg?auto=compress&cs=tinysrgb&w=400",
-      featured: false,
-    },
-    {
-      id: 3,
-      title: "Photography Masters Sri Lanka",
-      description:
-        "Capture everyday moments in Sri Lanka with a unique perspective.",
-      category: "Photography",
-      prize: "LKR 240,000",
-      participants: 312,
-      timeLeft: "23 days",
-      difficulty: "Beginner",
-      status: "active",
-      image:
-        "https://images.pexels.com/photos/1053924/pexels-photo-1053924.jpeg?auto=compress&cs=tinysrgb&w=400",
-      featured: false,
-    },
-  ];
+  const [selectedChallenge, setSelectedChallenge] = useState(null);
 
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setChallenges(mockRecentChallenges);
-      setLoading(false);
-    }, 1000);
+    const fetchChallenges = async () => {
+      setLoading(true);
+      try {
+        const token = localStorage.getItem("token");
+        const response = await axios.get(
+          `${API_URL}/api/buyer/challenges/active`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        const challengesData = response.data || [];
+
+        // Fetch submissions for each challenge to count them manually
+        const challengesWithSubmissions = await Promise.all(
+          challengesData.map(async (challenge) => {
+            try {
+              const submissionsResponse = await axios.get(
+                `${API_URL}/api/buyer/challenges/${challenge.id}/submissions`,
+                {
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                  },
+                }
+              );
+              const submissionsCount = submissionsResponse.data.length;
+              return {
+                ...challenge,
+                submissionsCount,
+              };
+            } catch (error) {
+              console.error(
+                `Error fetching submissions for challenge ${challenge.id}:`,
+                error
+              );
+              return {
+                ...challenge,
+                submissionsCount: 0,
+              };
+            }
+          })
+        );
+
+        // Sort challenges by the most recent publish date and take the top 3
+        const sortedChallenges = challengesWithSubmissions
+          .sort(
+            (a, b) => new Date(b.publishDateTime) - new Date(a.publishDateTime)
+          )
+          .slice(0, 3);
+
+        const mapped = sortedChallenges.map((challenge, idx) => ({
+          id: challenge.id || idx,
+          title: challenge.title,
+          description: challenge.description,
+          category: challenge.category,
+          startDate: challenge.publishDateTime,
+          endDate: challenge.deadlineDateTime,
+          participants: challenge.submissionsCount || 0, // Updated to use manually counted submissions
+          submissions: challenge.submissionsCount || 0,
+          timeLeft: getTimeLeft(challenge.deadlineDateTime),
+          image: undefined, // No image in DB
+        }));
+
+        setChallenges(mapped);
+      } catch (error) {
+        console.error("Error fetching challenges:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchChallenges();
   }, []);
 
-  const getDifficultyColor = (difficulty) => {
-    switch (difficulty) {
-      case "Beginner":
-        return "bg-green-100 text-green-800";
-      case "Intermediate":
-        return "bg-yellow-100 text-yellow-800";
-      case "Advanced":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
+  function getTimeLeft(deadline) {
+    if (!deadline) return "N/A";
+    const now = new Date();
+    const end = new Date(deadline);
+    const diff = end - now;
+    if (diff <= 0) return "Expired";
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    if (days > 0) return `${days} days`;
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    if (hours > 0) return `${hours} hours`;
+    const minutes = Math.floor(diff / (1000 * 60));
+    return `${minutes} minutes`;
+  }
 
   const handleChallengeClick = (challengeId) => {
+    // Navigate to the ChallengeSubmissionsPage with the challengeId
     navigate(`/challenge-submissions/${challengeId}`);
   };
 
@@ -122,73 +150,83 @@ const RecentChallenges = () => {
         </h2>
       </div>
 
-      <div className="space-y-4">
-        {challenges.map((challenge) => (
-          <div
-            key={challenge.id}
-            className="group cursor-pointer"
-            onClick={() => handleChallengeClick(challenge.id)}
+      {selectedChallenge ? (
+        <div>
+          <button
+            onClick={() => setSelectedChallenge(null)}
+            className="mb-4 text-[#D87C5A] hover:underline"
           >
-            <div className="bg-[#FFD95A]/10 rounded-lg p-4 border border-[#FFD95A]/30 hover:border-[#D87C5A] transition-all duration-300 hover:shadow-md">
-              {/* Challenge Image */}
-              <div className="relative mb-3">
+            Back to Challenges
+          </button>
+          <h3 className="text-lg font-semibold mb-4">Submissions</h3>
+          <div className="space-y-4">
+            {submissions.map((submission) => (
+              <div
+                key={submission.id}
+                className="bg-[#FFD95A]/10 rounded-lg p-4 border border-[#FFD95A]/30"
+              >
+                <p className="text-sm font-medium">{submission.artistName}</p>
                 <img
-                  src={challenge.image}
-                  alt={challenge.title}
-                  className="w-full h-28 object-cover rounded-lg"
+                  src={submission.image}
+                  alt={submission.title}
+                  className="w-full h-28 object-cover rounded-lg mt-2"
                 />
-                {challenge.featured && (
-                  <div className="absolute top-2 left-2 bg-[#FFD95A] text-[#7f5539] px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1">
-                    <Star className="w-3 h-3" />
-                    Featured
-                  </div>
-                )}
-                <div className="absolute top-2 right-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded-full text-xs">
-                  {challenge.participants} joined
-                </div>
               </div>
-
-              {/* Challenge Info */}
-              <div className="space-y-2">
-                <div className="flex items-start justify-between">
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {challenges.map((challenge) => (
+            <div
+              key={challenge.id}
+              className="group cursor-pointer"
+              onClick={() => handleChallengeClick(challenge.id)}
+            >
+              <div className="bg-[#FFD95A]/10 rounded-lg p-4 border border-[#FFD95A]/30 hover:border-[#D87C5A] transition-all duration-300 hover:shadow-md">
+                <div className="relative mb-3">
+                  <div className="flex items-center justify-center bg-gray-200 rounded-full w-12 h-12 mx-auto">
+                    <Award className="w-6 h-6 text-gray-500" />
+                  </div>
+                  <div className="absolute top-2 right-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded-full text-xs">
+                    {challenge.participants} joined
+                  </div>
+                </div>
+                <div className="space-y-2">
                   <h3 className="font-semibold text-[#7f5539] text-sm line-clamp-2 group-hover:text-[#D87C5A] transition-colors">
                     {challenge.title}
                   </h3>
-                </div>
-
-                <p className="text-[#7f5539]/70 text-xs line-clamp-2">
-                  {challenge.description}
-                </p>
-
-                <div className="flex items-center justify-between text-xs text-[#7f5539]/70">
-                  <div className="flex items-center gap-1">
-                    <Trophy className="w-3 h-3 text-[#D87C5A]" />
-                    <span>{challenge.prize}</span>
+                  <p className="text-[#7f5539]/70 text-xs line-clamp-2">
+                    {challenge.description}
+                  </p>
+                  <div className="flex items-center justify-between text-xs text-[#7f5539]/70">
+                    <div className="flex items-center gap-1">
+                      <Trophy className="w-3 h-3 text-[#D87C5A]" />
+                      <span>{challenge.prize || "Prize TBD"}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-3 h-3 text-[#D87C5A]" />
+                      <span>{challenge.timeLeft}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Clock className="w-3 h-3 text-[#D87C5A]" />
-                    <span>{challenge.timeLeft}</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="bg-[#D87C5A]/20 text-[#7f5539] px-2 py-1 rounded-full">
-                    {challenge.category}
-                  </span>
-                  <div className="flex items-center gap-1 text-[#7f5539]/70">
-                    <Users className="w-3 h-3" />
-                    <span>{challenge.participants}</span>
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="bg-[#D87C5A]/20 text-[#7f5539] px-2 py-1 rounded-full">
+                      {challenge.category || "Category TBD"}
+                    </span>
+                    <div className="flex items-center gap-1 text-[#7f5539]/70">
+                      <Users className="w-3 h-3" />
+                      <span>{challenge.participants} participants</span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
-      {/* Quick Actions */}
-      <div className="mt-6 pt-4 border-t border-[#FFD95A]/30">
-        <div className="space-y-2">
+      {!selectedChallenge && (
+        <div className="mt-6 pt-4 border-t border-[#FFD95A]/30">
           <button
             onClick={handleViewAllChallenges}
             className="w-full bg-[#D87C5A] hover:bg-[#7f5539] text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
@@ -197,7 +235,7 @@ const RecentChallenges = () => {
             Explore All Challenges
           </button>
         </div>
-      </div>
+      )}
     </div>
   );
 };
