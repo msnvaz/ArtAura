@@ -105,6 +105,18 @@ public class DeliveryStatusService {
      * Update delivery status to "delivered"
      */
     public boolean markAsDelivered(String orderType, Long orderId) {
+        // Get platform fee from admin_settings
+        String platformFee = deliveryRequestDAO.getPlatformFee();
+        System.out.println("💰 Platform Fee Retrieved: " + platformFee + "% for Order Type: " + orderType + ", Order ID: " + orderId);
+        
+        // Get payment amount from payment table
+        java.math.BigDecimal paymentAmount = deliveryRequestDAO.getPaymentAmount(orderType, orderId);
+        if (paymentAmount != null) {
+            System.out.println("💵 Payment Amount Retrieved: Rs " + paymentAmount + " for Order Type: " + orderType + ", Order ID: " + orderId);
+        } else {
+            System.out.println("⚠️ No payment found for Order Type: " + orderType + ", Order ID: " + orderId);
+        }
+        
         if ("artwork".equalsIgnoreCase(orderType)) {
             return deliveryStatusDAO.updateArtworkOrderDeliveryStatus(orderId, "delivered", null);
         } else if ("commission".equalsIgnoreCase(orderType)) {

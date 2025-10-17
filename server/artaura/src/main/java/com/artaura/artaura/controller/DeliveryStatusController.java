@@ -1,6 +1,7 @@
 package com.artaura.artaura.controller;
 
 import com.artaura.artaura.service.DeliveryStatusService;
+import com.artaura.artaura.service.DeliveryRequestService;
 import com.artaura.artaura.dto.delivery.DeliveryStatusUpdateDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +19,9 @@ public class DeliveryStatusController {
 
     @Autowired
     private DeliveryStatusService deliveryStatusService;
+    
+    @Autowired
+    private DeliveryRequestService deliveryRequestService;
 
     /**
      * Accept a delivery request and set shipping fee
@@ -182,6 +186,18 @@ public class DeliveryStatusController {
                 return ResponseEntity.badRequest().body(response);
             }
             
+            // Get platform fee before marking as delivered
+            String platformFee = deliveryRequestService.getPlatformFee();
+            System.out.println("💰 Platform Fee from admin_settings: " + platformFee + "%");
+            
+            // Get payment amount from payment table
+            java.math.BigDecimal paymentAmount = deliveryRequestService.getPaymentAmount(orderType, orderId);
+            if (paymentAmount != null) {
+                System.out.println("💵 Payment Amount from payment table: Rs " + paymentAmount);
+            } else {
+                System.out.println("⚠️ Warning: No payment record found for this order");
+            }
+            
             boolean updated = deliveryStatusService.markAsDelivered(orderType, orderId);
             
             Map<String, Object> response = new HashMap<>();
@@ -190,6 +206,8 @@ public class DeliveryStatusController {
                 response.put("success", true);
                 response.put("orderId", orderId);
                 response.put("orderType", orderType);
+                response.put("platformFee", platformFee);
+                response.put("paymentAmount", paymentAmount != null ? paymentAmount.toString() : "0");
                 return ResponseEntity.ok(response);
             } else {
                 response.put("error", "Failed to update delivery status. Order may not exist");

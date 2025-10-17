@@ -107,4 +107,18 @@ public interface DeliveryRequestDAO {
      * @return List of delivered commission delivery requests
      */
     List<DeliveryRequestDTO> getDeliveredCommissionDeliveryRequests();
+    
+    /**
+     * Get platform fee percentage from admin_settings table
+     * @return Platform fee percentage as String, or "0" if not found
+     */
+    String getPlatformFee();
+    
+    /**
+     * Get payment amount from payment table based on order type and order ID
+     * @param orderType either "artwork" or "commission"
+     * @param orderId the order ID
+     * @return Payment amount as BigDecimal, or null if not found
+     */
+    java.math.BigDecimal getPaymentAmount(String orderType, Long orderId);
 }
