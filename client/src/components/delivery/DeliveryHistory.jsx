@@ -18,7 +18,7 @@ import {
   SortDesc
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import axios from 'axios';
+import deliveryPartnerApi from '../../services/deliveryPartnerApi';
 
 const DeliveryHistory = () => {
   const { token } = useAuth();
@@ -47,13 +47,11 @@ const DeliveryHistory = () => {
         
         // Try the new API endpoint for delivered requests
         try {
-          const response = await axios.get('http://localhost:8081/api/delivery-partner/requests/delivered', {
-            headers: { Authorization: `Bearer ${token}` }
-          });
+          const response = await deliveryPartnerApi.getDeliveredDeliveries();
           
-          if (response.data.success && response.data.requests) {
+          if (response.success && response.requests) {
             // Transform the API data to match the component format
-            const transformedHistory = response.data.requests.map(request => ({
+            const transformedHistory = response.requests.map(request => ({
               id: request.id,
               requestId: `${request.requestType === 'artwork_order' ? 'AW' : 'COM'}-${request.id}`,
               requestType: request.requestType,
