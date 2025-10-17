@@ -26,13 +26,29 @@ public class ArtistService {
     @Autowired
     private ImageUploadService imageUploadService;
 
-    public void register(ArtistSignupRequest req) {
+    public void register(ArtistSignupRequest req, MultipartFile nicImageFile) {
         if (artistDAO.emailExists(req.getEmail())) {
             throw new CustomException("Email is already in use", HttpStatus.CONFLICT);
         }
 
-        String hashedPassword = encoder.encode(req.getPassword());
-        artistDAO.save(req, hashedPassword);
+        try {
+            // Validate NIC image file
+            if (!imageUploadService.isValidImageFile(nicImageFile)) {
+                throw new CustomException("Invalid NIC image file type. Only JPEG, PNG, GIF, and WebP are allowed.", HttpStatus.BAD_REQUEST);
+            }
+            if (!imageUploadService.isFileSizeValid(nicImageFile)) {
+                throw new CustomException("NIC image file size too large. Maximum size is 5MB.", HttpStatus.BAD_REQUEST);
+            }
+
+            // Save NIC image to client/public/nic
+            String nicImageUrl = imageUploadService.saveImage(nicImageFile, "nic", null);
+
+            // Save artist with NIC image URL
+            String hashedPassword = encoder.encode(req.getPassword());
+            artistDAO.save(req, hashedPassword, nicImageUrl);
+        } catch (IOException e) {
+            throw new CustomException("Failed to save NIC image: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     public Optional<ArtistProfileResponseDTO> getProfile(Long artistId) {

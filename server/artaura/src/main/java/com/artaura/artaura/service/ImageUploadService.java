@@ -15,17 +15,32 @@ import java.util.UUID;
 public class ImageUploadService {
 
     public String saveImage(MultipartFile file, String imageType, Long artistId) throws IOException {
-        // Get the current working directory and print it for debugging
         String currentDir = System.getProperty("user.dir");
         System.out.println("Current working directory: " + currentDir);
 
-        // Calculate the correct path to server/uploads
-        String serverDir = currentDir.endsWith("artaura")
-                ? currentDir.substring(0, currentDir.lastIndexOf("artaura"))
-                : currentDir + File.separator;
+        String uploadDirPath;
+        String relativePath;
+        String filename;
 
-        String uploadDirPath = serverDir + "uploads" + File.separator + "profiles" + File.separator;
-        System.out.println("Upload directory path: " + uploadDirPath);
+        // Generate unique filename
+        String originalFilename = file.getOriginalFilename();
+        String extension = originalFilename != null
+                ? originalFilename.substring(originalFilename.lastIndexOf('.')) : ".jpg";
+
+        if ("nic".equals(imageType)) {
+            // Save to client/public/nic
+            uploadDirPath = "c:/Users/aaa/Desktop/ArtAura/client/public/nic/";
+            filename = System.currentTimeMillis() + "_" + originalFilename;
+            relativePath = "/nic/" + filename;
+        } else {
+            // Save to default uploads/profiles
+            String serverDir = currentDir.endsWith("artaura")
+                    ? currentDir.substring(0, currentDir.lastIndexOf("artaura"))
+                    : currentDir + File.separator;
+            uploadDirPath = serverDir + "uploads" + File.separator + "profiles" + File.separator;
+            filename = artistId + "_" + imageType + "_" + System.currentTimeMillis() + extension;
+            relativePath = "/uploads/profiles/" + filename;
+        }
 
         // Create upload directory if it doesn't exist
         File uploadDir = new File(uploadDirPath);
@@ -34,24 +49,11 @@ public class ImageUploadService {
             System.out.println("Created upload directory: " + created + " at " + uploadDirPath);
         }
 
-        // Generate unique filename
-        String originalFilename = file.getOriginalFilename();
-        String extension = originalFilename != null
-                ? originalFilename.substring(originalFilename.lastIndexOf('.')) : ".jpg";
-
-        String filename = artistId + "_" + imageType + "_" + System.currentTimeMillis() + extension;
-        System.out.println("Generated filename: " + filename);
-
         // Save file
         Path filePath = Paths.get(uploadDirPath + filename);
         Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
         System.out.println("File saved to: " + filePath.toAbsolutePath());
-
-        // Return relative path for database storage
-        String relativePath = "/uploads/profiles/" + filename;
         System.out.println("Returning relative path: " + relativePath);
-
         return relativePath;
     }
 
