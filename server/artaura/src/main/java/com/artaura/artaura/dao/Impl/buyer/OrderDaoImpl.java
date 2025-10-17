@@ -20,7 +20,7 @@ public class OrderDaoImpl implements OrderDao {
     @Override
     @Transactional
     public Long saveOrder(OrderRequest orderRequest) {
-        String orderSql = "INSERT INTO AW_orders (status, order_date, buyer_id, first_name, last_name, email, total_amount, shipping_address, contact_number, payment_method, stripe_payment_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String orderSql = "INSERT INTO AW_orders (order_date, buyer_id, first_name, last_name, email, shipping_address, contact_number, payment_method, stripe_payment_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         String shippingAddress = orderRequest.getBillingAddress();
         if (orderRequest.getBillingCity() != null) shippingAddress += ", " + orderRequest.getBillingCity();
         if (orderRequest.getBillingState() != null) shippingAddress += ", " + orderRequest.getBillingState();
@@ -37,7 +37,6 @@ public class OrderDaoImpl implements OrderDao {
         }
         // Use total_amount from DTO for DB insert
         jdbcTemplate.update(orderSql,
-                "excrow", // force status to excrow
                 mysqlDateTime,
                 orderRequest.getBuyerId(),
                 orderRequest.getBillingFirstName(),
