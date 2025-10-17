@@ -43,6 +43,7 @@ public class SecurityConfig {
                                 "/api/shop/signup",
                                 "/uploads/**",   // <<< THIS ALLOWS IMAGE ACCESS
                                 "/api/admin/artworks/**", // <<< TEMPORARY: Allow admin artwork endpoints for development
+                                "/api/admin/payments/**", // <<< TEMPORARY: Allow admin payment endpoints for testing
                                 "/api/buyer/exhibitions/**",
                                 "/api/users/**",
                                 "/ws/**" // <-- Make sure this is present and permitted
