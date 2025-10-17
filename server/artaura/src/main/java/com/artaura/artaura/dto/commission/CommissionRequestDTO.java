@@ -19,6 +19,7 @@ public class CommissionRequestDTO {
     private String additionalNotes;
     private String urgency;
     private String status;
+    private String deliveryStatus; // Delivery status
     private String submittedAt; // Changed to String to match buyer's structure
     private String artistDeadline; // Artist's proposed deadline
     private String rejectionReason; // Reason for rejection
@@ -35,7 +36,7 @@ public class CommissionRequestDTO {
             String dimensions, String budget, String deadline,
             String additionalNotes, String urgency, String status,
             String submittedAt, String artistDeadline, String rejectionReason,
-            String responseDate, List<String> referenceImages) {
+            String responseDate, List<String> referenceImages, String deliveryStatus) {
         this.id = id;
         this.artistId = artistId;
         this.buyerId = buyerId;
@@ -56,6 +57,7 @@ public class CommissionRequestDTO {
         this.rejectionReason = rejectionReason;
         this.responseDate = responseDate;
         this.referenceImages = referenceImages;
+        this.deliveryStatus = deliveryStatus;
     }
 
     // Getters and Setters
@@ -217,5 +219,13 @@ public class CommissionRequestDTO {
 
     public void setResponseDate(String responseDate) {
         this.responseDate = responseDate;
+    }
+
+    public String getDeliveryStatus() {
+        return deliveryStatus;
+    }
+
+    public void setDeliveryStatus(String deliveryStatus) {
+        this.deliveryStatus = deliveryStatus;
     }
 }

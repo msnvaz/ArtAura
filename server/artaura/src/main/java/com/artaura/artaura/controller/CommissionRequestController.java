@@ -339,4 +339,100 @@ public class CommissionRequestController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
+
+    /**
+     * Request delivery for a completed commission
+     */
+    @PostMapping("/{requestId}/request-delivery")
+    public ResponseEntity<Map<String, Object>> requestDelivery(@PathVariable Long requestId,
+            @RequestHeader("Authorization") String authHeader) {
+        try {
+            String token = authHeader.substring(7); // Remove "Bearer " prefix
+            Long artistId = jwtUtil.extractUserId(token);
+
+            CommissionRequestDTO request = commissionRequestDAO.getCommissionRequestById(requestId);
+
+            if (request == null) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("message", "Commission request not found");
+                response.put("data", null);
+                response.put("success", false);
+
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+
+            // Check if the logged-in user is the artist for this request
+            if (!request.getArtistId().equals(artistId)) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("message", "Access denied");
+                response.put("data", null);
+                response.put("success", false);
+
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            }
+
+            // Check if commission is accepted
+            if (!"ACCEPTED".equalsIgnoreCase(request.getStatus())) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("message", "Commission must be accepted before requesting delivery");
+                response.put("data", null);
+                response.put("success", false);
+
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
+
+            // Update delivery_status to 'pending' in commission_requests table
+            String updateCommissionSql = "UPDATE commission_requests SET delivery_status = 'pending' WHERE id = ?";
+            int commissionUpdated = jdbcTemplate.update(updateCommissionSql, requestId);
+
+            // Also update delivery_status in AW_orders table if there's a related order
+            // Use a simpler query to avoid potential issues
+            try {
+                String updateOrderSql = "UPDATE AW_orders SET delivery_status = 'pending' WHERE buyer_id = ?";
+                jdbcTemplate.update(updateOrderSql, request.getBuyerId());
+            } catch (Exception e) {
+                System.err.println("Warning: Could not update AW_orders delivery status: " + e.getMessage());
+                // Continue execution even if AW_orders update fails
+            }
+
+            Map<String, Object> response = new HashMap<>();
+            if (commissionUpdated > 0) {
+                // Send notification to buyer
+                try {
+                    String notificationSql = "INSERT INTO user_notifications (user_id, user_type, type, title, message, commission_request_id) VALUES (?, 'BUYER', 'delivery_requested', ?, ?, ?)";
+                    String title = "Artwork Ready for Delivery!";
+                    String message = String.format("Great news! Your commissioned artwork \"%s\" is completed and ready for delivery. The artist has requested delivery arrangements.",
+                            request.getTitle());
+
+                    jdbcTemplate.update(notificationSql, request.getBuyerId(), title, message, requestId);
+
+                    // Also log to console
+                    System.out.println("=== DELIVERY REQUEST NOTIFICATION ===");
+                    System.out.println("To: " + request.getName() + " (" + request.getEmail() + ")");
+                    System.out.println("Subject: Your Artwork is Ready for Delivery!");
+                    System.out.println("Commission: " + request.getTitle());
+                    System.out.println("=====================================");
+                } catch (Exception e) {
+                    System.err.println("Failed to send delivery notification: " + e.getMessage());
+                }
+
+                response.put("message", "Delivery request submitted successfully");
+                response.put("data", null);
+                response.put("success", true);
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("message", "Failed to request delivery");
+                response.put("data", null);
+                response.put("success", false);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            }
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Error requesting delivery: " + e.getMessage());
+            response.put("data", null);
+            response.put("success", false);
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
 }

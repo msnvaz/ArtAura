@@ -53,7 +53,8 @@ import {
   Shield,
   AlertTriangle,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Truck
 } from 'lucide-react';
 
 import { useImageWithFallback } from '../../util/imageUtils';
@@ -1575,6 +1576,36 @@ const ArtistPortfolio = () => {
     setCommissionAction('accept');
   };
 
+  // Delivery request handler
+  const handleRequestDelivery = async (requestId) => {
+    try {
+      const response = await axios.post(`${API_URL}/api/commission-requests/${requestId}/request-delivery`, {}, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.data && response.data.success) {
+        showSuccess('Delivery request submitted successfully!');
+
+        // Update the specific commission request in state immediately
+        setCommissionRequests(prevRequests =>
+          prevRequests.map(request =>
+            request.id === requestId
+              ? { ...request, delivery_status: 'pending' }
+              : request
+          )
+        );
+      } else {
+        showError(response.data?.message || 'Failed to request delivery');
+      }
+    } catch (error) {
+      console.error('Error requesting delivery:', error);
+      showError('An error occurred while requesting delivery');
+    }
+  };
+
   // Loading state
   if (loading || !artistProfile) {
     return (
@@ -2473,6 +2504,38 @@ const ArtistPortfolio = () => {
                                 <X className="h-4 w-4" />
                                 <span>Reject</span>
                               </button>
+                            </div>
+                          )}
+
+                          {/* Delivery Request Button for Accepted Commissions */}
+                          {request.status === 'ACCEPTED' && (!request.delivery_status || request.delivery_status === 'N/A' || request.delivery_status === null || request.delivery_status === 'not_requested') && (
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => handleRequestDelivery(request.id)}
+                                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center space-x-1"
+                              >
+                                <Truck className="h-4 w-4" />
+                                <span>Request for Delivery</span>
+                              </button>
+                            </div>
+                          )}
+
+                          {/* Delivery Status Display */}
+                          {request.status === 'ACCEPTED' && request.delivery_status && request.delivery_status !== 'N/A' && (
+                            <div className="flex items-center space-x-2">
+                              <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center space-x-1 ${request.delivery_status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                  request.delivery_status === 'outForDelivery' ? 'bg-blue-100 text-blue-800' :
+                                    request.delivery_status === 'delivered' ? 'bg-green-100 text-green-800' :
+                                      'bg-gray-100 text-gray-800'
+                                }`}>
+                                <Truck className="h-3 w-3" />
+                                <span>
+                                  {request.delivery_status === 'pending' ? 'Delivery Pending' :
+                                    request.delivery_status === 'outForDelivery' ? 'Out for Delivery' :
+                                      request.delivery_status === 'delivered' ? 'Delivered' :
+                                        request.delivery_status}
+                                </span>
+                              </span>
                             </div>
                           )}
 

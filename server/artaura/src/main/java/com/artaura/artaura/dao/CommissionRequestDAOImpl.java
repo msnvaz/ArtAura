@@ -39,6 +39,7 @@ public class CommissionRequestDAOImpl implements CommissionRequestDAO {
             dto.setArtistDeadline(rs.getString("artist_deadline"));
             dto.setRejectionReason(rs.getString("rejection_reason"));
             dto.setResponseDate(rs.getString("response_date"));
+            dto.setDeliveryStatus(rs.getString("delivery_status"));
 
             // Fetch reference images for this commission request
             String imgSql = "SELECT image_url FROM commission_reference_images WHERE commission_request_id = ?";
