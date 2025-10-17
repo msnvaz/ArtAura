@@ -20,6 +20,9 @@ public class CommissionRequestDTO {
     private String urgency;
     private String status;
     private String submittedAt; // Changed to String to match buyer's structure
+    private String artistDeadline; // Artist's proposed deadline
+    private String rejectionReason; // Reason for rejection
+    private String responseDate; // Date when artist responded
     private List<String> referenceImages;
 
     // Default constructor
@@ -31,7 +34,8 @@ public class CommissionRequestDTO {
             String phone, String title, String artworkType, String style,
             String dimensions, String budget, String deadline,
             String additionalNotes, String urgency, String status,
-            String submittedAt, List<String> referenceImages) {
+            String submittedAt, String artistDeadline, String rejectionReason,
+            String responseDate, List<String> referenceImages) {
         this.id = id;
         this.artistId = artistId;
         this.buyerId = buyerId;
@@ -48,6 +52,9 @@ public class CommissionRequestDTO {
         this.urgency = urgency;
         this.status = status;
         this.submittedAt = submittedAt;
+        this.artistDeadline = artistDeadline;
+        this.rejectionReason = rejectionReason;
+        this.responseDate = responseDate;
         this.referenceImages = referenceImages;
     }
 
@@ -186,5 +193,29 @@ public class CommissionRequestDTO {
 
     public void setReferenceImages(List<String> referenceImages) {
         this.referenceImages = referenceImages;
+    }
+
+    public String getArtistDeadline() {
+        return artistDeadline;
+    }
+
+    public void setArtistDeadline(String artistDeadline) {
+        this.artistDeadline = artistDeadline;
+    }
+
+    public String getRejectionReason() {
+        return rejectionReason;
+    }
+
+    public void setRejectionReason(String rejectionReason) {
+        this.rejectionReason = rejectionReason;
+    }
+
+    public String getResponseDate() {
+        return responseDate;
+    }
+
+    public void setResponseDate(String responseDate) {
+        this.responseDate = responseDate;
     }
 }

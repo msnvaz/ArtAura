@@ -24,7 +24,7 @@ public class CommissionResponseDTO {
     private String status;
     private String submittedAt;
     private List<String> imageUrls; // Reference images
-     private String deliveryStatus; // Added deliveryStatus field to include delivery status
+    private String deliveryStatus; // Added deliveryStatus field to include delivery status
 
 
     // Getters and Setters
@@ -164,6 +164,6 @@ public class CommissionResponseDTO {
         this.imageUrls = imageUrls;
     }
 
-    private String deliveryStatus; // Added deliveryStatus field to include delivery status
+   
 
 }

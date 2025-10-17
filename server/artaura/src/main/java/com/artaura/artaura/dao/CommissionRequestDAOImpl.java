@@ -36,6 +36,9 @@ public class CommissionRequestDAOImpl implements CommissionRequestDAO {
             dto.setUrgency(rs.getString("urgency"));
             dto.setStatus(rs.getString("status"));
             dto.setSubmittedAt(rs.getString("submitted_at")); // Changed to String
+            dto.setArtistDeadline(rs.getString("artist_deadline"));
+            dto.setRejectionReason(rs.getString("rejection_reason"));
+            dto.setResponseDate(rs.getString("response_date"));
 
             // Fetch reference images for this commission request
             String imgSql = "SELECT image_url FROM commission_reference_images WHERE commission_request_id = ?";
@@ -59,16 +62,16 @@ public class CommissionRequestDAOImpl implements CommissionRequestDAO {
     }
 
     @Override
-    public boolean acceptCommissionRequest(Long requestId) {
-        String sql = "UPDATE commission_requests SET status = 'ACCEPTED' WHERE id = ?";
-        int rowsAffected = jdbcTemplate.update(sql, requestId);
+    public boolean acceptCommissionRequest(Long requestId, String deadline) {
+        String sql = "UPDATE commission_requests SET status = 'ACCEPTED', artist_deadline = ?, response_date = NOW() WHERE id = ?";
+        int rowsAffected = jdbcTemplate.update(sql, deadline, requestId);
         return rowsAffected > 0;
     }
 
     @Override
-    public boolean rejectCommissionRequest(Long requestId) {
-        String sql = "UPDATE commission_requests SET status = 'REJECTED' WHERE id = ?";
-        int rowsAffected = jdbcTemplate.update(sql, requestId);
+    public boolean rejectCommissionRequest(Long requestId, String rejectionReason) {
+        String sql = "UPDATE commission_requests SET status = 'REJECTED', rejection_reason = ?, response_date = NOW() WHERE id = ?";
+        int rowsAffected = jdbcTemplate.update(sql, rejectionReason, requestId);
         return rowsAffected > 0;
     }
 

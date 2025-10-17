@@ -9,6 +9,7 @@ import PostUploadModal from '../../components/social/PostUploadModal';
 import ChangeCoverModal from '../../components/profile/ChangeCoverModal';
 import EditPostModel from '../../components/artist/EditPostModel';
 import { AcceptOrderModal, RejectOrderModal } from '../../components/orders/OrderModals';
+import CommissionActionModal from '../../components/modals/CommissionActionModal';
 import ExhibitionsSection from '../../components/artist/ExhibitionsSection';
 import AchievementsSection from '../../components/artist/AchievementsSection';
 import EditArtworkModal from '../../components/artworks/EditArtworkModal';
@@ -161,6 +162,11 @@ const ArtistPortfolio = () => {
   const [requestsCount, setRequestsCount] = useState(0);
   const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
   const [loadingRequests, setLoadingRequests] = useState(false);
+  
+  // Commission action modal state
+  const [showCommissionActionModal, setShowCommissionActionModal] = useState(false);
+  const [selectedCommissionRequest, setSelectedCommissionRequest] = useState(null);
+  const [commissionAction, setCommissionAction] = useState('accept'); // 'accept' or 'reject'
 
   const [editedProfile, setEditedProfile] = useState({
     name: '',
@@ -1502,9 +1508,11 @@ const ArtistPortfolio = () => {
   };
 
   // Commission request handler functions
-  const handleAcceptCommissionRequest = async (requestId) => {
+  const handleAcceptCommissionRequest = async (requestId, deadline) => {
     try {
-      const response = await axios.post(`${API_URL}/api/commission-requests/${requestId}/accept`, {}, {
+      const response = await axios.post(`${API_URL}/api/commission-requests/${requestId}/accept`, {
+        deadline: deadline
+      }, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -1524,9 +1532,11 @@ const ArtistPortfolio = () => {
     }
   };
 
-  const handleRejectCommissionRequest = async (requestId) => {
+  const handleRejectCommissionRequest = async (requestId, rejectionReason) => {
     try {
-      const response = await axios.post(`${API_URL}/api/commission-requests/${requestId}/reject`, {}, {
+      const response = await axios.post(`${API_URL}/api/commission-requests/${requestId}/reject`, {
+        rejectionReason: rejectionReason
+      }, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -1544,6 +1554,25 @@ const ArtistPortfolio = () => {
       console.error('Error rejecting commission request:', error);
       showError('An error occurred while rejecting the commission request');
     }
+  };
+
+  // Commission action modal handlers
+  const handleOpenAcceptModal = (request) => {
+    setSelectedCommissionRequest(request);
+    setCommissionAction('accept');
+    setShowCommissionActionModal(true);
+  };
+
+  const handleOpenRejectModal = (request) => {
+    setSelectedCommissionRequest(request);
+    setCommissionAction('reject');
+    setShowCommissionActionModal(true);
+  };
+
+  const handleCloseCommissionActionModal = () => {
+    setShowCommissionActionModal(false);
+    setSelectedCommissionRequest(null);
+    setCommissionAction('accept');
   };
 
   // Loading state
@@ -2431,14 +2460,14 @@ const ArtistPortfolio = () => {
                           {request.status === 'PENDING' && (
                             <div className="flex space-x-2">
                               <button
-                                onClick={() => handleAcceptCommissionRequest(request.id)}
+                                onClick={() => handleOpenAcceptModal(request)}
                                 className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm font-medium flex items-center space-x-1"
                               >
                                 <Save className="h-4 w-4" />
                                 <span>Accept</span>
                               </button>
                               <button
-                                onClick={() => handleRejectCommissionRequest(request.id)}
+                                onClick={() => handleOpenRejectModal(request)}
                                 className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm font-medium flex items-center space-x-1"
                               >
                                 <X className="h-4 w-4" />
@@ -3075,6 +3104,16 @@ const ArtistPortfolio = () => {
           </div>
         </div>
       )}
+
+      {/* Commission Action Modal */}
+      <CommissionActionModal
+        isOpen={showCommissionActionModal}
+        onClose={handleCloseCommissionActionModal}
+        onAccept={handleAcceptCommissionRequest}
+        onReject={handleRejectCommissionRequest}
+        request={selectedCommissionRequest}
+        action={commissionAction}
+      />
     </div>
   );
 };

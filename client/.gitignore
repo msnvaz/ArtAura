@@ -32,7 +32,7 @@ vite.config.js
 *.sw?
 
 # Development images (copied from server for local development)
-public/uploads/
+
 
 .env
 /server/artaura/.env

@@ -25,17 +25,19 @@ public interface CommissionRequestDAO {
      * Accept a commission request
      *
      * @param requestId The ID of the commission request
+     * @param deadline The artist's proposed deadline for the commission
      * @return true if accepted successfully
      */
-    boolean acceptCommissionRequest(Long requestId);
+    boolean acceptCommissionRequest(Long requestId, String deadline);
 
     /**
      * Reject a commission request
      *
      * @param requestId The ID of the commission request
+     * @param rejectionReason The reason for rejecting the commission
      * @return true if rejected successfully
      */
-    boolean rejectCommissionRequest(Long requestId);
+    boolean rejectCommissionRequest(Long requestId, String rejectionReason);
 
     /**
      * Get a specific commission request by ID
