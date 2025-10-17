@@ -15,6 +15,7 @@ import AchievementsSection from '../../components/artist/AchievementsSection';
 import EditArtworkModal from '../../components/artworks/EditArtworkModal';
 import DeleteConfirmationModal from '../../components/artworks/DeleteConfirmationModal';
 import SmartImage from '../../components/common/SmartImage';
+import PostInteractions from '../../components/social/PostInteractions';
 import { getImageUrl, getAvatarUrl, getCoverUrl, getArtworkUrl } from '../../util/imageUrlResolver';
 import { useAuth } from "../../context/AuthContext";
 import {
@@ -54,7 +55,8 @@ import {
   AlertTriangle,
   ChevronLeft,
   ChevronRight,
-  Truck
+  Truck,
+  CheckCircle
 } from 'lucide-react';
 
 import { useImageWithFallback } from '../../util/imageUtils';
@@ -1661,6 +1663,14 @@ const ArtistPortfolio = () => {
                 alt={artistProfile.name}
                 className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
               />
+              
+              {/* Verified Badge */}
+              {artistProfile.status === 'Active' && (
+                <div className="absolute -top-1 -right-1 bg-blue-500 text-white rounded-full p-1.5 shadow-lg border-2 border-white" title="Verified Artist">
+                  <CheckCircle className="h-4 w-4" />
+                </div>
+              )}
+              
               <button
                 onClick={() => setIsEditingProfile(true)}
                 className="absolute bottom-0 right-0 bg-[#7f5539] text-[#fdf9f4] p-2 rounded-full hover:bg-[#6e4c34] transition-colors"
@@ -1673,7 +1683,14 @@ const ArtistPortfolio = () => {
             <div className="flex-1">
               <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
                 <div>
-                  <h2 className="text-2xl font-bold text-[#7f5539] mb-2">{artistProfile.name}</h2>
+                  <div className="flex items-center gap-2 mb-2">
+                    <h2 className="text-2xl font-bold text-[#7f5539]">{artistProfile.name}</h2>
+                    {artistProfile.status === 'Active' && (
+                      <div className="flex items-center" title="Verified Artist">
+                        <CheckCircle className="h-6 w-6 text-blue-500" />
+                      </div>
+                    )}
+                  </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                     <div>
                       <div className="text-2xl font-bold text-[#7f5539]">{artistProfile.stats.artworks}</div>
@@ -2055,54 +2072,12 @@ const ArtistPortfolio = () => {
                       )}
                     </div>
 
-                    {/* Post Actions */}
-                    <div className="p-5">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center space-x-5">
-                          <button className="flex items-center space-x-1 text-[#7f5539] hover:text-[#6e4c34] transition-colors">
-                            <Heart className="h-7 w-7" />
-                          </button>
-                          <button className="flex items-center space-x-1 text-[#7f5539] hover:text-[#6e4c34] transition-colors">
-                            <MessageCircle className="h-7 w-7" />
-                          </button>
-                          <button className="flex items-center space-x-1 text-[#7f5539] hover:text-[#6e4c34] transition-colors">
-                            <Upload className="h-7 w-7" />
-                          </button>
-                        </div>
-                        <button className="text-[#7f5539] hover:text-[#6e4c34] transition-colors">
-                          <Star className="h-7 w-7" />
-                        </button>
-                      </div>
-
-                      {/* Like Count */}
-                      <div className="mb-3">
-                        <p className="font-semibold text-[#7f5539] text-base">{post.likes || 0} likes</p>
-                      </div>
-
-                      {/* Comments Preview */}
-                      <div className="space-y-2">
-                        <button className="text-[#7f5539]/60 hover:text-[#7f5539] text-sm transition-colors">
-                          View all {post.comments || 0} comments
-                        </button>
-                      </div>
-
-                      {/* Add Comment */}
-                      <div className="flex items-center space-x-3 mt-4 pt-4 border-t border-[#fdf9f4]/30">
-                        <img
-                          src={artistProfile.avatar}
-                          alt="Your avatar"
-                          className="w-9 h-9 rounded-full object-cover"
-                        />
-                        <input
-                          type="text"
-                          placeholder="Add a comment..."
-                          className="flex-1 text-sm text-[#7f5539] placeholder-[#7f5539]/50 bg-transparent outline-none py-2"
-                        />
-                        <button className="text-[#7f5539] hover:text-[#6e4c34] font-semibold text-sm transition-colors">
-                          Post
-                        </button>
-                      </div>
-                    </div>
+                    {/* Post Interactions */}
+                    <PostInteractions 
+                      postId={post.post_id} 
+                      initialLikesCount={post.likes || 0}
+                      initialCommentsCount={post.comments || 0}
+                    />
                   </div>
                 ))}
 

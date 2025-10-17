@@ -54,5 +54,10 @@ public class JwtUtil {
         return claims.get("role", String.class);
     }
 
+    public String extractUserType(String token) {
+        Claims claims = extractClaims(token);
+        return claims.get("role", String.class); // Using role as userType
+    }
+
 }
 
