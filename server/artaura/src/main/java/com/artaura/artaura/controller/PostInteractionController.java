@@ -29,14 +29,14 @@ public class PostInteractionController {
      */
     @PostMapping("/{postId}/like")
     public ResponseEntity<Map<String, Object>> toggleLike(@PathVariable Long postId,
-                                                         @RequestHeader("Authorization") String authHeader) {
+            @RequestHeader("Authorization") String authHeader) {
         try {
             String token = authHeader.substring(7); // Remove "Bearer " prefix
             Long userId = jwtUtil.extractUserId(token);
             String userType = jwtUtil.extractUserType(token);
 
             boolean success = postInteractionService.toggleLike(postId, userId, userType);
-            
+
             Map<String, Object> response = new HashMap<>();
             response.put("success", success);
             response.put("liked", postInteractionService.isPostLikedByUser(postId, userId, userType));
@@ -80,22 +80,15 @@ public class PostInteractionController {
      */
     @PostMapping("/{postId}/comments")
     public ResponseEntity<Map<String, Object>> addComment(@PathVariable Long postId,
-                                                         @RequestHeader("Authorization") String authHeader,
-                                                         @RequestBody Map<String, Object> requestBody) {
+            @RequestHeader("Authorization") String authHeader,
+            @RequestBody Map<String, Object> requestBody) {
         try {
             String token = authHeader.substring(7); // Remove "Bearer " prefix
             Long userId = jwtUtil.extractUserId(token);
             String userType = jwtUtil.extractUserType(token);
             String commentText = (String) requestBody.get("commentText");
-            Long parentCommentId = requestBody.get("parentCommentId") != null ? 
-                                  Long.valueOf(requestBody.get("parentCommentId").toString()) : null;
-
-            System.out.println("=== ADD COMMENT DEBUG ===");
-            System.out.println("PostId: " + postId);
-            System.out.println("UserId: " + userId);
-            System.out.println("UserType: " + userType);
-            System.out.println("CommentText: " + commentText);
-            System.out.println("ParentCommentId: " + parentCommentId);
+            Long parentCommentId = requestBody.get("parentCommentId") != null
+                    ? Long.valueOf(requestBody.get("parentCommentId").toString()) : null;
 
             if (commentText == null || commentText.trim().isEmpty()) {
                 Map<String, Object> response = new HashMap<>();
@@ -137,14 +130,8 @@ public class PostInteractionController {
     @GetMapping("/{postId}/comments")
     public ResponseEntity<Map<String, Object>> getPostComments(@PathVariable Long postId) {
         try {
-            System.out.println("=== GET COMMENTS DEBUG ===");
-            System.out.println("Fetching comments for PostId: " + postId);
-            
             List<PostCommentDTO> comments = postInteractionService.getPostComments(postId);
             int commentsCount = postInteractionService.getCommentsCount(postId);
-
-            System.out.println("Found " + comments.size() + " comments");
-            System.out.println("Comments count: " + commentsCount);
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -165,8 +152,8 @@ public class PostInteractionController {
      */
     @PutMapping("/comments/{commentId}")
     public ResponseEntity<Map<String, Object>> updateComment(@PathVariable Long commentId,
-                                                           @RequestHeader("Authorization") String authHeader,
-                                                           @RequestBody Map<String, String> requestBody) {
+            @RequestHeader("Authorization") String authHeader,
+            @RequestBody Map<String, String> requestBody) {
         try {
             String token = authHeader.substring(7); // Remove "Bearer " prefix
             Long userId = jwtUtil.extractUserId(token);
@@ -200,7 +187,7 @@ public class PostInteractionController {
      */
     @DeleteMapping("/comments/{commentId}")
     public ResponseEntity<Map<String, Object>> deleteComment(@PathVariable Long commentId,
-                                                           @RequestHeader("Authorization") String authHeader) {
+            @RequestHeader("Authorization") String authHeader) {
         try {
             String token = authHeader.substring(7); // Remove "Bearer " prefix
             Long userId = jwtUtil.extractUserId(token);
@@ -226,7 +213,7 @@ public class PostInteractionController {
      */
     @GetMapping("/{postId}/like-status")
     public ResponseEntity<Map<String, Object>> getLikeStatus(@PathVariable Long postId,
-                                                           @RequestHeader("Authorization") String authHeader) {
+            @RequestHeader("Authorization") String authHeader) {
         try {
             String token = authHeader.substring(7); // Remove "Bearer " prefix
             Long userId = jwtUtil.extractUserId(token);

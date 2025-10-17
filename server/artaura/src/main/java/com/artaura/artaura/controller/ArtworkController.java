@@ -219,7 +219,13 @@ public class ArtworkController {
     }
 
     @DeleteMapping("/{artworkId}")
-    public void deleteArtWork(@PathVariable Long artworkId) {
-        artWorkDAO.deleteArtWorkById(artworkId);
+    public ResponseEntity<String> deleteArtWork(@PathVariable Long artworkId) {
+        try {
+            artWorkDAO.deleteArtWorkById(artworkId);
+            return ResponseEntity.ok("Artwork deleted successfully");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Error deleting artwork: " + e.getMessage());
+        }
     }
 }
