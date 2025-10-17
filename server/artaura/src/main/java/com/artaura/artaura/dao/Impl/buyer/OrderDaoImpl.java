@@ -55,9 +55,12 @@ public class OrderDaoImpl implements OrderDao {
         String itemSql = "INSERT INTO AW_order_items (order_id, artwork_id, quantity, price, title, artist_id) VALUES (?, ?, ?, ?, ?, ?)";
         String updateArtworkStatusSql = "UPDATE artworks SET status = 'Sold', updated_at = CURRENT_TIMESTAMP WHERE artwork_id = ?";
         // Insert payment records (one per order item)
-        String paymentSql = "INSERT INTO payment (status, amount, buyer_id, artist_id, order_id, created_at) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
+        String paymentSql = "INSERT INTO payment (status, amount, buyer_id, artist_id, AW_order_id, created_at) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
 
         for (OrderItemRequest item : orderRequest.getItems()) {
+            if (item.getArtworkId() == null) {
+                throw new IllegalArgumentException("Order item is missing artwork_id.");
+            }
             // Resolve artistId from request or fallback to DB by artworkId
             Long resolvedArtistId = item.getArtistId();
             if (resolvedArtistId == null) {
@@ -88,7 +91,7 @@ public class OrderDaoImpl implements OrderDao {
             // Insert payment record for this item
             double amount = (item.getPrice() != null ? item.getPrice() : 0.0) * (item.getQuantity() != null ? item.getQuantity() : 0);
             jdbcTemplate.update(paymentSql,
-                    "excrow", // force status to excrow
+                    "escrow", // force status to excrow
                     amount,
                     orderRequest.getBuyerId(),
                     resolvedArtistId,
