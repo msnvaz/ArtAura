@@ -6,7 +6,6 @@ import {
   XCircle,
   Clock,
   Download,
-  Upload,
   User,
   Store,
   FileText,
@@ -267,14 +266,6 @@ const UserVerification = () => {
               <XCircle size={16} />
               Reject
             </button>
-            <button
-              onClick={() => handleVerificationAction(request.id, 'request_more')}
-              className="px-4 py-2 rounded-lg flex items-center gap-2 text-white transition-colors"
-              style={{backgroundColor: '#D87C5A'}}
-            >
-              <Upload size={16} />
-              Request More Info
-            </button>
           </div>
         )}
       </div>
@@ -402,14 +393,6 @@ const UserVerification = () => {
             >
               <XCircle size={16} />
               Reject
-            </button>
-            <button
-              onClick={() => handleVerificationAction(request.id, 'request_more')}
-              className="px-4 py-2 rounded-lg flex items-center gap-2 text-white transition-colors"
-              style={{backgroundColor: '#D87C5A'}}
-            >
-              <Upload size={16} />
-              Request More Info
             </button>
           </div>
         )}

@@ -14,8 +14,8 @@ import {
     Navigation
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
+import deliveryPartnerApi from '../../services/deliveryPartnerApi';
 
 const ActiveDeliveries = () => {
   const { token } = useAuth();
@@ -54,6 +54,7 @@ const ActiveDeliveries = () => {
       },
       status: 'picked_up',
       acceptedFee: 'LKR 3,500',
+      shippingFee: 3500,
       pickupDate: '2024-08-16',
       estimatedDelivery: '2024-08-16',
       distance: '145 km',
@@ -91,6 +92,7 @@ const ActiveDeliveries = () => {
       },
       status: 'in_transit',
       acceptedFee: 'LKR 2,800',
+      shippingFee: 2800,
       pickupDate: '2024-08-15',
       estimatedDelivery: '2024-08-15',
       distance: '115 km',
@@ -104,43 +106,287 @@ const ActiveDeliveries = () => {
   ];
 
   useEffect(() => {
-    // Simulate API call
-    setLoading(true);
-    setTimeout(() => {
-      setActiveDeliveries(mockActiveDeliveries);
-      setLoading(false);
-    }, 1000);
-  }, []);
-
-  const updateDeliveryStatus = async (deliveryId, newStatus) => {
-    try {
-      // Here you would make an API call to update the delivery status
-      // await axios.patch(`/api/delivery/${deliveryId}/status`, { status: newStatus }, {
-      //   headers: { Authorization: `Bearer ${token}` }
-      // });
-
-      const currentTime = new Date().toLocaleString();
+    const fetchActiveDeliveries = async () => {
+      if (!token) return;
       
-      setActiveDeliveries(prev => 
-        prev.map(delivery => {
-          if (delivery.id === deliveryId) {
-            const updatedProgress = { ...delivery.progress };
-            updatedProgress[newStatus] = { completed: true, time: currentTime };
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // First try the new API endpoint for active deliveries
+        try {
+          const response = await deliveryPartnerApi.getActiveDeliveries();
+          
+          if (response.success && response.requests) {
+            // Transform the API data to match the component format
+            const transformedDeliveries = response.requests.map(request => ({
+              id: request.id,
+              requestId: `${request.requestType === 'artwork_order' ? 'AW' : 'COM'}-${request.id}`,
+              requestType: request.requestType,
+              artistName: request.artistName || 'Artist Name',
+              artistPhone: request.buyerPhone || 'N/A',
+              buyerName: request.buyerName || 'Unknown Buyer',
+              buyerPhone: request.buyerPhone || 'N/A',
+              artwork: {
+                title: request.artworkTitle || `${request.requestType === 'artwork_order' ? 'Artwork Order' : 'Commission'} #${request.id}`,
+                type: request.artworkType || (request.requestType === 'artwork_order' ? 'Artwork' : 'Commission'),
+                size: request.artworkDimensions || 'N/A',
+                value: `Rs ${request.totalAmount || 0}`
+              },
+              pickupAddress: {
+                street: request.pickupAddress || 'Pickup address to be confirmed',
+                city: request.pickupCity || 'TBD',
+                district: 'TBD',
+                postalCode: 'TBD'
+              },
+              deliveryAddress: {
+                full: request.shippingAddress || 'Address not provided',
+                street: request.shippingAddress?.split(',')[0] || '',
+                city: request.shippingAddress?.split(',')[1] || '',
+                district: request.shippingAddress?.split(',')[2] || '',
+                postalCode: request.shippingAddress?.split(',')[3] || ''
+              },
+              status: request.deliveryStatus === 'accepted' ? 'accepted' : 
+                      request.deliveryStatus === 'outForDelivery' ? 'in_transit' : 'accepted',
+              acceptedFee: request.shippingFee ? `Rs ${request.shippingFee}` : 'Fee not set',
+              shippingFee: request.shippingFee || 0,
+              pickupDate: request.orderDate ? new Date(request.orderDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+              estimatedDelivery: request.deadline ? 
+                new Date(request.deadline).toISOString().split('T')[0] : 
+                new Date(new Date().getTime() + 24*60*60*1000).toISOString().split('T')[0],
+              distance: 'TBD',
+              progress: {
+                accepted: { 
+                  completed: true, 
+                  time: request.orderDate ? new Date(request.orderDate).toLocaleString() : 'N/A'
+                },
+                picked_up: { 
+                  completed: request.deliveryStatus === 'outForDelivery', 
+                  time: request.deliveryStatus === 'outForDelivery' ? 'Recently' : null
+                },
+                in_transit: { 
+                  completed: request.deliveryStatus === 'outForDelivery', 
+                  time: request.deliveryStatus === 'outForDelivery' ? 'Recently' : null
+                },
+                delivered: { completed: false, time: null }
+              }
+            }));
             
-            return {
-              ...delivery,
-              status: newStatus,
-              progress: updatedProgress
-            };
+            setActiveDeliveries(transformedDeliveries);
+            return; // Success with new API
           }
-          return delivery;
-        })
-      );
+        } catch (newApiError) {
+          console.log('New API not available, falling back to old API:', newApiError.message);
+        }
+        
+        // Fallback to old API endpoint if new one fails
+        const response = await deliveryPartnerApi.getPendingDeliveries();
+        
+        if (response.success) {
+          const { artworkOrders, commissionRequests } = response.data;
+          
+          // Filter only accepted and outForDelivery statuses for active deliveries
+          const activeArtworkOrders = artworkOrders.filter(order => 
+            order.delivery_status === 'accepted' || order.delivery_status === 'outForDelivery'
+          );
+          
+          const activeCommissionRequests = commissionRequests.filter(commission => 
+            commission.delivery_status === 'accepted' || commission.delivery_status === 'outForDelivery'
+          );
+          
+          // Transform the API data to match the component format (old API structure)
+          const transformedDeliveries = [
+            ...activeArtworkOrders.map(order => ({
+              id: order.id,
+              requestId: `AW-${order.id}`,
+              requestType: 'artwork_order',
+              artistName: 'Artist Name', // You might need to fetch this separately
+              artistPhone: order.contact_number || 'N/A',
+              buyerName: `${order.first_name || ''} ${order.last_name || ''}`.trim() || 'Unknown Buyer',
+              buyerPhone: order.contact_number || 'N/A',
+              artwork: {
+                title: `Artwork Order #${order.id}`,
+                type: 'Artwork',
+                size: 'N/A',
+                value: `Rs ${order.total_amount || 0}`
+              },
+              pickupAddress: {
+                street: 'Pickup address to be confirmed',
+                city: 'TBD',
+                district: 'TBD',
+                postalCode: 'TBD'
+              },
+              deliveryAddress: {
+                full: order.shipping_address || 'Address not provided',
+                street: order.shipping_address?.split(',')[0] || '',
+                city: order.shipping_address?.split(',')[1] || '',
+                district: order.shipping_address?.split(',')[2] || '',
+                postalCode: order.shipping_address?.split(',')[3] || ''
+              },
+              status: order.delivery_status === 'accepted' ? 'accepted' : 
+                      order.delivery_status === 'outForDelivery' ? 'in_transit' : 'accepted',
+              acceptedFee: order.shipping_fee ? `Rs ${order.shipping_fee}` : 'Fee not set',
+              shippingFee: order.shipping_fee || 0,
+              pickupDate: order.order_date ? new Date(order.order_date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+              estimatedDelivery: order.order_date ? new Date(new Date(order.order_date).getTime() + 24*60*60*1000).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+              distance: 'TBD',
+              progress: {
+                accepted: { 
+                  completed: true, 
+                  time: order.order_date ? new Date(order.order_date).toLocaleString() : 'N/A'
+                },
+                picked_up: { 
+                  completed: order.delivery_status === 'outForDelivery', 
+                  time: order.delivery_status === 'outForDelivery' ? 'Recently' : null
+                },
+                in_transit: { 
+                  completed: order.delivery_status === 'outForDelivery', 
+                  time: order.delivery_status === 'outForDelivery' ? 'Recently' : null
+                },
+                delivered: { completed: false, time: null }
+              }
+            })),
+            ...activeCommissionRequests.map(commission => ({
+              id: commission.id,
+              requestId: `COM-${commission.id}`,
+              requestType: 'commission_request',
+              artistName: 'Artist Name', // You might need to fetch this separately
+              artistPhone: commission.phone || 'N/A',
+              buyerName: commission.name || 'Unknown Buyer',
+              buyerPhone: commission.phone || 'N/A',
+              artwork: {
+                title: commission.title || `Commission #${commission.id}`,
+                type: commission.artwork_type || 'Commission',
+                size: commission.dimensions || 'N/A',
+                value: `Rs ${commission.budget || 0}`
+              },
+              pickupAddress: {
+                street: 'Pickup address to be confirmed',
+                city: 'TBD',
+                district: 'TBD',
+                postalCode: 'TBD'
+              },
+              deliveryAddress: {
+                full: commission.shipping_address || 'Address not provided',
+                street: commission.shipping_address?.split(',')[0] || '',
+                city: commission.shipping_address?.split(',')[1] || '',
+                district: commission.shipping_address?.split(',')[2] || '',
+                postalCode: commission.shipping_address?.split(',')[3] || ''
+              },
+              status: commission.delivery_status === 'accepted' ? 'accepted' : 
+                      commission.delivery_status === 'outForDelivery' ? 'in_transit' : 'accepted',
+              acceptedFee: commission.shipping_fee ? `Rs ${commission.shipping_fee}` : 'Fee not set',
+              shippingFee: commission.shipping_fee || 0,
+              pickupDate: commission.submitted_at ? new Date(commission.submitted_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+              estimatedDelivery: commission.deadline ? new Date(commission.deadline).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+              distance: 'TBD',
+              progress: {
+                accepted: { 
+                  completed: true, 
+                  time: commission.submitted_at ? new Date(commission.submitted_at).toLocaleString() : 'N/A'
+                },
+                picked_up: { 
+                  completed: commission.delivery_status === 'outForDelivery', 
+                  time: commission.delivery_status === 'outForDelivery' ? 'Recently' : null
+                },
+                in_transit: { 
+                  completed: commission.delivery_status === 'outForDelivery', 
+                  time: commission.delivery_status === 'outForDelivery' ? 'Recently' : null
+                },
+                delivered: { completed: false, time: null }
+              }
+            }))
+          ];
+          
+          setActiveDeliveries(transformedDeliveries);
+        } else {
+          setError(response.error || 'Failed to fetch active deliveries');
+        }
+      } catch (error) {
+        console.error('Error fetching active deliveries:', error);
+        setError('Failed to fetch active deliveries. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-      alert(`Delivery status updated to: ${newStatus.replace('_', ' ')}`);
+    fetchActiveDeliveries();
+  }, [token]);
+
+  const updateDeliveryStatus = async (delivery, newStatus) => {
+    try {
+      console.log('Updating delivery status:', { delivery, newStatus });
+      
+      // Use the service to update delivery status
+      const response = await deliveryPartnerApi.updateDeliveryStatus(delivery, newStatus);
+
+      console.log('Status update API Response:', response);
+
+      if (response.success) {
+        const currentTime = new Date().toLocaleString();
+        
+        setActiveDeliveries(prev => 
+          prev.map(d => {
+            if (d.id === delivery.id && d.requestType === delivery.requestType) {
+              const updatedProgress = { ...d.progress };
+              
+              // Update progress based on new status
+              if (newStatus === 'picked_up' || newStatus === 'in_transit') {
+                // Update the delivery to "in_transit" status for UI
+                updatedProgress.picked_up = { completed: true, time: currentTime };
+                updatedProgress.in_transit = { completed: true, time: currentTime };
+                
+                return {
+                  ...d,
+                  status: 'in_transit', // Frontend status for display
+                  progress: updatedProgress
+                };
+              } else if (newStatus === 'delivered') {
+                updatedProgress.delivered = { completed: true, time: currentTime };
+                
+                // Remove from active deliveries after a delay (since it's now completed)
+                setTimeout(() => {
+                  setActiveDeliveries(prev => prev.filter(delivery => 
+                    !(delivery.id === d.id && delivery.requestType === d.requestType)
+                  ));
+                }, 2000);
+                
+                return {
+                  ...d,
+                  status: 'delivered',
+                  progress: updatedProgress
+                };
+              }
+            }
+            return d;
+          })
+        );
+
+        const statusLabel = newStatus === 'picked_up' ? 'Out for Delivery' : 
+                          newStatus === 'in_transit' ? 'In Transit' :
+                          newStatus === 'delivered' ? 'Delivered' :
+                          newStatus.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+        
+        alert(`Delivery status updated successfully to: ${statusLabel}\n\nResponse: ${response.message || 'Success'}`);
+      } else {
+        throw new Error(response.error || 'Failed to update status');
+      }
     } catch (error) {
       console.error('Error updating delivery status:', error);
-      alert('Failed to update delivery status. Please try again.');
+      
+      // Enhanced error handling
+      let errorMessage = 'Failed to update delivery status.';
+      if (error.error) {
+        errorMessage += `\nError: ${error.error}`;
+      }
+      if (error.details) {
+        errorMessage += `\nDetails: ${error.details}`;
+      }
+      if (error.message && !error.error) {
+        errorMessage += ` ${error.message}`;
+      }
+      
+      alert(errorMessage);
     }
   };
 
@@ -216,14 +462,16 @@ const ActiveDeliveries = () => {
         <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
           <div className="flex items-center">
             <div 
-              className="p-3 rounded-full"
-              style={{ backgroundColor: '#FFD95A' }}
+              className="p-3 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: '#FFD95A', width: '56px', height: '56px' }}
             >
-              <DollarSign className="h-8 w-8" style={{ color: '#5D3A00' }} />
+              <span className="text-xl font-bold" style={{ color: '#5D3A00' }}>Rs</span>
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium" style={{ color: '#D87C5A' }}>Total Earnings</p>
-              <p className="text-2xl font-bold" style={{ color: '#5D3A00' }}>LKR 6,300</p>
+              <p className="text-2xl font-bold" style={{ color: '#5D3A00' }}>
+                {activeDeliveries.reduce((total, delivery) => total + (delivery.shippingFee || 0), 0).toLocaleString()}
+              LKR</p>
             </div>
           </div>
         </div>
@@ -267,7 +515,7 @@ const ActiveDeliveries = () => {
                     </div>
                     {nextAction && (
                       <button
-                        onClick={() => updateDeliveryStatus(delivery.id, nextAction.action)}
+                        onClick={() => updateDeliveryStatus(delivery, nextAction.action)}
                         className="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors duration-200 flex items-center gap-2"
                         style={{ backgroundColor: '#D87C5A' }}
                         onMouseOver={(e) => e.target.style.backgroundColor = '#5D3A00'}
@@ -396,29 +644,10 @@ const ActiveDeliveries = () => {
                           <strong>Size:</strong> {delivery.artwork.size}
                         </div>
                         <div className="text-gray-600">
-                          <strong>Value:</strong> {delivery.artwork.value}
-                        </div>
-                        <div className="text-gray-600">
                           <strong>Est. Delivery:</strong> {delivery.estimatedDelivery}
                         </div>
                       </div>
                     </div>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="mt-6 flex gap-3">
-                    <button className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors duration-200 flex items-center gap-2">
-                      <Navigation className="h-4 w-4" />
-                      Get Directions
-                    </button>
-                    <button className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200 flex items-center gap-2">
-                      <Phone className="h-4 w-4" />
-                      Contact Artist
-                    </button>
-                    <button className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200 flex items-center gap-2">
-                      <Phone className="h-4 w-4" />
-                      Contact Buyer
-                    </button>
                   </div>
                 </div>
               </div>
