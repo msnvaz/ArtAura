@@ -18,6 +18,51 @@ const PostInteractions = ({ postId, initialLikesCount = 0, initialCommentsCount 
   const [editingComment, setEditingComment] = useState(null);
   const [editText, setEditText] = useState('');
 
+  console.log('PostInteractions Component Props:', { 
+    postId, 
+    initialLikesCount, 
+    initialCommentsCount, 
+    token: !!token, 
+    userType 
+  });
+
+  // Test function to manually check API
+  const testCommentAPI = async () => {
+    console.log('=== TESTING COMMENT API ===');
+    console.log('PostId:', postId);
+    console.log('Token available:', !!token);
+    console.log('API URL:', `${API_URL}/api/posts/${postId}/comments`);
+    
+    if (!token || !postId) {
+      console.log('Missing token or postId');
+      return;
+    }
+
+    try {
+      const response = await axios.get(`${API_URL}/api/posts/${postId}/comments`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      console.log('Raw API Response:', response);
+      console.log('Response Data:', response.data);
+      console.log('Response Status:', response.status);
+    } catch (error) {
+      console.error('API Test Error:', error);
+      console.error('Error Response:', error.response);
+    }
+  };
+
+  // Debug state changes
+  useEffect(() => {
+    console.log('=== COMMENTS STATE CHANGED ===');
+    console.log('Comments array:', comments);
+    console.log('Comments length:', comments.length);
+    console.log('Comments count:', commentsCount);
+    console.log('Show comments:', showComments);
+  }, [comments, commentsCount, showComments]);
+
   // Fetch initial like status and comments
   useEffect(() => {
     console.log('PostInteractions useEffect triggered:', { postId, token, showComments });
@@ -47,27 +92,43 @@ const PostInteractions = ({ postId, initialLikesCount = 0, initialCommentsCount 
 
   const fetchComments = async () => {
     try {
-      console.log('Fetching comments for postId:', postId);
+      console.log('=== FETCH COMMENTS START ===');
+      console.log('PostId:', postId);
+      console.log('Token exists:', !!token);
+      console.log('API URL:', `${API_URL}/api/posts/${postId}/comments`);
+      
       const response = await axios.get(`${API_URL}/api/posts/${postId}/comments`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
-      console.log('Comments response:', response.data);
+      
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
+      console.log('Response data:', response.data);
+      
       if (response.data.success) {
-        console.log('Setting comments:', response.data.comments);
-        console.log('Setting comments count:', response.data.commentsCount);
+        console.log('Comments received:', response.data.comments);
+        console.log('Comments count received:', response.data.commentsCount);
+        console.log('Comments array length:', response.data.comments?.length);
+        
         setComments(response.data.comments || []);
         setCommentsCount(response.data.commentsCount || 0);
+        
+        console.log('State after setting - comments length:', (response.data.comments || []).length);
       } else {
-        console.error('Failed to fetch comments:', response.data.message);
+        console.error('API returned success=false:', response.data.message);
         setComments([]);
         setCommentsCount(0);
       }
+      console.log('=== FETCH COMMENTS END ===');
     } catch (error) {
-      console.error('Error fetching comments:', error);
+      console.error('=== FETCH COMMENTS ERROR ===');
+      console.error('Error message:', error.message);
       console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      console.error('Full error:', error);
       setComments([]);
       setCommentsCount(0);
     }
@@ -293,6 +354,38 @@ const PostInteractions = ({ postId, initialLikesCount = 0, initialCommentsCount 
 
   return (
     <div className="border-t pt-4 mt-4">
+      {/* Debug section - remove in production */}
+      <div className="mb-4 p-2 bg-yellow-100 rounded text-xs">
+        <p><strong>Debug Info:</strong></p>
+        <p>PostId: {postId}</p>
+        <p>Comments Array Length: {comments?.length || 0}</p>
+        <p>Comments Count State: {commentsCount}</p>
+        <p>Show Comments: {showComments.toString()}</p>
+        <p>Token Available: {!!token ? 'Yes' : 'No'}</p>
+        <p>User Type: {userType || 'Not set'}</p>
+        <p>API URL: {API_URL}/api/posts/{postId}/comments</p>
+        <div className="mt-2 space-x-2">
+          <button 
+            onClick={testCommentAPI}
+            className="px-2 py-1 bg-yellow-500 text-white rounded text-xs"
+          >
+            Test API
+          </button>
+          <button 
+            onClick={() => {
+              console.log('=== MANUAL FETCH ===');
+              fetchComments();
+            }}
+            className="px-2 py-1 bg-blue-500 text-white rounded text-xs"
+          >
+            Fetch Comments
+          </button>
+        </div>
+        <div className="mt-2 text-xs">
+          <p><strong>Comments Data:</strong> {JSON.stringify(comments, null, 2)}</p>
+        </div>
+      </div>
+
       {/* Like and Comment buttons */}
       <div className="flex items-center space-x-6 mb-4">
         <button
@@ -356,14 +449,25 @@ const PostInteractions = ({ postId, initialLikesCount = 0, initialCommentsCount 
 
           {/* Comments list */}
           <div className="space-y-2">
-            {console.log('Rendering comments:', comments, 'Length:', comments.length)}
-            {comments && comments.length > 0 ? (
-              comments.map(comment => {
-                console.log('Rendering comment:', comment);
-                return renderComment(comment);
-              })
+            {console.log('=== RENDERING COMMENTS SECTION ===')}
+            {console.log('Comments state:', comments)}
+            {console.log('Comments is Array:', Array.isArray(comments))}
+            {console.log('Comments length:', comments?.length)}
+            {console.log('Show comments flag:', showComments)}
+            
+            {comments && Array.isArray(comments) && comments.length > 0 ? (
+              <div>
+                {console.log('Rendering', comments.length, 'comments')}
+                {comments.map((comment, index) => {
+                  console.log(`Rendering comment ${index}:`, comment);
+                  return renderComment(comment);
+                })}
+              </div>
             ) : (
-              <p className="text-gray-500 text-center py-4">No comments yet. Be the first to comment!</p>
+              <div>
+                {console.log('No comments to display')}
+                <p className="text-gray-500 text-center py-4">No comments yet. Be the first to comment!</p>
+              </div>
             )}
           </div>
         </div>
