@@ -1,9 +1,7 @@
 package com.artaura.artaura.dto.buyer;
 
-import lombok.Data;
-
-@Data
 public class ArtistListDTO {
+
     private Long id;
     private String name;
     private String specialization;
@@ -18,7 +16,8 @@ public class ArtistListDTO {
     private String email;
     private String coverImageUrl;
 
-    public ArtistListDTO() {}
+    public ArtistListDTO() {
+    }
 
     public ArtistListDTO(Long id, String name, String specialization, String bio, Double rate, Integer totalFollowers, Integer totalSales, String avatarUrl, String location, String badge, String contactNo, String email, String coverImageUrl) {
         this.id = id;
@@ -33,6 +32,111 @@ public class ArtistListDTO {
         this.badge = badge;
         this.contactNo = contactNo;
         this.email = email;
+        this.coverImageUrl = coverImageUrl;
+    }
+
+    // Getters and setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getSpecialization() {
+        return specialization;
+    }
+
+    public void setSpecialization(String specialization) {
+        this.specialization = specialization;
+    }
+
+    public String getBio() {
+        return bio;
+    }
+
+    public void setBio(String bio) {
+        this.bio = bio;
+    }
+
+    public Double getRate() {
+        return rate;
+    }
+
+    public void setRate(Double rate) {
+        this.rate = rate;
+    }
+
+    public Integer getTotalFollowers() {
+        return totalFollowers;
+    }
+
+    public void setTotalFollowers(Integer totalFollowers) {
+        this.totalFollowers = totalFollowers;
+    }
+
+    public Integer getTotalSales() {
+        return totalSales;
+    }
+
+    public void setTotalSales(Integer totalSales) {
+        this.totalSales = totalSales;
+    }
+
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
+    public String getBadge() {
+        return badge;
+    }
+
+    public void setBadge(String badge) {
+        this.badge = badge;
+    }
+
+    public String getContactNo() {
+        return contactNo;
+    }
+
+    public void setContactNo(String contactNo) {
+        this.contactNo = contactNo;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getCoverImageUrl() {
+        return coverImageUrl;
+    }
+
+    public void setCoverImageUrl(String coverImageUrl) {
         this.coverImageUrl = coverImageUrl;
     }
 }

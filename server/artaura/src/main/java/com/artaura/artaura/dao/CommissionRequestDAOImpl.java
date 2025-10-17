@@ -1,0 +1,120 @@
+package com.artaura.artaura.dao;
+
+import com.artaura.artaura.dto.commission.CommissionRequestDTO;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Repository;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
+
+@Repository
+public class CommissionRequestDAOImpl implements CommissionRequestDAO {
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    private final RowMapper<CommissionRequestDTO> commissionRequestRowMapper = new RowMapper<CommissionRequestDTO>() {
+        @Override
+        public CommissionRequestDTO mapRow(ResultSet rs, int rowNum) throws SQLException {
+            CommissionRequestDTO dto = new CommissionRequestDTO();
+            dto.setId(rs.getLong("id"));
+            dto.setArtistId(rs.getLong("artist_id"));
+            dto.setBuyerId(rs.getLong("buyer_id"));
+            dto.setName(rs.getString("name"));
+            dto.setEmail(rs.getString("email"));
+            dto.setPhone(rs.getString("phone"));
+            dto.setTitle(rs.getString("title"));
+            dto.setArtworkType(rs.getString("artwork_type"));
+            dto.setStyle(rs.getString("style"));
+            dto.setDimensions(rs.getString("dimensions"));
+            dto.setBudget(rs.getString("budget")); // Changed to String
+            dto.setDeadline(rs.getString("deadline")); // Changed to String
+            dto.setAdditionalNotes(rs.getString("additional_notes"));
+            dto.setUrgency(rs.getString("urgency"));
+            dto.setStatus(rs.getString("status"));
+            dto.setSubmittedAt(rs.getString("submitted_at")); // Changed to String
+            dto.setArtistDeadline(rs.getString("artist_deadline"));
+            dto.setRejectionReason(rs.getString("rejection_reason"));
+            dto.setResponseDate(rs.getString("response_date"));
+            dto.setDeliveryStatus(rs.getString("delivery_status"));
+
+            // Fetch reference images for this commission request
+            String imgSql = "SELECT image_url FROM commission_reference_images WHERE commission_request_id = ?";
+            List<String> images = jdbcTemplate.query(imgSql, (imgRs, imgRow) -> imgRs.getString("image_url"), dto.getId());
+            dto.setReferenceImages(images);
+
+            return dto;
+        }
+    };
+
+    @Override
+    public List<CommissionRequestDTO> getCommissionRequestsByArtistId(Long artistId) {
+        String sql = "SELECT * FROM commission_requests WHERE artist_id = ? ORDER BY submitted_at DESC";
+        return jdbcTemplate.query(sql, commissionRequestRowMapper, artistId);
+    }
+
+    @Override
+    public List<CommissionRequestDTO> getCommissionRequestsByBuyerId(Long buyerId) {
+        String sql = "SELECT * FROM commission_requests WHERE buyer_id = ? ORDER BY submitted_at DESC";
+        return jdbcTemplate.query(sql, commissionRequestRowMapper, buyerId);
+    }
+
+    @Override
+    public boolean acceptCommissionRequest(Long requestId, String deadline) {
+        String sql = "UPDATE commission_requests SET status = 'ACCEPTED', artist_deadline = ?, response_date = NOW() WHERE id = ?";
+        int rowsAffected = jdbcTemplate.update(sql, deadline, requestId);
+        return rowsAffected > 0;
+    }
+
+    @Override
+    public boolean rejectCommissionRequest(Long requestId, String rejectionReason) {
+        String sql = "UPDATE commission_requests SET status = 'REJECTED', rejection_reason = ?, response_date = NOW() WHERE id = ?";
+        int rowsAffected = jdbcTemplate.update(sql, rejectionReason, requestId);
+        return rowsAffected > 0;
+    }
+
+    @Override
+    public CommissionRequestDTO getCommissionRequestById(Long requestId) {
+        String sql = "SELECT * FROM commission_requests WHERE id = ?";
+        List<CommissionRequestDTO> results = jdbcTemplate.query(sql, commissionRequestRowMapper, requestId);
+        return results.isEmpty() ? null : results.get(0);
+    }
+
+    /**
+     * Get commission requests count for a specific artist
+     *
+     * @param artistId The ID of the artist
+     * @return Count of commission requests
+     */
+    public int getCommissionRequestsCountByArtistId(Long artistId) {
+        String sql = "SELECT COUNT(*) FROM commission_requests WHERE artist_id = ?";
+        return jdbcTemplate.queryForObject(sql, Integer.class, artistId);
+    }
+
+    /**
+     * Get pending commission requests count for a specific artist
+     *
+     * @param artistId The ID of the artist
+     * @return Count of pending commission requests
+     */
+    public int getPendingCommissionRequestsCountByArtistId(Long artistId) {
+        String sql = "SELECT COUNT(*) FROM commission_requests WHERE artist_id = ? AND status = 'PENDING'";
+        return jdbcTemplate.queryForObject(sql, Integer.class, artistId);
+    }
+
+    /**
+     * Update commission request status
+     *
+     * @param requestId The ID of the commission request
+     * @param status The new status
+     * @return true if updated successfully
+     */
+    public boolean updateCommissionRequestStatus(Long requestId, String status) {
+        String sql = "UPDATE commission_requests SET status = ? WHERE id = ?";
+        int rowsAffected = jdbcTemplate.update(sql, status, requestId);
+        return rowsAffected > 0;
+    }
+}
