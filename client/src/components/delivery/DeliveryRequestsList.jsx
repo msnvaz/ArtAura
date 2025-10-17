@@ -59,19 +59,19 @@ const DeliveryRequestsList = () => {
                 id: order.id,
                 requestType: 'artwork_order',
                 artistId: order.artist_id || 'N/A',
-                artistName: 'Artist Name', // You might need to fetch this separately
-                artistPhone: order.contact_number || 'N/A',
-                artistEmail: order.email || 'N/A',
+                artistName: order.artist_name || 'Unknown Artist',
+                artistPhone: order.artist_contact || order.contact_number || 'N/A',
+                artistEmail: order.artist_email || order.email || 'N/A',
                 buyerId: order.buyer_id,
                 buyerName: `${order.first_name || ''} ${order.last_name || ''}`.trim() || 'Unknown Buyer',
                 buyerPhone: order.contact_number || 'N/A',
                 buyerEmail: order.email || 'N/A',
                 pickupAddress: {
-                  full: 'Pickup address to be confirmed',
-                  street: 'TBD',
-                  city: 'TBD',
-                  district: 'TBD',
-                  postalCode: 'TBD'
+                  full: order.artist_address || 'Pickup address to be confirmed',
+                  street: order.artist_address?.split(',')[0] || 'TBD',
+                  city: order.artist_city || 'TBD',
+                  district: order.artist_address?.split(',')[2] || 'TBD',
+                  postalCode: order.artist_address?.split(',')[3] || 'TBD'
                 },
                 deliveryAddress: {
                   full: order.shipping_address || 'Address not provided',
@@ -81,7 +81,7 @@ const DeliveryRequestsList = () => {
                   postalCode: order.shipping_address?.split(',')[3] || ''
                 },
                 artwork: {
-                  title: `Artwork Order #${order.id}`,
+                  title: order.artwork_title || `Artwork Order #${order.id}`,
                   type: 'Artwork',
                   size: 'N/A',
                   weight: 'TBD',
@@ -107,19 +107,19 @@ const DeliveryRequestsList = () => {
                 id: commission.id,
                 requestType: 'commission_request',
                 artistId: commission.artist_id,
-                artistName: 'Artist Name', // You might need to fetch this separately
-                artistPhone: commission.phone || 'N/A',
-                artistEmail: commission.email || 'N/A',
+                artistName: commission.artist_name || 'Unknown Artist',
+                artistPhone: commission.artist_contact || commission.phone || 'N/A',
+                artistEmail: commission.artist_email || commission.email || 'N/A',
                 buyerId: commission.buyer_id,
                 buyerName: commission.name || 'Unknown Buyer',
                 buyerPhone: commission.phone || 'N/A',
                 buyerEmail: commission.email || 'N/A',
                 pickupAddress: {
-                  full: 'Pickup address to be confirmed',
-                  street: 'TBD',
-                  city: 'TBD',
-                  district: 'TBD',
-                  postalCode: 'TBD'
+                  full: commission.artist_address || 'Pickup address to be confirmed',
+                  street: commission.artist_address?.split(',')[0] || 'TBD',
+                  city: commission.artist_city || 'TBD',
+                  district: commission.artist_address?.split(',')[2] || 'TBD',
+                  postalCode: commission.artist_address?.split(',')[3] || 'TBD'
                 },
                 deliveryAddress: {
                   full: commission.shipping_address || 'Address not provided',
