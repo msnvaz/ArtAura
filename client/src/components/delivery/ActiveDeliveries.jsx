@@ -321,6 +321,8 @@ const ActiveDeliveries = () => {
       const response = await deliveryPartnerApi.updateDeliveryStatus(delivery, newStatus);
 
       console.log('Status update API Response:', response);
+      console.log('Platform Fee:', response.platformFee);
+      console.log('Payment Amount:', response.paymentAmount);
 
       if (response.success) {
         const currentTime = new Date().toLocaleString();
@@ -367,7 +369,18 @@ const ActiveDeliveries = () => {
                           newStatus === 'delivered' ? 'Delivered' :
                           newStatus.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
         
-        alert(`Delivery status updated successfully to: ${statusLabel}\n\nResponse: ${response.message || 'Success'}`);
+        // Show alert with platform fee and payment amount when delivered
+        let alertMessage = `Delivery status updated successfully to: ${statusLabel}\n\nResponse: ${response.message || 'Success'}`;
+        
+        if (newStatus === 'delivered') {
+          alertMessage += `\n\n📊 Payment Details:\n`;
+          alertMessage += `💰 Platform Fee: ${response.platformFee || 'N/A'}%\n`;
+          alertMessage += `💵 Payment Amount: Rs ${response.paymentAmount || 'N/A'}`;
+          
+          console.log('Alert message for delivered status:', alertMessage);
+        }
+        
+        alert(alertMessage);
       } else {
         throw new Error(response.error || 'Failed to update status');
       }

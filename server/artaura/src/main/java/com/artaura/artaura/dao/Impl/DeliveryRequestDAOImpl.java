@@ -513,4 +513,39 @@ public class DeliveryRequestDAOImpl implements DeliveryRequestDAO {
             return new ArrayList<>();
         }
     }
+    
+    @Override
+    public String getPlatformFee() {
+        try {
+            String sql = "SELECT setting_value FROM admin_settings WHERE setting_name = 'platform_fee'";
+            String platformFee = jdbc.queryForObject(sql, String.class);
+            System.out.println("✅ Platform fee retrieved: " + platformFee + "%");
+            return platformFee != null ? platformFee : "0";
+        } catch (Exception e) {
+            System.out.println("❌ Error fetching platform fee: " + e.getMessage());
+            return "0";
+        }
+    }
+    
+    @Override
+    public BigDecimal getPaymentAmount(String orderType, Long orderId) {
+        try {
+            String sql;
+            if ("artwork".equalsIgnoreCase(orderType)) {
+                sql = "SELECT amount FROM payment WHERE AW_order_id = ?";
+            } else if ("commission".equalsIgnoreCase(orderType)) {
+                sql = "SELECT amount FROM payment WHERE commission_request_id = ?";
+            } else {
+                System.out.println("❌ Invalid order type: " + orderType);
+                return null;
+            }
+            
+            BigDecimal amount = jdbc.queryForObject(sql, BigDecimal.class, orderId);
+            System.out.println("✅ Payment amount retrieved: Rs " + amount + " for " + orderType + " order ID: " + orderId);
+            return amount;
+        } catch (Exception e) {
+            System.out.println("❌ Error fetching payment amount for " + orderType + " order ID " + orderId + ": " + e.getMessage());
+            return null;
+        }
+    }
 }
