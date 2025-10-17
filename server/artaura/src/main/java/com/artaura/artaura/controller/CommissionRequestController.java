@@ -216,11 +216,11 @@ public class CommissionRequestController {
                     // Create database notification
                     String notificationSql = "INSERT INTO user_notifications (user_id, user_type, type, title, message, commission_request_id, artist_deadline) VALUES (?, 'BUYER', 'commission_accepted', ?, ?, ?, ?)";
                     String title = "Commission Request Accepted!";
-                    String message = String.format("Your commission request \"%s\" has been accepted! The artist will complete it by %s.", 
-                                                  request.getTitle(), deadline);
-                    
+                    String message = String.format("Your commission request \"%s\" has been accepted! The artist will complete it by %s.",
+                            request.getTitle(), deadline);
+
                     jdbcTemplate.update(notificationSql, request.getBuyerId(), title, message, requestId, deadline);
-                    
+
                     // Also log to console
                     System.out.println("=== COMMISSION ACCEPTED NOTIFICATION ===");
                     System.out.println("To: " + request.getName() + " (" + request.getEmail() + ")");
@@ -304,11 +304,11 @@ public class CommissionRequestController {
                     // Create database notification
                     String notificationSql = "INSERT INTO user_notifications (user_id, user_type, type, title, message, commission_request_id, rejection_reason) VALUES (?, 'BUYER', 'commission_rejected', ?, ?, ?, ?)";
                     String title = "Commission Request Update";
-                    String message = String.format("Unfortunately, your commission request \"%s\" has been declined. Reason: %s", 
-                                                  request.getTitle(), rejectionReason);
-                    
+                    String message = String.format("Unfortunately, your commission request \"%s\" has been declined. Reason: %s",
+                            request.getTitle(), rejectionReason);
+
                     jdbcTemplate.update(notificationSql, request.getBuyerId(), title, message, requestId, rejectionReason);
-                    
+
                     // Also log to console
                     System.out.println("=== COMMISSION REJECTED NOTIFICATION ===");
                     System.out.println("To: " + request.getName() + " (" + request.getEmail() + ")");

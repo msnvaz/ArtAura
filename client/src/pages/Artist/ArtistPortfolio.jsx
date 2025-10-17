@@ -162,7 +162,7 @@ const ArtistPortfolio = () => {
   const [requestsCount, setRequestsCount] = useState(0);
   const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
   const [loadingRequests, setLoadingRequests] = useState(false);
-  
+
   // Commission action modal state
   const [showCommissionActionModal, setShowCommissionActionModal] = useState(false);
   const [selectedCommissionRequest, setSelectedCommissionRequest] = useState(null);

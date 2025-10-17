@@ -72,7 +72,7 @@ public class NotificationControllerEnhanced {
             // Verify notification belongs to user
             String checkSql = "SELECT user_id FROM user_notifications WHERE id = ?";
             List<Long> userIds = jdbcTemplate.queryForList(checkSql, Long.class, notificationId);
-            
+
             if (userIds.isEmpty() || !userIds.get(0).equals(userId)) {
                 Map<String, Object> response = new HashMap<>();
                 response.put("message", "Notification not found or access denied");
@@ -115,7 +115,7 @@ public class NotificationControllerEnhanced {
             // Verify notification belongs to user
             String checkSql = "SELECT user_id FROM user_notifications WHERE id = ?";
             List<Long> userIds = jdbcTemplate.queryForList(checkSql, Long.class, notificationId);
-            
+
             if (userIds.isEmpty() || !userIds.get(0).equals(userId)) {
                 Map<String, Object> response = new HashMap<>();
                 response.put("message", "Notification not found or access denied");
@@ -147,9 +147,9 @@ public class NotificationControllerEnhanced {
     /**
      * Create a notification (internal use)
      */
-    public void createNotification(Long userId, String userType, String type, String title, 
-                                 String message, Long commissionRequestId, String artistDeadline, 
-                                 String rejectionReason) {
+    public void createNotification(Long userId, String userType, String type, String title,
+            String message, Long commissionRequestId, String artistDeadline,
+            String rejectionReason) {
         try {
             String sql = "INSERT INTO user_notifications (user_id, user_type, type, title, message, commission_request_id, artist_deadline, rejection_reason) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
             jdbcTemplate.update(sql, userId, userType, type, title, message, commissionRequestId, artistDeadline, rejectionReason);
