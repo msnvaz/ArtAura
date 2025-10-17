@@ -52,6 +52,7 @@ public class SecurityConfig {
 
                 .requestMatchers("/api/posts/create").authenticated()
                 .requestMatchers("/api/posts/{role}/{userId}").authenticated()// ✅ allow this
+                .requestMatchers("/api/artist/artwork-orders/**").authenticated() // Artist artwork orders endpoints
                 .anyRequest().authenticated() // 🔒 Everything else secured
 
                 )
