@@ -89,15 +89,15 @@ public class PostInteractionDAOImpl implements PostInteractionDAO {
                 dto.setPostId(rs.getLong("post_id"));
                 dto.setUserId(rs.getLong("user_id"));
                 dto.setUserType(rs.getString("user_type"));
-                
+
                 Timestamp timestamp = rs.getTimestamp("created_at");
                 if (timestamp != null) {
                     dto.setCreatedAt(timestamp.toLocalDateTime());
                 }
-                
+
                 dto.setUserName(rs.getString("user_name"));
                 dto.setUserAvatar(rs.getString("user_avatar"));
-                
+
                 return dto;
             }, postId);
         } catch (Exception e) {
@@ -110,11 +110,11 @@ public class PostInteractionDAOImpl implements PostInteractionDAO {
         try {
             String sql = "INSERT INTO post_comments (post_id, user_id, user_type, comment_text, parent_comment_id) VALUES (?, ?, ?, ?, ?)";
             jdbcTemplate.update(sql, postId, userId, userType, commentText, parentCommentId);
-            
+
             // Get the inserted comment ID
             String getIdSql = "SELECT LAST_INSERT_ID()";
             Long commentId = jdbcTemplate.queryForObject(getIdSql, Long.class);
-            
+
             // Return the full comment details
             return getCommentById(commentId);
         } catch (Exception e) {
@@ -150,21 +150,12 @@ public class PostInteractionDAOImpl implements PostInteractionDAO {
             String sql = """
                 SELECT pc.id, pc.post_id, pc.user_id, pc.user_type, pc.comment_text, 
                        pc.parent_comment_id, pc.created_at, pc.updated_at,
-                       CASE 
-                           WHEN pc.user_type = 'ARTIST' THEN CONCAT(a.first_name, ' ', a.last_name)
-                           WHEN pc.user_type = 'BUYER' THEN CONCAT(b.first_name, ' ', b.last_name)
-                       END as user_name,
-                       CASE 
-                           WHEN pc.user_type = 'ARTIST' THEN a.avatar_url
-                           WHEN pc.user_type = 'BUYER' THEN b.avatar_url
-                       END as user_avatar
+                       CONCAT(UPPER(SUBSTRING(pc.user_type, 1, 1)), LOWER(SUBSTRING(pc.user_type, 2)), ' ', pc.user_id) as user_name,
+                       NULL as user_avatar
                 FROM post_comments pc
-                LEFT JOIN artists a ON pc.user_id = a.artist_id AND pc.user_type = 'ARTIST'
-                LEFT JOIN buyers b ON pc.user_id = b.buyer_id AND pc.user_type = 'BUYER'
                 WHERE pc.post_id = ?
                 ORDER BY pc.created_at ASC
                 """;
-
             List<PostCommentDTO> allComments = jdbcTemplate.query(sql, (rs, rowNum) -> {
                 PostCommentDTO dto = new PostCommentDTO();
                 dto.setId(rs.getLong("id"));
@@ -172,29 +163,31 @@ public class PostInteractionDAOImpl implements PostInteractionDAO {
                 dto.setUserId(rs.getLong("user_id"));
                 dto.setUserType(rs.getString("user_type"));
                 dto.setCommentText(rs.getString("comment_text"));
-                
+
                 Long parentId = rs.getLong("parent_comment_id");
                 dto.setParentCommentId(rs.wasNull() ? null : parentId);
-                
+
                 Timestamp createdAt = rs.getTimestamp("created_at");
                 if (createdAt != null) {
                     dto.setCreatedAt(createdAt.toLocalDateTime());
                 }
-                
+
                 Timestamp updatedAt = rs.getTimestamp("updated_at");
                 if (updatedAt != null) {
                     dto.setUpdatedAt(updatedAt.toLocalDateTime());
                 }
-                
+
                 dto.setUserName(rs.getString("user_name"));
                 dto.setUserAvatar(rs.getString("user_avatar"));
-                
+
                 return dto;
             }, postId);
 
             // Organize comments into parent-child structure
             return organizeComments(allComments);
         } catch (Exception e) {
+            System.err.println("Error in getPostComments: " + e.getMessage());
+            e.printStackTrace();
             return new ArrayList<>();
         }
     }
@@ -237,23 +230,23 @@ public class PostInteractionDAOImpl implements PostInteractionDAO {
                 dto.setUserId(rs.getLong("user_id"));
                 dto.setUserType(rs.getString("user_type"));
                 dto.setCommentText(rs.getString("comment_text"));
-                
+
                 Long parentId = rs.getLong("parent_comment_id");
                 dto.setParentCommentId(rs.wasNull() ? null : parentId);
-                
+
                 Timestamp createdAt = rs.getTimestamp("created_at");
                 if (createdAt != null) {
                     dto.setCreatedAt(createdAt.toLocalDateTime());
                 }
-                
+
                 Timestamp updatedAt = rs.getTimestamp("updated_at");
                 if (updatedAt != null) {
                     dto.setUpdatedAt(updatedAt.toLocalDateTime());
                 }
-                
+
                 dto.setUserName(rs.getString("user_name"));
                 dto.setUserAvatar(rs.getString("user_avatar"));
-                
+
                 return dto;
             }, commentId);
         } catch (Exception e) {
@@ -263,7 +256,7 @@ public class PostInteractionDAOImpl implements PostInteractionDAO {
 
     private List<PostCommentDTO> organizeComments(List<PostCommentDTO> allComments) {
         List<PostCommentDTO> parentComments = new ArrayList<>();
-        
+
         // Separate parent comments and replies
         for (PostCommentDTO comment : allComments) {
             if (comment.getParentCommentId() == null) {
@@ -272,7 +265,7 @@ public class PostInteractionDAOImpl implements PostInteractionDAO {
                 parentComments.add(comment);
             }
         }
-        
+
         // Add replies to their parent comments
         for (PostCommentDTO comment : allComments) {
             if (comment.getParentCommentId() != null) {
@@ -285,7 +278,7 @@ public class PostInteractionDAOImpl implements PostInteractionDAO {
                 }
             }
         }
-        
+
         return parentComments;
     }
 }
