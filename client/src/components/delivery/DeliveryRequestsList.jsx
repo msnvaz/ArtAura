@@ -17,8 +17,9 @@ import {
     Truck
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
+import deliveryPartnerApi from '../../services/deliveryPartnerApi';
+import axios from 'axios';
 
 const DeliveryRequestsList = () => {
   const { token } = useAuth();
@@ -46,12 +47,10 @@ const DeliveryRequestsList = () => {
         
         // Try the new delivery status endpoint first
         try {
-          const pendingResponse = await axios.get('http://localhost:8081/api/delivery-status/pending', {
-            headers: { Authorization: `Bearer ${token}` },
-          });
+          const pendingResponse = await deliveryPartnerApi.getPendingDeliveries();
           
-          if (pendingResponse.data.success) {
-            const { artworkOrders, commissionRequests } = pendingResponse.data.data;
+          if (pendingResponse.success) {
+            const { artworkOrders, commissionRequests } = pendingResponse.data;
             
             // Transform the new API data format
             const transformedRequests = [
@@ -162,26 +161,22 @@ const DeliveryRequestsList = () => {
         
         // Fallback to old API if new one fails
         const [requestsResponse, pickupResponse] = await Promise.all([
-          axios.get('http://localhost:8081/api/delivery-partner/requests/pending', {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          axios.get('http://localhost:8081/api/delivery-partner/pickup-addresses', {
-            headers: { Authorization: `Bearer ${token}` },
-          })
+          deliveryPartnerApi.getPendingDeliveryRequests(),
+          deliveryPartnerApi.getPickupAddresses()
         ]);
         
-        if (requestsResponse.data.success) {
+        if (requestsResponse.success) {
           // Create a map of pickup addresses by request ID and type
           const pickupMap = new Map();
-          if (pickupResponse.data.success && pickupResponse.data.addresses) {
-            pickupResponse.data.addresses.forEach(addr => {
+          if (pickupResponse.success && pickupResponse.addresses) {
+            pickupResponse.addresses.forEach(addr => {
               const key = `${addr.requestType}-${addr.requestId}`;
               pickupMap.set(key, addr);
             });
           }
           
           // Transform API data to match frontend expected format (old format)
-          const transformedRequests = requestsResponse.data.requests.map(req => {
+          const transformedRequests = requestsResponse.requests.map(req => {
             const pickupKey = `${req.requestType}-${req.id}`;
             const pickupData = pickupMap.get(pickupKey);
             
@@ -239,7 +234,7 @@ const DeliveryRequestsList = () => {
           
           setDeliveryRequests(transformedRequests);
         } else {
-          setError(requestsResponse.data.error || 'Failed to fetch delivery requests');
+          setError(requestsResponse.error || 'Failed to fetch delivery requests');
         }
       } catch (error) {
         console.error('Error fetching delivery requests:', error);
@@ -278,16 +273,11 @@ const DeliveryRequestsList = () => {
       const orderType = request.requestType === 'artwork_order' ? 'artwork' : 'commission';
       
       // Make API call to mark as out for delivery
-      const response = await axios.put(`http://localhost:8081/api/delivery-status/${orderType}/${request.id}/out-for-delivery`, {}, {
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await deliveryPartnerApi.markOutForDelivery(orderType, request.id);
 
-      console.log('Mark in transit API Response:', response.data);
+      console.log('Mark in transit API Response:', response);
 
-      if (response.data.success) {
+      if (response.success) {
         // Update local state
         setDeliveryRequests(prev => 
           prev.map(req => 
@@ -299,11 +289,11 @@ const DeliveryRequestsList = () => {
 
         alert('Order marked as in transit successfully!');
       } else {
-        throw new Error(response.data.error || 'Failed to mark as in transit');
+        throw new Error(response.error || 'Failed to mark as in transit');
       }
     } catch (error) {
       console.error('Error marking as in transit:', error);
-      alert(`Failed to mark as in transit. Error: ${error.response?.data?.error || error.message}`);
+      alert(`Failed to mark as in transit. Error: ${error.error || error.message}`);
     }
   };
 
@@ -315,16 +305,11 @@ const DeliveryRequestsList = () => {
       const orderType = request.requestType === 'artwork_order' ? 'artwork' : 'commission';
       
       // Make API call to mark as delivered
-      const response = await axios.put(`http://localhost:8081/api/delivery-status/${orderType}/${request.id}/delivered`, {}, {
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await deliveryPartnerApi.markDelivered(orderType, request.id);
 
-      console.log('Mark delivered API Response:', response.data);
+      console.log('Mark delivered API Response:', response);
 
-      if (response.data.success) {
+      if (response.success) {
         // Update local state
         setDeliveryRequests(prev => 
           prev.map(req => 
@@ -336,11 +321,11 @@ const DeliveryRequestsList = () => {
 
         alert('Order marked as delivered successfully!');
       } else {
-        throw new Error(response.data.error || 'Failed to mark as delivered');
+        throw new Error(response.error || 'Failed to mark as delivered');
       }
     } catch (error) {
       console.error('Error marking as delivered:', error);
-      alert(`Failed to mark as delivered. Error: ${error.response?.data?.error || error.message}`);
+      alert(`Failed to mark as delivered. Error: ${error.error || error.message}`);
     }
   };
 
@@ -407,10 +392,8 @@ const DeliveryRequestsList = () => {
       // Get current user ID for delivery partner ID
       let deliveryPartnerId;
       try {
-        const userResponse = await axios.get(`http://localhost:8081/api/delivery-partner/profile/user/${userId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        deliveryPartnerId = userResponse.data.partnerId;
+        const userResponse = await deliveryPartnerApi.getDeliveryPartnerProfile(userId);
+        deliveryPartnerId = userResponse.partnerId;
         console.log('Got delivery partner ID:', deliveryPartnerId);
       } catch (userError) {
         console.error('Error getting delivery partner ID:', userError);
@@ -432,69 +415,58 @@ const DeliveryRequestsList = () => {
       console.log('Making API call with payload:', requestPayload);
 
       // Make API call to accept the delivery request using the new enhanced endpoint
-      const response = await axios.post('http://localhost:8081/api/delivery-status/accept-enhanced', requestPayload, {
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await deliveryPartnerApi.acceptDeliveryEnhanced(requestPayload);
 
-      console.log('API Response:', response.data);
+      console.log('API Response:', response);
 
-      if (response.data.success) {
+      if (response.success) {
+        console.log('Updating state with accepted request');
         // Update local state with enhanced response data
-        setDeliveryRequests(prev => 
-          prev.map(req => 
-            req.id === selectedRequest.id 
+        setDeliveryRequests(prev => {
+          const updated = prev.map(req => 
+            req.id === selectedRequest.id && req.requestType === selectedRequest.requestType
               ? { 
                   ...req, 
                   status: 'accepted', 
                   acceptedFee: `Rs ${deliveryFee}`, 
                   acceptedDate: new Date().toISOString().split('T')[0],
-                  lastUpdated: response.data.timestamp,
+                  lastUpdated: response.timestamp,
                   deliveryPartnerId: deliveryPartnerId
                 }
               : req
-          )
-        );
+          );
+          console.log('Updated delivery requests:', updated);
+          return updated;
+        });
 
+        console.log('Closing modal and resetting fee');
         setShowAcceptModal(false);
         setDeliveryFee('');
+        setSelectedRequest(null);
         
         // Enhanced success message with more details
         alert(`✅ Delivery request accepted successfully!\n\n` +
               `Order ID: ${selectedRequest.id}\n` +
               `Order Type: ${orderType}\n` +
               `Delivery Fee: Rs ${deliveryFee}\n` +
-              `Status: ${response.data.newStatus}\n` +
-              `${response.data.message || 'Request has been accepted and is ready for pickup.'}\n\n` +
-              `Previous Status: ${response.data.previousStatus}\n` +
-              `Updated At: ${new Date(response.data.timestamp).toLocaleString()}`);
+              `Status: ${response.newStatus || 'accepted'}\n` +
+              `${response.message || 'Request has been accepted and is ready for pickup.'}\n\n` +
+              `Previous Status: ${response.previousStatus || 'pending'}\n` +
+              `Updated At: ${response.timestamp ? new Date(response.timestamp).toLocaleString() : new Date().toLocaleString()}`);
       } else {
-        console.error('API returned success=false:', response.data);
-        throw new Error(response.data.error || 'Failed to accept delivery request');
+        console.error('API returned success=false:', response);
+        throw new Error(response.error || 'Failed to accept delivery request');
       }
     } catch (error) {
       console.error('Error accepting delivery request:', error);
-      console.error('Error details:', {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        message: error.message
-      });
       
       // Check if it's a 404 error or new endpoint not available, fallback to old endpoint
-      if (error.response?.status === 404 || error.code === 'ERR_NETWORK') {
+      if (error.error || error.success === false) {
         console.log('Enhanced endpoint not available, trying standard endpoint...');
         try {
-          const fallbackResponse = await axios.post('http://localhost:8081/api/delivery-status/accept', requestPayload, {
-            headers: { 
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
+          const fallbackResponse = await deliveryPartnerApi.acceptDelivery(requestPayload);
 
-          console.log('Standard API Response:', fallbackResponse.data);
+          console.log('Standard API Response:', fallbackResponse);
 
           // Update local state
           setDeliveryRequests(prev => 
@@ -511,17 +483,12 @@ const DeliveryRequestsList = () => {
         } catch (fallbackError) {
           console.error('Standard endpoint also failed, trying legacy endpoint:', fallbackError);
           try {
-            const legacyResponse = await axios.put(`http://localhost:8081/api/delivery-partner/requests/${selectedRequest.id}/accept`, {
+            const legacyResponse = await deliveryPartnerApi.acceptDeliveryLegacy(selectedRequest.id, {
               requestType: selectedRequest.requestType,
               deliveryFee: deliveryFee
-            }, {
-              headers: { 
-                Authorization: `Bearer ${token}`,
-                'Content-Type': 'application/json'
-              }
             });
 
-            console.log('Legacy API Response:', legacyResponse.data);
+            console.log('Legacy API Response:', legacyResponse);
 
             // Update local state
             setDeliveryRequests(prev => 
@@ -541,15 +508,12 @@ const DeliveryRequestsList = () => {
             // Enhanced error message for complete failure
             let errorMessage = 'Failed to accept delivery request on all available endpoints.';
             
-            if (legacyError.response) {
-              errorMessage += ` Status: ${legacyError.response.status}`;
-              if (legacyError.response.data && legacyError.response.data.error) {
-                errorMessage += `\nError: ${legacyError.response.data.error}`;
+            if (legacyError.error) {
+              errorMessage += `\nError: ${legacyError.error}`;
+              if (legacyError.details) {
+                errorMessage += `\nDetails: ${legacyError.details}`;
               }
-              if (legacyError.response.data && legacyError.response.data.details) {
-                errorMessage += `\nDetails: ${legacyError.response.data.details}`;
-              }
-            } else {
+            } else if (legacyError.message) {
               errorMessage += `\nError: ${legacyError.message}`;
             }
             
@@ -561,28 +525,12 @@ const DeliveryRequestsList = () => {
         // Enhanced error handling for non-404 errors
         let errorMessage = 'Failed to accept delivery request.';
         
-        if (error.response) {
-          errorMessage += ` Status: ${error.response.status}`;
-          if (error.response.data && error.response.data.error) {
-            errorMessage += `\nError: ${error.response.data.error}`;
+        if (error.error) {
+          errorMessage += `\nError: ${error.error}`;
+          if (error.details) {
+            errorMessage += `\nDetails: ${error.details}`;
           }
-          if (error.response.data && error.response.data.details) {
-            errorMessage += `\nDetails: ${error.response.data.details}`;
-          }
-          
-          // Specific handling for common errors
-          if (error.response.status === 400) {
-            errorMessage += '\n\nPlease check that all required fields are provided correctly.';
-          } else if (error.response.status === 401) {
-            errorMessage += '\n\nAuthentication failed. Please log in again.';
-          } else if (error.response.status === 403) {
-            errorMessage += '\n\nAccess denied. You may not have permission to accept this request.';
-          } else if (error.response.status >= 500) {
-            errorMessage += '\n\nServer error. Please try again later or contact support.';
-          }
-        } else if (error.request) {
-          errorMessage += '\n\nNetwork error: Unable to connect to server. Please check your connection.';
-        } else {
+        } else if (error.message) {
           errorMessage += `\nError: ${error.message}`;
         }
         
