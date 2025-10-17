@@ -48,7 +48,7 @@ public class ShopOwnerDAOImpl implements ShopOwnerDAO {
             ps.setString(8, req.getBusinessLicense());
             ps.setString(9, req.getTaxId());
             ps.setBoolean(10, req.isAgreedTerms());
-            ps.setString(11, "Active");
+            ps.setString(11, "Pending");
             return ps;
         }, keyHolder);
 

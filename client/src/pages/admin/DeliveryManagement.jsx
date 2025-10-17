@@ -4,10 +4,8 @@ import {
   Truck,
   Clock,
   AlertCircle,
-  DollarSign,
   BarChart3,
   FileText,
-  Star,
   Download,
   Search,
   AlertTriangle,
@@ -32,7 +30,6 @@ const DeliveryManagement = () => {
       completedDeliveries: 0,
       totalDeliveryPartners: 0,
       pendingRequests: 0,
-      totalRevenue: 0,
       avgDeliveryTime: 0,
       avgRating: 0
     },
@@ -90,7 +87,6 @@ const DeliveryManagement = () => {
             completedDeliveries: statsResponse.data.completedDeliveries || 0,
             totalDeliveryPartners: statsResponse.data.totalDeliveryPartners || 0,
             pendingRequests: statsResponse.data.pendingRequests || 0,
-            totalRevenue: statsResponse.data.totalRevenue || 0,
             avgDeliveryTime: statsResponse.data.avgDeliveryTime || 0,
             avgRating: statsResponse.data.avgRating || 0
           },
@@ -113,7 +109,6 @@ const DeliveryManagement = () => {
           completedDeliveries: 0,
           totalDeliveryPartners: 0,
           pendingRequests: 0,
-          totalRevenue: 0,
           avgDeliveryTime: 0,
           avgRating: 0
         },
@@ -256,15 +251,6 @@ const DeliveryManagement = () => {
     return statusMap[frontendStatus] || frontendStatus;
   };
 
-  const formatCurrencyCompact = (amount) => {
-    if (amount >= 1000000) {
-      return `LKR ${(amount / 1000000).toFixed(1)}M`;
-    } else if (amount >= 1000) {
-      return `LKR ${(amount / 1000).toFixed(0)}K`;
-    }
-    return `LKR ${amount.toLocaleString()}`;
-  };
-
   const getStatusColor = (status) => {
     switch (status) {
       case 'pending_assignment': 
@@ -303,7 +289,7 @@ const DeliveryManagement = () => {
 const renderOverview = () => (
     <div className="space-y-8">
         {/* Key Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
                 <div className="flex items-center">
                     <div className="p-3 rounded-full" style={{ backgroundColor: '#FFE4D6' }}>
@@ -328,28 +314,14 @@ const renderOverview = () => (
                 </div>
             </div>
 
-      <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-        <div className="flex items-center">
-          <div className="p-3 rounded-full" style={{ backgroundColor: '#FFE4D6' }}>
-            <AlertTriangle className="h-8 w-8" style={{ color: '#D87C5A' }} />
-          </div>
-          <div className="ml-4">
-            <p className="text-sm font-medium whitespace-nowrap" style={{ color: '#D87C5A' }}>Pending Requests</p>
-            <p className="text-2xl font-bold" style={{ color: '#5D3A00' }}>{deliveryData.stats.pendingRequests}</p>
-          </div>
-        </div>
-      </div>
-
             <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
                 <div className="flex items-center">
-                    <div className="p-3 rounded-full" style={{ backgroundColor: '#FFD95A' }}>
-                        <DollarSign className="h-8 w-8" style={{ color: '#5D3A00' }} />
+                    <div className="p-3 rounded-full" style={{ backgroundColor: '#FFE4D6' }}>
+                        <AlertTriangle className="h-8 w-8" style={{ color: '#D87C5A' }} />
                     </div>
                     <div className="ml-4">
-                        <p className="text-sm font-medium" style={{ color: '#D87C5A' }}>Total Revenue</p>
-                        <p className="text-2xl font-bold whitespace-nowrap" style={{ color: '#5D3A00' }}>
-                            {formatCurrencyCompact(deliveryData.stats.totalRevenue)}
-                        </p>
+                        <p className="text-sm font-medium whitespace-nowrap" style={{ color: '#D87C5A' }}>Pending Requests</p>
+                        <p className="text-2xl font-bold" style={{ color: '#5D3A00' }}>{deliveryData.stats.pendingRequests}</p>
                     </div>
                 </div>
             </div>
@@ -362,42 +334,47 @@ const renderOverview = () => (
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
                         <span className="text-sm" style={{ color: '#D87C5A' }}>Completion Rate</span>
-                        <span className="text-lg font-bold" style={{ color: '#5D3A00' }}>94%</span>
+                        <span className="text-lg font-bold" style={{ color: '#5D3A00' }}>
+                            {deliveryData.stats.totalDeliveries > 0 
+                                ? Math.round((deliveryData.stats.completedDeliveries / deliveryData.stats.totalDeliveries) * 100) 
+                                : 0}%
+                        </span>
                     </div>
                     <div className="flex items-center justify-between">
-                        <span className="text-sm" style={{ color: '#D87C5A' }}>Avg. Delivery Time</span>
-                        <span className="text-lg font-bold" style={{ color: '#5D3A00' }}>{deliveryData.stats.avgDeliveryTime} days</span>
+                        <span className="text-sm" style={{ color: '#D87C5A' }}>Delivered Orders</span>
+                        <span className="text-lg font-bold" style={{ color: '#5D3A00' }}>{deliveryData.stats.completedDeliveries}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                        <span className="text-sm" style={{ color: '#D87C5A' }}>Customer Rating</span>
-                        <div className="flex items-center">
-                            <Star className="h-4 w-4" style={{ color: '#FFD95A' }} />
-                            <span className="text-lg font-bold ml-1" style={{ color: '#5D3A00' }}>{deliveryData.stats.avgRating}</span>
-                        </div>
+                        <span className="text-sm" style={{ color: '#D87C5A' }}>Commission Requests</span>
+                        <span className="text-lg font-bold" style={{ color: '#5D3A00' }}>
+                            {deliveryData.deliveries.filter(d => d.requestType === 'commission_request').length}
+                        </span>
                     </div>
                 </div>
             </div>
 
             <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-                <h3 className="text-lg font-semibold mb-4" style={{ color: '#5D3A00' }}>Pending Actions</h3>
+                <h3 className="text-lg font-semibold mb-4" style={{ color: '#5D3A00' }}>Status Breakdown</h3>
                 <div className="space-y-3">
                     <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: '#FFE4D6' }}>
                         <div className="flex items-center">
                             <AlertTriangle className="h-5 w-5" style={{ color: '#D87C5A' }} />
                             <span className="ml-2 text-sm font-medium" style={{ color: '#5D3A00' }}>
-                                Unassigned Requests
+                                Pending Requests
                             </span>
                         </div>
                         <span className="text-lg font-bold" style={{ color: '#5D3A00' }}>{deliveryData.stats.pendingRequests}</span>
                     </div>
                     <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: '#FFE4D6' }}>
                         <div className="flex items-center">
-                            <Clock className="h-5 w-5" style={{ color: '#D87C5A' }} />
+                            <Truck className="h-5 w-5" style={{ color: '#D87C5A' }} />
                             <span className="ml-2 text-sm font-medium" style={{ color: '#5D3A00' }}>
-                                Overdue Deliveries
+                                Out for Delivery
                             </span>
                         </div>
-                        <span className="text-lg font-bold" style={{ color: '#5D3A00' }}>2</span>
+                        <span className="text-lg font-bold" style={{ color: '#5D3A00' }}>
+                            {deliveryData.deliveries.filter(d => d.status === 'in_transit').length}
+                        </span>
                     </div>
                 </div>
             </div>
@@ -450,10 +427,6 @@ const renderOverview = () => (
           </div>
 
           <div className="flex gap-2">
-            <button className="px-4 py-2 text-sm font-medium rounded-lg flex items-center gap-2 border" style={{ color: '#5D3A00', borderColor: '#FFE4D6' }}>
-              <Download className="h-4 w-4" />
-              Export
-            </button>
             <button 
               onClick={refreshData}
               className="px-4 py-2 text-sm font-medium text-white rounded-lg flex items-center gap-2" 
@@ -544,7 +517,7 @@ const renderOverview = () => (
               style={{ borderColor: '#5D3A00' }}
             ></div>
           </div>
-          <p className="mt-4" style={{ color: '#D87C5A' }}>Loading delivery management...</p>
+          <p className="mt-4" style={{ color: '#D87C5A' }}>Loading delivery Handling...</p>
         </div>
       );
     }
@@ -591,18 +564,8 @@ const renderOverview = () => (
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold" style={{ color: '#5D3A00' }}>Delivery Management</h2>
+          <h2 className="text-2xl font-bold" style={{ color: '#5D3A00' }}>Delivery Review</h2>
           <p style={{ color: '#D87C5A' }}>Monitor and manage all delivery operations</p>
-        </div>
-        <div className="flex gap-3">
-          <button className="px-4 py-2 text-sm font-medium rounded-lg border flex items-center gap-2" style={{ color: '#5D3A00', borderColor: '#FFE4D6' }}>
-            <Download className="h-4 w-4" />
-            Export Report
-          </button>
-          <button className="px-4 py-2 text-sm font-medium text-white rounded-lg flex items-center gap-2" style={{ backgroundColor: '#D87C5A' }}>
-            <FileText className="h-4 w-4" />
-            Generate Report
-          </button>
         </div>
       </div>
 
