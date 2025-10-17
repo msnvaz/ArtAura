@@ -81,7 +81,7 @@ const AdminDashboard = () => {
   return (
     <CurrencyProvider>
       {/* Optimized CSS styles for smoother animations */}
-      <style jsx>{`
+      <style>{`
         @keyframes smoothFadeIn {
           from {
             opacity: 0;
