@@ -37,7 +37,7 @@ public class OrderDaoImpl implements OrderDao {
         }
         // Use total_amount from DTO for DB insert
         jdbcTemplate.update(orderSql,
-                orderRequest.getStatus(),
+                "excrow", // force status to excrow
                 mysqlDateTime,
                 orderRequest.getBuyerId(),
                 orderRequest.getBillingFirstName(),
@@ -50,22 +50,54 @@ public class OrderDaoImpl implements OrderDao {
                 orderRequest.getStripePaymentId()
         );
         Long orderId = jdbcTemplate.queryForObject("SELECT LAST_INSERT_ID()", Long.class);
-        
+
         // Insert order items and update artwork status to "Sold"
         String itemSql = "INSERT INTO AW_order_items (order_id, artwork_id, quantity, price, title, artist_id) VALUES (?, ?, ?, ?, ?, ?)";
         String updateArtworkStatusSql = "UPDATE artworks SET status = 'Sold', updated_at = CURRENT_TIMESTAMP WHERE artwork_id = ?";
-        
+        // Insert payment records (one per order item)
+        String paymentSql = "INSERT INTO payment (status, amount, buyer_id, artist_id, AW_order_id, created_at) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
+
         for (OrderItemRequest item : orderRequest.getItems()) {
+            if (item.getArtworkId() == null) {
+                throw new IllegalArgumentException("Order item is missing artwork_id.");
+            }
+            // Resolve artistId from request or fallback to DB by artworkId
+            Long resolvedArtistId = item.getArtistId();
+            if (resolvedArtistId == null) {
+                try {
+                    resolvedArtistId = jdbcTemplate.queryForObject(
+                            "SELECT artist_id FROM artworks WHERE artwork_id = ?",
+                            Long.class,
+                            item.getArtworkId()
+                    );
+                } catch (Exception ex) {
+                    resolvedArtistId = null;
+                }
+            }
+            if (resolvedArtistId == null) {
+                throw new IllegalStateException("Artist not found for artwork_id=" + item.getArtworkId());
+            }
+
             // Insert order item
             jdbcTemplate.update(itemSql,
                     orderId,
-                    item.getArtworkId(), // <-- use getArtworkId() for artwork_id
+                    item.getArtworkId(),
                     item.getQuantity(),
                     item.getPrice(),
                     item.getTitle(),
-                    item.getArtistId()
+                    resolvedArtistId
             );
-            
+
+            // Insert payment record for this item
+            double amount = (item.getPrice() != null ? item.getPrice() : 0.0) * (item.getQuantity() != null ? item.getQuantity() : 0);
+            jdbcTemplate.update(paymentSql,
+                    "escrow", // force status to excrow
+                    amount,
+                    orderRequest.getBuyerId(),
+                    resolvedArtistId,
+                    orderId
+            );
+
             // Update artwork status to "Sold"
             try {
                 int rowsUpdated = jdbcTemplate.update(updateArtworkStatusSql, item.getArtworkId());
@@ -79,7 +111,7 @@ public class OrderDaoImpl implements OrderDao {
                 // Continue with other artworks even if one fails
             }
         }
-        
+
         return orderId;
     }
 
@@ -134,6 +166,10 @@ public class OrderDaoImpl implements OrderDao {
             // Optionally set order imageUrl to first item's imageUrl if available
             if (!items.isEmpty() && items.get(0).getImageUrl() != null) {
                 order.setImageUrl(items.get(0).getImageUrl());
+            }
+            // For clients expecting an order-level artistId, set it from the first item
+            if (!items.isEmpty() && items.get(0).getArtistId() != null) {
+                order.setArtistId(items.get(0).getArtistId());
             }
 
             return order;

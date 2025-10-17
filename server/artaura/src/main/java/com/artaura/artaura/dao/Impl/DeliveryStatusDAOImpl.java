@@ -87,20 +87,31 @@ public class DeliveryStatusDAOImpl implements DeliveryStatusDAO {
         try {
             String sql = """
                 SELECT 
-                    id, 
-                    buyer_id, 
-                    first_name, 
-                    last_name, 
-                    email, 
-                    order_date, 
-                    total_amount, 
-                    shipping_address, 
-                    contact_number, 
-                    delivery_status,
-                    shipping_fee
-                FROM AW_orders 
-                WHERE delivery_status = 'pending'
-                ORDER BY order_date DESC
+                    ao.id, 
+                    ao.buyer_id, 
+                    ao.first_name, 
+                    ao.last_name, 
+                    ao.email, 
+                    ao.order_date, 
+                    ao.total_amount, 
+                    ao.shipping_address, 
+                    ao.contact_number, 
+                    ao.delivery_status,
+                    ao.shipping_fee,
+                    aoi.artist_id,
+                    CONCAT(a.first_name, ' ', a.last_name) AS artist_name,
+                    a.contactNo AS artist_contact,
+                    a.email AS artist_email,
+                    CONCAT(COALESCE(addr.street_address, ''), ', ', COALESCE(addr.city, ''), ', ', 
+                           COALESCE(addr.state, ''), ', ', COALESCE(addr.country, '')) AS artist_address,
+                    addr.city AS artist_city,
+                    aoi.title AS artwork_title
+                FROM AW_orders ao
+                LEFT JOIN AW_order_items aoi ON ao.id = aoi.order_id
+                LEFT JOIN artists a ON aoi.artist_id = a.artist_id
+                LEFT JOIN addresses addr ON a.artist_id = addr.artist_id
+                WHERE ao.delivery_status = 'pending'
+                ORDER BY ao.order_date DESC
                 """;
             return jdbcTemplate.queryForList(sql);
         } catch (DataAccessException e) {
@@ -114,22 +125,35 @@ public class DeliveryStatusDAOImpl implements DeliveryStatusDAO {
         try {
             String sql = """
                 SELECT 
-                    id, 
-                    artist_id, 
-                    buyer_id, 
-                    name, 
-                    email, 
-                    phone, 
-                    title, 
-                    artwork_type, 
-                    budget, 
-                    deadline, 
-                    shipping_address, 
-                    delivery_status,
-                    shipping_fee
-                FROM commission_requests 
-                WHERE delivery_status = 'pending'
-                ORDER BY submitted_at DESC
+                    cr.id, 
+                    cr.artist_id, 
+                    cr.buyer_id, 
+                    cr.name, 
+                    cr.email, 
+                    cr.phone, 
+                    cr.title, 
+                    cr.artwork_type, 
+                    cr.budget, 
+                    cr.deadline, 
+                    cr.shipping_address, 
+                    cr.delivery_status,
+                    cr.shipping_fee,
+                    cr.submitted_at,
+                    cr.dimensions,
+                    cr.style,
+                    cr.urgency,
+                    cr.additional_notes,
+                    CONCAT(a.first_name, ' ', a.last_name) AS artist_name,
+                    a.contactNo AS artist_contact,
+                    a.email AS artist_email,
+                    CONCAT(COALESCE(addr.street_address, ''), ', ', COALESCE(addr.city, ''), ', ', 
+                           COALESCE(addr.state, ''), ', ', COALESCE(addr.country, '')) AS artist_address,
+                    addr.city AS artist_city
+                FROM commission_requests cr
+                LEFT JOIN artists a ON cr.artist_id = a.artist_id
+                LEFT JOIN addresses addr ON a.artist_id = addr.artist_id
+                WHERE cr.delivery_status = 'pending'
+                ORDER BY cr.submitted_at DESC
                 """;
             return jdbcTemplate.queryForList(sql);
         } catch (DataAccessException e) {
