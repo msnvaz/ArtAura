@@ -517,12 +517,12 @@ const Financial = () => {
                     <span className="font-semibold">{formatPrice(transaction.amount, 'LKR')}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Commission (15%):</span>
-                    <span>{formatPrice(transaction.amount * 0.15, 'LKR')}</span>
+                    <span>Platform Commission:</span>
+                    <span>{formatPrice(transaction.platformFee || 0, 'LKR')}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Artist Payout:</span>
-                    <span>{formatPrice(transaction.amount * 0.85, 'LKR')}</span>
+                    <span>{formatPrice(transaction.amount - (transaction.platformFee || 0), 'LKR')}</span>
                   </div>
                   {transaction.status === 'escrow' && (
                     <div className="flex justify-between text-blue-600">
@@ -1244,7 +1244,7 @@ const Financial = () => {
                           {formatPrice(payment.amount, 'LKR')}
                         </p>
                         <p className="text-xs" style={{color: '#8B4513'}}>
-                          Commission: {formatPrice(payment.amount * 0.15, 'LKR')} {/* Assuming 15% commission */}
+                          Commission: {formatPrice(payment.platformFee || 0, 'LKR')}
                         </p>
                       </div>
                     </td>

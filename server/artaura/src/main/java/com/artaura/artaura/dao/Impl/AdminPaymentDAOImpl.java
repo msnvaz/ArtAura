@@ -28,10 +28,17 @@ public class AdminPaymentDAOImpl implements AdminPaymentDAO {
         sql.append("CONCAT(a.first_name, ' ', a.last_name) as artist_name, a.email as artist_email, ");
         sql.append("CONCAT(b.first_name, ' ', b.last_name) as buyer_name, b.email as buyer_email, ");
         sql.append("CASE WHEN p.AW_order_id IS NOT NULL THEN 'order' ELSE 'commission' END as payment_type, ");
-        sql.append("'Payment Transaction' as description ");
+        sql.append("COALESCE(pf.fee_amount, 0) as platform_fee, ");
+        sql.append("CASE WHEN p.AW_order_id IS NOT NULL THEN ");
+        sql.append("  CONCAT('Order #', p.AW_order_id) ");
+        sql.append("ELSE ");
+        sql.append("  COALESCE(cr.title, 'Commission Request') ");
+        sql.append("END as description ");
         sql.append("FROM payment p ");
         sql.append("LEFT JOIN artists a ON p.artist_id = a.artist_id ");
         sql.append("LEFT JOIN buyers b ON p.buyer_id = b.buyer_id ");
+        sql.append("LEFT JOIN platform_fees pf ON p.id = pf.payment_id ");
+        sql.append("LEFT JOIN commission_requests cr ON p.commission_request_id = cr.id ");
         sql.append("WHERE 1=1 ");
 
         List<Object> params = new ArrayList<>();
@@ -104,6 +111,7 @@ public class AdminPaymentDAOImpl implements AdminPaymentDAO {
             payment.setBuyerEmail(rs.getString("buyer_email"));
             payment.setPaymentType(rs.getString("payment_type"));
             payment.setOrderDescription(rs.getString("description"));
+            payment.setPlatformFee(rs.getBigDecimal("platform_fee"));
             
             return payment;
         });
@@ -120,14 +128,17 @@ public class AdminPaymentDAOImpl implements AdminPaymentDAO {
                     "CONCAT(a.first_name, ' ', a.last_name) as artist_name, a.email as artist_email, " +
                     "CONCAT(b.first_name, ' ', b.last_name) as buyer_name, b.email as buyer_email, " +
                     "CASE WHEN p.AW_order_id IS NOT NULL THEN 'order' ELSE 'commission' END as payment_type, " +
+                    "COALESCE(pf.fee_amount, 0) as platform_fee, " +
                     "CASE WHEN p.AW_order_id IS NOT NULL THEN " +
-                    "  (SELECT CONCAT('Order #', aw.id, ' - Items purchased') FROM AW_orders aw WHERE aw.id = p.AW_order_id) " +
+                    "  CONCAT('Order #', p.AW_order_id) " +
                     "ELSE " +
-                    "  (SELECT cr.title FROM commission_requests cr WHERE cr.id = p.commission_request_id) " +
+                    "  COALESCE(cr.title, 'Commission Request') " +
                     "END as description " +
                     "FROM payment p " +
                     "LEFT JOIN artists a ON p.artist_id = a.artist_id " +
                     "LEFT JOIN buyers b ON p.buyer_id = b.buyer_id " +
+                    "LEFT JOIN platform_fees pf ON p.id = pf.payment_id " +
+                    "LEFT JOIN commission_requests cr ON p.commission_request_id = cr.id " +
                     "WHERE p.id = ?";
 
         try {
@@ -153,6 +164,7 @@ public class AdminPaymentDAOImpl implements AdminPaymentDAO {
                 p.setBuyerEmail(rs.getString("buyer_email"));
                 p.setPaymentType(rs.getString("payment_type"));
                 p.setOrderDescription(rs.getString("description"));
+                p.setPlatformFee(rs.getBigDecimal("platform_fee"));
                 
                 return p;
             });
@@ -251,14 +263,17 @@ public class AdminPaymentDAOImpl implements AdminPaymentDAO {
                     "CONCAT(a.first_name, ' ', a.last_name) as artist_name, a.email as artist_email, " +
                     "CONCAT(b.first_name, ' ', b.last_name) as buyer_name, b.email as buyer_email, " +
                     "CASE WHEN p.AW_order_id IS NOT NULL THEN 'order' ELSE 'commission' END as payment_type, " +
+                    "COALESCE(pf.fee_amount, 0) as platform_fee, " +
                     "CASE WHEN p.AW_order_id IS NOT NULL THEN " +
-                    "  (SELECT CONCAT('Order #', aw.id, ' - Items purchased') FROM AW_orders aw WHERE aw.id = p.AW_order_id) " +
+                    "  CONCAT('Order #', p.AW_order_id) " +
                     "ELSE " +
-                    "  (SELECT cr.title FROM commission_requests cr WHERE cr.id = p.commission_request_id) " +
+                    "  COALESCE(cr.title, 'Commission Request') " +
                     "END as description " +
                     "FROM payment p " +
                     "LEFT JOIN artists a ON p.artist_id = a.artist_id " +
                     "LEFT JOIN buyers b ON p.buyer_id = b.buyer_id " +
+                    "LEFT JOIN platform_fees pf ON p.id = pf.payment_id " +
+                    "LEFT JOIN commission_requests cr ON p.commission_request_id = cr.id " +
                     "WHERE CONCAT(a.first_name, ' ', a.last_name) LIKE ? " +
                     "OR CONCAT(b.first_name, ' ', b.last_name) LIKE ? " +
                     "OR a.email LIKE ? " +
@@ -288,6 +303,7 @@ public class AdminPaymentDAOImpl implements AdminPaymentDAO {
             payment.setBuyerEmail(rs.getString("buyer_email"));
             payment.setPaymentType(rs.getString("payment_type"));
             payment.setOrderDescription(rs.getString("description"));
+            payment.setPlatformFee(rs.getBigDecimal("platform_fee"));
             
             return payment;
         });
