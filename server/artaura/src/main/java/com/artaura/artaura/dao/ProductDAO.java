@@ -8,6 +8,8 @@ public interface ProductDAO {
 
     List<AddProductDTO> findAll();
 
+    List<AddProductDTO> findByShopId(Long shopId);
+
     void deleteById(Long id);
 
     void updateById(Long id, AddProductDTO product);

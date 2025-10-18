@@ -2,6 +2,7 @@ package com.artaura.artaura.dto.catalog;
 
 public class AddProductDTO {
     private Long id;
+    private Long shopId;
     private String name;
     private String sku;
     private String category;
@@ -23,6 +24,14 @@ public class AddProductDTO {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Long getShopId() {
+        return shopId;
+    }
+
+    public void setShopId(Long shopId) {
+        this.shopId = shopId;
     }
 
     public String getName() {
