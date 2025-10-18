@@ -22,6 +22,7 @@ public class AWOrderDto {
     private String stripePaymentId;
     private List<AWOrderItemDto> items;
     private String imageUrl;
+    private Long artistId; // Add missing artistId at order level (note: for multi-artist orders prefer reading from items)
 
     // Getter and Setter for deliveryStatus
     public String getDeliveryStatus() {

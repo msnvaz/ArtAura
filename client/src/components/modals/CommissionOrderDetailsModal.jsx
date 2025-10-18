@@ -14,9 +14,11 @@ const CommissionOrderDetailsModal = ({ order, isOpen, onClose }) => {
   const artistId = order.artistId ?? order.artist?.id ?? null;
   const artistName = order.artistName ?? order.artist?.name ?? "Artist";
   const ratedKey = `rated:commission:${order.id}:${artistId ?? "unknown"}`;
-  const isDelivered = ["delivered", "completed"].includes(
-    String(order.status || "").toLowerCase()
-  );
+  // Consider both status and deliveryStatus to enable rating
+  const isDelivered =
+    ["delivered", "completed"].includes(
+      String(order.status || "").toLowerCase()
+    ) || String(order.deliveryStatus || "").toLowerCase() === "delivered";
 
   const checkRated = () => {
     const val = localStorage.getItem(ratedKey) === "1";

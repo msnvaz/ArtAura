@@ -14,8 +14,8 @@ import {
     Navigation
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
+import deliveryPartnerApi from '../../services/deliveryPartnerApi';
 
 const ActiveDeliveries = () => {
   const { token } = useAuth();
@@ -115,13 +115,11 @@ const ActiveDeliveries = () => {
         
         // First try the new API endpoint for active deliveries
         try {
-          const response = await axios.get('http://localhost:8081/api/delivery-partner/requests/active', {
-            headers: { Authorization: `Bearer ${token}` },
-          });
+          const response = await deliveryPartnerApi.getActiveDeliveries();
           
-          if (response.data.success && response.data.requests) {
+          if (response.success && response.requests) {
             // Transform the API data to match the component format
-            const transformedDeliveries = response.data.requests.map(request => ({
+            const transformedDeliveries = response.requests.map(request => ({
               id: request.id,
               requestId: `${request.requestType === 'artwork_order' ? 'AW' : 'COM'}-${request.id}`,
               requestType: request.requestType,
@@ -182,12 +180,10 @@ const ActiveDeliveries = () => {
         }
         
         // Fallback to old API endpoint if new one fails
-        const response = await axios.get('http://localhost:8081/api/delivery-status/pending', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await deliveryPartnerApi.getPendingDeliveries();
         
-        if (response.data.success) {
-          const { artworkOrders, commissionRequests } = response.data.data;
+        if (response.success) {
+          const { artworkOrders, commissionRequests } = response.data;
           
           // Filter only accepted and outForDelivery statuses for active deliveries
           const activeArtworkOrders = artworkOrders.filter(order => 
@@ -304,7 +300,7 @@ const ActiveDeliveries = () => {
           
           setActiveDeliveries(transformedDeliveries);
         } else {
-          setError(response.data.error || 'Failed to fetch active deliveries');
+          setError(response.error || 'Failed to fetch active deliveries');
         }
       } catch (error) {
         console.error('Error fetching active deliveries:', error);
@@ -321,62 +317,14 @@ const ActiveDeliveries = () => {
     try {
       console.log('Updating delivery status:', { delivery, newStatus });
       
-      // Convert request type to match backend expected format
-      const orderType = delivery.requestType === 'artwork_order' ? 'artwork' : 'commission';
-      
-      let apiUrl;
-      let requestData = null;
-      let deliveryStatusToSend;
-      
-      // Map the frontend actions to backend delivery status and choose appropriate endpoint
-      if (newStatus === 'picked_up' || newStatus === 'in_transit') {
-        // Use the specific "out-for-delivery" endpoint
-        deliveryStatusToSend = 'outForDelivery';
-        apiUrl = `http://localhost:8081/api/delivery-status/${orderType}/${delivery.id}/out-for-delivery`;
-      } else if (newStatus === 'delivered') {
-        // Use the specific "delivered" endpoint
-        deliveryStatusToSend = 'delivered';
-        apiUrl = `http://localhost:8081/api/delivery-status/${orderType}/${delivery.id}/delivered`;
-      } else {
-        // For other status updates, use the comprehensive update endpoint
-        deliveryStatusToSend = newStatus;
-        apiUrl = 'http://localhost:8081/api/delivery-status/update-comprehensive';
-        requestData = {
-          orderId: delivery.id,
-          orderType: orderType,
-          deliveryStatus: deliveryStatusToSend,
-          shippingFee: null,
-          deliveryPartnerId: null
-        };
-      }
+      // Use the service to update delivery status
+      const response = await deliveryPartnerApi.updateDeliveryStatus(delivery, newStatus);
 
-      console.log('API URL:', apiUrl);
-      console.log('Delivery status to send:', deliveryStatusToSend);
-      console.log('Request data:', requestData);
-      
-      // Make API call
-      let response;
-      if (requestData) {
-        // POST/PUT request with body
-        response = await axios.put(apiUrl, requestData, {
-          headers: { 
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-      } else {
-        // PUT request without body (for specific endpoints)
-        response = await axios.put(apiUrl, {}, {
-          headers: { 
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-      }
+      console.log('Status update API Response:', response);
+      console.log('Platform Fee:', response.platformFee);
+      console.log('Payment Amount:', response.paymentAmount);
 
-      console.log('Status update API Response:', response.data);
-
-      if (response.data.success) {
+      if (response.success) {
         const currentTime = new Date().toLocaleString();
         
         setActiveDeliveries(prev => 
@@ -421,25 +369,34 @@ const ActiveDeliveries = () => {
                           newStatus === 'delivered' ? 'Delivered' :
                           newStatus.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
         
-        alert(`Delivery status updated successfully to: ${statusLabel}\n\nResponse: ${response.data.message}`);
+        // Show alert with platform fee and payment amount when delivered
+        let alertMessage = `Delivery status updated successfully to: ${statusLabel}\n\nResponse: ${response.message || 'Success'}`;
+        
+        if (newStatus === 'delivered') {
+          alertMessage += `\n\n📊 Payment Details:\n`;
+          alertMessage += `💰 Platform Fee: ${response.platformFee || 'N/A'}%\n`;
+          alertMessage += `💵 Payment Amount: Rs ${response.paymentAmount || 'N/A'}`;
+          
+          console.log('Alert message for delivered status:', alertMessage);
+        }
+        
+        alert(alertMessage);
       } else {
-        throw new Error(response.data.error || 'Failed to update status');
+        throw new Error(response.error || 'Failed to update status');
       }
     } catch (error) {
       console.error('Error updating delivery status:', error);
       
       // Enhanced error handling
       let errorMessage = 'Failed to update delivery status.';
-      if (error.response) {
-        errorMessage += ` Status: ${error.response.status}`;
-        if (error.response.data && error.response.data.error) {
-          errorMessage += `\nError: ${error.response.data.error}`;
-        }
-        if (error.response.data && error.response.data.details) {
-          errorMessage += `\nDetails: ${error.response.data.details}`;
-        }
-      } else if (error.message) {
-        errorMessage += ` Error: ${error.message}`;
+      if (error.error) {
+        errorMessage += `\nError: ${error.error}`;
+      }
+      if (error.details) {
+        errorMessage += `\nDetails: ${error.details}`;
+      }
+      if (error.message && !error.error) {
+        errorMessage += ` ${error.message}`;
       }
       
       alert(errorMessage);

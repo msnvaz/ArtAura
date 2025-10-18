@@ -10,17 +10,28 @@ import {
   User,
 } from "lucide-react";
 import ReviewModal from "./ReviewModal";
+import Toast from "./Toast";
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 const OrderDetailsModal = ({ order, isOpen, onClose }) => {
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [selectedArtist, setSelectedArtist] = useState({ name: "", id: null });
   const [ratedArtists, setRatedArtists] = useState(new Set());
+  const [toast, setToast] = useState({
+    isVisible: false,
+    message: "",
+    type: "success",
+  });
 
   if (!isOpen || !order) return null;
 
   const makeRatedKey = (artistId) =>
     `rated:shop:${order.id}:${artistId ?? "unknown"}`;
-  const isDelivered = String(order.status || "").toLowerCase() === "delivered";
+  const isDelivered =
+    ["delivered", "completed"].includes(
+      String(order.status || "").toLowerCase()
+    ) || String(order.deliveryStatus || "").toLowerCase() === "delivered";
 
   const syncRatedFromStorage = () => {
     const next = new Set();
@@ -31,17 +42,62 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
     setRatedArtists(next);
   };
 
-  const handleReviewSubmit = (reviewData) => {
-    // Persist rated flag locally to prevent duplicates client-side
+  const handleReviewSubmit = async (reviewData) => {
     const artistId = selectedArtist.id;
-    if (artistId != null) {
-      localStorage.setItem(makeRatedKey(artistId), "1");
-      setRatedArtists((prev) => new Set(prev).add(artistId));
+    const orderId = order.id;
+    const buyerId = order.buyerId;
+    const token = localStorage.getItem("token"); // or your actual token key
+    console.log(
+      "Submitting review for artistId:",
+      artistId,
+      "orderId:",
+      orderId,
+      "buyerId:",
+      buyerId,
+      reviewData
+    );
+    try {
+      const res = await fetch(`${API_URL}/api/reviews`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+        body: JSON.stringify({
+          artistId,
+          buyerId,
+          orderId,
+          rating: reviewData.rating,
+          comment: reviewData.comment,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.text();
+        setToast({
+          isVisible: true,
+          message: "Failed to submit review: " + err,
+          type: "error",
+        });
+        return;
+      }
+      // Persist rated flag locally to prevent duplicates client-side
+      if (artistId != null) {
+        localStorage.setItem(makeRatedKey(artistId), "1");
+        setRatedArtists((prev) => new Set(prev).add(artistId));
+      }
+      setToast({
+        isVisible: true,
+        message: "Review submitted successfully!",
+        type: "success",
+      });
+      setShowReviewModal(false);
+    } catch (e) {
+      setToast({
+        isVisible: true,
+        message: "Error submitting review: " + e.message,
+        type: "error",
+      });
     }
-    // TODO: send review to backend and enforce server-side uniqueness
-    console.log("Review submitted:", reviewData);
-    alert("Review submitted successfully!");
-    setShowReviewModal(false);
   };
 
   const openReviewModal = (artistName, artistId) => {
@@ -317,7 +373,7 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
                             <button
                               disabled={!isDelivered || alreadyRated}
                               onClick={() =>
-                                openReviewModal(item.artistName, item.artistId)
+                                openReviewModal(item.artistName, order.artistId)
                               }
                               className={`shrink-0 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                                 !isDelivered || alreadyRated
@@ -361,6 +417,14 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
         artistName={selectedArtist.name}
         artistId={selectedArtist.id}
         onSubmitReview={handleReviewSubmit}
+      />
+
+      {/* Toast Notification */}
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={() => setToast((t) => ({ ...t, isVisible: false }))}
       />
     </>
   );

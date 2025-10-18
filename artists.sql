@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: mysql-artaura.alwaysdata.net
--- Generation Time: Oct 16, 2025 at 11:12 AM
+-- Generation Time: Oct 17, 2025 at 12:43 PM
 -- Server version: 10.11.14-MariaDB
 -- PHP Version: 7.4.33
 
@@ -69,7 +69,8 @@ INSERT INTO `artists` (`artist_id`, `agreed_terms`, `badge`, `bio`, `contactNo`,
 (7, b'1', NULL, NULL, '1368487', '2025-07-05 17:02:23.821319', 'pawanr13@gmail.com', 'Pawan', 'Rathnayake', '153487', '$2a$10$Gx8zy9djc7kP6T5kxUGoWO6Af2UwhHoFgX1OE2wYvt7xTnETpACxu', 3.5, 'mixed', NULL, NULL, NULL, NULL, NULL, NULL, '2025-07-13 11:03:32', 0, 1001, 7, 'Suspended', NULL, '/nic/bg3.jpg'),
 (11, b'1', NULL, 'I\'m a visual artist passionate about turning emotion and imagination into vibrant artworks. I work with watercolor, acrylic, oil painting drawing, inspiration from everyday life, nature, and inner experiences. Always exploring, always creating.', '0771415855', '2025-07-14 14:32:02.279442', 'nimantham.lk@gmail.com', 'Nimantha', 'Madushan', 'nimantham.lk@gmail.com', '$2a$10$xX2ThSoWBMGUE6PUiHYRvO9gvtZakvvAXRW1nsqYUjluNa96kevzi', 5, 'painting', 'Colombo', '', '_nimantha.m', '', '/uploads/profiles/11_avatar_1755769381087.jpg', '/uploads/profiles/11_cover_1755846723860.PNG', '2025-07-14 09:02:02', 0, 1201, 18, 'Active', NULL, NULL),
 (16, b'1', NULL, NULL, '0767777777', '2025-07-21 17:00:16.222649', 'sandeepvz1@gmail.com', 'Sandeep', 'Vaz', '200207303077', '$2a$10$IbZAMAqFPOp9Cgq6/Msnc.ID2oG5KFRR/gu1rsuoow8ZQTjqfFKsC', 3.5, 'digital', NULL, NULL, NULL, NULL, NULL, NULL, '2025-07-21 15:00:16', 0, 520, 1, 'Pending', NULL, NULL),
-(17, b'1', NULL, NULL, '+94741748684', '2025-08-20 09:03:37.411034', 'wameesharasanjani28@gmail.com', 'Wameesha', 'Rasanjani', '200277200485', '$2a$10$uClu3YDZYdftWmvUgxkfKes..Z9DvBTA3iFZfSUbPpTLzIK82kcKe', 2, 'photography', NULL, NULL, NULL, NULL, NULL, NULL, '2025-08-20 07:03:37', 0, 300, 5, 'Pending', NULL, NULL);
+(17, b'1', NULL, NULL, '+94741748684', '2025-08-20 09:03:37.411034', 'wameesharasanjani28@gmail.com', 'Wameesha', 'Rasanjani', '200277200485', '$2a$10$uClu3YDZYdftWmvUgxkfKes..Z9DvBTA3iFZfSUbPpTLzIK82kcKe', 2, 'photography', NULL, NULL, NULL, NULL, NULL, NULL, '2025-08-20 07:03:37', 0, 300, 5, 'Pending', NULL, NULL),
+(18, b'1', NULL, NULL, '0771234567', '2025-10-17 06:22:55.157969', 'amalp@gmail.com', 'Amal', 'Perera', '200115467775', '$2a$10$uAsfVs9/VKsv9iVdhHgv3OaxAC7ql6o6V4kHQMK7ZVzmeRk8RJDe.', NULL, 'digital', NULL, NULL, NULL, NULL, NULL, NULL, '2025-10-17 04:22:55', 0, 0, 0, 'Suspended', NULL, NULL);
 
 --
 -- Indexes for dumped tables
@@ -90,7 +91,7 @@ ALTER TABLE `artists`
 -- AUTO_INCREMENT for table `artists`
 --
 ALTER TABLE `artists`
-  MODIFY `artist_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `artist_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
