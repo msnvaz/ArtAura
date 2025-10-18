@@ -30,6 +30,97 @@ const AdminDashboard = () => {
   const isSignedIn = !!token;
   const navigate = useNavigate();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  // Month selector for reports (YYYY-MM)
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    return `${y}-${m}`;
+  });
+
+  // Helpers to compute month range from YYYY-MM
+  const getMonthRange = (ym) => {
+    try {
+      const [yStr, mStr] = (ym || '').split('-');
+      const y = parseInt(yStr, 10);
+      const mIdx = parseInt(mStr, 10) - 1; // zero-based
+      if (isNaN(y) || isNaN(mIdx)) throw new Error('Invalid month');
+      const start = new Date(y, mIdx, 1);
+      const end = new Date(y, mIdx + 1, 0, 23, 59, 59, 999);
+      return { start, end };
+    } catch {
+      const now = new Date();
+      const start = new Date(now.getFullYear(), now.getMonth(), 1);
+      const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+      return { start, end };
+    }
+  };
+
+  // Report generation helper
+  const handleGenerateReport = async () => {
+    try {
+      if (isGenerating) return;
+      setIsGenerating(true);
+
+      // Lazy import to avoid bundle bloat in main path
+      const [{ default: adminPaymentApi }, { default: adminOverviewApi }, { default: adminDeliveryApi }, { default: adminVerificationApi }, { generateMonthlyReportPDF }] = await Promise.all([
+        import('../../services/adminPaymentApi'),
+        import('../../services/adminOverviewApi'),
+        import('../../services/adminDeliveryApi'),
+        import('../../services/adminVerificationApi'),
+        import('../../util/reportGenerator')
+      ]);
+
+  // Define selected month range
+  const { start, end } = getMonthRange(selectedMonth);
+      const toIsoDate = (d) => d.toISOString().slice(0, 10); // YYYY-MM-DD
+      const monthLabel = start.toLocaleString(undefined, { month: 'long', year: 'numeric' });
+
+      // Fetch data in parallel similar to other pages
+      const [overview, paymentsResp, deliveryByRange, verificationStats] = await Promise.all([
+        adminOverviewApi.getOverviewStatistics(),
+        adminPaymentApi.getPayments({ page: 0, size: 1000, sortBy: 'created_at', sortOrder: 'DESC' }),
+        adminDeliveryApi.getDeliveryRequestsByDateRange(toIsoDate(start), toIsoDate(end)),
+        adminVerificationApi.getVerificationStats()
+      ]);
+
+      // Filter payments for current month
+      const paymentsAll = paymentsResp?.payments || paymentsResp?.content || [];
+      const filteredPayments = paymentsAll.filter(p => {
+        const created = new Date(p.createdAt);
+        return created >= start && created <= end;
+      });
+
+      // Prepare delivery section as a flat array
+      let deliveryItems = [];
+      if (Array.isArray(deliveryByRange)) {
+        deliveryItems = deliveryByRange;
+      } else if (Array.isArray(deliveryByRange?.deliveries)) {
+        deliveryItems = deliveryByRange.deliveries;
+      } else if (deliveryByRange?.data && Array.isArray(deliveryByRange.data)) {
+        deliveryItems = deliveryByRange.data;
+      }
+
+      // Generate file name
+  const fileName = `artaura-report-${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}.pdf`;
+      
+      generateMonthlyReportPDF({
+        monthLabel,
+        generatedAt: new Date().toLocaleString(),
+        overview,
+        payments: { filtered: filteredPayments },
+        delivery: { items: deliveryItems },
+        verification: verificationStats || {},
+        fileName
+      });
+    } catch (err) {
+      console.error('Failed to generate report:', err);
+      alert('Failed to generate report. Please try again.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   useEffect(() => {
     // Trigger immediate smooth entrance animation without delay
@@ -206,6 +297,15 @@ const AdminDashboard = () => {
                 </div>
               </div>
               <div className="mt-4 md:mt-0 flex gap-2 items-center">
+                {/* Month selector */}
+                <input
+                  type="month"
+                  className="border rounded-lg px-2 py-2 bg-transparent text-white/90"
+                  style={{ borderColor: '#FFE4D6' }}
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                  aria-label="Select report month"
+                />
                 <button
                   className="border px-3 py-2 rounded-lg font-medium flex items-center space-x-1 whitespace-nowrap btn-animate"
                   style={{
@@ -213,9 +313,11 @@ const AdminDashboard = () => {
                     color: "#FFE4D6",
                     backgroundColor: "rgba(255, 228, 214, 0.1)",
                   }}
+                  onClick={handleGenerateReport}
+                  disabled={isGenerating}
                 >
                   <FileText size={14} />
-                  <span className="hidden sm:inline">Generate Report</span>
+                  <span className="hidden sm:inline">{isGenerating ? 'Generating…' : 'Generate Report'}</span>
                   <span className="sm:hidden">Generate</span>
                 </button>
 
