@@ -258,9 +258,9 @@ const DeliveryHistory = () => {
   );
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="space-y-8">
       {/* Filters and Search */}
-      <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
+      <div className="bg-white p-4 rounded-lg shadow-md border border-gray-100">
         <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
           <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
             {/* Search */}
@@ -294,11 +294,6 @@ const DeliveryHistory = () => {
             >
               <RefreshCw className="h-4 w-4" />
               Refresh
-            </button>
-            
-            <button className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors">
-              <Download className="h-4 w-4" />
-              Export
             </button>
           </div>
         </div>

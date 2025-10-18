@@ -588,6 +588,16 @@ public class DeliveryRequestDAOImpl implements DeliveryRequestDAO {
                 return false;
             }
             
+            // Check if platform fee already exists for this payment_id
+            String checkExistingSql = "SELECT COUNT(*) FROM platform_fees WHERE payment_id = ?";
+            Integer existingCount = jdbc.queryForObject(checkExistingSql, Integer.class, paymentId);
+            
+            if (existingCount != null && existingCount > 0) {
+                System.out.println("⚠️ Platform fee already exists for payment ID: " + paymentId + " (" + orderType + " order ID: " + orderId + ")");
+                System.out.println("ℹ️ Skipping duplicate insertion. Existing records: " + existingCount);
+                return true; // Return true as the fee already exists (idempotent operation)
+            }
+            
             // Insert platform fee
             String insertSql = "INSERT INTO platform_fees (payment_id, fee_amount, entered_at) VALUES (?, ?, NOW())";
             int rowsAffected = jdbc.update(insertSql, paymentId, platformCommissionFee);
