@@ -2,7 +2,6 @@ import React from "react";
 import {
   Home,
   ShoppingCart,
-  Bell,
   LogOut,
   Package,
   Handshake,
@@ -204,18 +203,8 @@ function Navbar() {
               ))}
             </div>
 
-            {/* RIGHT CORNER START - Notifications & Profile */}
+            {/* RIGHT CORNER START - Profile */}
             <div className="flex items-center space-x-4">
-              {/* Enhanced Notifications */}
-              {isSignedIn && (
-                <button className="relative p-2 text-[#FFD95A] hover:text-white hover:bg-[#FFE9A0]/20 rounded-lg transition-all duration-200">
-                  <Bell className="h-5 w-5" />
-                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
-                    <span className="text-xs text-white font-bold">3</span>
-                  </span>
-                </button>
-              )}
-
               {/* Profile Dropdown - Desktop */}
               {isSignedIn ? (
                 <div className="relative hidden md:block" ref={profileDropdownRef}>
