@@ -267,10 +267,6 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
                     <span className="font-medium">Payment Method:</span>{" "}
                     {order.paymentMethod || "-"}
                   </div>
-                  <div>
-                    <span className="font-medium">Stripe Payment ID:</span>{" "}
-                    {order.stripePaymentId || "-"}
-                  </div>
                 </div>
               </div>
               <div className="bg-[#FFF5E1] rounded-lg p-4">
@@ -298,10 +294,6 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
                   <div>
                     <span className="font-medium">Payment Method:</span>{" "}
                     {order.paymentMethod || "-"}
-                  </div>
-                  <div>
-                    <span className="font-medium">Stripe Payment ID:</span>{" "}
-                    {order.stripePaymentId || "-"}
                   </div>
                 </div>
               </div>

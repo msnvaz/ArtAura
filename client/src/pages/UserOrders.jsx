@@ -29,7 +29,16 @@ const fetchCommissionOrders = async (setCommissionOrders, setLoading) => {
         "Cache-Control": "no-cache",
       },
     });
-    setCommissionOrders(Array.isArray(response.data) ? response.data : []);
+    const commissionOrders = Array.isArray(response.data) ? response.data : [];
+
+    // Sort commission orders by date (latest first)
+    const sortedCommissionOrders = commissionOrders.sort((a, b) => {
+      const dateA = new Date(a.submittedAt || a.createdAt || 0);
+      const dateB = new Date(b.submittedAt || b.createdAt || 0);
+      return dateB - dateA; // Latest first (descending order)
+    });
+
+    setCommissionOrders(sortedCommissionOrders);
   } catch (error) {
     setCommissionOrders([]);
   } finally {
@@ -141,7 +150,18 @@ const UserOrders = () => {
           },
         }
       );
-      setOrders(Array.isArray(artworkRes.data) ? artworkRes.data : []);
+      const artworkOrders = Array.isArray(artworkRes.data)
+        ? artworkRes.data
+        : [];
+
+      // Sort artwork orders by date (latest first)
+      const sortedArtworkOrders = artworkOrders.sort((a, b) => {
+        const dateA = new Date(a.orderDate || a.createdAt || 0);
+        const dateB = new Date(b.orderDate || b.createdAt || 0);
+        return dateB - dateA; // Latest first (descending order)
+      });
+
+      setOrders(sortedArtworkOrders);
     } catch (error) {
       setOrders([]);
     } finally {

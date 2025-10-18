@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Calendar, X } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useNotification } from "../../context/NotificationContext";
@@ -6,9 +6,10 @@ import axios from "axios";
 const API_URL = import.meta.env.VITE_API_URL;
 
 const ExhibitionPostForm = ({ exhibitionPosts, setExhibitionPosts }) => {
-  const { auth } = useAuth();
+  const { auth, token, userId } = useAuth();
   const { showSuccess, showError } = useNotification();
   const [showForm, setShowForm] = useState(false);
+  const [userProfile, setUserProfile] = useState(null);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -47,6 +48,30 @@ const ExhibitionPostForm = ({ exhibitionPosts, setExhibitionPosts }) => {
     "Temple Murals",
     "Other",
   ];
+
+  // Fetch user profile data when component mounts
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!token || !userId) return;
+
+      try {
+        const response = await fetch(`${API_URL}/api/users/${userId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const userData = await response.json();
+          setUserProfile(userData);
+        }
+      } catch (error) {
+        console.error("Failed to fetch user profile:", error);
+      }
+    };
+
+    fetchUserProfile();
+  }, [token, userId]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -166,9 +191,18 @@ const ExhibitionPostForm = ({ exhibitionPosts, setExhibitionPosts }) => {
       <div className="mb-6">
         <div className="bg-white rounded-xl shadow-md border border-[#FFD95A] px-6 py-4 flex items-center gap-4">
           <img
-            src={"https://randomuser.me/api/portraits/women/42.jpg"}
+            src={
+              userProfile?.image
+                ? userProfile.image.startsWith("/uploads/")
+                  ? userProfile.image
+                  : `/uploads/buyer/${userProfile.image}`
+                : "/default-avatar.png"
+            }
             alt="Your avatar"
             className="w-10 h-10 rounded-full object-cover border-2 border-[#FFD95A]"
+            onError={(e) => {
+              e.target.src = "/default-avatar.png"; // Fallback to default avatar
+            }}
           />
           <button
             onClick={() => setShowForm(true)}

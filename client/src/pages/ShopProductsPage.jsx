@@ -340,13 +340,17 @@ const ShopProductsPage = () => {
         className="relative cursor-pointer"
         onClick={() => openDetails(product)}
       >
-        <ImageZoomLens
-          src={product.imageUrl}
-          zoom={2.2}
-          lensSize={120}
-          alt={product.title}
-          className="w-full h-48 object-cover rounded"
-        />
+        <div className="w-full h-64 overflow-hidden bg-gray-50 flex items-center justify-center p-3">
+          <img
+            src={product.imageUrl}
+            alt={product.title}
+            className="max-w-full max-h-full object-contain rounded"
+            style={{ width: "auto", height: "auto" }}
+            onError={(e) => {
+              e.target.src = "/art1.jpeg"; // Fallback image
+            }}
+          />
+        </div>
       </div>
 
       <div className="p-4">
