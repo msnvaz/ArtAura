@@ -187,13 +187,32 @@ public class DeliveryStatusController {
             }
             
             // Get platform fee before marking as delivered
-            String platformFee = deliveryRequestService.getPlatformFee();
-            System.out.println("💰 Platform Fee from admin_settings: " + platformFee + "%");
+            String platformFeeStr = deliveryRequestService.getPlatformFee();
+            System.out.println("💰 Platform Fee from admin_settings: " + platformFeeStr + "%");
             
             // Get payment amount from payment table
             java.math.BigDecimal paymentAmount = deliveryRequestService.getPaymentAmount(orderType, orderId);
             if (paymentAmount != null) {
                 System.out.println("💵 Payment Amount from payment table: Rs " + paymentAmount);
+                
+                // Calculate platform commission fee
+                try {
+                    float platformFeeFloat = Float.parseFloat(platformFeeStr);
+                    java.math.BigDecimal platformCommissionFee = paymentAmount.multiply(java.math.BigDecimal.valueOf(platformFeeFloat))
+                            .divide(java.math.BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
+                    
+                    System.out.println("💰 Platform Commission Fee calculated: Rs " + platformCommissionFee);
+                    
+                    // Insert platform fee into platform_fees table
+                    boolean feeInserted = deliveryRequestService.insertPlatformFee(orderType, orderId, platformCommissionFee);
+                    if (feeInserted) {
+                        System.out.println("✅ Platform fee inserted successfully");
+                    } else {
+                        System.out.println("⚠️ Warning: Failed to insert platform fee");
+                    }
+                } catch (NumberFormatException e) {
+                    System.out.println("❌ Error parsing platform fee: " + e.getMessage());
+                }
             } else {
                 System.out.println("⚠️ Warning: No payment record found for this order");
             }
@@ -206,7 +225,7 @@ public class DeliveryStatusController {
                 response.put("success", true);
                 response.put("orderId", orderId);
                 response.put("orderType", orderType);
-                response.put("platformFee", platformFee);
+                response.put("platformFee", platformFeeStr);
                 response.put("paymentAmount", paymentAmount != null ? paymentAmount.toString() : "0");
                 return ResponseEntity.ok(response);
             } else {

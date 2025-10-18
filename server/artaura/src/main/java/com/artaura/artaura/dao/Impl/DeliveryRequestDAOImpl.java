@@ -565,4 +565,63 @@ public class DeliveryRequestDAOImpl implements DeliveryRequestDAO {
             return null;
         }
     }
+    
+    @Override
+    public boolean insertPlatformFee(String orderType, Long orderId, BigDecimal platformCommissionFee) {
+        try {
+            // First, get the payment_id for this order
+            String paymentIdSql;
+            if ("artwork".equalsIgnoreCase(orderType)) {
+                paymentIdSql = "SELECT id FROM payment WHERE AW_order_id = ?";
+            } else if ("commission".equalsIgnoreCase(orderType)) {
+                paymentIdSql = "SELECT id FROM payment WHERE commission_request_id = ?";
+            } else {
+                System.out.println("❌ Invalid order type for platform fee insertion: " + orderType);
+                return false;
+            }
+            
+            // Get payment_id
+            Integer paymentId = jdbc.queryForObject(paymentIdSql, Integer.class, orderId);
+            
+            if (paymentId == null) {
+                System.out.println("❌ No payment record found for " + orderType + " order ID: " + orderId);
+                return false;
+            }
+            
+            // Insert platform fee
+            String insertSql = "INSERT INTO platform_fees (payment_id, fee_amount, entered_at) VALUES (?, ?, NOW())";
+            int rowsAffected = jdbc.update(insertSql, paymentId, platformCommissionFee);
+            
+            if (rowsAffected > 0) {
+                System.out.println("✅ Platform fee inserted: Rs " + platformCommissionFee + " for payment ID: " + paymentId);
+                
+                // Update payment status to 'paid' in the respective order table
+                String updateStatusSql;
+                if ("artwork".equalsIgnoreCase(orderType)) {
+                    updateStatusSql = "UPDATE AW_orders SET status = 'paid' WHERE id = ?";
+                } else { // commission
+                    updateStatusSql = "UPDATE commission_requests SET payment_status = 'paid' WHERE id = ?";
+                }
+                
+                System.out.println("📝 Executing SQL: " + updateStatusSql + " with orderId: " + orderId);
+                int statusUpdateRows = jdbc.update(updateStatusSql, orderId);
+                System.out.println("📊 Rows affected by status update: " + statusUpdateRows);
+                
+                if (statusUpdateRows > 0) {
+                    System.out.println("✅ Payment status updated to 'paid' for " + orderType + " order ID: " + orderId);
+                } else {
+                    System.out.println("⚠️ Warning: Failed to update payment status for " + orderType + " order ID: " + orderId);
+                }
+                
+                return true;
+            } else {
+                System.out.println("❌ Failed to insert platform fee");
+                return false;
+            }
+        } catch (Exception e) {
+            System.out.println("❌ Error inserting platform fee: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
 }

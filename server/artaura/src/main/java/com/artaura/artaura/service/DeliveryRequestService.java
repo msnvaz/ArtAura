@@ -300,4 +300,20 @@ public class DeliveryRequestService {
             return null;
         }
     }
+    
+    /**
+     * Insert platform fee commission into platform_fees table
+     * @param orderType either "artwork" or "commission"
+     * @param orderId the order ID
+     * @param platformCommissionFee the calculated platform commission fee
+     * @return true if insertion was successful
+     */
+    public boolean insertPlatformFee(String orderType, Long orderId, java.math.BigDecimal platformCommissionFee) {
+        try {
+            return deliveryRequestDAO.insertPlatformFee(orderType, orderId, platformCommissionFee);
+        } catch (Exception e) {
+            System.out.println("❌ DeliveryRequestService: Error inserting platform fee: " + e.getMessage());
+            return false;
+        }
+    }
 }

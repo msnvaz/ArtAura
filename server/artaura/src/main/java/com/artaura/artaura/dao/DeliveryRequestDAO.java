@@ -121,4 +121,13 @@ public interface DeliveryRequestDAO {
      * @return Payment amount as BigDecimal, or null if not found
      */
     java.math.BigDecimal getPaymentAmount(String orderType, Long orderId);
+    
+    /**
+     * Insert platform fee commission into platform_fees table
+     * @param orderType either "artwork" or "commission"
+     * @param orderId the order ID
+     * @param platformCommissionFee the calculated platform commission fee
+     * @return true if insertion was successful
+     */
+    boolean insertPlatformFee(String orderType, Long orderId, java.math.BigDecimal platformCommissionFee);
 }
