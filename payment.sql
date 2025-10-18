@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: mysql-artaura.alwaysdata.net
--- Generation Time: Oct 17, 2025 at 08:58 PM
+-- Generation Time: Oct 18, 2025 at 06:54 AM
 -- Server version: 10.11.14-MariaDB
 -- PHP Version: 7.4.33
 
@@ -48,8 +48,8 @@ INSERT INTO `payment` (`id`, `AW_order_id`, `commission_request_id`, `artist_id`
 (2, 18, NULL, 11, 1, 3600.00, 'escrow', '2025-10-16 17:56:58', '2025-10-17 13:15:16'),
 (4, NULL, 7, 11, 1, 1800.00, 'escrow', '2025-10-17 13:15:30', NULL),
 (5, 20, NULL, 11, 1, 20000.00, 'escrow', '2025-10-17 17:25:39', NULL),
-(6, NULL, 9, 11, 1, 2750.00, 'escrow', '2025-08-16 12:00:00', '2025-10-17 20:53:12'),
-(7, NULL, 10, 11, 1, 2751.00, 'escrow', '2025-08-18 10:06:29', '2025-10-17 20:53:17'),
+(6, NULL, 11, 11, 1, 2750.00, 'escrow', '2025-08-16 12:00:00', '2025-10-17 20:53:12'),
+(7, NULL, 10, 11, 1, 2751.00, 'paid', '2025-08-18 10:06:29', '2025-10-18 06:35:28'),
 (9, 9, NULL, 11, 1, 7000.00, 'escrow', '2025-08-16 01:05:38', '2025-10-17 20:53:22'),
 (10, 10, NULL, 1, 1, 800.00, 'escrow', '2025-08-26 23:22:35', '2025-10-17 20:53:27'),
 (11, 11, NULL, 1, 1, 800.00, 'escrow', '2025-08-28 14:41:23', '2025-10-17 20:53:31'),
@@ -91,7 +91,7 @@ ALTER TABLE `payment`
 -- AUTO_INCREMENT for table `payment`
 --
 ALTER TABLE `payment`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- Constraints for dumped tables

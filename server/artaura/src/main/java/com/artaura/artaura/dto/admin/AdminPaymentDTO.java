@@ -22,6 +22,7 @@ public class AdminPaymentDTO {
     private String orderDescription;
     private String commissionTitle;
     private String paymentType; // "order" or "commission"
+    private BigDecimal platformFee; // Platform commission fee
 
     public AdminPaymentDTO() {}
 
@@ -31,7 +32,7 @@ public class AdminPaymentDTO {
                           LocalDateTime createdAt, LocalDateTime updatedAt,
                           String artistName, String artistEmail, String buyerName, 
                           String buyerEmail, String orderDescription, String commissionTitle,
-                          String paymentType) {
+                          String paymentType, BigDecimal platformFee) {
         this.id = id;
         this.awOrderId = awOrderId;
         this.commissionRequestId = commissionRequestId;
@@ -48,6 +49,7 @@ public class AdminPaymentDTO {
         this.orderDescription = orderDescription;
         this.commissionTitle = commissionTitle;
         this.paymentType = paymentType;
+        this.platformFee = platformFee;
     }
 
     // Getters and Setters
@@ -98,4 +100,7 @@ public class AdminPaymentDTO {
 
     public String getPaymentType() { return paymentType; }
     public void setPaymentType(String paymentType) { this.paymentType = paymentType; }
+
+    public BigDecimal getPlatformFee() { return platformFee; }
+    public void setPlatformFee(BigDecimal platformFee) { this.platformFee = platformFee; }
 }

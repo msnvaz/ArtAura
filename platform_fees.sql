@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: mysql-artaura.alwaysdata.net
--- Generation Time: Oct 18, 2025 at 05:23 AM
+-- Generation Time: Oct 18, 2025 at 07:00 AM
 -- Server version: 10.11.14-MariaDB
 -- PHP Version: 7.4.33
 
@@ -35,6 +35,13 @@ CREATE TABLE `platform_fees` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
+-- Dumping data for table `platform_fees`
+--
+
+INSERT INTO `platform_fees` (`fee_id`, `payment_id`, `fee_amount`, `entered_at`) VALUES
+(4, 7, 137.55, '2025-10-18 06:35:28');
+
+--
 -- Indexes for dumped tables
 --
 
@@ -53,7 +60,7 @@ ALTER TABLE `platform_fees`
 -- AUTO_INCREMENT for table `platform_fees`
 --
 ALTER TABLE `platform_fees`
-  MODIFY `fee_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `fee_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- Constraints for dumped tables
