@@ -14,6 +14,17 @@ import Toast from "./Toast";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+// Helper function to get correct image path from uploads folder
+const getImagePath = (imagePath) => {
+  if (!imagePath) return "/uploads/default-artwork.jpg"; // fallback image
+  // If it's already a full URL or starts with /, return as is (served from public folder)
+  if (imagePath.startsWith("http") || imagePath.startsWith("/")) {
+    return imagePath;
+  }
+  // Otherwise, assume it's a relative path and prepend /
+  return `/${imagePath}`;
+};
+
 const OrderDetailsModal = ({ order, isOpen, onClose }) => {
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [selectedArtist, setSelectedArtist] = useState({ name: "", id: null });
@@ -267,10 +278,6 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
                     <span className="font-medium">Payment Method:</span>{" "}
                     {order.paymentMethod || "-"}
                   </div>
-                  <div>
-                    <span className="font-medium">Stripe Payment ID:</span>{" "}
-                    {order.stripePaymentId || "-"}
-                  </div>
                 </div>
               </div>
               <div className="bg-[#FFF5E1] rounded-lg p-4">
@@ -299,10 +306,6 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
                     <span className="font-medium">Payment Method:</span>{" "}
                     {order.paymentMethod || "-"}
                   </div>
-                  <div>
-                    <span className="font-medium">Stripe Payment ID:</span>{" "}
-                    {order.stripePaymentId || "-"}
-                  </div>
                 </div>
               </div>
             </div>
@@ -326,9 +329,12 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
                         {/* Artwork Image */}
                         {item.imageUrl && (
                           <img
-                            src={item.imageUrl}
+                            src={getImagePath(item.imageUrl)}
                             alt={item.title}
                             className="w-24 h-24 object-cover rounded-lg border border-[#FFD95A] mb-2"
+                            onError={(e) => {
+                              e.target.src = "/uploads/default-artwork.jpg";
+                            }}
                           />
                         )}
                         <div className="flex-1">

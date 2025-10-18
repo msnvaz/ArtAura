@@ -12,11 +12,23 @@ import {
   ArrowLeft,
   Star,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import Navbar from "../components/common/Navbar";
 import OrderDetailsModal from "../components/OrderDetailsModal";
 import CommissionOrderDetailsModal from "../components/modals/CommissionOrderDetailsModal";
 
 const API_URL = import.meta.env.VITE_API_URL;
+
+// Helper function to get correct image path from uploads folder
+const getImagePath = (imagePath) => {
+  if (!imagePath) return "/uploads/default-artwork.jpg"; // fallback image
+  // If it's already a full URL or starts with /, return as is (served from public folder)
+  if (imagePath.startsWith("http") || imagePath.startsWith("/")) {
+    return imagePath;
+  }
+  // Otherwise, assume it's a relative path and prepend /
+  return `/${imagePath}`;
+};
 
 const fetchCommissionOrders = async (setCommissionOrders, setLoading) => {
   setLoading(true);
@@ -28,7 +40,16 @@ const fetchCommissionOrders = async (setCommissionOrders, setLoading) => {
         "Cache-Control": "no-cache",
       },
     });
-    setCommissionOrders(Array.isArray(response.data) ? response.data : []);
+    const commissionOrders = Array.isArray(response.data) ? response.data : [];
+
+    // Sort commission orders by date (latest first)
+    const sortedCommissionOrders = commissionOrders.sort((a, b) => {
+      const dateA = new Date(a.submittedAt || a.createdAt || 0);
+      const dateB = new Date(b.submittedAt || b.createdAt || 0);
+      return dateB - dateA; // Latest first (descending order)
+    });
+
+    setCommissionOrders(sortedCommissionOrders);
   } catch (error) {
     setCommissionOrders([]);
   } finally {
@@ -38,27 +59,31 @@ const fetchCommissionOrders = async (setCommissionOrders, setLoading) => {
 
 // Add a delivery tracking visualization component
 const renderTrackingProgress = (deliveryStatus) => {
-  const steps = ["Pending", "Shipped", "OutForDelivery", "Delivered"];
-  const currentStep = steps.indexOf(
-    deliveryStatus?.charAt(0).toUpperCase() + deliveryStatus?.slice(1)
-  );
+  const steps = ["pending", "accepted", "outfordelivery", "delivered"];
+  const stepLabels = ["Pending", "Accepted", "Out for Delivery", "Delivered"];
+  const currentStep = steps.indexOf(deliveryStatus?.toLowerCase());
 
   return (
-    <div className="flex items-center gap-4 mt-4">
+    <div className="flex items-center gap-2 mt-4 overflow-x-auto">
       {steps.map((step, index) => (
-        <div key={step} className="flex items-center">
-          <div
-            className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
-              index <= currentStep
-                ? "bg-green-600 text-white"
-                : "bg-gray-300 text-gray-600"
-            }`}
-          >
-            {index + 1}
+        <div key={step} className="flex items-center min-w-0">
+          <div className="flex flex-col items-center">
+            <div
+              className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${
+                index <= currentStep
+                  ? "bg-green-600 text-white"
+                  : "bg-gray-300 text-gray-600"
+              }`}
+            >
+              {index + 1}
+            </div>
+            <span className="text-xs text-center mt-1 max-w-20">
+              {stepLabels[index]}
+            </span>
           </div>
           {index < steps.length - 1 && (
             <div
-              className={`h-1 w-12 ${
+              className={`h-1 w-8 mx-2 ${
                 index < currentStep ? "bg-green-600" : "bg-gray-300"
               }`}
             ></div>
@@ -71,28 +96,37 @@ const renderTrackingProgress = (deliveryStatus) => {
 
 // Add a safeguard to handle undefined or null status
 const renderDeliveryStatus = (status) => {
-  if (!status) {
+  if (!status || status === "N/A") {
     return (
       <span className="px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
-        Unknown
+        N/A
       </span>
     );
   }
 
   const statusColors = {
     pending: "bg-yellow-100 text-yellow-800",
-    shipped: "bg-blue-100 text-blue-800",
+    accepted: "bg-blue-100 text-blue-800",
+    outfordelivery: "bg-orange-100 text-orange-800",
     delivered: "bg-green-100 text-green-800",
-    cancelled: "bg-red-100 text-red-800",
   };
+
+  const statusLabels = {
+    pending: "Pending",
+    accepted: "Accepted",
+    outfordelivery: "Out for Delivery",
+    delivered: "Delivered",
+  };
+
+  const normalizedStatus = status.toLowerCase();
 
   return (
     <span
       className={`px-3 py-1 rounded-full text-sm font-medium ${
-        statusColors[status] || "bg-gray-100 text-gray-800"
+        statusColors[normalizedStatus] || "bg-gray-100 text-gray-800"
       }`}
     >
-      {status.charAt(0).toUpperCase() + status.slice(1)}
+      {statusLabels[normalizedStatus] || status}
     </span>
   );
 };
@@ -108,6 +142,7 @@ const UserOrders = () => {
   const [showCommissionOrderModal, setShowCommissionOrderModal] =
     useState(false);
   const [selectedCommissionOrder, setSelectedCommissionOrder] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchArtworkOrders();
@@ -126,7 +161,18 @@ const UserOrders = () => {
           },
         }
       );
-      setOrders(Array.isArray(artworkRes.data) ? artworkRes.data : []);
+      const artworkOrders = Array.isArray(artworkRes.data)
+        ? artworkRes.data
+        : [];
+
+      // Sort artwork orders by date (latest first)
+      const sortedArtworkOrders = artworkOrders.sort((a, b) => {
+        const dateA = new Date(a.orderDate || a.createdAt || 0);
+        const dateB = new Date(b.orderDate || b.createdAt || 0);
+        return dateB - dateA; // Latest first (descending order)
+      });
+
+      setOrders(sortedArtworkOrders);
     } catch (error) {
       setOrders([]);
     } finally {
@@ -212,6 +258,12 @@ const UserOrders = () => {
         }`}
       />
     ));
+  };
+
+  const handlePayCommissionOrder = (order) => {
+    navigate(`/commission-payment/${order.orderId || order.id}`, {
+      state: { order },
+    });
   };
 
   if (loading) {
@@ -359,11 +411,24 @@ const UserOrders = () => {
                       <div className="flex items-center gap-3">
                         {order.items && order.items.length > 0 ? (
                           order.items.slice(0, 3).map((item, index) => (
-                            <div
-                              key={index}
-                              className="w-12 h-12 rounded-lg bg-[#FFF5E1] border border-[#FFD95A] flex items-center justify-center text-[#7f5539] text-xs font-medium"
-                            >
-                              {item.title || "No Image"}
+                            <div key={index} className="relative">
+                              {item.imageUrl ? (
+                                <img
+                                  src={getImagePath(item.imageUrl)}
+                                  alt={item.title}
+                                  className="w-12 h-12 rounded-lg object-cover border border-[#FFD95A]"
+                                  onError={(e) => {
+                                    e.target.src =
+                                      "/uploads/default-artwork.jpg";
+                                  }}
+                                />
+                              ) : (
+                                <div className="w-12 h-12 rounded-lg bg-[#FFF5E1] border border-[#FFD95A] flex items-center justify-center text-[#7f5539] text-xs font-medium">
+                                  {item.title
+                                    ? item.title.substring(0, 2).toUpperCase()
+                                    : "No"}
+                                </div>
+                              )}
                             </div>
                           ))
                         ) : (
@@ -482,12 +547,26 @@ const UserOrders = () => {
                       </div>
                       {/* Actions */}
                       <div className="flex gap-2">
-                        {/* Pay Now Button for Accepted Orders */}
-                        {order.status === "accepted" && (
-                          <button className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm font-medium transition-colors">
-                            Pay
-                          </button>
+                        {/* Pay Now Button for Accepted Orders that haven't been paid */}
+                        {(order.status === "accepted" ||
+                          order.status === "ACCEPTED" ||
+                          order.status === "Accepted") &&
+                          !order.hasPayment && (
+                            <button
+                              className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm font-medium transition-colors"
+                              onClick={() => handlePayCommissionOrder(order)}
+                            >
+                              Pay
+                            </button>
+                          )}
+
+                        {/* Show Payment Status for paid orders */}
+                        {order.hasPayment && (
+                          <span className="bg-green-100 text-green-800 px-3 py-2 rounded text-sm font-medium">
+                            ✓ Paid
+                          </span>
                         )}
+
                         <button
                           onClick={() => handleViewCommissionOrder(order)}
                           className="bg-[#D87C5A] hover:bg-[#7f5539] text-white px-3 py-2 rounded text-sm font-medium transition-colors"

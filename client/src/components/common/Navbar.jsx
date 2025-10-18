@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Search,
   Bell,
@@ -18,10 +18,38 @@ import { useCart } from "../../context/CartContext";
 
 const Navbar = ({ onToggleSidebar }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { token } = useAuth();
+  const [userProfile, setUserProfile] = useState(null);
+  const { token, userId } = useAuth();
   const { toggleCart, getCartItemsCount } = useCart();
   const isSignedIn = !!token;
   const cartItemsCount = getCartItemsCount();
+
+  // Fetch user profile data when component mounts or when token/userId changes
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!token || !userId) return;
+
+      try {
+        const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+        const response = await fetch(`${API_URL}/api/users/${userId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const userData = await response.json();
+          setUserProfile(userData);
+        }
+      } catch (error) {
+        console.error("Failed to fetch user profile:", error);
+      }
+    };
+
+    if (isSignedIn) {
+      fetchUserProfile();
+    }
+  }, [token, userId, isSignedIn]);
 
   return (
     <>
@@ -63,16 +91,6 @@ const Navbar = ({ onToggleSidebar }) => {
               >
                 Challenges
               </a>
-              <div className="relative w-80">
-                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                  <Search className="h-5 w-5 text-white" />
-                </div>
-                <input
-                  type="search"
-                  placeholder="Search artists..."
-                  className="pl-10 pr-3 py-2 w-full bg-[#1C0E09] text-white border border-[#FFF5E1] rounded-xl placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-[#FFF5E1] transition-all"
-                />
-              </div>
             </div>
 
             {/* Right Actions */}
@@ -95,8 +113,14 @@ const Navbar = ({ onToggleSidebar }) => {
               {/* Profile Dropdown or Sign In Button */}
               {isSignedIn ? (
                 <ProfileDropdown
-                  profileImage="https://randomuser.me/api/portraits/women/42.jpg"
-                  userName="Pawani Kumari"
+                  profileImage={
+                    userProfile?.image
+                      ? userProfile.image.startsWith("/uploads/")
+                        ? userProfile.image // Use direct path for images in public/uploads
+                        : `/uploads/buyer/${userProfile.image}` // Fallback for relative paths
+                      : "/default-avatar.png"
+                  }
+                  userName={userProfile?.name || "User"}
                   isSignedIn={isSignedIn}
                 />
               ) : (

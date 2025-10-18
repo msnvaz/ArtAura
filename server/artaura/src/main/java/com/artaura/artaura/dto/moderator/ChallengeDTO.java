@@ -14,4 +14,5 @@ public class ChallengeDTO {
     private int maxParticipants;
     private String rewards;
     private boolean requestSponsorship;
+    private ScoringCriteriaDTO scoringCriteria;
 }

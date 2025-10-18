@@ -27,10 +27,12 @@ public class ProductDAOImpl implements ProductDAO {
 
     @Override
     public void save(AddProductDTO p) {
-        String sql = "INSERT INTO products (name, sku, category, price, stock, status, image, rating, sales) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO products (shop_id, name, sku, category, price, stock, status, image, rating, sales) "
+                +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         jdbcTemplate.update(sql,
+                p.getShopId(),
                 p.getName(),
                 p.getSku(),
                 p.getCategory(),
@@ -49,6 +51,12 @@ public class ProductDAOImpl implements ProductDAO {
     }
 
     @Override
+    public List<AddProductDTO> findByShopId(Long shopId) {
+        String sql = "SELECT * FROM products WHERE shop_id = ? ORDER BY id DESC";
+        return jdbcTemplate.query(sql, new ProductRowMapper(), shopId);
+    }
+
+    @Override
     public void deleteById(Long id) {
         String sql = "DELETE FROM products WHERE id = ?";
         int rowsAffected = jdbcTemplate.update(sql, id);
@@ -60,10 +68,11 @@ public class ProductDAOImpl implements ProductDAO {
 
     @Override
     public void updateById(Long id, AddProductDTO product) {
-        String sql = "UPDATE products SET name = ?, sku = ?, category = ?, price = ?, stock = ?, " +
+        String sql = "UPDATE products SET shop_id = ?, name = ?, sku = ?, category = ?, price = ?, stock = ?, " +
                 "status = ?, image = ?, rating = ?, sales = ? WHERE id = ?";
 
         int rowsAffected = jdbcTemplate.update(sql,
+                product.getShopId(),
                 product.getName(),
                 product.getSku(),
                 product.getCategory(),
@@ -97,6 +106,7 @@ public class ProductDAOImpl implements ProductDAO {
         public AddProductDTO mapRow(ResultSet rs, int rowNum) throws SQLException {
             AddProductDTO product = new AddProductDTO();
             product.setId(rs.getLong("id"));
+            product.setShopId(rs.getLong("shop_id"));
             product.setName(rs.getString("name"));
             product.setSku(rs.getString("sku"));
             product.setCategory(rs.getString("category"));

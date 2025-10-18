@@ -32,6 +32,15 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    public List<AddProductDTO> getProductsByShopId(Long shopId) {
+        try {
+            return productDAO.findByShopId(shopId);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to fetch products for shop: " + e.getMessage());
+        }
+    }
+
+    @Override
     public void deleteProduct(Long id) {
         try {
             productDAO.deleteById(id);

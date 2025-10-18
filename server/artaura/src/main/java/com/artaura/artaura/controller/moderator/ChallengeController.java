@@ -19,9 +19,11 @@ import com.artaura.artaura.dto.moderator.ChallengeDTO;
 import com.artaura.artaura.dto.moderator.ChallengeListDTO;
 import com.artaura.artaura.service.moderator.ChallengeService;
 import com.artaura.artaura.util.JwtUtil;
+import org.springframework.web.bind.annotation.CrossOrigin;
 
 @RestController
 @RequestMapping("/api/challenges")
+@CrossOrigin(origins = "http://localhost:5173")
 public class ChallengeController {
 
     @Autowired

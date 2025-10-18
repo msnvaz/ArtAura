@@ -14,7 +14,6 @@ import {
   Package,
   AlertTriangle,
   CheckCircle,
-  Star,
   X,
   Upload,
   Camera
@@ -157,8 +156,13 @@ const CatalogManagement = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
+      const shopId = localStorage.getItem("shopId");
 
-      const response = await fetch(`${API_URL}/api/products`, {
+      if (!shopId) {
+        throw new Error("Shop ID not found. Please log in again.");
+      }
+
+      const response = await fetch(`${API_URL}/api/products?shopId=${shopId}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -196,14 +200,21 @@ const CatalogManagement = () => {
     e.preventDefault();
 
     const token = localStorage.getItem("token");
+    const shopId = localStorage.getItem("shopId");
 
     if (!token) {
       showToast("❌ You must be logged in to add a product.", "error", 3000);
       return;
     }
 
+    if (!shopId) {
+      showToast("❌ Shop ID not found. Please log in again.", "error", 3000);
+      return;
+    }
+
     try {
       const productData = {
+        shopId: parseInt(shopId),
         name: newProduct.name,
         sku: newProduct.sku,
         category: newProduct.category,
@@ -255,14 +266,21 @@ const CatalogManagement = () => {
     e.preventDefault();
 
     const token = localStorage.getItem("token");
+    const shopId = localStorage.getItem("shopId");
 
     if (!token) {
       showToast("❌ You must be logged in to edit a product.", "error", 3000);
       return;
     }
 
+    if (!shopId) {
+      showToast("❌ Shop ID not found. Please log in again.", "error", 3000);
+      return;
+    }
+
     try {
       const productData = {
+        shopId: parseInt(shopId),
         name: productToEdit.name,
         sku: productToEdit.sku,
         category: productToEdit.category,
@@ -486,17 +504,6 @@ const CatalogManagement = () => {
                   <h3 className="font-bold text-[#5D3A00] text-base mb-1 line-clamp-2 group-hover:text-[#D87C5A] transition-colors duration-300">
                     {product.name}
                   </h3>
-                  <div className="flex items-center space-x-1 mb-1">
-                    <div className="flex items-center">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`w-3 h-3 ${i < Math.floor(product.rating) ? 'text-[#FFD95A] fill-current' : 'text-gray-300'}`}
-                        />
-                      ))}
-                    </div>
-                    <span className="text-xs text-[#5D3A00]/70 font-medium">({product.rating})</span>
-                  </div>
                   <div className="text-xs text-[#5D3A00]/70 space-y-0.5">
                     <p className="font-mono bg-[#FFF5E1] px-1.5 py-0.5 rounded inline-block">SKU: {product.sku}</p>
                     <p>Category: <span className="font-semibold">{product.category}</span></p>
@@ -607,13 +614,6 @@ const CatalogManagement = () => {
                       <div>
                         <p className="text-[#5D3A00]/70 font-semibold">Stock</p>
                         <p className="text-[#5D3A00]">{selectedProduct.stock} units</p>
-                      </div>
-                      <div>
-                        <p className="text-[#5D3A00]/70 font-semibold">Rating</p>
-                        <div className="flex items-center gap-1">
-                          <Star className="w-4 h-4 text-[#FFD95A] fill-current" />
-                          <span className="text-[#5D3A00]">{selectedProduct.rating}</span>
-                        </div>
                       </div>
                       <div>
                         <p className="text-[#5D3A00]/70 font-semibold">Sales</p>
@@ -853,29 +853,14 @@ const CatalogManagement = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-[#5D3A00] mb-2">Rating</label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      max="5"
-                      value={productToEdit.rating}
-                      onChange={(e) => setProductToEdit({ ...productToEdit, rating: e.target.value })}
-                      className="w-full border border-[#FFE4D6] px-3 py-2 rounded-lg focus:border-[#D87C5A] focus:ring-0 outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-[#5D3A00] mb-2">Sales</label>
-                    <input
-                      type="number"
-                      value={productToEdit.sales}
-                      onChange={(e) => setProductToEdit({ ...productToEdit, sales: e.target.value })}
-                      className="w-full border border-[#FFE4D6] px-3 py-2 rounded-lg focus:border-[#D87C5A] focus:ring-0 outline-none"
-                    />
-                  </div>
+                <div>
+                  <label className="block text-sm font-semibold text-[#5D3A00] mb-2">Sales</label>
+                  <input
+                    type="number"
+                    value={productToEdit.sales}
+                    onChange={(e) => setProductToEdit({ ...productToEdit, sales: e.target.value })}
+                    className="w-full border border-[#FFE4D6] px-3 py-2 rounded-lg focus:border-[#D87C5A] focus:ring-0 outline-none"
+                  />
                 </div>
 
                 <div className="flex gap-3 pt-4">

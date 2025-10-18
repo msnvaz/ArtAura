@@ -28,35 +28,17 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem("role", role);
     localStorage.setItem("userId", userId);
     setAuth({ token, role, userId });
-
-    // Fetch shopId using userId after login and store in localStorage
-    if (userId && token) {
-      fetch(`${import.meta.env.VITE_API_URL}/api/shop/profile/${userId}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (data && data.shopId) {
-            localStorage.setItem("shopId", data.shopId);
-          }
-        })
-        .catch(err => {
-          console.error("Failed to fetch shopId after login:", err);
-        });
-    }
+    
+    console.log("✅ User logged in:", { role, userId });
+    // Note: For shops, userId IS the shop_id from the database
   };
 
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
     localStorage.removeItem("userId");
-    localStorage.removeItem("shopId"); // Clear shopId on logout
     setAuth({ token: null, role: null, userId: null });
-    console.log("User has been logged out.");
+    console.log("✅ User has been logged out.");
   };
 
   return (

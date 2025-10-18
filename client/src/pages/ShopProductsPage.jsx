@@ -16,6 +16,7 @@ import Toast from "../components/Toast";
 import { useToast } from "../hooks/useToast";
 import axios from "axios";
 import ArtworkDetailsModal from "../components/modals/ArtworkDetailsModal";
+import ImageZoomLens from "../components/artworks/ImageZoomLense";
 
 const ShopProductsPage = () => {
   const [products, setProducts] = useState([]);
@@ -339,11 +340,17 @@ const ShopProductsPage = () => {
         className="relative cursor-pointer"
         onClick={() => openDetails(product)}
       >
-        <img
-          src={product.imageUrl}
-          alt={product.title}
-          className="w-full h-48 object-cover"
-        />
+        <div className="w-full h-64 overflow-hidden bg-gray-50 flex items-center justify-center p-3">
+          <img
+            src={product.imageUrl}
+            alt={product.title}
+            className="max-w-full max-h-full object-contain rounded"
+            style={{ width: "auto", height: "auto" }}
+            onError={(e) => {
+              e.target.src = "/art1.jpeg"; // Fallback image
+            }}
+          />
+        </div>
       </div>
 
       <div className="p-4">
@@ -457,9 +464,7 @@ const ShopProductsPage = () => {
             <h1 className="text-3xl font-bold text-[#7f5539] mb-2">
               Art Works to Sell
             </h1>
-            <p className="text-[#7f5539]/70">
-              Discover amazing arts
-            </p>
+            <p className="text-[#7f5539]/70">Discover amazing arts</p>
           </div>
 
           {/* Mobile filter toggle */}
