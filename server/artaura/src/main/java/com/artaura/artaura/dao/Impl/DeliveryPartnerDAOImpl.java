@@ -123,4 +123,28 @@ public class DeliveryPartnerDAOImpl implements DeliveryPartnerDAO {
             return false;
         }
     }
+
+    @Override
+    public Optional<String> getCurrentPasswordById(Long partnerId) {
+        try {
+            String sql = "SELECT password FROM delivery_partners WHERE partner_id = ?";
+            String currentPassword = jdbc.queryForObject(sql, String.class, partnerId);
+            return Optional.ofNullable(currentPassword);
+        } catch (Exception e) {
+            System.out.println("🔍 DeliveryPartnerDAO: No password found for partner ID: " + partnerId);
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public boolean verifyCurrentPassword(Long partnerId, String currentPassword) {
+        try {
+            String sql = "SELECT COUNT(*) FROM delivery_partners WHERE partner_id = ? AND password = ?";
+            Integer count = jdbc.queryForObject(sql, Integer.class, partnerId, currentPassword);
+            return count != null && count > 0;
+        } catch (Exception e) {
+            System.out.println("❌ DeliveryPartnerDAO: Failed to verify current password for ID: " + partnerId);
+            return false;
+        }
+    }
 }

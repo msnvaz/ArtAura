@@ -1,74 +1,101 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Star, TrendingUp, Users } from "lucide-react";
+import axios from "axios";
+
+const API_URL = import.meta.env.VITE_API_URL;
+
+const getBadgeLabel = (rankCriteria) => {
+  switch (rankCriteria) {
+    case "rate":
+      return "Top Rated";
+    case "total_followers":
+      return "Popular";
+    case "total_sales":
+      return "Rising Star";
+    default:
+      return "Artist";
+  }
+};
+
+const getBadgeColor = (badge) => {
+  switch (badge) {
+    case "Top Rated":
+      return "bg-gradient-to-r from-yellow-400 to-yellow-600 text-white";
+    case "Rising Star":
+      return "bg-gradient-to-r from-blue-400 to-blue-600 text-white";
+    case "Popular":
+      return "bg-gradient-to-r from-green-400 to-green-600 text-white";
+    default:
+      return "bg-gray-200 text-gray-700";
+  }
+};
+
+const Badge = ({ badge }) => (
+  <span
+    className={`text-xs px-3 py-1 rounded-full font-semibold shadow-md whitespace-nowrap ${getBadgeColor(
+      badge
+    )}`}
+    style={{ maxWidth: "100px", overflow: "hidden", textOverflow: "ellipsis" }}
+  >
+    {badge}
+  </span>
+);
 
 const TopArtists = () => {
   const navigate = useNavigate();
+  const [topArtists, setTopArtists] = useState([]);
 
-  const topArtists = [
-    {
-      id: 1,
-      name: "Nimali Perera",
-      avatar: "https://randomuser.me/api/portraits/women/44.jpg",
-      reviews: 124,
-      followers: 2840,
-      rating: 4.9,
-      badge: "Top Rated",
-    },
-    {
-      id: 2,
-      name: "Kasun Fernando",
-      avatar: "https://randomuser.me/api/portraits/men/32.jpg",
-      reviews: 98,
-      followers: 1950,
-      rating: 4.8,
-      badge: "Rising Star",
-    },
-    {
-      id: 3,
-      name: "Amaya Jayasinghe",
-      avatar: "https://randomuser.me/api/portraits/women/68.jpg",
-      reviews: 87,
-      followers: 1620,
-      rating: 4.7,
-      badge: "Popular",
-    },
-    {
-      id: 4,
-      name: "Nadeesha Gunawardena",
-      avatar: "https://randomuser.me/api/portraits/women/25.jpg",
-      reviews: 73,
-      followers: 1450,
-      rating: 4.6,
-      badge: "Trending",
-    },
-    {
-      id: 5,
-      name: "Sahan Perera",
-      avatar: "https://randomuser.me/api/portraits/men/15.jpg",
-      reviews: 65,
-      followers: 1200,
-      rating: 4.5,
-      badge: "Featured",
-    },
-  ];
+  useEffect(() => {
+    const fetchTopArtists = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await axios.get(`${API_URL}/api/buyer/artists/list`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-  const getBadgeColor = (badge) => {
-    switch (badge) {
-      case "Top Rated":
-        return "bg-[#D87C5A] text-white";
-      case "Rising Star":
-        return "bg-[#FFD95A] text-[#7f5539]";
-      case "Popular":
-        return "bg-[#87CEEB] text-white";
-      case "Trending":
-        return "bg-[#7f5539] text-white";
-      case "Featured":
-        return "bg-[#FFF5E1] text-[#7f5539] border border-[#7f5539]";
-      default:
-        return "bg-gray-200 text-gray-700";
-    }
-  };
+        // Rank artists based on rate, total_followers, and total_sales
+        const rankedArtists = response.data
+          .sort((a, b) => {
+            if (b.rate !== a.rate) {
+              return b.rate - a.rate; // Primary: Higher rate first
+            } else if (b.total_followers !== a.total_followers) {
+              return b.total_followers - a.total_followers; // Secondary: More followers first
+            } else {
+              return b.total_sales - a.total_sales; // Tertiary: More sales first
+            }
+          })
+          .slice(0, 8); // Limit to top 8 artists
+
+        // Add badges to ranked artists based on their rank criteria
+        const artistsWithBadges = rankedArtists.map((artist, index) => {
+          let rankCriteria = "rate";
+
+          // Compare with the previous artist to determine the rank criteria
+          if (index > 0 && artist.rate === rankedArtists[index - 1].rate) {
+            rankCriteria = "total_followers";
+
+            if (
+              artist.total_followers ===
+              rankedArtists[index - 1].total_followers
+            ) {
+              rankCriteria = "total_sales";
+            }
+          }
+
+          return { ...artist, badge: getBadgeLabel(rankCriteria) };
+        });
+
+        setTopArtists(artistsWithBadges);
+      } catch (error) {
+        console.error("Error fetching top artists:", error);
+      }
+    };
+
+    fetchTopArtists();
+  }, []);
 
   const handleDiscoverMoreArtists = () => {
     navigate("/artists");
@@ -94,7 +121,7 @@ const TopArtists = () => {
           >
             <div className="relative">
               <img
-                src={artist.avatar}
+                src={artist.avatar || "/src/assets/user.png"} // Use local fallback image
                 alt={artist.name}
                 className="w-10 h-10 rounded-full object-cover border-2 border-[#FFD95A]"
               />
@@ -108,13 +135,7 @@ const TopArtists = () => {
                 <p className="font-medium text-[#7f5539] truncate">
                   {artist.name}
                 </p>
-                <span
-                  className={`text-xs px-2 py-1 rounded-full ${getBadgeColor(
-                    artist.badge
-                  )}`}
-                >
-                  {artist.badge}
-                </span>
+                <Badge badge={artist.badge || "Top Rated"} />
               </div>
 
               <div className="flex items-center space-x-3 text-xs text-[#7f5539]/70">
@@ -124,9 +145,9 @@ const TopArtists = () => {
                 </div>
                 <div className="flex items-center gap-1">
                   <Users className="w-3 h-3" />
-                  <span>{artist.followers}</span>
+                  <span>{artist.totalFollowers}</span>
                 </div>
-                <span>• {artist.reviews} reviews</span>
+                <span>• {artist.totalSales || 0} sales</span>
               </div>
             </div>
           </div>

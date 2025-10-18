@@ -21,6 +21,7 @@ public class ArtistProfileResponseDTO {
     private Integer totalFollowers;
     private Integer totalSales;
     private String specialization;
+    private String status;
 
     // Stats
     private Integer artworksCount;
@@ -33,7 +34,7 @@ public class ArtistProfileResponseDTO {
             String contactNo, String bio, String location, String website,
             String instagram, String twitter, String avatarUrl,
             String coverImageUrl, LocalDateTime joinDate, Integer totalViews,
-            Integer totalFollowers, Integer totalSales, String specialization) {
+            Integer totalFollowers, Integer totalSales, String specialization, String status) {
         this.artistId = artistId;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -51,6 +52,7 @@ public class ArtistProfileResponseDTO {
         this.totalFollowers = totalFollowers;
         this.totalSales = totalSales;
         this.specialization = specialization;
+        this.status = status;
     }
 
     // Getters and Setters
@@ -188,6 +190,14 @@ public class ArtistProfileResponseDTO {
 
     public void setSpecialization(String specialization) {
         this.specialization = specialization;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     public Integer getArtworksCount() {

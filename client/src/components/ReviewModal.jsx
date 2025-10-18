@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { XCircle, Star, User, MessageSquare, Send } from "lucide-react";
 
 const ReviewModal = ({
@@ -11,9 +11,13 @@ const ReviewModal = ({
   const [reviewData, setReviewData] = useState({
     rating: 0,
     comment: "",
-    artistId: artistId || null,
-    artistName: artistName || "",
   });
+
+  useEffect(() => {
+    if (isOpen) {
+      setReviewData({ rating: 0, comment: "" });
+    }
+  }, [isOpen, artistId, artistName]);
 
   if (!isOpen) return null;
 
@@ -40,19 +44,19 @@ const ReviewModal = ({
     // Call the parent's submit handler
     if (onSubmitReview) {
       onSubmitReview({
-        ...reviewData,
+        rating: reviewData.rating,
+        comment: reviewData.comment,
         artistId: artistId,
         artistName: artistName,
       });
     }
 
     // Reset form and close modal
-    setReviewData({ rating: 0, comment: "", artistId: null, artistName: "" });
     onClose();
   };
 
   const handleClose = () => {
-    setReviewData({ rating: 0, comment: "", artistId: null, artistName: "" });
+    setReviewData({ rating: 0, comment: "" });
     onClose();
   };
 

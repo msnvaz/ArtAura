@@ -228,4 +228,15 @@ public class CustomOrderDAOImpl implements CustomOrderDAO {
         Integer count = jdbc.queryForObject(sql, Integer.class, artistId);
         return count != null ? count : 0;
     }
+
+    @Override
+    public Optional<String> getDeliveryStatusByOrderId(Long orderId) {
+        String sql = "SELECT delivery_status FROM commision_requests WHERE order_id = ?";
+        try {
+            String deliveryStatus = jdbc.queryForObject(sql, new Object[]{orderId}, String.class);
+            return Optional.ofNullable(deliveryStatus);
+        } catch (Exception e) {
+            return Optional.empty();
+        }
+    }
 }

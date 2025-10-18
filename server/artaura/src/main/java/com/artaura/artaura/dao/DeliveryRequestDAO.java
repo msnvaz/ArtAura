@@ -65,4 +65,69 @@ public interface DeliveryRequestDAO {
      * @return List of artist pickup addresses for commission requests
      */
     List<ArtistPickupAddressDTO> getCommissionPickupAddresses();
+    
+    /**
+     * Get all active delivery requests from both AW_orders and commission_requests tables
+     * Active requests have delivery_status 'accepted' or 'outForDelivery'
+     * @return List of active delivery requests
+     */
+    List<DeliveryRequestDTO> getAllActiveDeliveryRequests();
+    
+    /**
+     * Get active delivery requests from AW_orders table only
+     * Active requests have delivery_status 'accepted' or 'outForDelivery'
+     * @return List of active artwork order delivery requests
+     */
+    List<DeliveryRequestDTO> getActiveArtworkOrderDeliveryRequests();
+    
+    /**
+     * Get active delivery requests from commission_requests table only
+     * Active requests have delivery_status 'accepted' or 'outForDelivery'
+     * @return List of active commission delivery requests
+     */
+    List<DeliveryRequestDTO> getActiveCommissionDeliveryRequests();
+    
+    /**
+     * Get all delivered delivery requests from both AW_orders and commission_requests tables
+     * Delivered requests have delivery_status 'delivered'
+     * @return List of delivered delivery requests
+     */
+    List<DeliveryRequestDTO> getAllDeliveredDeliveryRequests();
+    
+    /**
+     * Get delivered delivery requests from AW_orders table only
+     * Delivered requests have delivery_status 'delivered'
+     * @return List of delivered artwork order delivery requests
+     */
+    List<DeliveryRequestDTO> getDeliveredArtworkOrderDeliveryRequests();
+    
+    /**
+     * Get delivered delivery requests from commission_requests table only
+     * Delivered requests have delivery_status 'delivered'
+     * @return List of delivered commission delivery requests
+     */
+    List<DeliveryRequestDTO> getDeliveredCommissionDeliveryRequests();
+    
+    /**
+     * Get platform fee percentage from admin_settings table
+     * @return Platform fee percentage as String, or "0" if not found
+     */
+    String getPlatformFee();
+    
+    /**
+     * Get payment amount from payment table based on order type and order ID
+     * @param orderType either "artwork" or "commission"
+     * @param orderId the order ID
+     * @return Payment amount as BigDecimal, or null if not found
+     */
+    java.math.BigDecimal getPaymentAmount(String orderType, Long orderId);
+    
+    /**
+     * Insert platform fee commission into platform_fees table
+     * @param orderType either "artwork" or "commission"
+     * @param orderId the order ID
+     * @param platformCommissionFee the calculated platform commission fee
+     * @return true if insertion was successful
+     */
+    boolean insertPlatformFee(String orderType, Long orderId, java.math.BigDecimal platformCommissionFee);
 }

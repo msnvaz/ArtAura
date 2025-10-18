@@ -5,21 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="bc3f369b-70c2-4079-bb42-8db22a19629a" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.env" beforeDir="false" afterPath="$PROJECT_DIR$/.env" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/client/src/pages/Artist/ArtistSubmissionPage.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/pages/Artist/ArtistSubmissionPage.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/client/src/pages/CommunityPage.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/pages/CommunityPage.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/artaura/src/main/java/com/artaura/artaura/dao/ArtistDAO.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/artaura/src/main/java/com/artaura/artaura/dao/ArtistDAO.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/artaura/src/main/java/com/artaura/artaura/dao/Impl/ArtistDAOImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/artaura/src/main/java/com/artaura/artaura/dao/Impl/ArtistDAOImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/artaura/src/main/java/com/artaura/artaura/dao/Impl/PostDAOImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/artaura/src/main/java/com/artaura/artaura/dao/Impl/PostDAOImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/artaura/src/main/java/com/artaura/artaura/dao/PostDAO.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/artaura/src/main/java/com/artaura/artaura/dao/PostDAO.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/artaura/src/main/java/com/artaura/artaura/dto/post/PostCreateDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/artaura/src/main/java/com/artaura/artaura/dto/post/PostCreateDTO.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/artaura/src/main/java/com/artaura/artaura/dto/post/PostResponseDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/artaura/src/main/java/com/artaura/artaura/dto/post/PostResponseDTO.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/artaura/src/main/java/com/artaura/artaura/dto/post/PostUpdateDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/artaura/src/main/java/com/artaura/artaura/dto/post/PostUpdateDTO.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/artaura/src/main/java/com/artaura/artaura/service/ArtistService.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/artaura/src/main/java/com/artaura/artaura/service/ArtistService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/artaura/src/main/java/com/artaura/artaura/service/PostService.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/artaura/src/main/java/com/artaura/artaura/service/PostService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/client/src/pages/admin/Users.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/pages/admin/Users.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/artaura/.env" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/client/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/client/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/pages/admin/AdminDashboard.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/pages/admin/AdminDashboard.jsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -42,7 +30,7 @@
     "Application.ArtauraApplication.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "nimantha2",
+    "git-widget-placeholder": "navindu2",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "C:/xampp/htdocs/ArtAura"
   }

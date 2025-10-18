@@ -73,12 +73,12 @@ public class ArtworkController {
             if (image != null && !image.isEmpty()) {
                 String fileName = System.currentTimeMillis() + "_" + image.getOriginalFilename();
 
-                // Use same logic as WebConfig to find correct upload directory
+                // Use client/public/uploads directory
                 String currentDir = System.getProperty("user.dir");
-                String serverDir = currentDir.endsWith("artaura")
+                String projectRoot = currentDir.endsWith("artaura")
                         ? currentDir.substring(0, currentDir.lastIndexOf("artaura"))
                         : currentDir + "/";
-                Path uploadDir = Paths.get(serverDir + "uploads");
+                Path uploadDir = Paths.get(projectRoot + "client/public/uploads");
 
                 Files.createDirectories(uploadDir); // Create folder if not exist
                 Path filePath = uploadDir.resolve(fileName);
@@ -191,8 +191,15 @@ public class ArtworkController {
 
             // Handle image upload if provided
             if (image != null && !image.isEmpty()) {
-                String uploadDir = "uploads/";
-                Path uploadPath = Paths.get(uploadDir);
+                String uploadDir = "client/public/uploads/";
+
+                // Calculate project root directory
+                String currentDir = System.getProperty("user.dir");
+                String projectRoot = currentDir.endsWith("artaura")
+                        ? currentDir.substring(0, currentDir.lastIndexOf("artaura"))
+                        : currentDir + "/";
+
+                Path uploadPath = Paths.get(projectRoot + uploadDir);
                 if (!Files.exists(uploadPath)) {
                     Files.createDirectories(uploadPath);
                 }
@@ -202,7 +209,7 @@ public class ArtworkController {
                 Path filePath = uploadPath.resolve(filename);
                 Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
-                dto.setImageUrl("/" + uploadDir + filename);
+                dto.setImageUrl("/uploads/" + filename);
             }
 
             // Update artwork
@@ -219,7 +226,13 @@ public class ArtworkController {
     }
 
     @DeleteMapping("/{artworkId}")
-    public void deleteArtWork(@PathVariable Long artworkId) {
-        artWorkDAO.deleteArtWorkById(artworkId);
+    public ResponseEntity<String> deleteArtWork(@PathVariable Long artworkId) {
+        try {
+            artWorkDAO.deleteArtWorkById(artworkId);
+            return ResponseEntity.ok("Artwork deleted successfully");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Error deleting artwork: " + e.getMessage());
+        }
     }
 }

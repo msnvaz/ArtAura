@@ -8,17 +8,19 @@ import {
     DollarSign,
     Check,
     X,
-    Eye,
     Clock,
     User,
     Home,
     FileText,
     AlertCircle,
-    Search
+    Search,
+    Truck
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
+import deliveryPartnerApi from '../../services/deliveryPartnerApi';
+import axios from 'axios';
+import Toast from '../Toast';
 
 const DeliveryRequestsList = () => {
   const { token } = useAuth();
@@ -32,9 +34,27 @@ const DeliveryRequestsList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedRequest, setSelectedRequest] = useState(null);
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showAcceptModal, setShowAcceptModal] = useState(false);
   const [deliveryFee, setDeliveryFee] = useState('');
+  
+  // Toast notification state
+  const [toast, setToast] = useState({
+    isVisible: false,
+    message: '',
+    type: 'success'
+  });
+
+  const showToast = (message, type = 'success') => {
+    setToast({
+      isVisible: true,
+      message,
+      type
+    });
+  };
+
+  const closeToast = () => {
+    setToast(prev => ({ ...prev, isVisible: false }));
+  };
 
   // Fetch delivery requests from API
   useEffect(() => {
@@ -45,28 +65,138 @@ const DeliveryRequestsList = () => {
         setLoading(true);
         setError(null);
         
-        // Fetch both delivery requests and pickup addresses
+        // Try the new delivery status endpoint first
+        try {
+          const pendingResponse = await deliveryPartnerApi.getPendingDeliveries();
+          
+          if (pendingResponse.success) {
+            const { artworkOrders, commissionRequests } = pendingResponse.data;
+            
+            // Transform the new API data format
+            const transformedRequests = [
+              ...artworkOrders.map(order => ({
+                id: order.id,
+                requestType: 'artwork_order',
+                artistId: order.artist_id || 'N/A',
+                artistName: order.artist_name || 'Unknown Artist',
+                artistPhone: order.artist_contact || order.contact_number || 'N/A',
+                artistEmail: order.artist_email || order.email || 'N/A',
+                buyerId: order.buyer_id,
+                buyerName: `${order.first_name || ''} ${order.last_name || ''}`.trim() || 'Unknown Buyer',
+                buyerPhone: order.contact_number || 'N/A',
+                buyerEmail: order.email || 'N/A',
+                pickupAddress: {
+                  full: order.artist_address || 'Pickup address to be confirmed',
+                  street: order.artist_address?.split(',')[0] || 'TBD',
+                  city: order.artist_city || 'TBD',
+                  district: order.artist_address?.split(',')[2] || 'TBD',
+                  postalCode: order.artist_address?.split(',')[3] || 'TBD'
+                },
+                deliveryAddress: {
+                  full: order.shipping_address || 'Address not provided',
+                  street: order.shipping_address?.split(',')[0] || '',
+                  city: order.shipping_address?.split(',')[1] || '',
+                  district: order.shipping_address?.split(',')[2] || '',
+                  postalCode: order.shipping_address?.split(',')[3] || ''
+                },
+                artwork: {
+                  title: order.artwork_title || `Artwork Order #${order.id}`,
+                  type: order.artwork_type || 'Artwork',
+                  size: order.artwork_dimensions || order.dimensions || 'N/A',
+                  weight: 'TBD',
+                  fragile: true,
+                  value: `Rs ${order.total_amount || 0}`
+                },
+                pickupDate: new Date().toISOString().split('T')[0],
+                preferredTime: '10:00 AM - 6:00 PM',
+                requestDate: order.order_date ? new Date(order.order_date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+                requestDateTime: order.order_date || new Date().toISOString(),
+                status: order.delivery_status === 'accepted' ? 'accepted' : 
+                        order.delivery_status === 'outForDelivery' ? 'in_progress' :
+                        order.delivery_status === 'delivered' ? 'completed' : 'pending',
+                urgency: 'normal',
+                specialInstructions: 'Handle with care',
+                distance: 'TBD',
+                estimatedFee: 'Rs 2,500',
+                deadline: null,
+                acceptedFee: order.shipping_fee ? `Rs ${order.shipping_fee}` : null,
+                acceptedDate: order.delivery_status === 'accepted' ? new Date().toISOString().split('T')[0] : null
+              })),
+              ...commissionRequests.map(commission => ({
+                id: commission.id,
+                requestType: 'commission_request',
+                artistId: commission.artist_id,
+                artistName: commission.artist_name || 'Unknown Artist',
+                artistPhone: commission.artist_contact || commission.phone || 'N/A',
+                artistEmail: commission.artist_email || commission.email || 'N/A',
+                buyerId: commission.buyer_id,
+                buyerName: commission.name || 'Unknown Buyer',
+                buyerPhone: commission.phone || 'N/A',
+                buyerEmail: commission.email || 'N/A',
+                pickupAddress: {
+                  full: commission.artist_address || 'Pickup address to be confirmed',
+                  street: commission.artist_address?.split(',')[0] || 'TBD',
+                  city: commission.artist_city || 'TBD',
+                  district: commission.artist_address?.split(',')[2] || 'TBD',
+                  postalCode: commission.artist_address?.split(',')[3] || 'TBD'
+                },
+                deliveryAddress: {
+                  full: commission.shipping_address || 'Address not provided',
+                  street: commission.shipping_address?.split(',')[0] || '',
+                  city: commission.shipping_address?.split(',')[1] || '',
+                  district: commission.shipping_address?.split(',')[2] || '',
+                  postalCode: commission.shipping_address?.split(',')[3] || ''
+                },
+                artwork: {
+                  title: commission.title || `Commission #${commission.id}`,
+                  type: commission.artwork_type || 'Commission',
+                  size: commission.dimensions || 'N/A',
+                  weight: 'TBD',
+                  fragile: true,
+                  value: `Rs ${commission.budget || 0}`
+                },
+                pickupDate: new Date().toISOString().split('T')[0],
+                preferredTime: '10:00 AM - 6:00 PM',
+                requestDate: commission.submitted_at ? new Date(commission.submitted_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+                requestDateTime: commission.submitted_at || new Date().toISOString(),
+                status: commission.delivery_status === 'accepted' ? 'accepted' : 
+                        commission.delivery_status === 'outForDelivery' ? 'in_progress' :
+                        commission.delivery_status === 'delivered' ? 'completed' : 'pending',
+                urgency: commission.urgency || 'normal',
+                specialInstructions: commission.additional_notes || 'Handle with care',
+                distance: 'TBD',
+                estimatedFee: 'Rs 2,500',
+                deadline: commission.deadline ? new Date(commission.deadline).toISOString().split('T')[0] : null,
+                acceptedFee: commission.shipping_fee ? `Rs ${commission.shipping_fee}` : null,
+                acceptedDate: commission.delivery_status === 'accepted' ? new Date().toISOString().split('T')[0] : null
+              }))
+            ];
+            
+            setDeliveryRequests(transformedRequests);
+            return; // Exit early if successful
+          }
+        } catch (newApiError) {
+          console.log('New API not available, falling back to old API:', newApiError);
+        }
+        
+        // Fallback to old API if new one fails
         const [requestsResponse, pickupResponse] = await Promise.all([
-          axios.get('http://localhost:8081/api/delivery-partner/requests/pending', {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          axios.get('http://localhost:8081/api/delivery-partner/pickup-addresses', {
-            headers: { Authorization: `Bearer ${token}` },
-          })
+          deliveryPartnerApi.getPendingDeliveryRequests(),
+          deliveryPartnerApi.getPickupAddresses()
         ]);
         
-        if (requestsResponse.data.success) {
+        if (requestsResponse.success) {
           // Create a map of pickup addresses by request ID and type
           const pickupMap = new Map();
-          if (pickupResponse.data.success && pickupResponse.data.addresses) {
-            pickupResponse.data.addresses.forEach(addr => {
+          if (pickupResponse.success && pickupResponse.addresses) {
+            pickupResponse.addresses.forEach(addr => {
               const key = `${addr.requestType}-${addr.requestId}`;
               pickupMap.set(key, addr);
             });
           }
           
-          // Transform API data to match frontend expected format
-          const transformedRequests = requestsResponse.data.requests.map(req => {
+          // Transform API data to match frontend expected format (old format)
+          const transformedRequests = requestsResponse.requests.map(req => {
             const pickupKey = `${req.requestType}-${req.id}`;
             const pickupData = pickupMap.get(pickupKey);
             
@@ -124,7 +254,7 @@ const DeliveryRequestsList = () => {
           
           setDeliveryRequests(transformedRequests);
         } else {
-          setError(requestsResponse.data.error || 'Failed to fetch delivery requests');
+          setError(requestsResponse.error || 'Failed to fetch delivery requests');
         }
       } catch (error) {
         console.error('Error fetching delivery requests:', error);
@@ -150,49 +280,294 @@ const DeliveryRequestsList = () => {
     return matchesSearch && matchesStatus;
   });
 
-  const handleViewDetails = (request) => {
-    setSelectedRequest(request);
-    setShowDetailsModal(true);
-  };
-
   const handleAcceptRequest = (request) => {
     setSelectedRequest(request);
     setShowAcceptModal(true);
   };
 
+  const handleMarkInTransit = async (request) => {
+    try {
+      console.log('Marking as in transit for request:', request);
+      
+      // Convert request type to match backend expected format
+      const orderType = request.requestType === 'artwork_order' ? 'artwork' : 'commission';
+      
+      // Make API call to mark as out for delivery
+      const response = await deliveryPartnerApi.markOutForDelivery(orderType, request.id);
+
+      console.log('Mark in transit API Response:', response);
+
+      if (response.success) {
+        // Update local state
+        setDeliveryRequests(prev => 
+          prev.map(req => 
+            req.id === request.id 
+              ? { ...req, status: 'in_progress' }
+              : req
+          )
+        );
+
+        // alert('Order marked as in transit successfully!');
+        showToast(`Order #${request.id} marked as in transit successfully!`, 'success');
+      } else {
+        throw new Error(response.error || 'Failed to mark as in transit');
+      }
+    } catch (error) {
+      console.error('Error marking as in transit:', error);
+      // alert(`Failed to mark as in transit. Error: ${error.error || error.message}`);
+      showToast('Failed to mark as in transit. Please try again.', 'error');
+    }
+  };
+
+  const handleMarkDelivered = async (request) => {
+    try {
+      console.log('Marking as delivered for request:', request);
+      
+      // Convert request type to match backend expected format
+      const orderType = request.requestType === 'artwork_order' ? 'artwork' : 'commission';
+      
+      // Make API call to mark as delivered
+      const response = await deliveryPartnerApi.markDelivered(orderType, request.id);
+
+      console.log('Mark delivered API Response:', response);
+
+      if (response.success) {
+        // Update local state
+        setDeliveryRequests(prev => 
+          prev.map(req => 
+            req.id === request.id 
+              ? { ...req, status: 'completed' }
+              : req
+          )
+        );
+
+        // alert('Order marked as delivered successfully!');
+        showToast(`Order #${request.id} marked as delivered successfully!`, 'success');
+      } else {
+        throw new Error(response.error || 'Failed to mark as delivered');
+      }
+    } catch (error) {
+      console.error('Error marking as delivered:', error);
+      // alert(`Failed to mark as delivered. Error: ${error.error || error.message}`);
+      showToast('Failed to mark as delivered. Please try again.', 'error');
+    }
+  };
+
   const handleSubmitAcceptance = async () => {
     if (!deliveryFee || isNaN(deliveryFee) || parseFloat(deliveryFee) <= 0) {
-      alert('Please enter a valid delivery fee');
+      // alert('Please enter a valid delivery fee');
+      showToast('Please enter a valid delivery fee', 'error');
       return;
     }
 
     try {
-      // Make API call to accept the delivery request
-      await axios.put(`http://localhost:8081/api/delivery-partner/requests/${selectedRequest.id}/accept`, {
-        requestType: selectedRequest.requestType,
-        deliveryFee: deliveryFee
-      }, {
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
+      console.log('Starting acceptance process for request:', selectedRequest);
+      
+      // Get current user from localStorage and validate
+      let currentUser;
+      let userId;
+      try {
+        const userStr = localStorage.getItem('user');
+        console.log('Raw user string from localStorage:', userStr);
+        
+        if (!userStr) {
+          throw new Error('No user found in localStorage');
         }
-      });
+        
+        currentUser = JSON.parse(userStr);
+        console.log('Parsed user object:', currentUser);
+        
+        // Try different possible property names for user ID
+        userId = currentUser.userId || currentUser.id || currentUser.UserId || currentUser.user_id;
+        
+        if (!userId) {
+          console.error('No userId found in user object. Available properties:', Object.keys(currentUser));
+          throw new Error('No valid user ID found in user data');
+        }
+        
+        console.log('Found userId:', userId);
+      } catch (userParseError) {
+        console.error('Error parsing user from localStorage:', userParseError);
+        
+        // If localStorage parsing fails, try to extract from JWT token
+        if (token) {
+          try {
+            // Decode JWT token to get user info (basic decode, not verifying signature)
+            const tokenParts = token.split('.');
+            if (tokenParts.length === 3) {
+              const payload = JSON.parse(atob(tokenParts[1]));
+              console.log('JWT payload:', payload);
+              userId = payload.userId || payload.sub || payload.id || payload.UserId;
+              if (userId) {
+                console.log('Extracted userId from JWT:', userId);
+                currentUser = { userId: userId };
+              }
+            }
+          } catch (jwtError) {
+            console.error('Error extracting from JWT:', jwtError);
+          }
+        }
+        
+        if (!userId) {
+          // alert('User authentication error. Please log in again.');
+          showToast('User authentication error. Please log in again.', 'error');
+          return;
+        }
+      }
+      
+      // Get current user ID for delivery partner ID
+      let deliveryPartnerId;
+      try {
+        const userResponse = await deliveryPartnerApi.getDeliveryPartnerProfile(userId);
+        deliveryPartnerId = userResponse.partnerId;
+        console.log('Got delivery partner ID:', deliveryPartnerId);
+      } catch (userError) {
+        console.error('Error getting delivery partner ID:', userError);
+        // Use the user ID as fallback
+        deliveryPartnerId = userId;
+        console.log('Using fallback delivery partner ID (user ID):', deliveryPartnerId);
+      }
 
-      // Update local state
-      setDeliveryRequests(prev => 
-        prev.map(req => 
-          req.id === selectedRequest.id 
-            ? { ...req, status: 'accepted', acceptedFee: `Rs ${deliveryFee}`, acceptedDate: new Date().toISOString().split('T')[0] }
-            : req
-        )
-      );
+      // Convert request type to match backend expected format
+      const orderType = selectedRequest.requestType === 'artwork_order' ? 'artwork' : 'commission';
+      
+      const requestPayload = {
+        orderType: orderType,
+        orderId: selectedRequest.id,
+        shippingFee: parseFloat(deliveryFee),
+        deliveryPartnerId: deliveryPartnerId
+      };
+      
+      console.log('Making API call with payload:', requestPayload);
 
-      setShowAcceptModal(false);
-      setDeliveryFee('');
-      alert('Delivery request accepted successfully!');
+      // Make API call to accept the delivery request using the new enhanced endpoint
+      const response = await deliveryPartnerApi.acceptDeliveryEnhanced(requestPayload);
+
+      console.log('API Response:', response);
+
+      if (response.success) {
+        console.log('Updating state with accepted request');
+        // Update local state with enhanced response data
+        setDeliveryRequests(prev => {
+          const updated = prev.map(req => 
+            req.id === selectedRequest.id && req.requestType === selectedRequest.requestType
+              ? { 
+                  ...req, 
+                  status: 'accepted', 
+                  acceptedFee: `Rs ${deliveryFee}`, 
+                  acceptedDate: new Date().toISOString().split('T')[0],
+                  lastUpdated: response.timestamp,
+                  deliveryPartnerId: deliveryPartnerId
+                }
+              : req
+          );
+          console.log('Updated delivery requests:', updated);
+          return updated;
+        });
+
+        console.log('Closing modal and resetting fee');
+        setShowAcceptModal(false);
+        setDeliveryFee('');
+        setSelectedRequest(null);
+        
+        // Enhanced success message with more details
+        /* alert(`✅ Delivery request accepted successfully!\n\n` +
+              `Order ID: ${selectedRequest.id}\n` +
+              `Order Type: ${orderType}\n` +
+              `Delivery Fee: Rs ${deliveryFee}\n` +
+              `Status: ${response.newStatus || 'accepted'}\n` +
+              `${response.message || 'Request has been accepted and is ready for pickup.'}\n\n` +
+              `Previous Status: ${response.previousStatus || 'pending'}\n` +
+              `Updated At: ${response.timestamp ? new Date(response.timestamp).toLocaleString() : new Date().toLocaleString()}`); */
+        
+        showToast(`✅ Delivery request #${selectedRequest.id} accepted successfully! Fee: Rs ${deliveryFee}`, 'success');
+      } else {
+        console.error('API returned success=false:', response);
+        throw new Error(response.error || 'Failed to accept delivery request');
+      }
     } catch (error) {
       console.error('Error accepting delivery request:', error);
-      alert('Failed to accept delivery request. Please try again.');
+      
+      // Check if it's a 404 error or new endpoint not available, fallback to old endpoint
+      if (error.error || error.success === false) {
+        console.log('Enhanced endpoint not available, trying standard endpoint...');
+        try {
+          const fallbackResponse = await deliveryPartnerApi.acceptDelivery(requestPayload);
+
+          console.log('Standard API Response:', fallbackResponse);
+
+          // Update local state
+          setDeliveryRequests(prev => 
+            prev.map(req => 
+              req.id === selectedRequest.id 
+                ? { ...req, status: 'accepted', acceptedFee: `Rs ${deliveryFee}`, acceptedDate: new Date().toISOString().split('T')[0] }
+                : req
+            )
+          );
+
+          setShowAcceptModal(false);
+          setDeliveryFee('');
+          // alert('Delivery request accepted successfully using standard method!');
+          showToast(`✅ Delivery request #${selectedRequest.id} accepted successfully!`, 'success');
+        } catch (fallbackError) {
+          console.error('Standard endpoint also failed, trying legacy endpoint:', fallbackError);
+          try {
+            const legacyResponse = await deliveryPartnerApi.acceptDeliveryLegacy(selectedRequest.id, {
+              requestType: selectedRequest.requestType,
+              deliveryFee: deliveryFee
+            });
+
+            console.log('Legacy API Response:', legacyResponse);
+
+            // Update local state
+            setDeliveryRequests(prev => 
+              prev.map(req => 
+                req.id === selectedRequest.id 
+                  ? { ...req, status: 'accepted', acceptedFee: `Rs ${deliveryFee}`, acceptedDate: new Date().toISOString().split('T')[0] }
+                  : req
+              )
+            );
+
+            setShowAcceptModal(false);
+            setDeliveryFee('');
+            // alert('Delivery request accepted successfully using legacy method!');
+            showToast(`✅ Delivery request #${selectedRequest.id} accepted successfully!`, 'success');
+          } catch (legacyError) {
+            console.error('All endpoints failed:', legacyError);
+            
+            // Enhanced error message for complete failure
+            let errorMessage = 'Failed to accept delivery request on all available endpoints.';
+            
+            if (legacyError.error) {
+              errorMessage += `\nError: ${legacyError.error}`;
+              if (legacyError.details) {
+                errorMessage += `\nDetails: ${legacyError.details}`;
+              }
+            } else if (legacyError.message) {
+              errorMessage += `\nError: ${legacyError.message}`;
+            }
+            
+            errorMessage += '\n\nPlease check your network connection and try again, or contact support.';
+            // alert(errorMessage);
+            showToast('Failed to accept delivery request. Please try again.', 'error');
+          }
+        }
+      } else {
+        // Enhanced error handling for non-404 errors
+        let errorMessage = 'Failed to accept delivery request.';
+        
+        if (error.error) {
+          errorMessage += `\nError: ${error.error}`;
+          if (error.details) {
+            errorMessage += `\nDetails: ${error.details}`;
+          }
+        } else if (error.message) {
+          errorMessage += `\nError: ${error.message}`;
+        }
+        
+        // alert(errorMessage);
+        showToast('Failed to accept delivery request. Please try again.', 'error');
+      }
     }
   };
 
@@ -288,7 +663,7 @@ const DeliveryRequestsList = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      {/* <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
           <div className="flex items-center">
             <div 
@@ -349,7 +724,7 @@ const DeliveryRequestsList = () => {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Delivery Requests List */}
       <div className="space-y-6">
@@ -396,19 +771,7 @@ const DeliveryRequestsList = () => {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <button
-                      onClick={() => handleViewDetails(request)}
-                      className="px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200"
-                      style={{
-                        color: '#5D3A00',
-                        backgroundColor: '#FFE4D6'
-                      }}
-                      onMouseOver={(e) => e.target.style.backgroundColor = '#FFD95A'}
-                      onMouseOut={(e) => e.target.style.backgroundColor = '#FFE4D6'}
-                    >
-                      <Eye className="h-4 w-4 inline mr-1" />
-                      View Details
-                    </button>
+                    {/* Show different buttons based on status */}
                     {request.status === 'pending' && (
                       <button
                         onClick={() => handleAcceptRequest(request)}
@@ -422,6 +785,42 @@ const DeliveryRequestsList = () => {
                         <Check className="h-4 w-4 inline mr-1" />
                         Accept
                       </button>
+                    )}
+                    
+                    {request.status === 'accepted' && (
+                      <button
+                        onClick={() => handleMarkInTransit(request)}
+                        className="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors duration-200"
+                        style={{
+                          backgroundColor: '#2563eb'
+                        }}
+                        onMouseOver={(e) => e.target.style.backgroundColor = '#1d4ed8'}
+                        onMouseOut={(e) => e.target.style.backgroundColor = '#2563eb'}
+                      >
+                        <Truck className="h-4 w-4 inline mr-1" />
+                        Mark In Transit
+                      </button>
+                    )}
+                    
+                    {request.status === 'in_progress' && (
+                      <button
+                        onClick={() => handleMarkDelivered(request)}
+                        className="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors duration-200"
+                        style={{
+                          backgroundColor: '#16a34a'
+                        }}
+                        onMouseOver={(e) => e.target.style.backgroundColor = '#15803d'}
+                        onMouseOut={(e) => e.target.style.backgroundColor = '#16a34a'}
+                      >
+                        <Check className="h-4 w-4 inline mr-1" />
+                        Mark Delivered
+                      </button>
+                    )}
+                    
+                    {request.status === 'completed' && (
+                      <span className="px-4 py-2 text-sm font-medium text-green-800 bg-green-100 rounded-lg">
+                        ✓ Delivered
+                      </span>
                     )}
                   </div>
                 </div>
@@ -519,73 +918,27 @@ const DeliveryRequestsList = () => {
                     </p>
                   </div>
                 )}
+
+                {request.status === 'in_progress' && (
+                  <div className="mt-4 p-3 rounded-lg" style={{ backgroundColor: '#DBEAFE' }}>
+                    <p className="text-sm" style={{ color: '#1E3A8A' }}>
+                      <strong>🚚 In Transit</strong> - Order is on the way to delivery location
+                    </p>
+                  </div>
+                )}
+
+                {request.status === 'completed' && (
+                  <div className="mt-4 p-3 rounded-lg" style={{ backgroundColor: '#DCFCE7' }}>
+                    <p className="text-sm" style={{ color: '#14532D' }}>
+                      <strong>✅ Delivered</strong> - Order has been successfully delivered
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           ))
         )}
       </div>
-
-      {/* Details Modal */}
-      {showDetailsModal && selectedRequest && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-gray-900">Delivery Request Details</h2>
-                <button
-                  onClick={() => setShowDetailsModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <X className="h-6 w-6" />
-                </button>
-              </div>
-            </div>
-            <div className="p-6">
-              {/* Detailed view content would go here */}
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-semibold mb-3">Request Information</h3>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="font-medium">Request ID:</span> #{selectedRequest.id}
-                    </div>
-                    <div>
-                      <span className="font-medium">Request Type:</span> 
-                      <span className="ml-2 px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
-                        {selectedRequest.requestType === 'artwork_order' ? 'Artwork Order' : 'Commission Request'}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="font-medium">
-                        {selectedRequest.requestType === 'artwork_order' ? 'Order Date:' : 'Submitted Date:'}
-                      </span> {formatDate(selectedRequest.requestDate)}
-                      {selectedRequest.requestDateTime && (
-                        <span className="text-xs text-gray-500 ml-1">
-                          ({formatDateTime(selectedRequest.requestDateTime)})
-                        </span>
-                      )}
-                    </div>
-                    <div>
-                      <span className="font-medium">Status:</span> 
-                      <span className={`ml-2 px-2 py-1 text-xs rounded-full ${getStatusColor(selectedRequest.status)}`}>
-                        {selectedRequest.status}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="font-medium">Priority:</span> 
-                      <span className={`ml-2 ${getUrgencyColor(selectedRequest.urgency)}`}>
-                        {selectedRequest.urgency}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Additional detailed sections would be added here */}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Accept Request Modal */}
       {showAcceptModal && selectedRequest && (
@@ -651,6 +1004,15 @@ const DeliveryRequestsList = () => {
           </div>
         </div>
       )}
+
+      {/* Toast Notification */}
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={closeToast}
+        duration={3000}
+      />
     </div>
   );
 };

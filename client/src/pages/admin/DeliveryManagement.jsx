@@ -2,29 +2,17 @@ import React, { useState, useEffect } from 'react';
 import {
   Package,
   Truck,
-  MapPin,
-  Phone,
-  Calendar,
   Clock,
-  CheckCircle,
   AlertCircle,
-  User,
-  DollarSign,
   BarChart3,
   FileText,
-  Star,
-  TrendingUp,
-  Navigation,
-  Filter,
   Download,
   Search,
-  Eye,
-  MoreHorizontal,
-  UserCheck,
   AlertTriangle,
   RefreshCw
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import adminDeliveryApi from '../../services/adminDeliveryApi';
 
 const DeliveryManagement = () => {
   const { token } = useAuth();
@@ -42,7 +30,6 @@ const DeliveryManagement = () => {
       completedDeliveries: 0,
       totalDeliveryPartners: 0,
       pendingRequests: 0,
-      totalRevenue: 0,
       avgDeliveryTime: 0,
       avgRating: 0
     },
@@ -51,187 +38,230 @@ const DeliveryManagement = () => {
     recentActivity: []
   });
 
-  // Mock data for admin delivery overview
-  const mockDeliveryData = {
-    stats: {
-      totalDeliveries: 284,
-      activeDeliveries: 12,
-      completedDeliveries: 267,
-      totalDeliveryPartners: 18,
-      pendingRequests: 8,
-      totalRevenue: 850000,
-      avgDeliveryTime: 2.3,
-      avgRating: 4.7
-    },
-    deliveries: [
-      {
-        id: 1,
-        requestId: 'REQ001',
-        artwork: 'Sunset over Sigiriya',
-        artist: 'Saman Kumara',
-        buyer: 'Nimal Silva',
-        deliveryPartner: 'Kasun Perera',
-        partnerPhone: '+94 71 234 5678',
-        status: 'delivered',
-        fee: 3200,
-        createdDate: '2024-08-10',
-        deliveredDate: '2024-08-12',
-        rating: 5,
-        distance: '120 km',
-        pickupCity: 'Colombo',
-        deliveryCity: 'Kandy'
-      },
-      {
-        id: 2,
-        requestId: 'REQ002',
-        artwork: 'Traditional Mask Collection',
-        artist: 'Priya Jayawardena',
-        buyer: 'Ravi Perera',
-        deliveryPartner: 'Nuwan Silva',
-        partnerPhone: '+94 76 555 1234',
-        status: 'in_transit',
-        fee: 3500,
-        createdDate: '2024-08-11',
-        estimatedDelivery: '2024-08-16',
-        rating: null,
-        distance: '145 km',
-        pickupCity: 'Galle',
-        deliveryCity: 'Nugegoda'
-      },
-      {
-        id: 3,
-        requestId: 'REQ003',
-        artwork: 'Tea Plantation Vista',
-        artist: 'Chaminda Fernando',
-        buyer: 'Malini Silva',
-        deliveryPartner: 'Asanka Rodrigo',
-        partnerPhone: '+94 77 888 9999',
-        status: 'picked_up',
-        fee: 2800,
-        createdDate: '2024-08-12',
-        estimatedDelivery: '2024-08-15',
-        rating: null,
-        distance: '95 km',
-        pickupCity: 'Nuwara Eliya',
-        deliveryCity: 'Colombo'
-      },
-      {
-        id: 4,
-        requestId: 'REQ004',
-        artwork: 'Modern Abstract Canvas',
-        artist: 'Ruwan Dissanayake',
-        buyer: 'Sanduni Perera',
-        deliveryPartner: null,
-        partnerPhone: null,
-        status: 'pending_assignment',
-        fee: 2800,
-        createdDate: '2024-08-13',
-        estimatedDelivery: null,
-        rating: null,
-        distance: '115 km',
-        pickupCity: 'Colombo',
-        deliveryCity: 'Kandy'
+  const [error, setError] = useState(null);
+
+  // Load delivery data
+  const loadDeliveryData = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // Fetch statistics and delivery requests in parallel
+      const [statsResponse, deliveriesResponse] = await Promise.all([
+        adminDeliveryApi.getDeliveryStatistics(),
+        adminDeliveryApi.getAllDeliveryRequests()
+      ]);
+
+      if (statsResponse.success && deliveriesResponse.success) {
+        // Transform backend data to match frontend expectations
+        const transformedDeliveries = deliveriesResponse.data.map(delivery => ({
+          id: delivery.id,
+          requestId: `${delivery.requestType.toUpperCase()}-${delivery.id}`,
+          artwork: delivery.artworkTitle || 'N/A',
+          artist: delivery.artistName || 'N/A',
+          buyer: delivery.buyerName || 'N/A',
+          deliveryPartner: null, // Will be populated when delivery partner data is available
+          partnerPhone: null,
+          status: mapDeliveryStatus(delivery.deliveryStatus),
+          createdDate: delivery.orderDate ? new Date(delivery.orderDate).toISOString().split('T')[0] : 'N/A',
+          deliveredDate: null,
+          rating: null,
+          pickupAddress: delivery.pickupAddress || 'N/A',
+          pickupCity: delivery.pickupCity || 'N/A',
+          deliveryAddress: delivery.shippingAddress || 'N/A',
+          deliveryCity: extractCityFromAddress(delivery.shippingAddress),
+          requestType: delivery.requestType,
+          artistId: delivery.artistId,
+          buyerId: delivery.buyerId,
+          buyerEmail: delivery.buyerEmail,
+          buyerPhone: delivery.buyerPhone,
+          shippingAddress: delivery.shippingAddress,
+          artworkType: delivery.artworkType,
+          artworkDimensions: delivery.artworkDimensions
+        }));
+
+        setDeliveryData({
+          stats: {
+            totalDeliveries: statsResponse.data.totalDeliveries || 0,
+            activeDeliveries: statsResponse.data.activeDeliveries || 0,
+            completedDeliveries: statsResponse.data.completedDeliveries || 0,
+            totalDeliveryPartners: statsResponse.data.totalDeliveryPartners || 0,
+            pendingRequests: statsResponse.data.pendingRequests || 0,
+            avgDeliveryTime: statsResponse.data.avgDeliveryTime || 0,
+            avgRating: statsResponse.data.avgRating || 0
+          },
+          deliveries: transformedDeliveries,
+          deliveryPartners: [], // Will be populated when partner API is available
+          recentActivity: generateRecentActivity(transformedDeliveries.slice(0, 5))
+        });
+      } else {
+        throw new Error('Failed to fetch delivery data');
       }
-    ],
-    deliveryPartners: [
-      {
-        id: 1,
-        name: 'Kasun Perera',
-        phone: '+94 71 234 5678',
-        email: 'kasun.perera@email.com',
-        rating: 4.8,
-        totalDeliveries: 47,
-        activeDeliveries: 2,
-        joinDate: '2024-01-15',
-        status: 'active',
-        totalEarnings: 125600,
-        location: 'Colombo'
-      },
-      {
-        id: 2,
-        name: 'Nuwan Silva',
-        phone: '+94 76 555 1234',
-        email: 'nuwan.silva@email.com',
-        rating: 4.6,
-        totalDeliveries: 32,
-        activeDeliveries: 1,
-        joinDate: '2024-02-20',
-        status: 'active',
-        totalEarnings: 89400,
-        location: 'Gampaha'
-      },
-      {
-        id: 3,
-        name: 'Asanka Rodrigo',
-        phone: '+94 77 888 9999',
-        email: 'asanka.rodrigo@email.com',
-        rating: 4.9,
-        totalDeliveries: 28,
-        activeDeliveries: 1,
-        joinDate: '2024-03-10',
-        status: 'active',
-        totalEarnings: 76500,
-        location: 'Kandy'
-      }
-    ],
-    recentActivity: [
-      {
-        id: 1,
-        type: 'delivery_completed',
-        message: 'Kasun Perera completed delivery REQ001',
-        timestamp: '2024-08-14 14:30',
-        severity: 'success'
-      },
-      {
-        id: 2,
-        type: 'new_request',
-        message: 'New delivery request REQ004 created',
-        timestamp: '2024-08-13 16:45',
-        severity: 'info'
-      },
-      {
-        id: 3,
-        type: 'partner_joined',
-        message: 'New delivery partner Saman Kumara joined',
-        timestamp: '2024-08-13 10:20',
-        severity: 'success'
-      }
-    ]
+    } catch (error) {
+      console.error('Error loading delivery data:', error);
+      setError(error.error || 'Failed to load delivery data');
+      
+      // Set empty data on error
+      setDeliveryData({
+        stats: {
+          totalDeliveries: 0,
+          activeDeliveries: 0,
+          completedDeliveries: 0,
+          totalDeliveryPartners: 0,
+          pendingRequests: 0,
+          avgDeliveryTime: 0,
+          avgRating: 0
+        },
+        deliveries: [],
+        deliveryPartners: [],
+        recentActivity: []
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Helper function to map backend delivery status to frontend status
+  const mapDeliveryStatus = (backendStatus) => {
+    if (!backendStatus || backendStatus === 'N/A') return 'pending_assignment';
+    
+    const statusMap = {
+      'pending': 'pending_assignment',
+      'accepted': 'accepted',
+      'outForDelivery': 'in_transit',
+      'delivered': 'delivered',
+      'cancelled': 'cancelled'
+    };
+    
+    return statusMap[backendStatus] || 'pending_assignment';
+  };
+
+  // Helper function to display status with proper words
+  const getStatusDisplayName = (status) => {
+    const statusDisplayMap = {
+      'pending': 'Pending',
+      'pending_assignment': 'Pending',
+      'accepted': 'Accepted',
+      'picked_up': 'Picked Up',
+      'in_transit': 'Out for Delivery',
+      'outForDelivery': 'Out for Delivery',
+      'delivered': 'Delivered',
+      'cancelled': 'Cancelled',
+      'N/A': 'Not Assigned'
+    };
+    
+    return statusDisplayMap[status] || status;
+  };
+
+  // Helper function to extract city from shipping address
+  const extractCityFromAddress = (address) => {
+    if (!address) return 'N/A';
+    
+    // Try to extract city from address (this is a simple implementation)
+    const parts = address.split(',');
+    return parts.length >= 2 ? parts[1].trim() : 'N/A';
+  };
+
+  // Helper function to generate recent activity from deliveries
+  const generateRecentActivity = (recentDeliveries) => {
+    return recentDeliveries.map((delivery, index) => ({
+      id: index + 1,
+      type: delivery.status === 'delivered' ? 'delivery_completed' : 'new_request',
+      message: delivery.status === 'delivered' 
+        ? `Delivery ${delivery.requestId} completed`
+        : `New delivery request ${delivery.requestId} created`,
+      timestamp: delivery.createdDate + ' ' + new Date().toLocaleTimeString(),
+      severity: delivery.status === 'delivered' ? 'success' : 'info'
+    }));
   };
 
   useEffect(() => {
-    setLoading(true);
-    setTimeout(() => {
-      setDeliveryData(mockDeliveryData);
-      setLoading(false);
-    }, 1000);
+    loadDeliveryData();
   }, []);
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-LK', {
-      style: 'currency',
-      currency: 'LKR',
-      minimumFractionDigits: 0
-    }).format(amount);
+  // Refresh data function
+  const refreshData = () => {
+    loadDeliveryData();
   };
 
-  const formatCurrencyCompact = (amount) => {
-    if (amount >= 1000000) {
-      return `LKR ${(amount / 1000000).toFixed(1)}M`;
-    } else if (amount >= 1000) {
-      return `LKR ${(amount / 1000).toFixed(0)}K`;
+  // Handle status filter change
+  const handleStatusFilterChange = async (newStatus) => {
+    setStatusFilter(newStatus);
+    
+    if (newStatus === 'all') {
+      loadDeliveryData();
+      return;
     }
-    return `LKR ${amount.toLocaleString()}`;
+
+    setLoading(true);
+    try {
+      const response = await adminDeliveryApi.getDeliveryRequestsByStatus(mapFrontendStatusToBackend(newStatus));
+      
+      if (response.success) {
+        const transformedDeliveries = response.data.map(delivery => ({
+          id: delivery.id,
+          requestId: `${delivery.requestType.toUpperCase()}-${delivery.id}`,
+          artwork: delivery.artworkTitle || 'N/A',
+          artist: delivery.artistName || 'N/A',
+          buyer: delivery.buyerName || 'N/A',
+          deliveryPartner: null,
+          partnerPhone: null,
+          status: mapDeliveryStatus(delivery.deliveryStatus),
+          createdDate: delivery.orderDate ? new Date(delivery.orderDate).toISOString().split('T')[0] : 'N/A',
+          deliveredDate: null,
+          rating: null,
+          pickupAddress: delivery.pickupAddress || 'N/A',
+          pickupCity: delivery.pickupCity || 'N/A',
+          deliveryAddress: delivery.shippingAddress || 'N/A',
+          deliveryCity: extractCityFromAddress(delivery.shippingAddress),
+          requestType: delivery.requestType,
+          artistId: delivery.artistId,
+          buyerId: delivery.buyerId,
+          buyerEmail: delivery.buyerEmail,
+          buyerPhone: delivery.buyerPhone,
+          shippingAddress: delivery.shippingAddress,
+          artworkType: delivery.artworkType,
+          artworkDimensions: delivery.artworkDimensions
+        }));
+
+        setDeliveryData(prev => ({
+          ...prev,
+          deliveries: transformedDeliveries
+        }));
+      }
+    } catch (error) {
+      console.error('Error filtering by status:', error);
+      setError('Failed to filter delivery requests');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Helper function to map frontend status to backend status
+  const mapFrontendStatusToBackend = (frontendStatus) => {
+    const statusMap = {
+      'pending_assignment': 'pending',
+      'accepted': 'accepted',
+      'picked_up': 'accepted', // Map to accepted for now
+      'in_transit': 'outForDelivery',
+      'delivered': 'delivered',
+      'cancelled': 'cancelled'
+    };
+    
+    return statusMap[frontendStatus] || frontendStatus;
   };
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'pending_assignment': return 'bg-red-100 text-red-800';
+      case 'pending_assignment': 
+      case 'pending': return 'bg-red-100 text-red-800';
       case 'accepted': return 'bg-blue-100 text-blue-800';
       case 'picked_up': return 'bg-yellow-100 text-yellow-800';
-      case 'in_transit': return 'bg-orange-100 text-orange-800';
+      case 'in_transit': 
+      case 'outForDelivery': return 'bg-orange-100 text-orange-800';
       case 'delivered': return 'bg-green-100 text-green-800';
       case 'cancelled': return 'bg-gray-100 text-gray-800';
+      case 'N/A': return 'bg-gray-100 text-gray-600';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -246,10 +276,10 @@ const DeliveryManagement = () => {
   };
 
   const filteredDeliveries = deliveryData.deliveries.filter(delivery => {
-    const matchesSearch = delivery.artwork.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         delivery.artist.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         delivery.buyer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         delivery.requestId.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (delivery.artwork || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (delivery.artist || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (delivery.buyer || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (delivery.requestId || '').toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || delivery.status === statusFilter;
     
@@ -259,7 +289,7 @@ const DeliveryManagement = () => {
 const renderOverview = () => (
     <div className="space-y-8">
         {/* Key Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
                 <div className="flex items-center">
                     <div className="p-3 rounded-full" style={{ backgroundColor: '#FFE4D6' }}>
@@ -287,25 +317,11 @@ const renderOverview = () => (
             <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
                 <div className="flex items-center">
                     <div className="p-3 rounded-full" style={{ backgroundColor: '#FFE4D6' }}>
-                        <UserCheck className="h-8 w-8" style={{ color: '#D87C5A' }} />
+                        <AlertTriangle className="h-8 w-8" style={{ color: '#D87C5A' }} />
                     </div>
                     <div className="ml-4">
-                        <p className="text-sm font-medium whitespace-nowrap" style={{ color: '#D87C5A' }}>Delivery Partners</p>
-                        <p className="text-2xl font-bold" style={{ color: '#5D3A00' }}>{deliveryData.stats.totalDeliveryPartners}</p>
-                    </div>
-                </div>
-            </div>
-
-            <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-                <div className="flex items-center">
-                    <div className="p-3 rounded-full" style={{ backgroundColor: '#FFD95A' }}>
-                        <DollarSign className="h-8 w-8" style={{ color: '#5D3A00' }} />
-                    </div>
-                    <div className="ml-4">
-                        <p className="text-sm font-medium" style={{ color: '#D87C5A' }}>Total Revenue</p>
-                        <p className="text-2xl font-bold whitespace-nowrap" style={{ color: '#5D3A00' }}>
-                            {formatCurrencyCompact(deliveryData.stats.totalRevenue)}
-                        </p>
+                        <p className="text-sm font-medium whitespace-nowrap" style={{ color: '#D87C5A' }}>Pending Requests</p>
+                        <p className="text-2xl font-bold" style={{ color: '#5D3A00' }}>{deliveryData.stats.pendingRequests}</p>
                     </div>
                 </div>
             </div>
@@ -318,42 +334,47 @@ const renderOverview = () => (
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
                         <span className="text-sm" style={{ color: '#D87C5A' }}>Completion Rate</span>
-                        <span className="text-lg font-bold" style={{ color: '#5D3A00' }}>94%</span>
+                        <span className="text-lg font-bold" style={{ color: '#5D3A00' }}>
+                            {deliveryData.stats.totalDeliveries > 0 
+                                ? Math.round((deliveryData.stats.completedDeliveries / deliveryData.stats.totalDeliveries) * 100) 
+                                : 0}%
+                        </span>
                     </div>
                     <div className="flex items-center justify-between">
-                        <span className="text-sm" style={{ color: '#D87C5A' }}>Avg. Delivery Time</span>
-                        <span className="text-lg font-bold" style={{ color: '#5D3A00' }}>{deliveryData.stats.avgDeliveryTime} days</span>
+                        <span className="text-sm" style={{ color: '#D87C5A' }}>Delivered Orders</span>
+                        <span className="text-lg font-bold" style={{ color: '#5D3A00' }}>{deliveryData.stats.completedDeliveries}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                        <span className="text-sm" style={{ color: '#D87C5A' }}>Customer Rating</span>
-                        <div className="flex items-center">
-                            <Star className="h-4 w-4" style={{ color: '#FFD95A' }} />
-                            <span className="text-lg font-bold ml-1" style={{ color: '#5D3A00' }}>{deliveryData.stats.avgRating}</span>
-                        </div>
+                        <span className="text-sm" style={{ color: '#D87C5A' }}>Commission Requests</span>
+                        <span className="text-lg font-bold" style={{ color: '#5D3A00' }}>
+                            {deliveryData.deliveries.filter(d => d.requestType === 'commission_request').length}
+                        </span>
                     </div>
                 </div>
             </div>
 
             <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-                <h3 className="text-lg font-semibold mb-4" style={{ color: '#5D3A00' }}>Pending Actions</h3>
+                <h3 className="text-lg font-semibold mb-4" style={{ color: '#5D3A00' }}>Status Breakdown</h3>
                 <div className="space-y-3">
                     <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: '#FFE4D6' }}>
                         <div className="flex items-center">
                             <AlertTriangle className="h-5 w-5" style={{ color: '#D87C5A' }} />
                             <span className="ml-2 text-sm font-medium" style={{ color: '#5D3A00' }}>
-                                Unassigned Requests
+                                Pending Requests
                             </span>
                         </div>
                         <span className="text-lg font-bold" style={{ color: '#5D3A00' }}>{deliveryData.stats.pendingRequests}</span>
                     </div>
                     <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: '#FFE4D6' }}>
                         <div className="flex items-center">
-                            <Clock className="h-5 w-5" style={{ color: '#D87C5A' }} />
+                            <Truck className="h-5 w-5" style={{ color: '#D87C5A' }} />
                             <span className="ml-2 text-sm font-medium" style={{ color: '#5D3A00' }}>
-                                Overdue Deliveries
+                                Out for Delivery
                             </span>
                         </div>
-                        <span className="text-lg font-bold" style={{ color: '#5D3A00' }}>2</span>
+                        <span className="text-lg font-bold" style={{ color: '#5D3A00' }}>
+                            {deliveryData.deliveries.filter(d => d.status === 'in_transit').length}
+                        </span>
                     </div>
                 </div>
             </div>
@@ -393,25 +414,24 @@ const renderOverview = () => (
             
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => handleStatusFilterChange(e.target.value)}
               className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2"
               style={{ borderColor: '#FFE4D6' }}
             >
               <option value="all">All Statuses</option>
-              <option value="pending_assignment">Pending Assignment</option>
+              <option value="pending_assignment">Pending</option>
               <option value="accepted">Accepted</option>
-              <option value="picked_up">Picked Up</option>
-              <option value="in_transit">In Transit</option>
+              <option value="in_transit">Out for Delivery</option>
               <option value="delivered">Delivered</option>
             </select>
           </div>
 
           <div className="flex gap-2">
-            <button className="px-4 py-2 text-sm font-medium rounded-lg flex items-center gap-2 border" style={{ color: '#5D3A00', borderColor: '#FFE4D6' }}>
-              <Download className="h-4 w-4" />
-              Export
-            </button>
-            <button className="px-4 py-2 text-sm font-medium text-white rounded-lg flex items-center gap-2" style={{ backgroundColor: '#D87C5A' }}>
+            <button 
+              onClick={refreshData}
+              className="px-4 py-2 text-sm font-medium text-white rounded-lg flex items-center gap-2" 
+              style={{ backgroundColor: '#D87C5A' }}
+            >
               <RefreshCw className="h-4 w-4" />
               Refresh
             </button>
@@ -432,25 +452,19 @@ const renderOverview = () => (
                   Artwork & Parties
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: '#5D3A00' }}>
-                  Delivery Partner
+                  Pickup Address
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: '#5D3A00' }}>
-                  Route
+                  Delivery Address
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: '#5D3A00' }}>
                   Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: '#5D3A00' }}>
-                  Fee
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: '#5D3A00' }}>
-                  Actions
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {filteredDeliveries.map((delivery) => (
-                <tr key={delivery.id} className="hover:bg-gray-50">
+                <tr key={`${delivery.requestType}-${delivery.id}`} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium" style={{ color: '#5D3A00' }}>{delivery.requestId}</div>
                     <div className="text-xs" style={{ color: '#D87C5A' }}>{delivery.createdDate}</div>
@@ -458,42 +472,29 @@ const renderOverview = () => (
                   <td className="px-6 py-4">
                     <div className="text-sm font-medium" style={{ color: '#5D3A00' }}>{delivery.artwork}</div>
                     <div className="text-xs" style={{ color: '#D87C5A' }}>
-                      {delivery.artist} → {delivery.buyer}
+                      Artist: {delivery.artist} | Buyer: {delivery.buyer}
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    {delivery.deliveryPartner ? (
-                      <div>
-                        <div className="text-sm font-medium" style={{ color: '#5D3A00' }}>{delivery.deliveryPartner}</div>
-                        <div className="text-xs" style={{ color: '#D87C5A' }}>{delivery.partnerPhone}</div>
-                      </div>
-                    ) : (
-                      <span className="text-sm" style={{ color: '#D87C5A' }}>Not assigned</span>
-                    )}
+                    <div className="text-sm" style={{ color: '#5D3A00', maxWidth: '200px', wordWrap: 'break-word' }}>
+                      {delivery.pickupAddress}
+                    </div>
+                    <div className="text-xs" style={{ color: '#D87C5A' }}>
+                      Artist Location
+                    </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm" style={{ color: '#5D3A00' }}>{delivery.pickupCity} → {delivery.deliveryCity}</div>
-                    <div className="text-xs" style={{ color: '#D87C5A' }}>{delivery.distance}</div>
+                    <div className="text-sm" style={{ color: '#5D3A00', maxWidth: '200px', wordWrap: 'break-word' }}>
+                      {delivery.deliveryAddress}
+                    </div>
+                    <div className="text-xs" style={{ color: '#D87C5A' }}>
+                      Buyer Location
+                    </div>
                   </td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(delivery.status)}`}>
-                      {delivery.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${getStatusColor(delivery.status)}`}>
+                      {getStatusDisplayName(delivery.status)}
                     </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium" style={{ color: '#5D3A00' }}>
-                      {formatCurrency(delivery.fee)}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center space-x-2">
-                      <button className="p-1 rounded-full hover:bg-gray-100">
-                        <Eye className="h-4 w-4" style={{ color: '#D87C5A' }} />
-                      </button>
-                      <button className="p-1 rounded-full hover:bg-gray-100">
-                        <MoreHorizontal className="h-4 w-4" style={{ color: '#D87C5A' }} />
-                      </button>
-                    </div>
                   </td>
                 </tr>
               ))}
@@ -504,151 +505,7 @@ const renderOverview = () => (
     </div>
   );
 
-  const renderPartners = () => (
-    <div className="space-y-6">
-      {/* Partner Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-          <div className="flex items-center">
-            <div className="p-3 rounded-full" style={{ backgroundColor: '#FFE4D6' }}>
-              <UserCheck className="h-8 w-8" style={{ color: '#5D3A00' }} />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium" style={{ color: '#D87C5A' }}>Total Partners</p>
-              <p className="text-2xl font-bold" style={{ color: '#5D3A00' }}>{deliveryData.deliveryPartners.length}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-          <div className="flex items-center">
-            <div className="p-3 rounded-full" style={{ backgroundColor: '#FFD95A' }}>
-              <TrendingUp className="h-8 w-8" style={{ color: '#5D3A00' }} />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium" style={{ color: '#D87C5A' }}>Active Partners</p>
-              <p className="text-2xl font-bold" style={{ color: '#5D3A00' }}>
-                {deliveryData.deliveryPartners.filter(p => p.status === 'active').length}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-          <div className="flex items-center">
-            <div className="p-3 rounded-full" style={{ backgroundColor: '#FFE4D6' }}>
-              <Star className="h-8 w-8" style={{ color: '#D87C5A' }} />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium" style={{ color: '#D87C5A' }}>Avg Rating</p>
-              <p className="text-2xl font-bold" style={{ color: '#5D3A00' }}>4.8</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-          <div className="flex items-center">
-            <div className="p-3 rounded-full" style={{ backgroundColor: '#FFD95A' }}>
-              <Package className="h-8 w-8" style={{ color: '#5D3A00' }} />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium" style={{ color: '#D87C5A' }}>Total Deliveries</p>
-              <p className="text-2xl font-bold" style={{ color: '#5D3A00' }}>
-                {deliveryData.deliveryPartners.reduce((sum, p) => sum + p.totalDeliveries, 0)}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Partners List */}
-      <div className="bg-white rounded-lg shadow-md border border-gray-100">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold" style={{ color: '#5D3A00' }}>Delivery Partners</h3>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead style={{ backgroundColor: '#FFE4D6' }}>
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: '#5D3A00' }}>
-                  Partner
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: '#5D3A00' }}>
-                  Contact
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: '#5D3A00' }}>
-                  Performance
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: '#5D3A00' }}>
-                  Deliveries
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: '#5D3A00' }}>
-                  Earnings
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: '#5D3A00' }}>
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: '#5D3A00' }}>
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {deliveryData.deliveryPartners.map((partner) => (
-                <tr key={partner.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center">
-                      <div className="h-10 w-10 rounded-full flex items-center justify-center" style={{ backgroundColor: '#FFE4D6' }}>
-                        <User className="h-5 w-5" style={{ color: '#5D3A00' }} />
-                      </div>
-                      <div className="ml-4">
-                        <div className="text-sm font-medium" style={{ color: '#5D3A00' }}>{partner.name}</div>
-                        <div className="text-xs" style={{ color: '#D87C5A' }}>{partner.location}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm" style={{ color: '#5D3A00' }}>{partner.phone}</div>
-                    <div className="text-xs" style={{ color: '#D87C5A' }}>{partner.email}</div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center">
-                      <Star className="h-4 w-4" style={{ color: '#FFD95A' }} />
-                      <span className="ml-1 text-sm font-medium" style={{ color: '#5D3A00' }}>{partner.rating}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm" style={{ color: '#5D3A00' }}>{partner.totalDeliveries} total</div>
-                    <div className="text-xs" style={{ color: '#D87C5A' }}>{partner.activeDeliveries} active</div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm font-medium" style={{ color: '#5D3A00' }}>
-                      {formatCurrency(partner.totalEarnings)}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${getPartnerStatusColor(partner.status)}`}>
-                      {partner.status.charAt(0).toUpperCase() + partner.status.slice(1)}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center space-x-2">
-                      <button className="p-1 rounded-full hover:bg-gray-100">
-                        <Eye className="h-4 w-4" style={{ color: '#D87C5A' }} />
-                      </button>
-                      <button className="p-1 rounded-full hover:bg-gray-100">
-                        <MoreHorizontal className="h-4 w-4" style={{ color: '#D87C5A' }} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
+  
 
   const renderContent = () => {
     if (loading) {
@@ -660,7 +517,27 @@ const renderOverview = () => (
               style={{ borderColor: '#5D3A00' }}
             ></div>
           </div>
-          <p className="mt-4" style={{ color: '#D87C5A' }}>Loading delivery management...</p>
+          <p className="mt-4" style={{ color: '#D87C5A' }}>Loading delivery Handling...</p>
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <div className="bg-white rounded-lg shadow-md p-12 text-center border border-gray-100">
+          <div className="flex justify-center items-center mb-4">
+            <AlertCircle className="h-16 w-16" style={{ color: '#D87C5A' }} />
+          </div>
+          <h3 className="text-lg font-semibold mb-2" style={{ color: '#5D3A00' }}>Error Loading Data</h3>
+          <p className="mb-4" style={{ color: '#D87C5A' }}>{error}</p>
+          <button 
+            onClick={refreshData}
+            className="px-4 py-2 text-sm font-medium text-white rounded-lg flex items-center gap-2 mx-auto" 
+            style={{ backgroundColor: '#D87C5A' }}
+          >
+            <RefreshCw className="h-4 w-4" />
+            Retry
+          </button>
         </div>
       );
     }
@@ -679,8 +556,7 @@ const renderOverview = () => (
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: BarChart3 },
-    { id: 'deliveries', label: 'All Deliveries', icon: Package },
-    { id: 'partners', label: 'Delivery Partners', icon: UserCheck }
+    { id: 'deliveries', label: 'All Deliveries', icon: Package }
   ];
 
   return (
@@ -688,18 +564,8 @@ const renderOverview = () => (
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold" style={{ color: '#5D3A00' }}>Delivery Management</h2>
+          <h2 className="text-2xl font-bold" style={{ color: '#5D3A00' }}>Delivery Review</h2>
           <p style={{ color: '#D87C5A' }}>Monitor and manage all delivery operations</p>
-        </div>
-        <div className="flex gap-3">
-          <button className="px-4 py-2 text-sm font-medium rounded-lg border flex items-center gap-2" style={{ color: '#5D3A00', borderColor: '#FFE4D6' }}>
-            <Download className="h-4 w-4" />
-            Export Report
-          </button>
-          <button className="px-4 py-2 text-sm font-medium text-white rounded-lg flex items-center gap-2" style={{ backgroundColor: '#D87C5A' }}>
-            <FileText className="h-4 w-4" />
-            Generate Report
-          </button>
         </div>
       </div>
 

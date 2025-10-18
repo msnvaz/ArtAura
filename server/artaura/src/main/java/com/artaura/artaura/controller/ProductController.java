@@ -17,9 +17,14 @@ public class ProductController {
     private ProductService productService;
 
     @GetMapping
-    public ResponseEntity<List<AddProductDTO>> getAllProducts() {
+    public ResponseEntity<List<AddProductDTO>> getAllProducts(@RequestParam(required = false) Long shopId) {
         try {
-            List<AddProductDTO> products = productService.getAllProducts();
+            List<AddProductDTO> products;
+            if (shopId != null) {
+                products = productService.getProductsByShopId(shopId);
+            } else {
+                products = productService.getAllProducts();
+            }
             return ResponseEntity.ok(products);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);

@@ -14,35 +14,47 @@ import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Repository
+@Repository("buyerCommissionDAO")
 public class CommissionRequestDAOImpl implements ComissionRequestDAO {
+
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
     @Override
     public Long saveCommissionRequest(CommissionRequestDTO dto) {
-        String sql = "INSERT INTO commission_requests (artist_id, buyer_id, name, email, phone, title, artwork_type, style, dimensions, budget, deadline, additional_notes, urgency, status, submitted_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO commission_requests (artist_id, buyer_id, name, email, phone, title, artwork_type, style, dimensions, budget, deadline, additional_notes, urgency, status, submitted_at, payment_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
-        jdbcTemplate.update(connection -> {
-            PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-            ps.setLong(1, dto.getArtistId());
-            ps.setLong(2, dto.getClientId());
-            ps.setString(3, dto.getClientName());
-            ps.setString(4, dto.getClientEmail());
-            ps.setString(5, dto.getClientPhone());
-            ps.setString(6, dto.getTitle());
-            ps.setString(7, dto.getArtworkType());
-            ps.setString(8, dto.getStyle());
-            ps.setString(9, dto.getDimensions());
-            ps.setString(10, dto.getBudget());
-            ps.setString(11, dto.getDeadline());
-            ps.setString(12, dto.getAdditionalNotes());
-            ps.setString(13, dto.getUrgency());
-            ps.setString(14, dto.getStatus());
-            ps.setString(15, LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-            return ps;
-        }, keyHolder);
-        return keyHolder.getKey().longValue();
+
+        try {
+            jdbcTemplate.update(connection -> {
+                PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+                ps.setLong(1, dto.getArtistId());
+                ps.setLong(2, dto.getClientId());
+                ps.setString(3, dto.getClientName() != null ? dto.getClientName() : "");
+                ps.setString(4, dto.getClientEmail() != null ? dto.getClientEmail() : "");
+                ps.setString(5, dto.getClientPhone() != null ? dto.getClientPhone() : "");
+                ps.setString(6, dto.getTitle() != null ? dto.getTitle() : "");
+                ps.setString(7, dto.getArtworkType() != null ? dto.getArtworkType() : "");
+                ps.setString(8, dto.getStyle() != null ? dto.getStyle() : "");
+                ps.setString(9, dto.getDimensions() != null ? dto.getDimensions() : "");
+                ps.setString(10, dto.getBudget() != null ? dto.getBudget() : "");
+                ps.setString(11, dto.getDeadline() != null ? dto.getDeadline() : "");
+                ps.setString(12, dto.getAdditionalNotes() != null ? dto.getAdditionalNotes() : "");
+                ps.setString(13, dto.getUrgency() != null ? dto.getUrgency() : "");
+                ps.setString(14, dto.getStatus() != null ? dto.getStatus() : "PENDING");
+                ps.setString(15, LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                ps.setString(16, "PENDING"); // Set default payment_status
+                return ps;
+            }, keyHolder);
+
+            if (keyHolder.getKey() != null) {
+                return keyHolder.getKey().longValue();
+            } else {
+                throw new RuntimeException("Failed to get generated key for commission request");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error saving commission request: " + e.getMessage(), e);
+        }
     }
 
     @Override
@@ -76,6 +88,7 @@ public class CommissionRequestDAOImpl implements ComissionRequestDAO {
             dto.setUrgency(rs.getString("urgency"));
             dto.setStatus(rs.getString("status"));
             dto.setSubmittedAt(rs.getString("submitted_at"));
+            dto.setDeliveryStatus(rs.getString("delivery_status")); // Fetch delivery_status from commission_requests table
 
             // Fetch reference images for this commission request
             String imgSql = "SELECT image_url FROM commission_reference_images WHERE commission_request_id = ?";
@@ -87,4 +100,3 @@ public class CommissionRequestDAOImpl implements ComissionRequestDAO {
         return requests;
     }
 }
-

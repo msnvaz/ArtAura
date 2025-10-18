@@ -188,4 +188,132 @@ public class DeliveryRequestService {
             throw new RuntimeException("Failed to fetch commission pickup addresses", e);
         }
     }
+    
+    /**
+     * Get all active delivery requests from both tables
+     * Active requests have delivery_status 'accepted' or 'outForDelivery'
+     * @return List of active delivery requests
+     */
+    public List<DeliveryRequestDTO> getAllActiveDeliveryRequests() {
+        try {
+            return deliveryRequestDAO.getAllActiveDeliveryRequests();
+        } catch (Exception e) {
+            System.out.println("❌ DeliveryRequestService: Error fetching all active requests: " + e.getMessage());
+            throw new RuntimeException("Failed to fetch active delivery requests", e);
+        }
+    }
+
+    /**
+     * Get active delivery requests from AW_orders table only
+     * Active requests have delivery_status 'accepted' or 'outForDelivery'
+     * @return List of active artwork order delivery requests
+     */
+    public List<DeliveryRequestDTO> getActiveArtworkOrderDeliveryRequests() {
+        try {
+            return deliveryRequestDAO.getActiveArtworkOrderDeliveryRequests();
+        } catch (Exception e) {
+            System.out.println("❌ DeliveryRequestService: Error fetching active artwork orders: " + e.getMessage());
+            throw new RuntimeException("Failed to fetch active artwork order delivery requests", e);
+        }
+    }
+
+    /**
+     * Get active delivery requests from commission_requests table only
+     * Active requests have delivery_status 'accepted' or 'outForDelivery'
+     * @return List of active commission delivery requests
+     */
+    public List<DeliveryRequestDTO> getActiveCommissionDeliveryRequests() {
+        try {
+            return deliveryRequestDAO.getActiveCommissionDeliveryRequests();
+        } catch (Exception e) {
+            System.out.println("❌ DeliveryRequestService: Error fetching active commission requests: " + e.getMessage());
+            throw new RuntimeException("Failed to fetch active commission delivery requests", e);
+        }
+    }
+    
+    /**
+     * Get all delivered delivery requests from both tables
+     * Delivered requests have delivery_status 'delivered'
+     * @return List of delivered delivery requests
+     */
+    public List<DeliveryRequestDTO> getAllDeliveredDeliveryRequests() {
+        try {
+            return deliveryRequestDAO.getAllDeliveredDeliveryRequests();
+        } catch (Exception e) {
+            System.out.println("❌ DeliveryRequestService: Error fetching all delivered requests: " + e.getMessage());
+            throw new RuntimeException("Failed to fetch delivered delivery requests", e);
+        }
+    }
+
+    /**
+     * Get delivered delivery requests from AW_orders table only
+     * Delivered requests have delivery_status 'delivered'
+     * @return List of delivered artwork order delivery requests
+     */
+    public List<DeliveryRequestDTO> getDeliveredArtworkOrderDeliveryRequests() {
+        try {
+            return deliveryRequestDAO.getDeliveredArtworkOrderDeliveryRequests();
+        } catch (Exception e) {
+            System.out.println("❌ DeliveryRequestService: Error fetching delivered artwork orders: " + e.getMessage());
+            throw new RuntimeException("Failed to fetch delivered artwork order delivery requests", e);
+        }
+    }
+
+    /**
+     * Get delivered delivery requests from commission_requests table only
+     * Delivered requests have delivery_status 'delivered'
+     * @return List of delivered commission delivery requests
+     */
+    public List<DeliveryRequestDTO> getDeliveredCommissionDeliveryRequests() {
+        try {
+            return deliveryRequestDAO.getDeliveredCommissionDeliveryRequests();
+        } catch (Exception e) {
+            System.out.println("❌ DeliveryRequestService: Error fetching delivered commission requests: " + e.getMessage());
+            throw new RuntimeException("Failed to fetch delivered commission delivery requests", e);
+        }
+    }
+    
+    /**
+     * Get platform fee percentage from admin_settings table
+     * @return Platform fee percentage as String
+     */
+    public String getPlatformFee() {
+        try {
+            return deliveryRequestDAO.getPlatformFee();
+        } catch (Exception e) {
+            System.out.println("❌ DeliveryRequestService: Error fetching platform fee: " + e.getMessage());
+            return "0";
+        }
+    }
+    
+    /**
+     * Get payment amount from payment table based on order type and order ID
+     * @param orderType either "artwork" or "commission"
+     * @param orderId the order ID
+     * @return Payment amount as BigDecimal
+     */
+    public java.math.BigDecimal getPaymentAmount(String orderType, Long orderId) {
+        try {
+            return deliveryRequestDAO.getPaymentAmount(orderType, orderId);
+        } catch (Exception e) {
+            System.out.println("❌ DeliveryRequestService: Error fetching payment amount: " + e.getMessage());
+            return null;
+        }
+    }
+    
+    /**
+     * Insert platform fee commission into platform_fees table
+     * @param orderType either "artwork" or "commission"
+     * @param orderId the order ID
+     * @param platformCommissionFee the calculated platform commission fee
+     * @return true if insertion was successful
+     */
+    public boolean insertPlatformFee(String orderType, Long orderId, java.math.BigDecimal platformCommissionFee) {
+        try {
+            return deliveryRequestDAO.insertPlatformFee(orderType, orderId, platformCommissionFee);
+        } catch (Exception e) {
+            System.out.println("❌ DeliveryRequestService: Error inserting platform fee: " + e.getMessage());
+            return false;
+        }
+    }
 }

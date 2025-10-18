@@ -1,6 +1,5 @@
 package com.artaura.artaura.controller.buyer;
 
-
 import com.artaura.artaura.dto.exhibition.UserProfileDTO;
 import com.artaura.artaura.dto.exhibition.ChangePasswordRequest;
 import com.artaura.artaura.service.buyer.UserService;
@@ -17,6 +16,7 @@ import org.springframework.http.HttpStatus;
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
+
     @Autowired
     private UserService userService;
 
@@ -38,8 +38,13 @@ public class UserController {
         UserProfileDTO updatedProfile = objectMapper.readValue(profileJson, UserProfileDTO.class);
         String imagePath = null;
         if (imageFile != null && !imageFile.isEmpty()) {
-            // Use absolute path for uploads directory
-            String uploadDir = System.getProperty("user.dir") + File.separator + "uploads" + File.separator;
+            // Use client/public/uploads directory
+            String currentDir = System.getProperty("user.dir");
+            String projectRoot = currentDir.endsWith("artaura")
+                    ? currentDir.substring(0, currentDir.lastIndexOf("artaura"))
+                    : currentDir + File.separator;
+
+            String uploadDir = projectRoot + "client" + File.separator + "public" + File.separator + "uploads" + File.separator;
             String fileName = "profile_" + userId + "_" + System.currentTimeMillis() + ".jpg";
             File dest = new File(uploadDir + fileName);
             dest.getParentFile().mkdirs(); // Ensure directory exists
