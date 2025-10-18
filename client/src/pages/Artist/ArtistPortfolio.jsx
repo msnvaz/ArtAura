@@ -12,11 +12,15 @@ import { AcceptOrderModal, RejectOrderModal } from '../../components/orders/Orde
 import CommissionActionModal from '../../components/modals/CommissionActionModal';
 import ExhibitionsSection from '../../components/artist/ExhibitionsSection';
 import AchievementsSection from '../../components/artist/AchievementsSection';
+import ChallengeParticipation from '../../components/artist/ChallengeParticipation';
 import EditArtworkModal from '../../components/artworks/EditArtworkModal';
 import DeleteConfirmationModal from '../../components/artworks/DeleteConfirmationModal';
 import SmartImage from '../../components/common/SmartImage';
+import ImageWithFallback from '../../components/ImageWithFallback';
+import ImageDebugger from '../../components/ImageDebugger';
 import PostInteractions from '../../components/social/PostInteractions';
 import { getImageUrl, getAvatarUrl, getCoverUrl, getArtworkUrl } from '../../util/imageUrlResolver';
+import { logProfileUpdate, clearImageCache, forceReloadProfileImages } from '../../util/debugImageUpload';
 import { useAuth } from "../../context/AuthContext";
 import artistArtworkOrderApi from '../../services/artistArtworkOrderApi';
 import {
@@ -214,13 +218,23 @@ const ArtistPortfolio = () => {
   const [postImageIndex, setPostImageIndex] = useState({}); // Track current image index for each post
 
   // Get API URL from environment variable
-  const API_URL = import.meta.env.VITE_API_URL;
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081';
   const [artistProfile, setArtistProfile] = useState(null);
   const [achievementsCount, setAchievementsCount] = useState(0);
   const [recentAchievements, setRecentAchievements] = useState([]);
   const [topAchievements, setTopAchievements] = useState([]);
   const [exhibitionsCount, setExhibitionsCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [imageRefreshKey, setImageRefreshKey] = useState(0); // Force image refresh
+
+  // Debug logging for authentication and API
+  useEffect(() => {
+    console.log('🔍 ArtistPortfolio Debug Info:');
+    console.log('API_URL:', API_URL);
+    console.log('userId:', userId);
+    console.log('token exists:', !!token);
+    console.log('role:', role);
+  }, [API_URL, userId, token, role]);
 
   // Debug effect to track achievementsCount changes
   useEffect(() => {
@@ -229,76 +243,103 @@ const ArtistPortfolio = () => {
     }
   }, [achievementsCount]);
 
-  // Fetch artist profile data
+  // Reusable function to fetch artist profile data
+  const fetchProfile = async (bustCache = false) => {
+    console.log('🚀 fetchProfile called with:', { userId, token: !!token, bustCache });
+
+    if (!userId || !token) {
+      console.warn("Missing userId or token. Skipping profile fetch.");
+      console.log("userId:", userId, "token exists:", !!token);
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      // Add cache busting parameter when needed
+      const url = bustCache
+        ? `${API_URL}/api/artist/profile/${userId}?t=${Date.now()}`
+        : `${API_URL}/api/artist/profile/${userId}`;
+
+      console.log('📡 Making API request to:', url);
+
+      const response = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      console.log('✅ Profile API response:', response.data);
+
+      // Transform the response to match the expected structure
+      const profileData = response.data;
+      console.log('Profile data received:', profileData);
+
+      const avatarUrl = getAvatarUrl(profileData.avatarUrl);
+      const coverUrl = getCoverUrl(profileData.coverImageUrl);
+
+      console.log('Raw avatar path from backend:', profileData.avatarUrl);
+      console.log('Raw cover path from backend:', profileData.coverImageUrl);
+      console.log('Processed Avatar URL:', avatarUrl);
+      console.log('Processed Cover URL:', coverUrl);
+
+      setArtistProfile({
+        ...profileData,
+        name: `${profileData.firstName} ${profileData.lastName}`,
+        avatar: avatarUrl,
+        coverImage: coverUrl,
+        joinDate: profileData.joinDate ? new Date(profileData.joinDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : 'Recently joined',
+        phone: profileData.contactNo,
+        stats: {
+          artworks: profileData.artworksCount || 0,
+          sales: profileData.totalSales || 0,
+          followers: profileData.totalFollowers || 0,
+          views: profileData.totalViews || 0
+        }
+      });
+
+      console.log('✅ Artist profile updated successfully');
+    } catch (error) {
+      console.error("❌ Error fetching profile:", error);
+
+      // Detailed error logging
+      if (error.response) {
+        console.error("Response status:", error.response.status);
+        console.error("Response data:", error.response.data);
+        console.error("Response headers:", error.response.headers);
+      } else if (error.request) {
+        console.error("Request made but no response received:", error.request);
+      } else {
+        console.error("Error setting up request:", error.message);
+      }
+      console.error("Full error config:", error.config);
+      // Fallback to default profile if fetch fails
+      setArtistProfile({
+        name: 'Artist Profile',
+        bio: 'No bio available',
+        location: 'Not specified',
+        joinDate: 'Recently joined',
+        website: '',
+        instagram: '',
+        twitter: '',
+        phone: '',
+        email: '',
+        avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=200',
+        coverImage: 'https://images.pexels.com/photos/1070981/pexels-photo-1070981.jpeg?auto=compress&cs=tinysrgb&w=800',
+        stats: {
+          artworks: 0,
+          sales: 0,
+          followers: 0,
+          views: 0
+        }
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch artist profile data on component mount
   useEffect(() => {
-    const fetchProfile = async () => {
-      if (!userId || !token) {
-        console.warn("Missing userId or token. Skipping profile fetch.");
-        return;
-      }
-
-      try {
-        setLoading(true);
-        const response = await axios.get(
-          `${API_URL}/api/artist/profile/${userId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        // Transform the response to match the expected structure
-        const profileData = response.data;
-        console.log('Profile data received:', profileData);
-
-        const avatarUrl = profileData.avatarUrl ? `${API_URL}${profileData.avatarUrl}?t=${Date.now()}` : 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=200';
-        const coverUrl = profileData.coverImageUrl ? `${API_URL}${profileData.coverImageUrl}?t=${Date.now()}` : 'https://images.pexels.com/photos/1070981/pexels-photo-1070981.jpeg?auto=compress&cs=tinysrgb&w=800';
-
-        console.log('Avatar URL:', avatarUrl);
-        console.log('Cover URL:', coverUrl);
-
-        setArtistProfile({
-          ...profileData,
-          name: `${profileData.firstName} ${profileData.lastName}`,
-          avatar: avatarUrl,
-          coverImage: coverUrl,
-          joinDate: profileData.joinDate ? new Date(profileData.joinDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : 'Recently joined',
-          phone: profileData.contactNo,
-          stats: {
-            artworks: profileData.artworksCount || 0,
-            sales: profileData.totalSales || 0,
-            followers: profileData.totalFollowers || 0,
-            views: profileData.totalViews || 0
-          }
-        });
-      } catch (error) {
-        console.error("Error fetching profile:", error);
-        // Fallback to default profile if fetch fails
-        setArtistProfile({
-          name: 'Artist Profile',
-          bio: 'No bio available',
-          location: 'Not specified',
-          joinDate: 'Recently joined',
-          website: '',
-          instagram: '',
-          twitter: '',
-          phone: '',
-          email: '',
-          avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=200',
-          coverImage: 'https://images.pexels.com/photos/1070981/pexels-photo-1070981.jpeg?auto=compress&cs=tinysrgb&w=800',
-          stats: {
-            artworks: 0,
-            sales: 0,
-            followers: 0,
-            views: 0
-          }
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchProfile();
   }, [userId, token]);
 
@@ -1500,16 +1541,33 @@ const ArtistPortfolio = () => {
       );
 
       console.log('Cover upload response:', response.data);
+      logProfileUpdate('Cover', response.data);
 
-      // Update the local artist profile state with new cover image
-      const newImageUrl = response.data.imageUrl;
-      const fullImageUrl = `${API_URL}${newImageUrl}?t=${Date.now()}`;
+      // Clear old image from cache and force refresh
+      if (artistProfile?.coverImage) {
+        clearImageCache(artistProfile.coverImage.split('?')[0]);
+      }
 
-      setArtistProfile(prevProfile => ({
-        ...prevProfile,
-        coverImage: fullImageUrl,
-        coverImageUrl: newImageUrl
-      }));
+      // Force image refresh by updating key
+      setImageRefreshKey(prev => prev + 1);
+
+      // Immediately update local state for instant feedback
+      if (response.data.imageUrl) {
+        const newCoverUrl = getCoverUrl(response.data.imageUrl);
+        setArtistProfile(prevProfile => ({
+          ...prevProfile,
+          coverImage: newCoverUrl
+        }));
+
+        // Clear cache for new image as well
+        clearImageCache(newCoverUrl.split('?')[0]);
+      }
+
+      // Small delay to ensure database update is complete
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Refresh the profile from the server to get the latest data with cache busting
+      await fetchProfile(true);
 
       setIsChangingCover(false);
       showSuccess('Cover image updated successfully!');
@@ -1545,23 +1603,33 @@ const ArtistPortfolio = () => {
       );
 
       console.log('Avatar upload response:', response.data);
+      logProfileUpdate('Avatar', response.data);
 
-      // Update the local artist profile state with new avatar
-      const newImageUrl = response.data.imageUrl;
-      const fullImageUrl = `${API_URL}${newImageUrl}?t=${Date.now()}`;
+      // Clear old image from cache and force refresh
+      if (artistProfile?.avatar) {
+        clearImageCache(artistProfile.avatar.split('?')[0]);
+      }
 
-      console.log('New avatar URL:', fullImageUrl);
+      // Force image refresh by updating key
+      setImageRefreshKey(prev => prev + 1);
 
-      setArtistProfile(prevProfile => {
-        console.log('Previous profile:', prevProfile);
-        const updatedProfile = {
+      // Immediately update local state for instant feedback
+      if (response.data.imageUrl) {
+        const newAvatarUrl = getAvatarUrl(response.data.imageUrl);
+        setArtistProfile(prevProfile => ({
           ...prevProfile,
-          avatar: fullImageUrl,
-          avatarUrl: newImageUrl
-        };
-        console.log('Updated profile:', updatedProfile);
-        return updatedProfile;
-      });
+          avatar: newAvatarUrl
+        }));
+
+        // Clear cache for new image as well
+        clearImageCache(newAvatarUrl.split('?')[0]);
+      }
+
+      // Small delay to ensure database update is complete
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Refresh the profile from the server to get the latest data with cache busting
+      await fetchProfile(true);
 
       alert('Profile picture updated successfully!');
 
@@ -1686,10 +1754,12 @@ const ArtistPortfolio = () => {
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
         {/* Cover Image */}
         <div className="relative h-64 md:h-80 rounded-lg overflow-hidden mb-8">
-          <img
+          <ImageWithFallback
             src={artistProfile.coverImage}
+            fallback="/heritage.jpeg"
             alt="Cover"
             className="w-full h-full object-cover"
+            forceRefresh={imageRefreshKey > 0}
           />
           <div className="absolute inset-0 bg-black/40"></div>
           <div className="absolute bottom-6 left-6 text-white">
@@ -1719,10 +1789,12 @@ const ArtistPortfolio = () => {
           <div className="flex flex-col md:flex-row md:items-start md:space-x-6">
             {/* Avatar */}
             <div className="relative mb-4 md:mb-0">
-              <img
+              <ImageWithFallback
                 src={artistProfile.avatar}
+                fallback="/art1.jpeg"
                 alt={artistProfile.name}
                 className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
+                forceRefresh={imageRefreshKey > 0}
               />
 
               {/* Verified Badge */}
@@ -1836,6 +1908,7 @@ const ArtistPortfolio = () => {
               {[
                 { id: 'portfolio', label: 'Portfolio', count: portfolioPosts.length },
                 { id: 'tosell', label: 'To sell', count: Array.isArray(artworks) ? artworks.length : 0 },
+                { id: 'challenges', label: 'Challenges', icon: Trophy },
                 { id: 'orders', label: 'Commission Requests', count: requestsCount },
                 { id: 'artwork-orders', label: 'Orders', count: artworkOrdersCount },
                 { id: 'exhibitions', label: 'Exhibitions', count: exhibitionsCount },
@@ -1981,8 +2054,9 @@ const ArtistPortfolio = () => {
                 <div className="bg-white rounded-lg shadow-sm border border-[#fdf9f4]/20">
                   <div className="p-4 border-b border-[#fdf9f4]/30">
                     <div className="flex items-center space-x-3">
-                      <img
+                      <ImageWithFallback
                         src={artistProfile.avatar}
+                        fallback="/art1.jpeg"
                         alt={artistProfile.name}
                         className="w-10 h-10 rounded-full object-cover"
                       />
@@ -2022,8 +2096,9 @@ const ArtistPortfolio = () => {
                     {/* Post Header */}
                     <div className="flex items-center justify-between p-5">
                       <div className="flex items-center space-x-3">
-                        <img
+                        <ImageWithFallback
                           src={artistProfile.avatar}
+                          fallback="/art1.jpeg"
                           alt={artistProfile.name}
                           className="w-11 h-11 rounded-full object-cover"
                         />
@@ -2066,7 +2141,7 @@ const ArtistPortfolio = () => {
                           <img
                             src={post.images[getCurrentImageIndex(post.post_id)]?.startsWith('http')
                               ? post.images[getCurrentImageIndex(post.post_id)]
-                              : `${API_URL}${encodeURI(post.images[getCurrentImageIndex(post.post_id)] || '')}`}
+                              : getImageUrl(post.images[getCurrentImageIndex(post.post_id)])}
                             alt={`Post ${post.post_id} - Image ${getCurrentImageIndex(post.post_id) + 1}`}
                             className="w-full h-[32rem] object-cover"
                             onError={(e) => {
@@ -2124,7 +2199,7 @@ const ArtistPortfolio = () => {
                         // Fallback: Show single image if images array is empty but image field exists
                         post.image && (
                           <img
-                            src={post.image?.startsWith('http') ? post.image : `${API_URL}${encodeURI(post.image || '')}`}
+                            src={post.image?.startsWith('http') ? post.image : getImageUrl(post.image)}
                             alt={`Post ${post.post_id}`}
                             className="w-full h-[32rem] object-cover"
                             onError={(e) => {
@@ -2167,7 +2242,7 @@ const ArtistPortfolio = () => {
                     {Array.isArray(artworks) && artworks.slice(0, 4).map((artwork, index) => (
                       <div key={artwork.artworkId || `featured-${index}-${artwork.title || 'unknown'}`} className="flex items-center space-x-3">
                         <img
-                          src={artwork.imageUrl?.startsWith('http') ? artwork.imageUrl : `${API_URL}${encodeURI(artwork.imageUrl || '')}`}
+                          src={artwork.imageUrl?.startsWith('http') ? artwork.imageUrl : getArtworkUrl(artwork.imageUrl)}
                           alt={artwork.title}
                           className="w-12 h-12 rounded-lg object-cover"
                           onError={(e) => {
@@ -2340,7 +2415,7 @@ const ArtistPortfolio = () => {
                   <div key={artwork.artworkId || `artwork-${index}-${artwork.title || 'unknown'}`} className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-lg transition-all duration-300 group">
                     <div className="relative">
                       <img
-                        src={artwork.imageUrl?.startsWith('http') ? artwork.imageUrl : `${API_URL}${encodeURI(artwork.imageUrl || '')}`}
+                        src={artwork.imageUrl?.startsWith('http') ? artwork.imageUrl : getArtworkUrl(artwork.imageUrl)}
                         alt={artwork.title}
                         className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                         onError={(e) => {
@@ -2464,7 +2539,7 @@ const ArtistPortfolio = () => {
                           <div className="flex items-start space-x-4">
                             {request.referenceImages && request.referenceImages.length > 0 && (
                               <img
-                                src={`${API_URL}${request.referenceImages[0]}`}
+                                src={getImageUrl(request.referenceImages[0])}
                                 alt="Reference"
                                 className="w-16 h-16 object-cover rounded-lg"
                                 onError={(e) => {
@@ -2772,6 +2847,11 @@ const ArtistPortfolio = () => {
           </div>
         )}
 
+        {/* Challenges Tab */}
+        {activeTab === 'challenges' && (
+          <ChallengeParticipation />
+        )}
+
         {/* Exhibitions Tab */}
         {activeTab === 'exhibitions' && (
           <ExhibitionsSection
@@ -2974,7 +3054,7 @@ const ArtistPortfolio = () => {
                               {index + 1}
                             </div>
                             <img
-                              src={artwork.imageUrl?.startsWith('http') ? artwork.imageUrl : `${API_URL}${encodeURI(artwork.imageUrl || '')}`}
+                              src={artwork.imageUrl?.startsWith('http') ? artwork.imageUrl : getArtworkUrl(artwork.imageUrl)}
                               alt={artwork.title}
                               className="w-12 h-12 rounded-lg object-cover"
                               onError={(e) => {
@@ -3016,8 +3096,8 @@ const ArtistPortfolio = () => {
                             </div>
                             <img
                               src={post.images && post.images.length > 0 ?
-                                (post.images[0]?.startsWith('http') ? post.images[0] : `${API_URL}${encodeURI(post.images[0] || '')}`) :
-                                (post.image?.startsWith('http') ? post.image : `${API_URL}${encodeURI(post.image || '')}`)}
+                                (post.images[0]?.startsWith('http') ? post.images[0] : getImageUrl(post.images[0])) :
+                                (post.image?.startsWith('http') ? post.image : getImageUrl(post.image))}
                               alt={`Post ${post.id}`}
                               className="w-12 h-12 rounded-lg object-cover"
                               onError={(e) => {
@@ -3395,6 +3475,9 @@ const ArtistPortfolio = () => {
         request={selectedCommissionRequest}
         action={commissionAction}
       />
+
+      {/* Debug Component - Remove this in production */}
+      <ImageDebugger artistProfile={artistProfile} />
     </div>
   );
 };

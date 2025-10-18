@@ -18,10 +18,22 @@ public class ImageUploadService {
         String currentDir = System.getProperty("user.dir");
         System.out.println("Current working directory: " + currentDir);
 
-        // Calculate the correct path to client/public/uploads
-        String projectRoot = currentDir.endsWith("artaura")
-                ? currentDir.substring(0, currentDir.lastIndexOf("artaura"))
-                : currentDir + File.separator;
+        // Calculate the correct path to client/public/uploads using robust detection
+        String projectRoot;
+        if (currentDir.contains("ArtAura2")) {
+            // Extract everything up to and including ArtAura2
+            int artAuraIndex = currentDir.indexOf("ArtAura2");
+            projectRoot = currentDir.substring(0, artAuraIndex + 8) + File.separator; // 8 is length of "ArtAura2"
+        } else if (currentDir.contains("server" + File.separator + "artaura")) {
+            // We're in server/artaura, need to go up two levels to project root
+            projectRoot = currentDir.substring(0, currentDir.lastIndexOf("server" + File.separator + "artaura"));
+        } else if (currentDir.endsWith("artaura")) {
+            // Fallback: if just in artaura directory
+            projectRoot = currentDir.substring(0, currentDir.lastIndexOf("artaura"));
+        } else {
+            // Fallback: assume we're already in project root
+            projectRoot = currentDir + File.separator;
+        }
 
         String uploadDirPath = projectRoot + "client" + File.separator + "public" + File.separator + "uploads"
                 + File.separator + "profiles" + File.separator;
@@ -54,9 +66,20 @@ public class ImageUploadService {
         try {
             if (imagePath != null && !imagePath.isEmpty()) {
                 String currentDir = System.getProperty("user.dir");
-                String projectRoot = currentDir.endsWith("artaura")
-                        ? currentDir.substring(0, currentDir.lastIndexOf("artaura"))
-                        : currentDir + File.separator;
+
+                // Use the same robust path calculation logic as saveImage
+                String projectRoot;
+                if (currentDir.contains("ArtAura2")) {
+                    // Extract everything up to and including ArtAura2
+                    int artAuraIndex = currentDir.indexOf("ArtAura2");
+                    projectRoot = currentDir.substring(0, artAuraIndex + 8) + File.separator; // 8 is length of "ArtAura2"
+                } else if (currentDir.contains("server" + File.separator + "artaura")) {
+                    projectRoot = currentDir.substring(0, currentDir.lastIndexOf("server" + File.separator + "artaura"));
+                } else if (currentDir.endsWith("artaura")) {
+                    projectRoot = currentDir.substring(0, currentDir.lastIndexOf("artaura"));
+                } else {
+                    projectRoot = currentDir + File.separator;
+                }
 
                 // Convert URL path back to file path for client/public/uploads
                 String filePath = imagePath.replace("/uploads/", projectRoot + "client" + File.separator + "public"

@@ -38,6 +38,12 @@ const Login = () => {
 
     try {
       const API_URL = import.meta.env.VITE_API_URL;
+      console.log("🌐 API_URL:", API_URL);
+      console.log("📧 Login data being sent:", {
+        email: formData.email,
+        passwordLength: formData.password ? formData.password.length : 0
+      });
+
       const response = await axios.post(`${API_URL}/api/auth/login`, formData);
       const { token, role, userId } = response.data;
 
@@ -59,9 +65,23 @@ const Login = () => {
         setError("Unknown user role. Contact support.");
       }
     } catch (err) {
+      console.error("❌ Login error details:", {
+        message: err.message,
+        status: err.response?.status,
+        statusText: err.response?.statusText,
+        data: err.response?.data,
+        config: {
+          url: err.config?.url,
+          method: err.config?.method,
+          data: err.config?.data
+        }
+      });
+
+      console.error("📋 Full error response data:", err.response?.data);
+
       setError(
         err.response?.data?.message ||
-          "Login failed. Please check your credentials and try again."
+        "Login failed. Please check your credentials and try again."
       );
     } finally {
       setLoading(false);
@@ -157,9 +177,8 @@ const Login = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className={`w-full py-3 bg-[#362625] text-white rounded-xl font-semibold flex justify-center items-center space-x-2 hover:bg-[#2c1f1f] transition ${
-                  loading ? "opacity-60 cursor-not-allowed" : ""
-                }`}
+                className={`w-full py-3 bg-[#362625] text-white rounded-xl font-semibold flex justify-center items-center space-x-2 hover:bg-[#2c1f1f] transition ${loading ? "opacity-60 cursor-not-allowed" : ""
+                  }`}
               >
                 <span>{loading ? "Signing In..." : "Sign In"}</span>
                 <ArrowRight size={20} />
