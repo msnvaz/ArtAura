@@ -20,6 +20,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import deliveryPartnerApi from '../../services/deliveryPartnerApi';
 import axios from 'axios';
+import Toast from '../Toast';
 
 const DeliveryRequestsList = () => {
   const { token } = useAuth();
@@ -35,6 +36,25 @@ const DeliveryRequestsList = () => {
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [showAcceptModal, setShowAcceptModal] = useState(false);
   const [deliveryFee, setDeliveryFee] = useState('');
+  
+  // Toast notification state
+  const [toast, setToast] = useState({
+    isVisible: false,
+    message: '',
+    type: 'success'
+  });
+
+  const showToast = (message, type = 'success') => {
+    setToast({
+      isVisible: true,
+      message,
+      type
+    });
+  };
+
+  const closeToast = () => {
+    setToast(prev => ({ ...prev, isVisible: false }));
+  };
 
   // Fetch delivery requests from API
   useEffect(() => {
@@ -287,13 +307,15 @@ const DeliveryRequestsList = () => {
           )
         );
 
-        alert('Order marked as in transit successfully!');
+        // alert('Order marked as in transit successfully!');
+        showToast(`Order #${request.id} marked as in transit successfully!`, 'success');
       } else {
         throw new Error(response.error || 'Failed to mark as in transit');
       }
     } catch (error) {
       console.error('Error marking as in transit:', error);
-      alert(`Failed to mark as in transit. Error: ${error.error || error.message}`);
+      // alert(`Failed to mark as in transit. Error: ${error.error || error.message}`);
+      showToast('Failed to mark as in transit. Please try again.', 'error');
     }
   };
 
@@ -319,19 +341,22 @@ const DeliveryRequestsList = () => {
           )
         );
 
-        alert('Order marked as delivered successfully!');
+        // alert('Order marked as delivered successfully!');
+        showToast(`Order #${request.id} marked as delivered successfully!`, 'success');
       } else {
         throw new Error(response.error || 'Failed to mark as delivered');
       }
     } catch (error) {
       console.error('Error marking as delivered:', error);
-      alert(`Failed to mark as delivered. Error: ${error.error || error.message}`);
+      // alert(`Failed to mark as delivered. Error: ${error.error || error.message}`);
+      showToast('Failed to mark as delivered. Please try again.', 'error');
     }
   };
 
   const handleSubmitAcceptance = async () => {
     if (!deliveryFee || isNaN(deliveryFee) || parseFloat(deliveryFee) <= 0) {
-      alert('Please enter a valid delivery fee');
+      // alert('Please enter a valid delivery fee');
+      showToast('Please enter a valid delivery fee', 'error');
       return;
     }
 
@@ -384,7 +409,8 @@ const DeliveryRequestsList = () => {
         }
         
         if (!userId) {
-          alert('User authentication error. Please log in again.');
+          // alert('User authentication error. Please log in again.');
+          showToast('User authentication error. Please log in again.', 'error');
           return;
         }
       }
@@ -445,14 +471,16 @@ const DeliveryRequestsList = () => {
         setSelectedRequest(null);
         
         // Enhanced success message with more details
-        alert(`✅ Delivery request accepted successfully!\n\n` +
+        /* alert(`✅ Delivery request accepted successfully!\n\n` +
               `Order ID: ${selectedRequest.id}\n` +
               `Order Type: ${orderType}\n` +
               `Delivery Fee: Rs ${deliveryFee}\n` +
               `Status: ${response.newStatus || 'accepted'}\n` +
               `${response.message || 'Request has been accepted and is ready for pickup.'}\n\n` +
               `Previous Status: ${response.previousStatus || 'pending'}\n` +
-              `Updated At: ${response.timestamp ? new Date(response.timestamp).toLocaleString() : new Date().toLocaleString()}`);
+              `Updated At: ${response.timestamp ? new Date(response.timestamp).toLocaleString() : new Date().toLocaleString()}`); */
+        
+        showToast(`✅ Delivery request #${selectedRequest.id} accepted successfully! Fee: Rs ${deliveryFee}`, 'success');
       } else {
         console.error('API returned success=false:', response);
         throw new Error(response.error || 'Failed to accept delivery request');
@@ -479,7 +507,8 @@ const DeliveryRequestsList = () => {
 
           setShowAcceptModal(false);
           setDeliveryFee('');
-          alert('Delivery request accepted successfully using standard method!');
+          // alert('Delivery request accepted successfully using standard method!');
+          showToast(`✅ Delivery request #${selectedRequest.id} accepted successfully!`, 'success');
         } catch (fallbackError) {
           console.error('Standard endpoint also failed, trying legacy endpoint:', fallbackError);
           try {
@@ -501,7 +530,8 @@ const DeliveryRequestsList = () => {
 
             setShowAcceptModal(false);
             setDeliveryFee('');
-            alert('Delivery request accepted successfully using legacy method!');
+            // alert('Delivery request accepted successfully using legacy method!');
+            showToast(`✅ Delivery request #${selectedRequest.id} accepted successfully!`, 'success');
           } catch (legacyError) {
             console.error('All endpoints failed:', legacyError);
             
@@ -518,7 +548,8 @@ const DeliveryRequestsList = () => {
             }
             
             errorMessage += '\n\nPlease check your network connection and try again, or contact support.';
-            alert(errorMessage);
+            // alert(errorMessage);
+            showToast('Failed to accept delivery request. Please try again.', 'error');
           }
         }
       } else {
@@ -534,7 +565,8 @@ const DeliveryRequestsList = () => {
           errorMessage += `\nError: ${error.message}`;
         }
         
-        alert(errorMessage);
+        // alert(errorMessage);
+        showToast('Failed to accept delivery request. Please try again.', 'error');
       }
     }
   };
@@ -972,6 +1004,15 @@ const DeliveryRequestsList = () => {
           </div>
         </div>
       )}
+
+      {/* Toast Notification */}
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={closeToast}
+        duration={3000}
+      />
     </div>
   );
 };
