@@ -20,9 +20,23 @@ const ArtistProfileModal = ({ isOpen, artist, onClose }) => {
   );
   const API_URL = import.meta.env.VITE_API_URL;
 
+  // Debug: log artist object to inspect id
+  React.useEffect(() => {
+    if (artist) {
+      console.log("ArtistProfileModal artist:", artist);
+    }
+  }, [artist]);
+
   // Handle follow button click
   const handleFollow = async (artistId) => {
-    if (!token) return;
+    if (!token) {
+      alert("You must be logged in to follow an artist.");
+      return;
+    }
+    if (!artistId || artistId === "undefined") {
+      alert("Invalid artist ID. Cannot follow.");
+      return;
+    }
     try {
       await axios.post(
         `${API_URL}/api/buyer/artists/${artistId}/follow`,
@@ -34,7 +48,7 @@ const ArtistProfileModal = ({ isOpen, artist, onClose }) => {
       setIsFollowing(true);
       setFollowersCount((prev) => prev + 1);
     } catch (err) {
-      // Optionally show error toast
+      alert("Failed to follow artist. Please try again later.");
     }
   };
 
@@ -304,7 +318,7 @@ const ArtistProfileModal = ({ isOpen, artist, onClose }) => {
                 color: isFollowing ? "#7f5539" : "white",
               }}
               disabled={isFollowing}
-              onClick={() => handleFollow(artist.id)}
+              onClick={() => handleFollow(artist.artistId)}
             >
               <Users size={20} />
               {isFollowing ? "Following" : "Follow Artist"}

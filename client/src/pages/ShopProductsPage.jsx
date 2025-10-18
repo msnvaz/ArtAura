@@ -16,6 +16,7 @@ import Toast from "../components/Toast";
 import { useToast } from "../hooks/useToast";
 import axios from "axios";
 import ArtworkDetailsModal from "../components/modals/ArtworkDetailsModal";
+import ImageZoomLens from "../components/artworks/ImageZoomLense";
 
 const ShopProductsPage = () => {
   const [products, setProducts] = useState([]);
@@ -339,10 +340,12 @@ const ShopProductsPage = () => {
         className="relative cursor-pointer"
         onClick={() => openDetails(product)}
       >
-        <img
+        <ImageZoomLens
           src={product.imageUrl}
+          zoom={2.2}
+          lensSize={120}
           alt={product.title}
-          className="w-full h-48 object-cover"
+          className="w-full h-48 object-cover rounded"
         />
       </div>
 
@@ -457,9 +460,7 @@ const ShopProductsPage = () => {
             <h1 className="text-3xl font-bold text-[#7f5539] mb-2">
               Art Works to Sell
             </h1>
-            <p className="text-[#7f5539]/70">
-              Discover amazing arts
-            </p>
+            <p className="text-[#7f5539]/70">Discover amazing arts</p>
           </div>
 
           {/* Mobile filter toggle */}

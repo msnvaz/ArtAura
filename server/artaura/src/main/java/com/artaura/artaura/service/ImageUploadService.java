@@ -15,7 +15,6 @@ import java.util.UUID;
 public class ImageUploadService {
 
     public String saveImage(MultipartFile file, String imageType, Long artistId) throws IOException {
-        // Get the current working directory and print it for debugging
         String currentDir = System.getProperty("user.dir");
         System.out.println("Current working directory: " + currentDir);
 
@@ -34,24 +33,11 @@ public class ImageUploadService {
             System.out.println("Created upload directory: " + created + " at " + uploadDirPath);
         }
 
-        // Generate unique filename
-        String originalFilename = file.getOriginalFilename();
-        String extension = originalFilename != null
-                ? originalFilename.substring(originalFilename.lastIndexOf('.')) : ".jpg";
-
-        String filename = artistId + "_" + imageType + "_" + System.currentTimeMillis() + extension;
-        System.out.println("Generated filename: " + filename);
-
         // Save file
         Path filePath = Paths.get(uploadDirPath + filename);
         Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
         System.out.println("File saved to: " + filePath.toAbsolutePath());
-
-        // Return relative path for database storage
-        String relativePath = "/uploads/profiles/" + filename;
         System.out.println("Returning relative path: " + relativePath);
-
         return relativePath;
     }
 
