@@ -418,12 +418,15 @@ const UserOrders = () => {
                                   alt={item.title}
                                   className="w-12 h-12 rounded-lg object-cover border border-[#FFD95A]"
                                   onError={(e) => {
-                                    e.target.src = '/uploads/default-artwork.jpg';
+                                    e.target.src =
+                                      "/uploads/default-artwork.jpg";
                                   }}
                                 />
                               ) : (
                                 <div className="w-12 h-12 rounded-lg bg-[#FFF5E1] border border-[#FFD95A] flex items-center justify-center text-[#7f5539] text-xs font-medium">
-                                  {item.title ? item.title.substring(0, 2).toUpperCase() : "No"}
+                                  {item.title
+                                    ? item.title.substring(0, 2).toUpperCase()
+                                    : "No"}
                                 </div>
                               )}
                             </div>
