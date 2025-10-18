@@ -56,10 +56,11 @@ payment (commission_request_id) → commission_requests (id)
 ## Payment Status Updates
 When marking a delivery as "delivered":
 1. Platform fee is calculated and inserted into `platform_fees` table
-2. For **Artwork Orders**: `AW_orders.status` is updated to `'paid'`
-3. For **Commission Requests**: `commission_requests.payment_status` is updated to `'paid'`
+2. **Payment table**: `payment.status` is updated to `'paid'`
+3. For **Artwork Orders**: `AW_orders.status` is updated to `'paid'`
+4. For **Commission Requests**: `commission_requests.payment_status` is updated to `'paid'`
 
-This ensures that once the delivery is completed and platform fee is collected, the order payment status is properly marked as paid.
+This ensures that once the delivery is completed and platform fee is collected, all payment-related statuses are properly updated across all tables.
 
 ## Important Notes
 1. Payment records must exist in the `payment` table for platform fees to be calculated
@@ -85,7 +86,8 @@ To test this implementation:
 4. ✅ Backend calculates: `platformCommissionFee = (paymentAmount × platformFee) / 100`
 5. ✅ Backend gets `payment_id` from payment table
 6. ✅ Backend inserts fee into `platform_fees` table
-7. ✅ Backend updates payment status:
+7. ✅ Backend updates payment status in **3 tables**:
+   - `UPDATE payment SET status = 'paid' WHERE id = ?` (payment table)
    - If artwork order: `UPDATE AW_orders SET status = 'paid' WHERE id = ?`
    - If commission: `UPDATE commission_requests SET payment_status = 'paid' WHERE id = ?`
 8. ✅ Backend updates delivery status to 'delivered'

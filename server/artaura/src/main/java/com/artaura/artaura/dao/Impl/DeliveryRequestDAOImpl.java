@@ -595,6 +595,18 @@ public class DeliveryRequestDAOImpl implements DeliveryRequestDAO {
             if (rowsAffected > 0) {
                 System.out.println("✅ Platform fee inserted: Rs " + platformCommissionFee + " for payment ID: " + paymentId);
                 
+                // Update payment status to 'paid' in payment table
+                String updatePaymentSql = "UPDATE payment SET status = 'paid' WHERE id = ?";
+                int paymentUpdateRows = jdbc.update(updatePaymentSql, paymentId);
+                System.out.println("📝 Updating payment table - SQL: " + updatePaymentSql + " with paymentId: " + paymentId);
+                System.out.println("📊 Rows affected in payment table: " + paymentUpdateRows);
+                
+                if (paymentUpdateRows > 0) {
+                    System.out.println("✅ Payment status updated to 'paid' in payment table for payment ID: " + paymentId);
+                } else {
+                    System.out.println("⚠️ Warning: Failed to update payment status in payment table for payment ID: " + paymentId);
+                }
+                
                 // Update payment status to 'paid' in the respective order table
                 String updateStatusSql;
                 if ("artwork".equalsIgnoreCase(orderType)) {
