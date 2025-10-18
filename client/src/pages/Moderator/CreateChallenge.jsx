@@ -38,10 +38,9 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
   
   // Scoring criteria state
   const [criteria, setCriteria] = useState({
-    likesWeight: 25,
-    commentsWeight: 25,
-    buyerInterestWeight: 25,
-    expertEvaluationWeight: 25
+    likesWeight: 34,
+    commentsWeight: 33,
+    shareWeight: 33
   });
   
   const navigate = useNavigate();
@@ -139,8 +138,7 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
         scoringCriteria: {
           likesWeight: criteria.likesWeight,
           commentsWeight: criteria.commentsWeight,
-          buyerInterestWeight: criteria.buyerInterestWeight,
-          expertEvaluationWeight: criteria.expertEvaluationWeight
+          shareWeight: criteria.shareWeight
         }
       };
 
@@ -197,8 +195,7 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
       const total =
         newCriteria.likesWeight +
         newCriteria.commentsWeight +
-        newCriteria.buyerInterestWeight +
-        newCriteria.expertEvaluationWeight;
+        newCriteria.shareWeight;
       // If total is over 100, adjust the changed field to not exceed 100
       if (total > 100) {
         const over = total - 100;
@@ -209,7 +206,7 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
   };
 
   const getTotalWeight = () => {
-    return criteria.likesWeight + criteria.commentsWeight + criteria.buyerInterestWeight + criteria.expertEvaluationWeight;
+    return criteria.likesWeight + criteria.commentsWeight + criteria.shareWeight;
   };
 
 
@@ -769,7 +766,7 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
                   </div>
 
                   {/* Scoring Criteria Grid */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Likes & Engagement Weight */}
                     <div className="space-y-3">
                       <div className="flex items-center gap-2" style={{ color: "#362625" }}>
@@ -824,11 +821,11 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
                       <p className="text-xs" style={{ color: "#7f5539" }}>Based on the number of comments received</p>
                     </div>
 
-                    {/* Buyer Interest Weight */}
+                    {/* Share Weight */}
                     <div className="space-y-3">
                       <div className="flex items-center gap-2" style={{ color: "#362625" }}>
-                        <ShoppingCart size={18} style={{ color: "#10b981" }} />
-                        <h4 className="text-base font-semibold">Buyer Interest Weight</h4>
+                        <Send size={18} style={{ color: "#10b981" }} />
+                        <h4 className="text-base font-semibold">Share Weight</h4>
                       </div>
                       
                       <div className="relative">
@@ -836,46 +833,19 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
                           type="range"
                           min="0"
                           max="100"
-                          value={criteria.buyerInterestWeight}
-                          onChange={(e) => handleWeightChange('buyerInterestWeight', e.target.value)}
+                          value={criteria.shareWeight}
+                          onChange={(e) => handleWeightChange('shareWeight', e.target.value)}
                           className="w-full h-2 bg-yellow-200 rounded-lg appearance-none cursor-pointer slider"
                           style={{
-                            background: `linear-gradient(to right, #7f5539 0%, #7f5539 ${criteria.buyerInterestWeight}%, #f4e8dc ${criteria.buyerInterestWeight}%, #f4e8dc 100%)`
+                            background: `linear-gradient(to right, #7f5539 0%, #7f5539 ${criteria.shareWeight}%, #f4e8dc ${criteria.shareWeight}%, #f4e8dc 100%)`
                           }}
                         />
                         <div className="flex justify-end mt-2">
-                          <span className="text-xl font-bold" style={{ color: "#362625" }}>{criteria.buyerInterestWeight}%</span>
+                          <span className="text-xl font-bold" style={{ color: "#362625" }}>{criteria.shareWeight}%</span>
                         </div>
                       </div>
                       
-                      <p className="text-xs" style={{ color: "#7f5539" }}>Based on buyer interest and purchase inquiries</p>
-                    </div>
-
-                    {/* Expert Evaluation Weight */}
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2" style={{ color: "#362625" }}>
-                        <Star size={18} style={{ color: "#fbbf24" }} />
-                        <h4 className="text-base font-semibold">Expert Evaluation Weight</h4>
-                      </div>
-                      
-                      <div className="relative">
-                        <input
-                          type="range"
-                          min="0"
-                          max="100"
-                          value={criteria.expertEvaluationWeight}
-                          onChange={(e) => handleWeightChange('expertEvaluationWeight', e.target.value)}
-                          className="w-full h-2 bg-yellow-200 rounded-lg appearance-none cursor-pointer slider"
-                          style={{
-                            background: `linear-gradient(to right, #7f5539 0%, #7f5539 ${criteria.expertEvaluationWeight}%, #f4e8dc ${criteria.expertEvaluationWeight}%, #f4e8dc 100%)`
-                          }}
-                        />
-                        <div className="flex justify-end mt-2">
-                          <span className="text-xl font-bold" style={{ color: "#362625" }}>{criteria.expertEvaluationWeight}%</span>
-                        </div>
-                      </div>
-                      
-                      <p className="text-xs" style={{ color: "#7f5539" }}>Based on scores from expert artist evaluators</p>
+                      <p className="text-xs" style={{ color: "#7f5539" }}>Based on the number of shares and social engagement</p>
                     </div>
                   </div>
 
