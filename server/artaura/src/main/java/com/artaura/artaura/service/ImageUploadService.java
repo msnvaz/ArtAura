@@ -15,7 +15,6 @@ import java.util.UUID;
 public class ImageUploadService {
 
     public String saveImage(MultipartFile file, String imageType, Long artistId) throws IOException {
-        // Get the current working directory and print it for debugging
         String currentDir = System.getProperty("user.dir");
         System.out.println("Current working directory: " + currentDir);
 
@@ -36,14 +35,9 @@ public class ImageUploadService {
             projectRoot = currentDir + File.separator;
         }
 
-        String uploadDirPath = projectRoot + "client" + File.separator + "public" + File.separator + "uploads" + File.separator + "profiles" + File.separator;
-        System.out.println("🔧 Project root: " + projectRoot);
-        System.out.println("🔧 Upload directory path: " + uploadDirPath);
-
-        // Verify the path is correct
-        File testPath = new File(uploadDirPath);
-        System.out.println("🔧 Upload directory exists: " + testPath.exists());
-        System.out.println("🔧 Upload directory absolute path: " + testPath.getAbsolutePath());
+        String uploadDirPath = projectRoot + "client" + File.separator + "public" + File.separator + "uploads"
+                + File.separator + "profiles" + File.separator;
+        System.out.println("Upload directory path: " + uploadDirPath);
 
         // Create upload directory if it doesn't exist
         File uploadDir = new File(uploadDirPath);
@@ -54,22 +48,17 @@ public class ImageUploadService {
 
         // Generate unique filename
         String originalFilename = file.getOriginalFilename();
-        String extension = originalFilename != null
-                ? originalFilename.substring(originalFilename.lastIndexOf('.')) : ".jpg";
-
-        String filename = artistId + "_" + imageType + "_" + System.currentTimeMillis() + extension;
-        System.out.println("Generated filename: " + filename);
+        String extension = originalFilename != null && originalFilename.contains(".")
+                ? originalFilename.substring(originalFilename.lastIndexOf("."))
+                : "";
+        String filename = UUID.randomUUID().toString() + extension;
+        String relativePath = "/uploads/profiles/" + filename;
 
         // Save file
         Path filePath = Paths.get(uploadDirPath + filename);
         Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
         System.out.println("File saved to: " + filePath.toAbsolutePath());
-
-        // Return relative path for database storage
-        String relativePath = "/uploads/profiles/" + filename;
         System.out.println("Returning relative path: " + relativePath);
-
         return relativePath;
     }
 
@@ -93,7 +82,8 @@ public class ImageUploadService {
                 }
 
                 // Convert URL path back to file path for client/public/uploads
-                String filePath = imagePath.replace("/uploads/", projectRoot + "client" + File.separator + "public" + File.separator + "uploads" + File.separator);
+                String filePath = imagePath.replace("/uploads/", projectRoot + "client" + File.separator + "public"
+                        + File.separator + "uploads" + File.separator);
                 Path path = Paths.get(filePath);
                 boolean deleted = Files.deleteIfExists(path);
                 System.out.println("Deleted file: " + deleted + " at " + path.toAbsolutePath());

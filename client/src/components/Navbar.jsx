@@ -1,8 +1,6 @@
 import React from "react";
 import {
-  Home,
   ShoppingCart,
-  Bell,
   LogOut,
   Package,
   Handshake,
@@ -20,7 +18,6 @@ import { useState, useRef, useEffect } from "react";
 
 // Remove mockUser - we'll fetch real data
 const mainLinks = [
-  { name: "Dashboard", path: "/shop/dashboard", icon: Home },
   { name: "Orders", path: "/shop/orders", icon: ShoppingCart },
   { name: "Catalog", path: "/shop/catalog", icon: Package },
   { name: "Analytics", path: "/shop/analytics", icon: BarChart3 },
@@ -181,7 +178,6 @@ function Navbar() {
                 <NavLink
                   key={name}
                   to={path}
-                  end={name === "Dashboard"}
                   className={({ isActive }) =>
                     `group relative flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
                       isActive
@@ -194,7 +190,6 @@ function Navbar() {
                   <span className="text-sm">{name}</span>
                   {/* Beautiful hover underline */}
                   <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-gradient-to-r from-[#FFD95A] to-[#D87C5A] transition-all duration-300 ${
-                    name === 'Dashboard' ? 'w-0 group-hover:w-3/4' :
                     name === 'Orders' ? 'w-0 group-hover:w-2/3' :
                     name === 'Catalog' ? 'w-0 group-hover:w-3/4' :
                     name === 'Analytics' ? 'w-0 group-hover:w-4/5' :
@@ -204,18 +199,8 @@ function Navbar() {
               ))}
             </div>
 
-            {/* RIGHT CORNER START - Notifications & Profile */}
+            {/* RIGHT CORNER START - Profile */}
             <div className="flex items-center space-x-4">
-              {/* Enhanced Notifications */}
-              {isSignedIn && (
-                <button className="relative p-2 text-[#FFD95A] hover:text-white hover:bg-[#FFE9A0]/20 rounded-lg transition-all duration-200">
-                  <Bell className="h-5 w-5" />
-                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
-                    <span className="text-xs text-white font-bold">3</span>
-                  </span>
-                </button>
-              )}
-
               {/* Profile Dropdown - Desktop */}
               {isSignedIn ? (
                 <div className="relative hidden md:block" ref={profileDropdownRef}>
@@ -312,11 +297,10 @@ function Navbar() {
           <div className="md:hidden bg-[#362625] border-t border-[#FFD95A]/30">
             <div className="px-2 py-3 space-y-1">
               {/* Mobile Navigation Links */}
-              {mainLinks.map(({ name, path}) => (
+              {mainLinks.map(({ name, path, icon: Icon }) => (
                 <NavLink
                   key={name}
                   to={path}
-                  end={name === "Dashboard"}
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={({ isActive }) =>
                     `group relative flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all duration-300 ${
@@ -330,7 +314,6 @@ function Navbar() {
                   <span>{name}</span>
                   {/* Mobile hover underline */}
                   <span className={`absolute bottom-1 left-4 h-0.5 bg-gradient-to-r from-[#D87C5A] to-[#FFD95A] transition-all duration-300 ${
-                    name === 'Dashboard' ? 'w-0 group-hover:w-16' :
                     name === 'Orders' ? 'w-0 group-hover:w-12' :
                     name === 'Catalog' ? 'w-0 group-hover:w-14' :
                     name === 'Analytics' ? 'w-0 group-hover:w-16' :

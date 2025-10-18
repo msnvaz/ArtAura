@@ -38,7 +38,12 @@ public class ShopOwnerSignupRequest {
     private String zipCode;
     @NotBlank
     private String country;
-
+    @NotBlank
+    private String categories;
+    @NotBlank
+    private String nicNumber;
+    @NotBlank
+    private String nicImageUrl;
 
     // Getters and setters
 }

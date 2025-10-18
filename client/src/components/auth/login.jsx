@@ -9,7 +9,7 @@ const roleDashboardMap = {
   admin: "/admin/dashboard",
   moderator: "/ModeratorDashboard",
   artist: "/artist/artistportfolio",
-  shop: "/shop/dashboard",
+  shop: "/shop/orders",
   buyer: "/community",
   delivery_partner: "/delivery-partner",
 };

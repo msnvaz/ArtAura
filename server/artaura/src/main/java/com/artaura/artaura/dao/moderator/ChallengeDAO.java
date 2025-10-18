@@ -9,6 +9,6 @@ public interface ChallengeDAO {
     void insertChallenge(ChallengeDTO challenge, String moderatorId);
     List<ChallengeListDTO> getAllChallenges();
     void deleteChallenge(int challengeId);
-
     void updateChallenge(ChallengeDTO challenge, String moderatorId);
+    int updateExpiredChallenges();
 }

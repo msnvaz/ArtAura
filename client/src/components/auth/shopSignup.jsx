@@ -1,21 +1,35 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Store } from 'lucide-react';
-import { useUser } from '../../context/UserContext';
-import axios from 'axios';
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Eye, EyeOff, Store } from "lucide-react";
+import { useUser } from "../../context/UserContext";
+import axios from "axios";
 import AlertMessage from "../AlertMessage";
 
 // Step 1: Basic Info
-function BasicInfoStep({ formData, onChange, showPassword, setShowPassword }) {
+function BasicInfoStep({
+  formData,
+  onChange,
+  showPassword,
+  setShowPassword,
+  onNicImageChange,
+  nicImagePreview,
+}) {
   return (
     <div className="space-y-6">
       <div className="text-center mb-6">
-        <h3 className="text-xl font-semibold text-[#362625]">Basic Information</h3>
-        <p className="text-[#362625]/70">Let's start with your shop and personal details</p>
+        <h3 className="text-xl font-semibold text-[#362625]">
+          Basic Information
+        </h3>
+        <p className="text-[#362625]/70">
+          Let's start with your shop and personal details
+        </p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label htmlFor="shopName" className="block text-sm font-medium text-[#362625] mb-1">
+          <label
+            htmlFor="shopName"
+            className="block text-sm font-medium text-[#362625] mb-1"
+          >
             Shop Name <span className="text-red-500">*</span>
           </label>
           <input
@@ -30,7 +44,10 @@ function BasicInfoStep({ formData, onChange, showPassword, setShowPassword }) {
           />
         </div>
         <div>
-          <label htmlFor="ownerName" className="block text-sm font-medium text-[#362625] mb-1">
+          <label
+            htmlFor="ownerName"
+            className="block text-sm font-medium text-[#362625] mb-1"
+          >
             Owner Name <span className="text-red-500">*</span>
           </label>
           <input
@@ -46,7 +63,10 @@ function BasicInfoStep({ formData, onChange, showPassword, setShowPassword }) {
         </div>
       </div>
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-[#362625] mb-1">
+        <label
+          htmlFor="email"
+          className="block text-sm font-medium text-[#362625] mb-1"
+        >
           Business Email <span className="text-red-500">*</span>
         </label>
         <input
@@ -62,14 +82,17 @@ function BasicInfoStep({ formData, onChange, showPassword, setShowPassword }) {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-[#362625] mb-1">
+          <label
+            htmlFor="password"
+            className="block text-sm font-medium text-[#362625] mb-1"
+          >
             Password <span className="text-red-500">*</span>
           </label>
           <div className="relative">
             <input
               id="password"
               name="password"
-              type={showPassword ? 'text' : 'password'}
+              type={showPassword ? "text" : "password"}
               required
               value={formData.password}
               onChange={onChange}
@@ -90,7 +113,10 @@ function BasicInfoStep({ formData, onChange, showPassword, setShowPassword }) {
           </div>
         </div>
         <div>
-          <label htmlFor="confirmPassword" className="block text-sm font-medium text-[#362625] mb-1">
+          <label
+            htmlFor="confirmPassword"
+            className="block text-sm font-medium text-[#362625] mb-1"
+          >
             Confirm Password <span className="text-red-500">*</span>
           </label>
           <input
@@ -105,6 +131,54 @@ function BasicInfoStep({ formData, onChange, showPassword, setShowPassword }) {
           />
         </div>
       </div>
+      {/* NIC Number */}
+      <div>
+        <label
+          htmlFor="nicNumber"
+          className="block text-sm font-medium text-[#362625] mb-1"
+        >
+          NIC Number <span className="text-red-500">*</span>
+        </label>
+        <input
+          id="nicNumber"
+          name="nicNumber"
+          type="text"
+          required
+          value={formData.nicNumber}
+          onChange={onChange}
+          className="w-full px-3 py-3 border border-[#362625]/20 placeholder-[#362625]/50 text-[#362625] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#362625] focus:border-transparent bg-white"
+          placeholder="Enter NIC number"
+        />
+      </div>
+      {/* NIC Image Upload */}
+      <div>
+        <label
+          htmlFor="nicImage"
+          className="block text-sm font-medium text-[#362625] mb-1"
+        >
+          NIC Image <span className="text-red-500">*</span>
+        </label>
+        <p className="text-xs text-[#362625]/70 mb-2">
+          Please upload a clear and visible image of your NIC. Blurry or cropped
+          images may cause delays in verification.
+        </p>
+        <input
+          id="nicImage"
+          name="nicImage"
+          type="file"
+          accept="image/*"
+          required
+          onChange={onNicImageChange}
+          className="w-full px-3 py-3 border border-[#362625]/20 text-[#362625] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#362625] focus:border-transparent bg-white"
+        />
+        {nicImagePreview && (
+          <img
+            src={nicImagePreview}
+            alt="NIC Preview"
+            className="mt-2 h-24 rounded shadow border"
+          />
+        )}
+      </div>
     </div>
   );
 }
@@ -114,12 +188,17 @@ function BusinessInfoStep({ formData, onChange, businessTypes }) {
   return (
     <div className="space-y-6">
       <div className="text-center mb-6">
-        <h3 className="text-xl font-semibold text-[#362625]">Business Details</h3>
+        <h3 className="text-xl font-semibold text-[#362625]">
+          Business Details
+        </h3>
         <p className="text-[#362625]/70">Tell us more about your business</p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label htmlFor="businessType" className="block text-sm font-medium text-[#362625] mb-1">
+          <label
+            htmlFor="businessType"
+            className="block text-sm font-medium text-[#362625] mb-1"
+          >
             Business Type <span className="text-red-500">*</span>
           </label>
           <select
@@ -132,12 +211,17 @@ function BusinessInfoStep({ formData, onChange, businessTypes }) {
           >
             <option value="">Select business type</option>
             {businessTypes.map((type) => (
-              <option key={type} value={type}>{type}</option>
+              <option key={type} value={type}>
+                {type}
+              </option>
             ))}
           </select>
         </div>
         <div>
-          <label htmlFor="phone" className="block text-sm font-medium text-[#362625] mb-1">
+          <label
+            htmlFor="phone"
+            className="block text-sm font-medium text-[#362625] mb-1"
+          >
             Phone Number <span className="text-red-500">*</span>
           </label>
           <input
@@ -153,7 +237,10 @@ function BusinessInfoStep({ formData, onChange, businessTypes }) {
         </div>
       </div>
       <div>
-        <label htmlFor="description" className="block text-sm font-medium text-[#362625] mb-1">
+        <label
+          htmlFor="description"
+          className="block text-sm font-medium text-[#362625] mb-1"
+        >
           Shop Description <span className="text-red-500">*</span>
         </label>
         <textarea
@@ -169,7 +256,10 @@ function BusinessInfoStep({ formData, onChange, businessTypes }) {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label htmlFor="businessLicense" className="block text-sm font-medium text-[#362625] mb-1">
+          <label
+            htmlFor="businessLicense"
+            className="block text-sm font-medium text-[#362625] mb-1"
+          >
             Business License Number
           </label>
           <input
@@ -183,7 +273,10 @@ function BusinessInfoStep({ formData, onChange, businessTypes }) {
           />
         </div>
         <div>
-          <label htmlFor="taxId" className="block text-sm font-medium text-[#362625] mb-1">
+          <label
+            htmlFor="taxId"
+            className="block text-sm font-medium text-[#362625] mb-1"
+          >
             Tax ID / EIN
           </label>
           <input
@@ -206,11 +299,16 @@ function LocationInfoStep({ formData, onChange }) {
   return (
     <div className="space-y-6">
       <div className="text-center mb-6">
-        <h3 className="text-xl font-semibold text-[#362625]">Location Information</h3>
+        <h3 className="text-xl font-semibold text-[#362625]">
+          Location Information
+        </h3>
         <p className="text-[#362625]/70">Where is your shop located?</p>
       </div>
       <div>
-        <label htmlFor="address" className="block text-sm font-medium text-[#362625] mb-1">
+        <label
+          htmlFor="address"
+          className="block text-sm font-medium text-[#362625] mb-1"
+        >
           Street Address <span className="text-red-500">*</span>
         </label>
         <input
@@ -226,7 +324,10 @@ function LocationInfoStep({ formData, onChange }) {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label htmlFor="city" className="block text-sm font-medium text-[#362625] mb-1">
+          <label
+            htmlFor="city"
+            className="block text-sm font-medium text-[#362625] mb-1"
+          >
             City <span className="text-red-500">*</span>
           </label>
           <input
@@ -241,7 +342,10 @@ function LocationInfoStep({ formData, onChange }) {
           />
         </div>
         <div>
-          <label htmlFor="state" className="block text-sm font-medium text-[#362625] mb-1">
+          <label
+            htmlFor="state"
+            className="block text-sm font-medium text-[#362625] mb-1"
+          >
             State/Province <span className="text-red-500">*</span>
           </label>
           <input
@@ -258,7 +362,10 @@ function LocationInfoStep({ formData, onChange }) {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label htmlFor="zipCode" className="block text-sm font-medium text-[#362625] mb-1">
+          <label
+            htmlFor="zipCode"
+            className="block text-sm font-medium text-[#362625] mb-1"
+          >
             ZIP/Postal Code <span className="text-red-500">*</span>
           </label>
           <input
@@ -273,7 +380,10 @@ function LocationInfoStep({ formData, onChange }) {
           />
         </div>
         <div>
-          <label htmlFor="country" className="block text-sm font-medium text-[#362625] mb-1">
+          <label
+            htmlFor="country"
+            className="block text-sm font-medium text-[#362625] mb-1"
+          >
             Country <span className="text-red-500">*</span>
           </label>
           <input
@@ -293,12 +403,22 @@ function LocationInfoStep({ formData, onChange }) {
 }
 
 // Step 4: Categories & Terms
-function CategoriesStep({ formData, onCategoryToggle, categories, onTermsChange, onNewsletterChange }) {
+function CategoriesStep({
+  formData,
+  onCategoryToggle,
+  categories,
+  onTermsChange,
+  onNewsletterChange,
+}) {
   return (
     <div className="space-y-6">
       <div className="text-center mb-6">
-        <h3 className="text-xl font-semibold text-[#362625]">Shop Categories & Final Steps</h3>
-        <p className="text-[#362625]/70">What type of art supplies do you sell?</p>
+        <h3 className="text-xl font-semibold text-[#362625]">
+          Shop Categories & Final Steps
+        </h3>
+        <p className="text-[#362625]/70">
+          What type of art supplies do you sell?
+        </p>
       </div>
       <div>
         <label className="block text-sm font-medium text-[#362625] mb-3">
@@ -312,8 +432,8 @@ function CategoriesStep({ formData, onCategoryToggle, categories, onTermsChange,
               onClick={() => onCategoryToggle(category)}
               className={`p-3 text-sm rounded-lg border-2 transition-colors text-left ${
                 formData.categories.includes(category)
-                  ? 'border-[#362625] bg-[#362625]/5 text-[#362625]'
-                  : 'border-[#362625]/20 text-[#362625]/70 hover:border-[#362625]/40'
+                  ? "border-[#362625] bg-[#362625]/5 text-[#362625]"
+                  : "border-[#362625]/20 text-[#362625]/70 hover:border-[#362625]/40"
               }`}
             >
               {category}
@@ -335,12 +455,18 @@ function CategoriesStep({ formData, onCategoryToggle, categories, onTermsChange,
             className="h-4 w-4 text-[#362625] focus:ring-[#362625] border-[#362625]/20 rounded"
           />
           <label htmlFor="terms" className="ml-2 block text-sm text-[#362625]">
-            I agree to the{' '}
-            <a href="#" className="font-medium text-[#362625] hover:text-[#362625]/80 transition-colors">
+            I agree to the{" "}
+            <a
+              href="#"
+              className="font-medium text-[#362625] hover:text-[#362625]/80 transition-colors"
+            >
               Terms and Conditions
-            </a>{' '}
-            and{' '}
-            <a href="#" className="font-medium text-[#362625] hover:text-[#362625]/80 transition-colors">
+            </a>{" "}
+            and{" "}
+            <a
+              href="#"
+              className="font-medium text-[#362625] hover:text-[#362625]/80 transition-colors"
+            >
               Seller Agreement
             </a>
             <span className="text-red-500 ml-1">*</span>
@@ -354,8 +480,8 @@ function CategoriesStep({ formData, onCategoryToggle, categories, onTermsChange,
 // Progress Bar - FIXED VERSION
 function ProgressBar({ currentStep }) {
   const steps = [1, 2, 3, 4];
-  const labels = ['Basic Info', 'Business Details', 'Location', 'Categories'];
-  
+  const labels = ["Basic Info", "Business Details", "Location", "Categories"];
+
   return (
     <div className="mb-8">
       {/* Step circles */}
@@ -365,8 +491,8 @@ function ProgressBar({ currentStep }) {
             <div
               className={`flex items-center justify-center w-10 h-10 rounded-full text-sm font-medium transition-all duration-300 ${
                 step <= currentStep
-                  ? 'bg-[#362625] text-[#faf3e0] shadow-lg'
-                  : 'bg-[#362625]/20 text-[#362625]/60'
+                  ? "bg-[#362625] text-[#faf3e0] shadow-lg"
+                  : "bg-[#362625]/20 text-[#362625]/60"
               }`}
             >
               {step}
@@ -377,9 +503,9 @@ function ProgressBar({ currentStep }) {
                 <div className="w-full bg-[#362625]/20 rounded-full h-1">
                   <div
                     className={`h-1 rounded-full transition-all duration-500 ${
-                      step < currentStep ? 'bg-[#362625]' : 'bg-[#362625]/20'
+                      step < currentStep ? "bg-[#362625]" : "bg-[#362625]/20"
                     }`}
-                    style={{ width: step < currentStep ? '100%' : '0%' }}
+                    style={{ width: step < currentStep ? "100%" : "0%" }}
                   ></div>
                 </div>
               </div>
@@ -387,7 +513,7 @@ function ProgressBar({ currentStep }) {
           </React.Fragment>
         ))}
       </div>
-      
+
       {/* Progress bar */}
       <div className="w-full bg-[#362625]/20 rounded-full h-2 mb-3">
         <div
@@ -395,13 +521,15 @@ function ProgressBar({ currentStep }) {
           style={{ width: `${(currentStep / 4) * 100}%` }}
         ></div>
       </div>
-      
+
       {/* Step labels */}
       <div className="flex justify-between text-xs text-[#362625]/60">
         {labels.map((label, index) => (
-          <span 
-            key={label} 
-            className={`${index + 1 <= currentStep ? 'text-[#362625] font-medium' : ''}`}
+          <span
+            key={label}
+            className={`${
+              index + 1 <= currentStep ? "text-[#362625] font-medium" : ""
+            }`}
           >
             {label}
           </span>
@@ -412,7 +540,13 @@ function ProgressBar({ currentStep }) {
 }
 
 // Navigation Buttons
-function NavigationButtons({ currentStep, prevStep, nextStep, isStepValid, isLastStep }) {
+function NavigationButtons({
+  currentStep,
+  prevStep,
+  nextStep,
+  isStepValid,
+  isLastStep,
+}) {
   return (
     <div className="flex justify-between pt-6 border-t border-[#362625]/10">
       <div>
@@ -457,54 +591,57 @@ function ShopRegisterPage() {
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("success");
   const [formData, setFormData] = useState({
-    shopName: '',
-    ownerName: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    businessType: '',
-    description: '',
-    contactNo: '',
-    streetAddress: '',
-    city: '',
-    state: '',
-    zipCode: '',
-    country: '',
+    shopName: "",
+    ownerName: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    businessType: "",
+    description: "",
+    contactNo: "",
+    streetAddress: "",
+    city: "",
+    state: "",
+    zipCode: "",
+    country: "",
     categories: [],
-    businessLicense: '',
-    taxId: '',
+    businessLicense: "",
+    taxId: "",
     agreedTerms: false,
-    newsletter: false
+    newsletter: false,
+    nicNumber: "",
+    nicImage: null,
   });
+  const [nicImagePreview, setNicImagePreview] = useState(null);
 
   const { setUser } = useUser();
   const navigate = useNavigate();
 
   const businessTypes = [
-    'Sole Proprietorship',
-    'Partnership',
-    'Corporation',
-    'LLC',
-    'Other'
+    "Sole Proprietorship",
+    "Partnership",
+    "Corporation",
+    "LLC",
+    "Other",
   ];
 
   const shopCategories = [
-    'Painting Supplies',
-    'Drawing Materials',
-    'Digital Art Tools',
-    'Sculpture Supplies',
-    'Craft Materials',
-    'Professional Equipment',
-    'Canvas & Paper',
-    'Brushes & Tools',
-    'Art Books & Education',
-    'Framing & Display'
+    "Painting Supplies",
+    "Drawing Materials",
+    "Digital Art Tools",
+    "Sculpture Supplies",
+    "Craft Materials",
+    "Professional Equipment",
+    "Canvas & Paper",
+    "Brushes & Tools",
+    "Art Books & Education",
+    "Framing & Display",
   ];
 
   const handleInputChange = (e) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
@@ -512,14 +649,26 @@ function ShopRegisterPage() {
     setFormData({
       ...formData,
       categories: formData.categories.includes(category)
-        ? formData.categories.filter(c => c !== category)
-        : [...formData.categories, category]
+        ? formData.categories.filter((c) => c !== category)
+        : [...formData.categories, category],
     });
   };
 
   const validateEmail = (email) => {
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailPattern.test(email);
+  };
+
+  const handleNicImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormData({ ...formData, nicImage: file });
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNicImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -545,22 +694,35 @@ function ShopRegisterPage() {
       return;
     }
 
-    const payload = { ...formData };
-    delete payload.confirmPassword;
+    // Use FormData for multipart/form-data
+    const formDataObj = new FormData();
+    Object.entries(formData).forEach(([key, value]) => {
+      if (key === "categories") {
+        formDataObj.append(key, value.join(","));
+      } else if (key === "nicImage") {
+        formDataObj.append(key, value); // File object
+      } else {
+        formDataObj.append(key, value);
+      }
+    });
 
     try {
       const API_URL = import.meta.env.VITE_API_URL;
-      const response = await axios.post(`${API_URL}/api/shop/signup`, payload, {
-        headers: { 'Content-Type': 'application/json' }
-      });
+      const response = await axios.post(
+        `${API_URL}/api/shop/signup`,
+        formDataObj,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
 
       if (response.status === 201 || response.status === 200) {
         setUser({
-          id: '1',
+          id: "1",
           name: formData.ownerName,
           email: formData.email,
-          role: 'shop',
-          avatar: undefined
+          role: "shop",
+          avatar: undefined,
         });
         setMessage("Shop registered successfully!");
         setMessageType("success");
@@ -571,7 +733,8 @@ function ShopRegisterPage() {
       }
     } catch (error) {
       setMessage(
-        error.response?.data?.message || "Something went wrong during registration."
+        error.response?.data?.message ||
+          "Something went wrong during registration."
       );
       setMessageType("error");
     }
@@ -588,11 +751,27 @@ function ShopRegisterPage() {
   const isStepValid = () => {
     switch (currentStep) {
       case 1:
-        return formData.shopName && formData.ownerName && formData.email && formData.password && formData.confirmPassword;
+        return (
+          formData.shopName &&
+          formData.ownerName &&
+          formData.email &&
+          formData.password &&
+          formData.confirmPassword &&
+          formData.nicNumber &&
+          formData.nicImage
+        );
       case 2:
-        return formData.businessType && formData.description && formData.contactNo;
+        return (
+          formData.businessType && formData.description && formData.contactNo
+        );
       case 3:
-        return formData.streetAddress && formData.city && formData.state && formData.zipCode && formData.country;
+        return (
+          formData.streetAddress &&
+          formData.city &&
+          formData.state &&
+          formData.zipCode &&
+          formData.country
+        );
       case 4:
         return formData.categories.length > 0 && formData.agreedTerms;
       default:
@@ -609,23 +788,29 @@ function ShopRegisterPage() {
               <Store className="h-8 w-8 text-[#faf3e0]" />
             </div>
           </div>
-          <h2 className="mt-6 text-3xl font-bold text-[#362625]">Register Your Art Supply Shop</h2>
+          <h2 className="mt-6 text-3xl font-bold text-[#362625]">
+            Register Your Art Supply Shop
+          </h2>
           <p className="mt-2 text-sm text-[#362625]/70">
-            Join our community and start selling art supplies to artists worldwide
+            Join our community and start selling art supplies to artists
+            worldwide
           </p>
         </div>
-
-        {message && <AlertMessage type={messageType} message={message} />} {/* ✅ Alert shown here */}
-        
+        {message && <AlertMessage type={messageType} message={message} />}{" "}
+        {/* ✅ Alert shown here */}
         <ProgressBar currentStep={currentStep} />
-        
-        <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm p-8">
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white rounded-lg shadow-sm p-8"
+        >
           {currentStep === 1 && (
             <BasicInfoStep
               formData={formData}
               onChange={handleInputChange}
               showPassword={showPassword}
               setShowPassword={setShowPassword}
+              onNicImageChange={handleNicImageChange}
+              nicImagePreview={nicImagePreview}
             />
           )}
           {currentStep === 2 && (
@@ -646,11 +831,15 @@ function ShopRegisterPage() {
               formData={formData}
               onCategoryToggle={handleCategoryToggle}
               categories={shopCategories}
-              onTermsChange={e => setFormData({ ...formData, agreedTerms: e.target.checked })}
-              onNewsletterChange={e => setFormData({ ...formData, newsletter: e.target.checked })}
+              onTermsChange={(e) =>
+                setFormData({ ...formData, agreedTerms: e.target.checked })
+              }
+              onNewsletterChange={(e) =>
+                setFormData({ ...formData, newsletter: e.target.checked })
+              }
             />
           )}
-          
+
           <NavigationButtons
             currentStep={currentStep}
             prevStep={prevStep}
@@ -658,7 +847,7 @@ function ShopRegisterPage() {
             isStepValid={isStepValid}
             isLastStep={currentStep === 4}
           />
-          
+
           <div className="text-center pt-4">
             <span className="text-[#362625]/70">Already have an account? </span>
             <Link

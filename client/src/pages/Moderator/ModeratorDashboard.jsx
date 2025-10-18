@@ -2,8 +2,11 @@ import {
   Award,
   BarChart3,
   Clock,
+  Heart,
+  MessageCircle,
   Plus,
   Search,
+  Send,
   Settings,
   Shield,
   Star,
@@ -33,10 +36,9 @@ const ModeratorDashboard = () => {
   const [selectedChallenge, setSelectedChallenge] = useState('');
   const [selectedScoringChallenge, setSelectedScoringChallenge] = useState('');
   const [criteria, setCriteria] = useState({
-    likesWeight: 25,
-    commentsWeight: 25,
-    buyerInterestWeight: 25,
-    expertEvaluationWeight: 25
+    likesWeight: 34,
+    commentsWeight: 33,
+    shareWeight: 33
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [contestantSearchTerm, setContestantSearchTerm] = useState('');
@@ -153,47 +155,41 @@ const ModeratorDashboard = () => {
     // Mock challenge-specific criteria data
     const challengeCriteria = {
       1: { // Sri Lankan Heritage Art Challenge 2025
-        likesWeight: 20,
-        commentsWeight: 30,
-        buyerInterestWeight: 20,
-        expertEvaluationWeight: 30,
+        likesWeight: 30,
+        commentsWeight: 40,
+        shareWeight: 30,
         defined: true
       },
       2: { // Kandy Perahera Digital Art Contest
-        likesWeight: 30,
-        commentsWeight: 25,
-        buyerInterestWeight: 25,
-        expertEvaluationWeight: 20,
+        likesWeight: 35,
+        commentsWeight: 30,
+        shareWeight: 35,
         defined: true
       },
       3: { // Ceylon Tea Plantation Landscape Art
-        likesWeight: 25,
-        commentsWeight: 20,
-        buyerInterestWeight: 30,
-        expertEvaluationWeight: 25,
+        likesWeight: 40,
+        commentsWeight: 30,
+        shareWeight: 30,
         defined: true
       },
       4: { // Sigiriya Rock Fortress Art Challenge
-        likesWeight: 15,
-        commentsWeight: 25,
-        buyerInterestWeight: 25,
-        expertEvaluationWeight: 35,
+        likesWeight: 30,
+        commentsWeight: 35,
+        shareWeight: 35,
         defined: true
       },
       5: { // Galle Fort Architecture Drawing Contest
-        likesWeight: 25,
-        commentsWeight: 25,
-        buyerInterestWeight: 25,
-        expertEvaluationWeight: 25,
+        likesWeight: 34,
+        commentsWeight: 33,
+        shareWeight: 33,
         defined: false
       }
     };
 
     return challengeCriteria[challengeId] || {
-      likesWeight: 25,
-      commentsWeight: 25,
-      buyerInterestWeight: 25,
-      expertEvaluationWeight: 25,
+      likesWeight: 34,
+      commentsWeight: 33,
+      shareWeight: 33,
       defined: false
     };
   };
@@ -211,7 +207,7 @@ const ModeratorDashboard = () => {
   };
 
   const getTotalWeight = () => {
-    return criteria.likesWeight + criteria.commentsWeight + criteria.buyerInterestWeight + criteria.expertEvaluationWeight;
+    return criteria.likesWeight + criteria.commentsWeight + criteria.shareWeight;
   };
 
   const isValidCriteria = () => {
@@ -300,12 +296,6 @@ const ModeratorDashboard = () => {
       desc: "Create and manage art challenges",
     },
     {
-      id: "verification",
-      label: "Verification",
-      icon: Shield,
-      desc: "Verify exhibitions and submissions",
-    },
-    {
       id: "scoring",
       label: "Scoring Criteria",
       icon: Star,
@@ -327,31 +317,31 @@ const ModeratorDashboard = () => {
       icon: Trophy,
     },
     {
-      type: "verification",
-      message: "Exhibition verified: Colombo National Art Gallery",
-      time: "4 hours ago",
-      icon: Shield,
-    },
-    {
       type: "winner",
       message: "Winner selected: Kandy Perahera Digital Art Contest",
-      time: "6 hours ago",
+      time: "4 hours ago",
       icon: Award,
     },
     {
       type: "scoring",
       message: "Scoring criteria updated: Ceylon Tea Plantation Landscape Art",
-      time: "8 hours ago",
+      time: "6 hours ago",
       icon: Star,
+    },
+    {
+      type: "challenge",
+      message: "Challenge deadline approaching: Galle Fort Architecture Contest",
+      time: "8 hours ago",
+      icon: Trophy,
     },
   ];
 
   const menuItems = [
     { id: "dashboard", label: "Overview", icon: BarChart3 },
     { id: "challenges", label: "Challenges", icon: Trophy },
-    { id: "verification", label: "Verification", icon: Shield },
     { id: "scoring", label: "Scoring", icon: Star },
     { id: "winner", label: "Winners", icon: Award },
+    { id: "verification", label: "Verification", icon: Shield },
   ];
 
   const renderDashboard = () => (
@@ -385,20 +375,20 @@ const ModeratorDashboard = () => {
               <div className="flex justify-between items-start">
                 <div className="flex-1">
                   <p
-                    className="text-sm font-semibold mb-1"
+                    className="text-xs font-bold uppercase tracking-widest mb-1"
                     style={{ color: "#5D3A00" }}
                   >
                     {stat.name}
                   </p>
                   <h2
-                    className="text-2xl font-bold mb-2"
+                    className="text-3xl font-black mb-2"
                     style={{ color: "#5D3A00" }}
                   >
                     {stat.value}
                   </h2>
                   <div className="flex items-center gap-1">
                     <span
-                      className="text-xs font-medium px-2 py-1 rounded-full"
+                      className="text-xs font-semibold px-2 py-1 rounded-full"
                       style={{
                         backgroundColor:
                           stat.changeType === "increase"
@@ -413,7 +403,7 @@ const ModeratorDashboard = () => {
                       {stat.change}
                     </span>
                     <span
-                      className="text-xs opacity-75"
+                      className="text-xs font-light italic opacity-75"
                       style={{ color: "#5D3A00" }}
                     >
                       vs last month
@@ -448,7 +438,7 @@ const ModeratorDashboard = () => {
             }}
           ></div>
           <div className="p-6 relative z-10">
-            <h2 className="text-xl font-bold mb-4" style={{ color: "#5D3A00" }}>
+            <h2 className="text-2xl font-extrabold tracking-tight mb-4" style={{ color: "#5D3A00" }}>
               Quick Actions
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -457,12 +447,10 @@ const ModeratorDashboard = () => {
                   key={action.id}
                   onClick={() => {
                     if (action.id === "challenges") navigate("/challenges");
-                    else if (action.id === "verification")
-                      navigate("/verify-exhibition");
                     else if (action.id === "scoring")
                       navigate("/scoring-criteria");
                     else if (action.id === "winner")
-                      navigate("/winner-selection");
+                      setActiveSection("winner"); // Changed to switch to Winners tab
                   }}
                   className="border rounded-lg p-4 text-left h-full btn-animate"
                   style={{
@@ -476,12 +464,12 @@ const ModeratorDashboard = () => {
                     style={{ color: "#5D3A00" }}
                   />
                   <h6
-                    className="font-semibold mb-1"
+                    className="font-bold mb-1"
                     style={{ color: "#5D3A00" }}
                   >
                     {action.label}
                   </h6>
-                  <small style={{ color: "#5D3A00" }}>{action.desc}</small>
+                  <small className="font-medium" style={{ color: "#5D3A00" }}>{action.desc}</small>
                 </button>
               ))}
             </div>
@@ -502,7 +490,7 @@ const ModeratorDashboard = () => {
             }}
           ></div>
           <div className="p-6 relative z-10">
-            <h2 className="text-xl font-bold mb-4" style={{ color: "#5D3A00" }}>
+            <h2 className="text-2xl font-extrabold tracking-tight mb-4" style={{ color: "#5D3A00" }}>
               Recent Activity
             </h2>
             <div className="flex flex-col gap-3">
@@ -538,8 +526,6 @@ const ModeratorDashboard = () => {
         return renderDashboard();
       case 'challenges':
         return <ChallengeList />;
-      case 'verification':
-        return <VerificationList />;
       case 'scoring':
         // Get selected challenge data for scoring
         const selectedScoringChallengeData = challenges.find(c => c.id === parseInt(selectedScoringChallenge));
@@ -563,18 +549,21 @@ const ModeratorDashboard = () => {
           <div className="p-8">
             <div className="flex items-center gap-3 mb-6">
               <BarChart3 className="h-6 w-6 text-[#7f5539]" />
-              <h2 className="text-2xl font-semibold text-[#362625]">Scoring & Evaluation</h2>
+              <div>
+                <h2 className="text-3xl font-extrabold tracking-tight text-[#362625]">Scoring & Evaluation</h2>
+                <p className="text-sm font-light italic text-[#7f5539]">Review contestant performance based on Likes, Comments & Share metrics</p>
+              </div>
             </div>
 
             {/* Challenge Selection */}
             <div className="bg-white rounded-lg border border-[#d87c5a] p-6 mb-6">
-              <label className="block text-sm font-medium mb-3" style={{color: '#362625'}}>
+              <label className="block text-xs font-bold uppercase tracking-widest mb-3" style={{color: '#362625'}}>
                 Select Challenge for Scoring
               </label>
               <select
                 value={selectedScoringChallenge}
                 onChange={(e) => setSelectedScoringChallenge(e.target.value)}
-                className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent text-lg"
+                className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent text-lg font-semibold"
                 style={{borderColor: '#d87c5a', backgroundColor: 'white', color: '#362625'}}
               >
                 <option value="">Select a challenge...</option>
@@ -588,12 +577,12 @@ const ModeratorDashboard = () => {
               {/* Challenge Details */}
               {selectedScoringChallengeData && (
                 <div className="mt-4 p-4 rounded-lg" style={{backgroundColor: '#f4e8dc'}}>
-                  <h4 className="font-semibold mb-2" style={{color: '#362625'}}>{selectedScoringChallengeData.title}</h4>
-                  <p className="text-sm mb-3" style={{color: '#7f5539'}}>{selectedScoringChallengeData.description}</p>
+                  <h4 className="font-extrabold mb-2" style={{color: '#362625'}}>{selectedScoringChallengeData.title}</h4>
+                  <p className="text-sm font-medium mb-3" style={{color: '#7f5539'}}>{selectedScoringChallengeData.description}</p>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <div>
-                      <span className="font-medium" style={{color: '#362625'}}>Status:</span>
-                      <span className={`ml-1 px-2 py-1 rounded text-xs ${
+                      <span className="font-bold" style={{color: '#362625'}}>Status:</span>
+                      <span className={`ml-1 px-2 py-1 rounded text-xs font-semibold ${
                         selectedScoringChallengeData.status === 'active' ? 'bg-green-100 text-green-800' : 
                         selectedScoringChallengeData.status === 'review' ? 'bg-blue-100 text-blue-800' :
                         selectedScoringChallengeData.status === 'completed' ? 'bg-gray-100 text-gray-800' : 'bg-yellow-100 text-yellow-800'
@@ -601,9 +590,9 @@ const ModeratorDashboard = () => {
                         {selectedScoringChallengeData.status}
                       </span>
                     </div>
-                    <div><span className="font-medium" style={{color: '#362625'}}>Participants:</span> <span style={{color: '#7f5539'}}>{selectedScoringChallengeData.participants}</span></div>
-                    <div><span className="font-medium" style={{color: '#362625'}}>Submissions:</span> <span style={{color: '#7f5539'}}>{selectedScoringChallengeData.submissions}</span></div>
-                    <div><span className="font-medium" style={{color: '#362625'}}>Deadline:</span> <span style={{color: '#7f5539'}}>{selectedScoringChallengeData.deadline}</span></div>
+                    <div><span className="font-bold" style={{color: '#362625'}}>Participants:</span> <span className="font-medium" style={{color: '#7f5539'}}>{selectedScoringChallengeData.participants}</span></div>
+                    <div><span className="font-bold" style={{color: '#362625'}}>Submissions:</span> <span className="font-medium" style={{color: '#7f5539'}}>{selectedScoringChallengeData.submissions}</span></div>
+                    <div><span className="font-bold" style={{color: '#362625'}}>Deadline:</span> <span className="font-medium" style={{color: '#7f5539'}}>{selectedScoringChallengeData.deadline}</span></div>
                   </div>
                   
                   {/* Criteria Status */}
@@ -623,34 +612,90 @@ const ModeratorDashboard = () => {
 
             {/* Current Scoring Criteria Display - Only show if challenge is selected */}
             {selectedScoringChallenge && challengeSpecificCriteria && (
-              <div className="bg-[#f4e8dc] border border-[#d87c5a] rounded-lg p-6 mb-8">
-                <h3 className="text-lg font-medium text-[#362625] mb-4">
-                  Current Scoring Criteria for "{selectedScoringChallengeData?.title}"
-                </h3>
-                <p className="text-[#7f5539] mb-4">
-                  {challengeSpecificCriteria.defined ? 
-                    'Custom scoring weights defined for this challenge' : 
-                    'Default scoring weights applied to this challenge'
-                  }
-                </p>
+              <div className="bg-gradient-to-br from-[#f4e8dc] to-[#ffe4d6] border-2 border-[#d87c5a] rounded-xl p-8 mb-8 shadow-lg">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-3 rounded-full bg-[#d87c5a]">
+                    <Settings className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-extrabold tracking-tight text-[#362625]">
+                      Scoring Criteria for "{selectedScoringChallengeData?.title}"
+                    </h3>
+                    <p className="text-sm font-light italic text-[#7f5539] mt-1">
+                      {challengeSpecificCriteria.defined ? 
+                        '✓ Custom scoring weights applied to this challenge' : 
+                        '⚙ Default scoring weights applied to this challenge'
+                      }
+                    </p>
+                  </div>
+                </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="bg-white rounded-lg p-4 text-center border border-[#d87c5a]">
-                    <div className="text-2xl font-bold text-[#7f5539]">{challengeSpecificCriteria.likesWeight}%</div>
-                    <div className="text-sm text-[#362625]">Social Engagement</div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Likes & Engagement Weight */}
+                  <div className="bg-white rounded-xl p-6 text-center border-2 border-[#d87c5a] shadow-md hover:shadow-xl transition-all transform hover:scale-105">
+                    <div className="flex justify-center mb-3">
+                      <div className="p-3 rounded-full bg-blue-100">
+                        <Heart className="h-6 w-6 text-blue-600" />
+                      </div>
+                    </div>
+                    <div className="text-4xl font-black text-[#d87c5a] mb-2">{challengeSpecificCriteria.likesWeight}%</div>
+                    <div className="text-xs font-bold uppercase tracking-wider text-[#362625] mb-1">Likes & Engagement Weight</div>
+                    <div className="text-xs font-medium text-[#7f5539]">Social popularity metric</div>
+                    {/* Progress Bar */}
+                    <div className="mt-3 w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-blue-500 h-2 rounded-full transition-all" 
+                        style={{width: `${challengeSpecificCriteria.likesWeight}%`}}
+                      ></div>
+                    </div>
                   </div>
-                  <div className="bg-white rounded-lg p-4 text-center border border-[#d87c5a]">
-                    <div className="text-2xl font-bold text-[#7f5539]">{challengeSpecificCriteria.commentsWeight}%</div>
-                    <div className="text-sm text-[#362625]">Community Interaction</div>
+
+                  {/* Comments & Interaction Weight */}
+                  <div className="bg-white rounded-xl p-6 text-center border-2 border-[#d87c5a] shadow-md hover:shadow-xl transition-all transform hover:scale-105">
+                    <div className="flex justify-center mb-3">
+                      <div className="p-3 rounded-full bg-green-100">
+                        <MessageCircle className="h-6 w-6 text-green-600" />
+                      </div>
+                    </div>
+                    <div className="text-4xl font-black text-[#d87c5a] mb-2">{challengeSpecificCriteria.commentsWeight}%</div>
+                    <div className="text-xs font-bold uppercase tracking-wider text-[#362625] mb-1">Comments & Interaction Weight</div>
+                    <div className="text-xs font-medium text-[#7f5539]">Community engagement</div>
+                    {/* Progress Bar */}
+                    <div className="mt-3 w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-green-500 h-2 rounded-full transition-all" 
+                        style={{width: `${challengeSpecificCriteria.commentsWeight}%`}}
+                      ></div>
+                    </div>
                   </div>
-                  <div className="bg-white rounded-lg p-4 text-center border border-[#d87c5a]">
-                    <div className="text-2xl font-bold text-[#7f5539]">{challengeSpecificCriteria.buyerInterestWeight}%</div>
-                    <div className="text-sm text-[#362625]">Market Appeal</div>
+
+                  {/* Share Weight */}
+                  <div className="bg-white rounded-xl p-6 text-center border-2 border-[#d87c5a] shadow-md hover:shadow-xl transition-all transform hover:scale-105">
+                    <div className="flex justify-center mb-3">
+                      <div className="p-3 rounded-full bg-purple-100">
+                        <Send className="h-6 w-6 text-purple-600" />
+                      </div>
+                    </div>
+                    <div className="text-4xl font-black text-[#d87c5a] mb-2">{challengeSpecificCriteria.shareWeight}%</div>
+                    <div className="text-xs font-bold uppercase tracking-wider text-[#362625] mb-1">Share Weight</div>
+                    <div className="text-xs font-medium text-[#7f5539]">Viral spread potential</div>
+                    {/* Progress Bar */}
+                    <div className="mt-3 w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-purple-500 h-2 rounded-full transition-all" 
+                        style={{width: `${challengeSpecificCriteria.shareWeight}%`}}
+                      ></div>
+                    </div>
                   </div>
-                  <div className="bg-white rounded-lg p-4 text-center border border-[#d87c5a]">
-                    <div className="text-2xl font-bold text-[#7f5539]">{challengeSpecificCriteria.expertEvaluationWeight}%</div>
-                    <div className="text-sm text-[#362625]">Expert Assessment</div>
-                  </div>
+                </div>
+
+                {/* Total Verification */}
+                <div className="mt-6 p-4 bg-white rounded-lg border-2 border-green-500 flex items-center justify-center gap-3">
+                  <Trophy className="h-5 w-5 text-green-600" />
+                  <span className="text-sm font-semibold text-green-700">
+                    Total Weight: {challengeSpecificCriteria.likesWeight + challengeSpecificCriteria.commentsWeight + challengeSpecificCriteria.shareWeight}% 
+                    {(challengeSpecificCriteria.likesWeight + challengeSpecificCriteria.commentsWeight + challengeSpecificCriteria.shareWeight) === 100 ? ' ✓ Valid' : ' ⚠ Invalid'}
+                  </span>
                 </div>
               </div>
             )}
@@ -688,73 +733,134 @@ const ModeratorDashboard = () => {
                 </div>
                 
                 <div className="grid gap-4">
-                  {filteredScoringContestants.map((contestant, index) => (
-                    <div key={`${contestant.challengeId}-${contestant.id}`} className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                  {filteredScoringContestants.map((contestant) => (
+                    <div key={`${contestant.challengeId}-${contestant.id}`} className="bg-white rounded-xl p-6 border-2 border-gray-200 shadow-md hover:shadow-xl transition-all">
                       <div className="flex justify-between items-start mb-4">
                         <div className="flex-1">
-                          <h4 className="font-medium text-gray-900">{contestant.name}</h4>
-                          <p className="text-sm text-gray-500">Artwork: {contestant.artworkTitle}</p>
-                          <p className="text-xs text-[#7f5539] font-medium mt-1">Submission Date: {contestant.submissionDate}</p>
+                          <h4 className="font-semibold text-lg text-gray-900">{contestant.name}</h4>
+                          <p className="text-sm text-gray-600 flex items-center gap-2 mt-1">
+                            <Trophy size={14} className="text-[#d87c5a]" />
+                            Artwork: <span className="font-medium">{contestant.artworkTitle}</span>
+                          </p>
+                          <p className="text-xs text-[#7f5539] font-medium mt-1 flex items-center gap-1">
+                            <Clock size={12} />
+                            Submitted: {contestant.submissionDate}
+                          </p>
                         </div>
-                        <div className="text-right">
-                          <div className="text-2xl font-bold text-[#7f5539]">
+                        <div className="text-right bg-gradient-to-br from-[#d87c5a] to-[#b85a3a] text-white rounded-xl p-4 shadow-lg">
+                          <div className="text-3xl font-bold">
                             {Math.round((
                               contestant.likes/250*challengeSpecificCriteria.likesWeight + 
                               contestant.comments/50*challengeSpecificCriteria.commentsWeight + 
-                              contestant.buyerInterest*10*challengeSpecificCriteria.buyerInterestWeight/100 + 
-                              contestant.expertScore*10*challengeSpecificCriteria.expertEvaluationWeight/100
+                              contestant.buyerInterest*10*challengeSpecificCriteria.shareWeight/100
                             ))}
                           </div>
-                          <div className="text-sm text-gray-500">Calculated Score</div>
+                          <div className="text-xs opacity-90">Total Score</div>
                         </div>
                       </div>
                       
-                      {/* Performance Metrics */}
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                        <div className="text-center">
-                          <div className="text-sm font-medium text-gray-900">{contestant.likes}</div>
-                          <div className="text-xs text-gray-500">Likes</div>
+                      {/* Performance Metrics with Percentages */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 p-4 bg-gradient-to-r from-blue-50 via-green-50 to-purple-50 rounded-lg">
+                        {/* Likes & Engagement Metric */}
+                        <div className="bg-white rounded-lg p-3 border border-blue-200 shadow-sm">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <Heart size={16} className="text-blue-600" />
+                              <span className="text-xs font-semibold text-gray-700">Likes & Engagement</span>
+                            </div>
+                            <span className="text-xs font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded">
+                              {challengeSpecificCriteria.likesWeight}%
+                            </span>
+                          </div>
+                          <div className="text-2xl font-bold text-gray-900">{contestant.likes}</div>
+                          <div className="text-xs text-gray-500 mb-2">Raw Count</div>
+                          <div className="w-full bg-blue-200 rounded-full h-2">
+                            <div 
+                              className="bg-blue-600 h-2 rounded-full transition-all" 
+                              style={{width: `${Math.min(100, (contestant.likes/250)*100)}%`}}
+                            ></div>
+                          </div>
+                          <div className="text-xs text-blue-600 font-semibold mt-1">
+                            Contributes: {Math.round(contestant.likes/250*challengeSpecificCriteria.likesWeight)} pts
+                          </div>
                         </div>
-                        <div className="text-center">
-                          <div className="text-sm font-medium text-gray-900">{contestant.comments}</div>
-                          <div className="text-xs text-gray-500">Comments</div>
+
+                        {/* Comments & Interaction Metric */}
+                        <div className="bg-white rounded-lg p-3 border border-green-200 shadow-sm">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <MessageCircle size={16} className="text-green-600" />
+                              <span className="text-xs font-semibold text-gray-700">Comments & Interaction</span>
+                            </div>
+                            <span className="text-xs font-bold text-green-600 bg-green-100 px-2 py-1 rounded">
+                              {challengeSpecificCriteria.commentsWeight}%
+                            </span>
+                          </div>
+                          <div className="text-2xl font-bold text-gray-900">{contestant.comments}</div>
+                          <div className="text-xs text-gray-500 mb-2">Raw Count</div>
+                          <div className="w-full bg-green-200 rounded-full h-2">
+                            <div 
+                              className="bg-green-600 h-2 rounded-full transition-all" 
+                              style={{width: `${Math.min(100, (contestant.comments/50)*100)}%`}}
+                            ></div>
+                          </div>
+                          <div className="text-xs text-green-600 font-semibold mt-1">
+                            Contributes: {Math.round(contestant.comments/50*challengeSpecificCriteria.commentsWeight)} pts
+                          </div>
                         </div>
-                        <div className="text-center">
-                          <div className="text-sm font-medium text-gray-900">{contestant.buyerInterest.toFixed(1)}/10</div>
-                          <div className="text-xs text-gray-500">Market Appeal</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-sm font-medium text-gray-900">{contestant.expertScore.toFixed(1)}/10</div>
-                          <div className="text-xs text-gray-500">Expert Score</div>
+
+                        {/* Share Weight Metric */}
+                        <div className="bg-white rounded-lg p-3 border border-purple-200 shadow-sm">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <Send size={16} className="text-purple-600" />
+                              <span className="text-xs font-semibold text-gray-700">Share Weight</span>
+                            </div>
+                            <span className="text-xs font-bold text-purple-600 bg-purple-100 px-2 py-1 rounded">
+                              {challengeSpecificCriteria.shareWeight}%
+                            </span>
+                          </div>
+                          <div className="text-2xl font-bold text-gray-900">{contestant.buyerInterest.toFixed(1)}/10</div>
+                          <div className="text-xs text-gray-500 mb-2">Engagement Score</div>
+                          <div className="w-full bg-purple-200 rounded-full h-2">
+                            <div 
+                              className="bg-purple-600 h-2 rounded-full transition-all" 
+                              style={{width: `${(contestant.buyerInterest/10)*100}%`}}
+                            ></div>
+                          </div>
+                          <div className="text-xs text-purple-600 font-semibold mt-1">
+                            Contributes: {Math.round(contestant.buyerInterest*10*challengeSpecificCriteria.shareWeight/100)} pts
+                          </div>
                         </div>
                       </div>
 
-                      {/* Score Breakdown */}
-                      <div className="border-t pt-3">
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                          <div className="bg-blue-50 rounded p-2 text-center">
-                            <div className="font-medium text-blue-800">
+                      {/* Score Breakdown Summary */}
+                      <div className="border-t-2 border-gray-200 pt-4">
+                        <h5 className="text-xs font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                          <BarChart3 size={14} className="text-[#d87c5a]" />
+                          Score Breakdown Based on Challenge Criteria
+                        </h5>
+                        <div className="grid grid-cols-3 gap-3">
+                          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-3 text-center border border-blue-300">
+                            <div className="text-xl font-bold text-blue-700">
                               {Math.round(contestant.likes/250*challengeSpecificCriteria.likesWeight)}
                             </div>
-                            <div className="text-blue-600">Social ({challengeSpecificCriteria.likesWeight}%)</div>
+                            <div className="text-xs text-blue-600 font-medium">Likes Score</div>
+                            <div className="text-xs text-gray-600 mt-1">({challengeSpecificCriteria.likesWeight}% weight)</div>
                           </div>
-                          <div className="bg-green-50 rounded p-2 text-center">
-                            <div className="font-medium text-green-800">
+                          <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-3 text-center border border-green-300">
+                            <div className="text-xl font-bold text-green-700">
                               {Math.round(contestant.comments/50*challengeSpecificCriteria.commentsWeight)}
                             </div>
-                            <div className="text-green-600">Community ({challengeSpecificCriteria.commentsWeight}%)</div>
+                            <div className="text-xs text-green-600 font-medium">Interaction Score</div>
+                            <div className="text-xs text-gray-600 mt-1">({challengeSpecificCriteria.commentsWeight}% weight)</div>
                           </div>
-                          <div className="bg-orange-50 rounded p-2 text-center">
-                            <div className="font-medium text-orange-800">
-                              {Math.round(contestant.buyerInterest*10*challengeSpecificCriteria.buyerInterestWeight/100)}
+                          <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-3 text-center border border-purple-300">
+                            <div className="text-xl font-bold text-purple-700">
+                              {Math.round(contestant.buyerInterest*10*challengeSpecificCriteria.shareWeight/100)}
                             </div>
-                            <div className="text-orange-600">Market ({challengeSpecificCriteria.buyerInterestWeight}%)</div>
-                          </div>
-                          <div className="bg-purple-50 rounded p-2 text-center">
-                            <div className="font-medium text-purple-800">
-                              {Math.round(contestant.expertScore*10*challengeSpecificCriteria.expertEvaluationWeight/100)}
-                            </div>
-                            <div className="text-purple-600">Expert ({challengeSpecificCriteria.expertEvaluationWeight}%)</div>
+                            <div className="text-xs text-purple-600 font-medium">Share Score</div>
+                            <div className="text-xs text-gray-600 mt-1">({challengeSpecificCriteria.shareWeight}% weight)</div>
                           </div>
                         </div>
                       </div>
@@ -785,15 +891,90 @@ const ModeratorDashboard = () => {
           </div>
         );
       case 'winner':
-        // Mock previous challenges data (should match WinnerSelection)
-        const previousChallenges = [
+        // Filter completed challenges from the database
+        // Only show challenges that are EXPLICITLY marked as 'completed' in database status
+        
+        // Generate dummy winners for demonstration
+        const generateDummyWinners = () => {
+          const artistNames = [
+            'Kasun Perera', 'Nadeeka Silva', 'Tharindu Fernando', 'Amaya Jayawardena',
+            'Dilshan Rajapaksa', 'Sachini Bandara', 'Ravindu Wijesekara', 'Kavitha Gunaratne',
+            'Chamod Wickramasinghe', 'Nimali Dissanayake', 'Isuru Kumara', 'Sanduni Mendis'
+          ];
+          const artworkTitles = [
+            'Digital Dreams', 'Abstract Harmony', 'Vibrant Expressions', 'Modern Fusion',
+            'Creative Vision', 'Artistic Journey', 'Color Symphony', 'Contemporary Art',
+            'Visual Poetry', 'Expressive Canvas', 'Bold Strokes', 'Artistic Essence'
+          ];
+          
+          // Generate 3 random winners
+          const winners = [];
+          const usedIndices = new Set();
+          
+          for (let i = 1; i <= 3; i++) {
+            let randomIndex;
+            do {
+              randomIndex = Math.floor(Math.random() * artistNames.length);
+            } while (usedIndices.has(randomIndex));
+            
+            usedIndices.add(randomIndex);
+            
+            winners.push({
+              position: i,
+              name: artistNames[randomIndex],
+              title: artworkTitles[randomIndex]
+            });
+          }
+          
+          return winners;
+        };
+        
+        // Filter only challenges that are EXPLICITLY marked as 'completed' in database
+        const completedChallenges = challenges.filter(challenge => {
+          return challenge.status === 'completed';
+        }).map(challenge => {
+          // Calculate completion date:
+          // - If status is 'completed', use deadline as completion date
+          // - Otherwise, use deadline as completion date
+          const completedDate = challenge.deadlineDateTime;
+          
+          return {
+            id: challenge.id,
+            name: challenge.title,
+            description: challenge.description || 'No description available',
+            category: challenge.category,
+            deadline: challenge.deadlineDateTime,
+            completedDate: completedDate,
+            publishDateTime: challenge.publishDateTime,
+            maxParticipants: challenge.maxParticipants,
+            rewards: challenge.rewards,
+            requestSponsorship: challenge.requestSponsorship,
+            status: 'completed',
+            moderatorId: challenge.moderatorId,
+            participants: 0, // Will be populated from submissions data
+            submissions: 0, // Will be populated from submissions data
+            scoringCriteria: challenge.scoringCriteria || {
+              likesWeight: 34,
+              commentsWeight: 33,
+              shareWeight: 33
+            },
+            winners: generateDummyWinners() // Generate dummy winners
+          };
+        }).sort((a, b) => new Date(b.completedDate) - new Date(a.completedDate));        const previousChallenges = completedChallenges.length > 0 ? completedChallenges : [
           {
             id: 'abstract-art-contest',
             name: 'Abstract Art Contest',
             description: 'A national web design challenge for creative portfolios and landing pages.',
             deadline: '2025-07-30',
+            completedDate: '2025-07-30',
+            status: 'completed',
             participants: 180,
             submissions: 120,
+            scoringCriteria: {
+              likesWeight: 35,
+              commentsWeight: 30,
+              shareWeight: 35
+            },
             winners: [
               { position: 1, name: 'Alice Smith', title: 'Modern Web Portfolio' },
               { position: 2, name: 'John Doe', title: 'Creative Landing Page' },
@@ -805,15 +986,42 @@ const ModeratorDashboard = () => {
             name: 'Digital Art 2024',
             description: 'A digital art contest for surreal and fantasy artworks.',
             deadline: '2024-09-15',
+            completedDate: '2024-09-15',
+            status: 'completed',
             participants: 140,
             submissions: 90,
+            scoringCriteria: {
+              likesWeight: 40,
+              commentsWeight: 30,
+              shareWeight: 30
+            },
             winners: [
               { position: 1, name: 'Liam Wong', title: 'Neon Cityscape' },
               { position: 2, name: 'Maria Garcia', title: 'Surreal Portrait' },
               { position: 3, name: 'Chen Wei', title: 'Fantasy Forest' }
             ]
+          },
+          {
+            id: 'landscape-photography-2025',
+            name: 'Landscape Photography Challenge',
+            description: 'Capture the beauty of nature in stunning landscape photography.',
+            deadline: '2025-06-20',
+            completedDate: '2025-06-20',
+            status: 'completed',
+            participants: 95,
+            submissions: 75,
+            scoringCriteria: {
+              likesWeight: 30,
+              commentsWeight: 35,
+              shareWeight: 35
+            },
+            winners: [
+              { position: 1, name: 'Nuwan Perera', title: 'Misty Mountains' },
+              { position: 2, name: 'Chamari Silva', title: 'Golden Hour Beach' },
+              { position: 3, name: 'Rohan Fernando', title: 'Valley of Colors' }
+            ]
           }
-        ];
+        ].sort((a, b) => new Date(b.completedDate) - new Date(a.completedDate)); // Sort by completion date, most recent first
         const getPositionIcon = (position) => {
           switch (position) {
             case 1:
@@ -828,52 +1036,202 @@ const ModeratorDashboard = () => {
         };
         return (
           <div className="p-6">
-            <button
-              onClick={() => navigate('/scoring-criteria')}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-lg mb-8 btn-animate"
-              style={{backgroundColor: '#D87C5A', color: 'white'}}
-            >
-              <Star size={20} />
-              Set Scoring Criteria
-            </button>
-            <div className="rounded-lg shadow-sm border h-full relative overflow-hidden" style={{backgroundColor: '#FFF5E1'}}>
-              <div className="p-6">
-                <h2 className="text-xl font-semibold mb-4" style={{color: '#5D3A00'}}>Previous Challenges Winners</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {previousChallenges.map((challenge) => (
-                    <div key={challenge.id} className="rounded-lg border bg-white p-4" style={{borderColor: '#FFE4D6'}}>
-                      <h3 className="font-semibold mb-1" style={{color: '#D87C5A'}}>{challenge.name}</h3>
-                      <p className="text-sm text-gray-600 mb-2">{challenge.description}</p>
-                      <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
-                        <Clock size={14} />
-                        <span>Deadline: {challenge.deadline}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
-                        <Users size={14} />
-                        <span>{challenge.participants} participants • {challenge.submissions} submissions</span>
-                      </div>
-                      <div className="mt-2">
-                        <span className="block text-xs font-semibold text-green-700 mb-1">Winners:</span>
-                        <div className="space-y-1">
-                          {challenge.winners.map((winner) => (
-                            <div key={winner.position} className="flex items-center gap-2">
-                              {getPositionIcon(winner.position)}
-                              <span className="font-medium" style={{color: '#5D3A00'}}>
-                                {winner.position === 1 ? '1st Place' : winner.position === 2 ? '2nd Place' : '3rd Place'}:
-                              </span>
-                              <span>{winner.name}</span>
-                              <span className="text-gray-500">- {winner.title}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+            {/* View Winners and Criteria Details Section */}
+            <div className="rounded-lg shadow-sm border p-6 mb-6" style={{backgroundColor: '#FFF5E1'}}>
+              <div className="flex items-center gap-3 mb-6">
+                <Trophy className="h-6 w-6" style={{color: '#D87C5A'}} />
+                <div>
+                  <h2 className="text-2xl font-extrabold tracking-tight" style={{color: '#5D3A00'}}>View Winners and Criteria Details</h2>
+                  <p className="text-sm font-light italic" style={{color: '#7f5539'}}>Select a completed challenge to view its winners and scoring criteria</p>
                 </div>
               </div>
+
+              {/* Challenge Selection Dropdown */}
+              <div className="mb-6">
+                <label className="block text-xs font-bold uppercase tracking-widest mb-3" style={{color: '#362625'}}>
+                  Select Completed Challenge (Sorted by Completion Date)
+                </label>
+                <select
+                  value={selectedChallenge}
+                  onChange={(e) => setSelectedChallenge(e.target.value)}
+                  className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent text-lg font-semibold"
+                  style={{borderColor: '#D87C5A', backgroundColor: 'white', color: '#362625'}}
+                >
+                  <option value="">Select a challenge...</option>
+                  {previousChallenges.map(challenge => (
+                    <option key={challenge.id} value={challenge.id}>
+                      {challenge.name} - Completed: {new Date(challenge.completedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Display Winners for Selected Challenge */}
+              {selectedChallenge && previousChallenges.find(c => String(c.id) === String(selectedChallenge)) && (
+                <div className="space-y-4">
+                  {(() => {
+                    const challenge = previousChallenges.find(c => String(c.id) === String(selectedChallenge));
+                    return (
+                      <>
+                        {/* Challenge Info */}
+                        <div className="p-4 rounded-lg" style={{backgroundColor: '#f4e8dc'}}>
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-extrabold text-xl" style={{color: '#362625'}}>{challenge.name}</h4>
+                              <span className="px-2 py-1 rounded text-xs font-bold" style={{backgroundColor: '#60a5fa', color: 'white'}}>✓ Completed</span>
+                            </div>
+                            {challenge.category && (
+                              <span className="px-3 py-1 rounded-full text-xs font-bold" style={{backgroundColor: '#FFD95A', color: '#5D3A00'}}>
+                                {challenge.category}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm font-medium mb-4" style={{color: '#7f5539'}}>{challenge.description}</p>
+                          
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm mb-3">
+                            <div>
+                              <span className="font-bold" style={{color: '#362625'}}>Completed:</span>
+                              <span className="ml-1 font-medium" style={{color: '#7f5539'}}>
+                                {new Date(challenge.completedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="font-bold" style={{color: '#362625'}}>Deadline:</span>
+                              <span className="ml-1 font-medium" style={{color: '#7f5539'}}>
+                                {new Date(challenge.deadline).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="font-bold" style={{color: '#362625'}}>Max Participants:</span>
+                              <span className="ml-1 font-medium" style={{color: '#7f5539'}}>{challenge.maxParticipants || 'Unlimited'}</span>
+                            </div>
+                          </div>
+
+                          {challenge.rewards && (
+                            <div className="p-3 rounded-lg mb-3" style={{backgroundColor: '#fff9e6', borderLeft: '4px solid #FFD700'}}>
+                              <div className="flex items-center gap-2">
+                                <Trophy className="h-4 w-4" style={{color: '#FFD700'}} />
+                                <span className="font-bold text-xs uppercase tracking-wider" style={{color: '#362625'}}>Rewards:</span>
+                              </div>
+                              <p className="text-sm font-medium mt-1" style={{color: '#7f5539'}}>{challenge.rewards}</p>
+                            </div>
+                          )}
+
+                          {challenge.requestSponsorship && (
+                            <div className="flex items-center gap-2 text-xs">
+                              <span className="px-2 py-1 rounded" style={{backgroundColor: '#e3f2fd', color: '#1976d2'}}>
+                                🤝 Sponsorship Requested
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Scoring Criteria Display */}
+                        <div className="p-4 rounded-lg bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-300">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Settings size={18} style={{color: '#D87C5A'}} />
+                            <span className="text-sm font-bold uppercase tracking-wider" style={{color: '#5D3A00'}}>Scoring Criteria Used:</span>
+                          </div>
+                          <div className="grid grid-cols-3 gap-3">
+                            <div className="bg-white rounded-lg p-3 border border-amber-200 text-center">
+                              <div className="text-2xl font-black" style={{color: '#D87C5A'}}>{challenge.scoringCriteria.likesWeight}%</div>
+                              <div className="text-xs font-bold uppercase tracking-wider" style={{color: '#5D3A00'}}>Likes & Engagement</div>
+                            </div>
+                            <div className="bg-white rounded-lg p-3 border border-green-200 text-center">
+                              <div className="text-2xl font-black" style={{color: '#D87C5A'}}>{challenge.scoringCriteria.commentsWeight}%</div>
+                              <div className="text-xs font-bold uppercase tracking-wider" style={{color: '#5D3A00'}}>Comments & Interaction</div>
+                            </div>
+                            <div className="bg-white rounded-lg p-3 border border-purple-200 text-center">
+                              <div className="text-2xl font-black" style={{color: '#D87C5A'}}>{challenge.scoringCriteria.shareWeight}%</div>
+                              <div className="text-xs font-bold uppercase tracking-wider" style={{color: '#5D3A00'}}>Share Weight</div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Winners Display */}
+                        <div className="bg-white rounded-lg p-6 border-2" style={{borderColor: '#D87C5A'}}>
+                          <h3 className="text-xl font-extrabold tracking-tight mb-4" style={{color: '#5D3A00'}}>
+                            🏆 Challenge Winners
+                          </h3>
+                          {challenge.winners && challenge.winners.length > 0 ? (
+                            <div className="space-y-3">
+                              {challenge.winners.map((winner) => {
+                                const getPositionIcon = (position) => {
+                                  switch (position) {
+                                    case 1:
+                                      return <Trophy className="h-5 w-5 text-yellow-500" />;
+                                    case 2:
+                                      return <Award className="h-5 w-5 text-gray-500" />;
+                                    case 3:
+                                      return <Star className="h-5 w-5 text-orange-700" />;
+                                    default:
+                                      return null;
+                                  }
+                                };
+                                
+                                return (
+                                  <div 
+                                    key={winner.position}
+                                    className="flex items-center justify-between p-4 rounded-lg border"
+                                    style={{
+                                      backgroundColor: winner.position === 1 ? '#FFF9E6' : 
+                                                     winner.position === 2 ? '#F5F5F5' : 
+                                                     '#FFF5E1',
+                                      borderColor: winner.position === 1 ? '#FFD700' : 
+                                                 winner.position === 2 ? '#C0C0C0' : 
+                                                 '#CD7F32'
+                                    }}
+                                  >
+                                    <div className="flex items-center gap-4">
+                                      <div 
+                                        className="flex items-center justify-center rounded-full w-12 h-12"
+                                        style={{
+                                          backgroundColor: winner.position === 1 ? '#FFD700' : 
+                                                         winner.position === 2 ? '#C0C0C0' : 
+                                                         '#CD7F32'
+                                        }}
+                                      >
+                                        {getPositionIcon(winner.position)}
+                                      </div>
+                                      <div>
+                                        <div className="font-bold text-lg" style={{color: '#362625'}}>
+                                          {winner.position === 1 ? '🥇' : winner.position === 2 ? '🥈' : '🥉'} {winner.name}
+                                        </div>
+                                        <div className="text-sm font-medium" style={{color: '#7f5539'}}>
+                                          {winner.title}
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div className="text-right">
+                                      <div className="text-xs font-bold uppercase tracking-wider" style={{color: '#D87C5A'}}>
+                                        {winner.position === 1 ? '1st Place' : 
+                                         winner.position === 2 ? '2nd Place' : 
+                                         '3rd Place'}
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <div className="text-center py-8">
+                              <Trophy className="h-16 w-16 mx-auto mb-3" style={{color: '#D87C5A', opacity: 0.5}} />
+                              <p className="text-sm font-medium" style={{color: '#7f5539'}}>
+                                Winners will be calculated based on submissions and scoring criteria
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+              )}
             </div>
           </div>
         );
+      case 'verification':
+        return <VerificationList />;
       default:
         return renderDashboard();
     }
@@ -881,114 +1239,37 @@ const ModeratorDashboard = () => {
 
   return (
     <>
-      {/* Optimized CSS styles for smoother animations */}
+      {/* Consistent CSS styles for smoother animations and layout (matches AdminDashboard) */}
       <style jsx>{`
         @keyframes smoothFadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(15px) scale(0.98);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-          }
+          from { opacity: 0; transform: translateY(15px) scale(0.98); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
         }
-
         @keyframes slideInFromTop {
-          from {
-            opacity: 0;
-            transform: translateY(-20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+          from { opacity: 0; transform: translateY(-20px); }
+          to { opacity: 1; transform: translateY(0); }
         }
-
         @keyframes popInContent {
-          from {
-            opacity: 0;
-            transform: translateY(10px) scale(0.99);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-          }
+          from { opacity: 0; transform: translateY(10px) scale(0.99); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
         }
-
-        .page-container {
-          animation: smoothFadeIn 0.4s ease-out;
-          opacity: 1;
-        }
-
-        .header-container {
-          animation: slideInFromTop 0.5s ease-out 0.1s both;
-        }
-
-        .nav-container {
-          animation: slideInFromTop 0.5s ease-out 0.2s both;
-        }
-
-        .content-container {
-          animation: popInContent 0.4s ease-out 0.3s both;
-        }
-
-        .menu-item {
-          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-          opacity: 1;
-          transform: translateY(0);
-        }
-
-        .menu-item:hover {
-          transform: translateY(-1px);
-        }
-
-        .smooth-transition {
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .btn-animate {
-          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-          opacity: 1;
-          transform: translateY(0);
-        }
-
-        .btn-animate:hover {
-          transform: translateY(-1px) scale(1.02);
-        }
-
-        .card-animate {
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .card-animate:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Prevent flash of unstyled content */
-        .dashboard-content {
-          min-height: 200px;
-        }
-
-        /* Ensure smooth rendering */
-        * {
-          -webkit-font-smoothing: antialiased;
-          -moz-osx-font-smoothing: grayscale;
-        }
+        .page-container { animation: smoothFadeIn 0.4s ease-out; opacity: 1; }
+        .header-container { animation: slideInFromTop 0.5s ease-out 0.1s both; }
+        .nav-container { animation: slideInFromTop 0.5s ease-out 0.2s both; }
+        .content-container { animation: popInContent 0.4s ease-out 0.3s both; }
+        .menu-item { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); opacity: 1; transform: translateY(0); }
+        .menu-item:hover { transform: translateY(-1px); }
+        .smooth-transition { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .btn-animate { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); opacity: 1; transform: translateY(0); }
+        .btn-animate:hover { transform: translateY(-1px) scale(1.02); }
+        .card-animate { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .card-animate:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .dashboard-content { min-height: 200px; }
+        * { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
       `}</style>
 
-      {/* Bootstrap CSS */}
-      <link
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-        rel="stylesheet"
-      />
-
-      <div
-        className="min-h-screen page-container"
-        style={{ backgroundColor: "#FFF5E1" }}
-      >
-        {/* Full Width Header */}
+      <div className="min-h-screen page-container" style={{ backgroundColor: "#FFF5E1" }}>
+        {/* Header (matches AdminDashboard) */}
         <div
           className="w-full shadow-sm p-6 mb-8 relative header-container"
           style={{
@@ -1002,29 +1283,18 @@ const ModeratorDashboard = () => {
           <div className="max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between">
               <div className="flex items-center space-x-4">
-                <div
-                  className="p-3 rounded-full smooth-transition"
-                  style={{ backgroundColor: "#FFD95A" }}
-                >
+                <div className="p-3 rounded-full smooth-transition" style={{ backgroundColor: "#FFD95A" }}>
                   <Shield size={32} style={{ color: "#5D3A00" }} />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-white">
-                    Moderator Dashboard
-                  </h1>
-                  <p className="text-gray-200">
-                    Welcome back! Here's what's happening with your challenges.
-                  </p>
+                  <h1 className="text-2xl font-bold text-white">Moderator Dashboard</h1>
+                  <p className="text-gray-200">Welcome back! Here's what's happening with your challenges.</p>
                 </div>
               </div>
               <div className="mt-4 md:mt-0 flex gap-2 items-center">
                 <button
                   className="border px-3 py-2 rounded-lg font-medium flex items-center space-x-1 whitespace-nowrap btn-animate"
-                  style={{
-                    borderColor: "#FFE4D6",
-                    color: "#FFE4D6",
-                    backgroundColor: "rgba(255, 228, 214, 0.1)",
-                  }}
+                  style={{ borderColor: "#FFE4D6", color: "#FFE4D6", backgroundColor: "rgba(255, 228, 214, 0.1)" }}
                   onClick={() => navigate("/create-challenge")}
                 >
                   <Plus size={14} />
@@ -1033,40 +1303,17 @@ const ModeratorDashboard = () => {
                 </button>
                 <button
                   className="border px-3 py-2 rounded-lg font-medium flex items-center space-x-1 whitespace-nowrap btn-animate"
-                  style={{
-                    borderColor: "#FFE4D6",
-                    color: "#FFE4D6",
-                    backgroundColor: "rgba(255, 228, 214, 0.1)",
-                  }}
-                  onClick={() => navigate("/verify-exhibition")}
-                >
-                  <Shield size={14} />
-                  <span className="hidden sm:inline">Verify Exhibition</span>
-                  <span className="sm:hidden">Verify</span>
-                </button>
-                <button
-                  className="border px-3 py-2 rounded-lg font-medium flex items-center space-x-1 whitespace-nowrap btn-animate"
-                  style={{
-                    borderColor: "#FFE4D6",
-                    color: "#FFE4D6",
-                    backgroundColor: "rgba(255, 228, 214, 0.1)",
-                  }}
+                  style={{ borderColor: "#FFE4D6", color: "#FFE4D6", backgroundColor: "rgba(255, 228, 214, 0.1)" }}
                   onClick={() => navigate("/winner-selection")}
                 >
                   <Award size={14} />
                   <span className="hidden sm:inline">Select Winners</span>
                   <span className="sm:hidden">Winners</span>
                 </button>
-
-                {/* Auth Button */}
                 {isSignedIn ? (
                   <button
                     className="px-3 py-2 rounded-lg font-medium flex items-center space-x-1 whitespace-nowrap btn-animate"
-                    style={{
-                      backgroundColor: "#D87C5A",
-                      color: "white",
-                      border: "none",
-                    }}
+                    style={{ backgroundColor: "#D87C5A", color: "white", border: "none" }}
                     onClick={handleLogoutClick}
                   >
                     <User size={14} />
@@ -1076,12 +1323,7 @@ const ModeratorDashboard = () => {
                   <a
                     href="/"
                     className="px-3 py-2 rounded-lg font-medium flex items-center space-x-1 whitespace-nowrap btn-animate no-underline"
-                    style={{
-                      backgroundColor: "#D87C5A",
-                      color: "white",
-                      border: "none",
-                      textDecoration: "none",
-                    }}
+                    style={{ backgroundColor: "#D87C5A", color: "white", border: "none", textDecoration: "none" }}
                   >
                     <User size={14} />
                     <span>Login</span>
@@ -1093,7 +1335,7 @@ const ModeratorDashboard = () => {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
-          {/* Navigation Tabs */}
+          {/* Navigation Tabs (matches AdminDashboard) */}
           <div className="bg-white rounded-lg shadow-sm mb-8 nav-container">
             <div style={{ borderBottom: "1px solid #FFE4D6" }}>
               <nav className="flex space-x-8 px-6">
@@ -1103,8 +1345,7 @@ const ModeratorDashboard = () => {
                     onClick={() => setActiveSection(item.id)}
                     className="py-4 px-2 border-b-2 font-medium text-sm flex items-center gap-2 menu-item"
                     style={{
-                      borderBottomColor:
-                        activeSection === item.id ? "#5D3A00" : "transparent",
+                      borderBottomColor: activeSection === item.id ? "#5D3A00" : "transparent",
                       color: activeSection === item.id ? "#5D3A00" : "#D87C5A",
                     }}
                     onMouseOver={(e) => {
@@ -1127,41 +1368,36 @@ const ModeratorDashboard = () => {
               </nav>
             </div>
           </div>
-
           {/* Content */}
           <div className="content-container dashboard-content">{renderContent()}</div>
         </div>
-      </div>
 
-      {/* Logout Confirmation Modal */}
-      {showLogoutConfirm && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full mx-4 transform transition-all duration-300 ease-out scale-100">
-            <div className="text-center">
-              <h3 className="text-2xl font-bold text-[#362625] mb-2">
-                Confirm Logout
-              </h3>
-              <p className="text-gray-600 mb-8 text-lg">
-                Are you sure you want to log out of your account?
-              </p>
-              <div className="flex gap-4 justify-center">
-                <button
-                  onClick={cancelLogout}
-                  className="px-6 py-3 bg-gray-100 text-[#362625] rounded-xl hover:bg-gray-200 transition-all duration-200 font-medium border border-gray-200 hover:border-gray-300 min-w-[120px]"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={confirmLogout}
-                  className="px-6 py-3 bg-gradient-to-r from-[#e74c3c] to-[#c0392b] text-white rounded-xl hover:from-[#c0392b] hover:to-[#a93226] transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105 min-w-[120px]"
-                >
-                  Log Out
-                </button>
+        {/* Logout Confirmation Modal (matches AdminDashboard) */}
+        {showLogoutConfirm && (
+          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full mx-4 transform transition-all duration-300 ease-out scale-100">
+              <div className="text-center">
+                <h3 className="text-2xl font-bold text-[#362625] mb-2">Confirm Logout</h3>
+                <p className="text-gray-600 mb-8 text-lg">Are you sure you want to log out of your account?</p>
+                <div className="flex gap-4 justify-center">
+                  <button
+                    onClick={cancelLogout}
+                    className="px-6 py-3 bg-gray-100 text-[#362625] rounded-xl hover:bg-gray-200 transition-all duration-200 font-medium border border-gray-200 hover:border-gray-300 min-w-[120px]"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmLogout}
+                    className="px-6 py-3 bg-gradient-to-r from-[#e74c3c] to-[#c0392b] text-white rounded-xl hover:from-[#c0392b] hover:to-[#a93226] transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105 min-w-[120px]"
+                  >
+                    Log Out
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </>
   );
 };

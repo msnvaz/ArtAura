@@ -28,6 +28,7 @@ public class ShopDAOImpl implements ShopDAO {
 
     @Override
     public ShopDTO findByUserId(Long userId) {
+        // In this system, userId for shops IS the shop_id (from authentication)
         String sql = "SELECT * FROM shops WHERE shop_id = ?";
         try {
             return jdbc.queryForObject(sql, (rs, rowNum) -> mapShop(rs), userId);
@@ -50,6 +51,16 @@ public class ShopDAOImpl implements ShopDAO {
                 shop.getTaxId(),
                 shop.getDescription(),
                 shopId);
+    }
+
+    @Override
+    public void deleteShop(Long shopId) {
+        String sql = "DELETE FROM shops WHERE shop_id = ?";
+        int rowsAffected = jdbc.update(sql, shopId);
+        if (rowsAffected == 0) {
+            throw new RuntimeException("Shop not found with ID: " + shopId);
+        }
+        System.out.println("🗑️ ShopDAOImpl: Deleted shop with ID: " + shopId);
     }
 
     private ShopDTO mapShop(ResultSet rs) throws java.sql.SQLException {

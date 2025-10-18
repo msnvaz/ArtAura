@@ -67,11 +67,14 @@ const RegisterPage = () => {
     }
 
     let endpoint = "";
-    let payload = {};
     const API_URL = import.meta.env.VITE_API_URL;
+    let formPayload;
+
     if (userType === "artist") {
       endpoint = `${API_URL}/api/artist/signup`;
-      payload = {
+      // Prepare FormData for multipart/form-data
+      formPayload = new FormData();
+      const artistData = {
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
@@ -82,9 +85,14 @@ const RegisterPage = () => {
         status: "Pending",
         agreedTerms: true,
       };
+      formPayload.append(
+        "artist",
+        new Blob([JSON.stringify(artistData)], { type: "application/json" })
+      );
+      formPayload.append("nicImage", formData.nicImage);
     } else if (userType === "buyer") {
       endpoint = `${API_URL}/api/buyer/signup`;
-      payload = {
+      formPayload = {
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
@@ -95,9 +103,14 @@ const RegisterPage = () => {
     }
 
     try {
-      const res = await axios.post(endpoint, payload, {
-        headers: { "Content-Type": "application/json" },
-      });
+      let res;
+      if (userType === "artist") {
+        res = await axios.post(endpoint, formPayload);
+      } else {
+        res = await axios.post(endpoint, formPayload, {
+          headers: { "Content-Type": "application/json" },
+        });
+      }
 
       if (res.status === 200) {
         setMessage("Registration successful! Please sign in.");
@@ -439,7 +452,9 @@ const RegisterPage = () => {
                       >
                         <Upload className="h-5 w-5 text-[#362625]/60" />
                         <span className="text-[#362625]/70">
-                          {formData.nicImage ? formData.nicImage.name : "Upload NIC Image"}
+                          {formData.nicImage
+                            ? formData.nicImage.name
+                            : "Upload NIC Image"}
                         </span>
                       </label>
                       {formData.nicImage && (
@@ -449,7 +464,8 @@ const RegisterPage = () => {
                       )}
                     </div>
                     <p className="text-xs text-[#362625]/50 mt-1">
-                      Upload a clear image of your National Identity Card for verification purposes
+                      Upload a clear image of your National Identity Card for
+                      verification purposes
                     </p>
                   </div>
                 </div>

@@ -24,6 +24,29 @@ import { useNavigate } from "react-router-dom";
 import ArtistProfileModal from "../components/modals/ArtistProfileModal";
 const API_URL = import.meta.env.VITE_API_URL;
 
+// Filter options
+const specialties = [
+  "All Specialties",
+  "Digital Art",
+  "Photography",
+  "Painting",
+  "Sculpture",
+  "Illustration",
+  "Mixed Media",
+];
+
+const locations = [
+  "All Locations",
+  "Colombo",
+  "Kandy",
+  "Galle",
+  "Negombo",
+  "Jaffna",
+  "Trincomalee",
+  "Anuradhapura",
+  "Polonnaruwa",
+];
+
 const ArtistsPage = () => {
   const [artists, setArtists] = useState([]);
   const [filteredArtists, setFilteredArtists] = useState([]);
@@ -72,6 +95,12 @@ const ArtistsPage = () => {
       return (count / 1000).toFixed(count % 1000 === 0 ? 0 : 1) + "k";
     }
     return count;
+  };
+
+  // Format rating to 1 decimal place
+  const formatRating = (rating) => {
+    if (!rating) return "0.0";
+    return Number(rating).toFixed(1);
   };
 
   // Filter and search functionality
@@ -200,126 +229,133 @@ const ArtistsPage = () => {
     }
   };
 
-  const ArtistCard = ({ artist }) => (
-    <div className="bg-white rounded-xl shadow-md border border-[#FFD95A] overflow-hidden hover:shadow-lg transition-all duration-300 hover:scale-105">
-      {/* Featured Badge */}
-      {artist.featured && (
-        <div className="bg-gradient-to-r from-[#D87C5A] to-[#FFD95A] px-4 py-2 text-center">
-          <span className="text-white text-sm font-bold">
-            ✨ Featured Artist
-          </span>
-        </div>
-      )}
+  const ArtistCard = ({ artist }) => {
+    return (
+      <div className="bg-white rounded-xl shadow-md border border-[#FFD95A] overflow-hidden hover:shadow-lg transition-all duration-300 hover:scale-105">
+        {/* Featured Badge */}
+        {artist.featured && (
+          <div className="bg-gradient-to-r from-[#D87C5A] to-[#FFD95A] px-4 py-2 text-center">
+            <span className="text-white text-sm font-bold">
+              ✨ Featured Artist
+            </span>
+          </div>
+        )}
 
-      {/* Header with Avatar and Basic Info */}
-      <div className="p-6 pb-4">
-        <div className="flex items-center gap-4 mb-4">
-          <div className="relative">
-            <img
-              src={artist.avatar}
-              alt={artist.name}
-              className="w-16 h-16 rounded-full object-cover border-4 border-[#FFD95A]"
-            />
-            {artist.verified && (
-              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-[#D87C5A] rounded-full flex items-center justify-center">
-                <span className="text-white text-xs">✓</span>
+        {/* Header with Avatar and Basic Info */}
+        <div className="p-6 pb-4">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="relative">
+              <img
+                src={artist.avatarUrl || "/uploads/profiles/default-avatar.svg"}
+                alt={artist.name}
+                className="w-16 h-16 rounded-full object-cover border-4 border-[#FFD95A]"
+                onError={(e) => {
+                  e.target.src = "/uploads/profiles/default-avatar.svg";
+                }}
+              />
+              {artist.verified && (
+                <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-[#D87C5A] rounded-full flex items-center justify-center">
+                  <span className="text-white text-xs">✓</span>
+                </div>
+              )}
+            </div>
+            <div className="flex-1">
+              <h3 className="font-bold text-[#7f5539] text-lg">
+                {artist.name}
+              </h3>
+              <div className="flex items-center gap-2 text-[#7f5539]/70 text-sm">
+                {getSpecialtyIcon(artist.specialization)}
+                <span>{artist.specialization}</span>
               </div>
-            )}
-          </div>
-          <div className="flex-1">
-            <h3 className="font-bold text-[#7f5539] text-lg">{artist.name}</h3>
-            <div className="flex items-center gap-2 text-[#7f5539]/70 text-sm">
-              {getSpecialtyIcon(artist.specialization)}
-              <span>{artist.specialization}</span>
-            </div>
-            <div className="flex items-center gap-1 text-[#7f5539]/70 text-sm mt-1">
-              <MapPin className="w-3 h-3" />
-              <span>{artist.location}</span>
+              <div className="flex items-center gap-1 text-[#7f5539]/70 text-sm mt-1">
+                <MapPin className="w-3 h-3" />
+                <span>{artist.location}</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Bio */}
-        <p className="text-[#7f5539]/80 text-sm line-clamp-3 mb-4">
-          {artist.bio}
-        </p>
+          {/* Bio */}
+          <p className="text-[#7f5539]/80 text-sm line-clamp-3 mb-4">
+            {artist.bio}
+          </p>
 
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 mb-4">
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-1 text-[#FFD95A] mb-1">
-              <Star className="w-4 h-4 fill-current" />
-              <span className="font-bold text-[#7f5539]">{artist.rate}</span>
+          {/* Stats */}
+          <div className="grid grid-cols-3 gap-4 mb-4">
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-1 text-[#FFD95A] mb-1">
+                <Star className="w-4 h-4 fill-current" />
+                <span className="font-bold text-[#7f5539]">
+                  {formatRating(artist.rate)}
+                </span>
+              </div>
+              <span className="text-xs text-[#7f5539]/70">rating</span>
             </div>
-            <span className="text-xs text-[#7f5539]/70">
-              {artist.rate} reviews
-            </span>
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-1 mb-1">
+                <Users className="w-4 h-4 text-[#D87C5A]" />
+                <span className="font-bold text-[#7f5539]">
+                  {formatFollowers(artist.totalFollowers)}
+                </span>
+              </div>
+              <span className="text-xs text-[#7f5539]/70">followers</span>
+            </div>
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-1 mb-1">
+                <Eye className="w-4 h-4 text-[#D87C5A]" />
+                <span className="font-bold text-[#7f5539]">
+                  {artist.totalSales}
+                </span>
+              </div>
+              <span className="text-xs text-[#7f5539]/70">artworks</span>
+            </div>
           </div>
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-1 mb-1">
-              <Users className="w-4 h-4 text-[#D87C5A]" />
-              <span className="font-bold text-[#7f5539]">
-                {formatFollowers(artist.totalFollowers)}
+
+          {/* Badges */}
+          <div className="flex flex-wrap gap-2 mb-4">
+            {(artist.badges || []).map((badge, index) => (
+              <span
+                key={badge + "-" + index}
+                className={`text-xs px-2 py-1 rounded-full font-medium ${getBadgeColor(
+                  badge
+                )}`}
+              >
+                {badge}
               </span>
-            </div>
-            <span className="text-xs text-[#7f5539]/70">followers</span>
+            ))}
           </div>
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-1 mb-1">
-              <Eye className="w-4 h-4 text-[#D87C5A]" />
-              <span className="font-bold text-[#7f5539]">
-                {artist.totalSales}
-              </span>
-            </div>
-            <span className="text-xs text-[#7f5539]/70">artworks</span>
-          </div>
-        </div>
 
-        {/* Badges */}
-        <div className="flex flex-wrap gap-2 mb-4">
-          {(artist.badges || []).map((badge, index) => (
-            <span
-              key={badge + "-" + index}
-              className={`text-xs px-2 py-1 rounded-full font-medium ${getBadgeColor(
-                badge
-              )}`}
+          {/* Portfolio Preview */}
+          <div className="grid grid-cols-3 gap-2 mb-4">
+            {(artist.portfolioImages || []).map((image, index) => (
+              <img
+                key={image + "-" + index}
+                src={image}
+                alt={`${artist.name} artwork ${index + 1}`}
+                className="w-full h-16 object-cover rounded-lg hover:scale-110 transition-transform cursor-pointer"
+              />
+            ))}
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => handleViewProfile(artist)}
+              className="flex-1 bg-[#D87C5A] hover:bg-[#7f5539] text-white py-2 px-4 rounded-lg font-medium transition-colors"
             >
-              {badge}
-            </span>
-          ))}
-        </div>
-
-        {/* Portfolio Preview */}
-        <div className="grid grid-cols-3 gap-2 mb-4">
-          {(artist.portfolioImages || []).map((image, index) => (
-            <img
-              key={image + "-" + index}
-              src={image}
-              alt={`${artist.name} artwork ${index + 1}`}
-              className="w-full h-16 object-cover rounded-lg hover:scale-110 transition-transform cursor-pointer"
-            />
-          ))}
-        </div>
-
-        {/* Actions */}
-        <div className="flex gap-2">
-          <button
-            onClick={() => handleViewProfile(artist)}
-            className="flex-1 bg-[#D87C5A] hover:bg-[#7f5539] text-white py-2 px-4 rounded-lg font-medium transition-colors"
-          >
-            View Profile
-          </button>
-          <button
-            onClick={() => handleOpenCommissionModal(artist)}
-            className="flex-1 bg-[#7f5539] hover:bg-[#D87C5A] text-white py-2 px-4 rounded-lg font-medium transition-colors"
-          >
-            <MessageSquare className="w-5 h-5 inline-block -mt-1 mr-1" />
-            Commission
-          </button>
+              View Profile
+            </button>
+            <button
+              onClick={() => handleOpenCommissionModal(artist)}
+              className="flex-1 bg-[#7f5539] hover:bg-[#D87C5A] text-white py-2 px-4 rounded-lg font-medium transition-colors"
+            >
+              <MessageSquare className="w-5 h-5 inline-block -mt-1 mr-1" />
+              Commission
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="min-h-screen bg-[#FFF5E1]">

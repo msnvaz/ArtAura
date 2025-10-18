@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import {
   Route,
   BrowserRouter as Router,
@@ -13,7 +12,6 @@ import Marketplace from "./pages/Marketplace";
 import UserOrders from "./pages/UserOrders";
 import UserProfile from "./pages/Profile/UserProfile";
 
-import Dashboard from "./pages/shop/Dashboard";
 import ShopOrders from "./pages/shop/Orders";
 import Sponsorships from "./pages/shop/Sponsorships";
 import SalesAnalytics from "./pages/shop/Analytics";
@@ -35,6 +33,8 @@ import ChallengesPage from "./pages/ChallengesPage";
 import ChallengeSubmissionPage from "./pages/ChallengeSubmissionPage";
 import ChallengeSubmissionsPage from "./pages/ChallengeSubmissionsPage";
 import MyPosts from "./pages/MyPosts";
+import CommissionPayment from "./pages/CommissionPayment";
+import CommissionPaymentConfirmation from "./pages/CommissionPaymentConfirmation";
 
 // Cart and Checkout Pages
 import CartPage from "./pages/CartPage";
@@ -88,7 +88,6 @@ function AppWrapper() {
         <Route path="/checkout" element={<PageTransition><CheckoutPage /></PageTransition>} />
         <Route path="/payment" element={<PageTransition><PaymentPage /></PageTransition>} />
         <Route path="/order-confirmation" element={<PageTransition><OrderConfirmationPage /></PageTransition>} />
-        <Route path="/shop/dashboard" element={<PageTransition><Dashboard /></PageTransition>} />
         <Route path="/shop/orders" element={<PageTransition><ShopOrders /></PageTransition>} />
         <Route path="/shop/sponsorships" element={<PageTransition><Sponsorships /></PageTransition>} />
         <Route path="/shop/analytics" element={<PageTransition><SalesAnalytics /></PageTransition>} />
@@ -107,6 +106,8 @@ function AppWrapper() {
         <Route path="/scoring-criteria" element={<Layout><ScoringCriteria /></Layout>} />
         <Route path="/delivery/dashboard" element={<PageTransition><DeliveryPartnerPage /></PageTransition>} />
         <Route path="/delivery-partner" element={<PageTransition><DeliveryPartnerPage /></PageTransition>} />
+        <Route path="/commission-payment/:commissionId" element={<PageTransition><CommissionPayment /></PageTransition>} />
+        <Route path="/commission-payment-confirmation" element={<PageTransition><CommissionPaymentConfirmation /></PageTransition>} />
       </Routes>
       {isLargeFooter ? <FooterLarge /> : <Footer />}
     </>

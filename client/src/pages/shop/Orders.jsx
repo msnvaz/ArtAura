@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import Navbar from '../../components/Navbar'; // Changed import
+import { useState, useEffect } from 'react';
+import Navbar from '../../components/Navbar';
 import { 
   ShoppingCart,
   Download,
@@ -8,25 +8,25 @@ import {
   Mail,
   Phone,
   CheckCircle,
-  Truck,
   Clock,
-  Calendar,
   XCircle,
   Eye,
   X,
-  MapPin,
-  Star,
   Package,
   FileText,
-  Users,
-  DollarSign
+  Users
 } from 'lucide-react';
 
 const Orders = () => {
+  const API_URL = import.meta.env.VITE_API_URL;
+  
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showExportModal, setShowExportModal] = useState(false);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [exportOptions, setExportOptions] = useState({
     format: 'csv',
     dateRange: 'all',
@@ -35,155 +35,68 @@ const Orders = () => {
     includeItems: true
   });
 
-  const orders = [
-    {
-      id: '#ORD-2025-120',
-      customer: 'Priyanka Wijesinghe',
-      email: 'priyanka.w@gmail.com',
-      phone: '+94 71 234 5678',
-      items: ['Premium Acrylic Paint Set 24 Colors', 'Professional Canvas Board Set'],
-      total: 'Rs. 18,750',
-      status: 'delivered',
-      date: '2025-07-20',
-      address: '47/3, Reid Avenue, Colombo 07',
-      rating: 5,
-      trackingNumber: 'SL-TRK-120-AP',
-      notes: 'Customer very satisfied with product quality'
-    },
-    {
-      id: '#ORD-2025-121',
-      customer: 'Mahesh Gunasekara',
-      email: 'mahesh.g@yahoo.com',
-      phone: '+94 77 345 6789',
-      items: ['Digital Drawing Tablet Pro', 'Stylus Pen Set', 'Tablet Stand'],
-      total: 'Rs. 45,600',
-      status: 'shipped',
-      date: '2025-07-21',
-      address: '89, Battaramulla Road, Battaramulla',
-      rating: null,
-      trackingNumber: 'SL-TRK-121-DT',
-      notes: 'Express delivery requested - shipped via courier'
-    },
-    {
-      id: '#ORD-2025-122',
-      customer: 'Shalini Rajapakse',
-      email: 'shalini.r@hotmail.com',
-      phone: '+94 76 456 7890',
-      items: ['Watercolor Paper Pad A3', 'Fine Art Brushes Set'],
-      total: 'Rs. 6,450',
-      status: 'processing',
-      date: '2025-07-21',
-      address: '156/B, Peradeniya Road, Kandy',
-      rating: null,
-      trackingNumber: null,
-      notes: 'Waiting for stock confirmation from supplier'
-    },
-    {
-      id: '#ORD-2025-123',
-      customer: 'Dinesh Perera',
-      email: 'dinesh.perera@outlook.com',
-      phone: '+94 70 567 8901',
-      items: ['Oil Painting Starter Kit', 'Palette Knife Set', 'Canvas Stretcher Bars'],
-      total: 'Rs. 22,300',
-      status: 'pending',
-      date: '2025-07-21',
-      address: '234, Galle Road, Mount Lavinia',
-      rating: null,
-      trackingNumber: null,
-      notes: 'Payment verification in progress'
-    },
-    {
-      id: '#ORD-2025-124',
-      customer: 'Anusha Fernando',
-      email: 'anusha.f@gmail.com',
-      phone: '+94 75 678 9012',
-      items: ['Sketching Pencils Professional Set', 'Blending Stumps'],
-      total: 'Rs. 4,200',
-      status: 'cancelled',
-      date: '2025-07-20',
-      address: '78/A, Main Street, Negombo',
-      rating: null,
-      trackingNumber: null,
-      notes: 'Customer found cheaper alternative elsewhere'
-    },
-    {
-      id: '#ORD-2025-125',
-      customer: 'Sampath Wickramasinghe',
-      email: 'sampath.w@gmail.com',
-      phone: '+94 72 789 0123',
-      items: ['Calligraphy Pen Set Premium', 'Ink Bottles Assorted', 'Practice Paper'],
-      total: 'Rs. 11,850',
-      status: 'delivered',
-      date: '2025-07-19',
-      address: '123/C, Colombo Road, Gampaha',
-      rating: 4,
-      trackingNumber: 'SL-TRK-125-CP',
-      notes: 'Delivered successfully to Gampaha office'
-    },
-    {
-      id: '#ORD-2025-126',
-      customer: 'Kavitha Jayawardena',
-      email: 'kavitha.j@yahoo.com',
-      phone: '+94 78 890 1234',
-      items: ['Marker Set Professional 60 Colors', 'Marker Paper Pad'],
-      total: 'Rs. 15,900',
-      status: 'shipped',
-      date: '2025-07-21',
-      address: '67, Hospital Road, Kalutara',
-      rating: null,
-      trackingNumber: 'SL-TRK-126-MK',
-      notes: 'Standard shipping to Kalutara - expected delivery tomorrow'
-    },
-    {
-      id: '#ORD-2025-127',
-      customer: 'Roshan Silva',
-      email: 'roshan.silva@gmail.com',
-      phone: '+94 71 901 2345',
-      items: ['Easel Table Adjustable', 'Paint Palette Large', 'Brush Cleaner Solution'],
-      total: 'Rs. 28,400',
-      status: 'processing',
-      date: '2025-07-21',
-      address: '145, Queen Street, Kandy',
-      rating: null,
-      trackingNumber: null,
-      notes: 'Large item - arranging special delivery vehicle'
-    },
-    {
-      id: '#ORD-2025-128',
-      customer: 'Malini Ranasinghe',
-      email: 'malini.r@hotmail.com',
-      phone: '+94 77 012 3456',
-      items: ['Pastels Set Soft 48 Colors', 'Pastel Paper Textured'],
-      total: 'Rs. 9,750',
-      status: 'delivered',
-      date: '2025-07-18',
-      address: '89/1, Lake Road, Nuwara Eliya',
-      rating: 5,
-      trackingNumber: 'SL-TRK-128-PS',
-      notes: 'Special delivery to Nuwara Eliya - customer very happy'
-    },
-    {
-      id: '#ORD-2025-129',
-      customer: 'Chamara Bandara',
-      email: 'chamara.b@outlook.com',
-      phone: '+94 76 123 4567',
-      items: ['Graphic Design Kit Complete', 'Cutting Mat A2', 'Precision Rulers Set'],
-      total: 'Rs. 31,200',
-      status: 'pending',
-      date: '2025-07-21',
-      address: '234/A, Matara Road, Galle',
-      rating: null,
-      trackingNumber: null,
-      notes: 'Awaiting credit card payment confirmation'
-    }
-  ];
+  // Fetch orders from backend
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem("token");
+        const shopId = localStorage.getItem("shopId");
+
+        if (!shopId) {
+          throw new Error("Shop ID not found. Please log in again.");
+        }
+
+        const response = await fetch(`${API_URL}/api/shop/orders?shopId=${shopId}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch orders");
+        }
+
+        const data = await response.json();
+        
+        // Transform backend data to frontend format
+        const transformedOrders = data.map(order => {
+          const items = order.items.split(', ');
+          const fullName = `${order.artistFirstName} ${order.artistLastName}`;
+          
+          return {
+            id: `#ORD-${order.orderId}`,
+            orderId: order.orderId,
+            customer: fullName,
+            email: order.artistEmail || 'N/A',
+            phone: order.artistContactNo || 'N/A',
+            items: items,
+            total: `Rs. ${order.totalAmount.toLocaleString()}`,
+            status: order.status,
+            date: new Date(order.date).toISOString().split('T')[0]
+          };
+        });
+
+        setOrders(transformedOrders);
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching orders:", err);
+        setError("Failed to load orders");
+        setOrders([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, [API_URL]);
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'delivered': return 'bg-emerald-200 text-emerald-800';
-      case 'shipped': return 'bg-blue-200 text-blue-800';
-      case 'processing': return 'bg-amber-200 text-amber-800';
-      case 'pending': return 'bg-gray-200 text-gray-800';
+      case 'approved': return 'bg-emerald-200 text-emerald-800';
+      case 'pending': return 'bg-amber-200 text-amber-800';
       case 'cancelled': return 'bg-red-200 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
@@ -192,10 +105,8 @@ const Orders = () => {
   const getStatusIcon = (status) => {
     const baseClass = "w-4 h-4 transform transition-transform duration-300 group-hover:scale-125";
     switch (status) {
-      case 'delivered': return <CheckCircle className={baseClass} />;
-      case 'shipped': return <Truck className={baseClass} />;
-      case 'processing': return <Clock className={baseClass} />;
-      case 'pending': return <Calendar className={baseClass} />;
+      case 'approved': return <CheckCircle className={baseClass} />;
+      case 'pending': return <Clock className={baseClass} />;
       case 'cancelled': return <XCircle className={baseClass} />;
       default: return <Clock className={baseClass} />;
     }
@@ -209,59 +120,167 @@ const Orders = () => {
   });
 
   const handleExport = () => {
-    // Simulate export functionality
-    const exportData = filteredOrders.map(order => ({
+    // Filter orders based on export options
+    let ordersToExport = [...filteredOrders];
+    
+    // Apply date range filter
+    if (exportOptions.dateRange !== 'all') {
+      const now = new Date();
+      const startDate = new Date();
+      
+      switch(exportOptions.dateRange) {
+        case 'today':
+          startDate.setHours(0, 0, 0, 0);
+          break;
+        case 'week':
+          startDate.setDate(now.getDate() - 7);
+          break;
+        case 'month':
+          startDate.setMonth(now.getMonth() - 1);
+          break;
+        default:
+          break;
+      }
+      
+      ordersToExport = ordersToExport.filter(order => 
+        new Date(order.date) >= startDate
+      );
+    }
+    
+    // Apply status filter
+    if (exportOptions.status !== 'all') {
+      ordersToExport = ordersToExport.filter(order => 
+        order.status === exportOptions.status
+      );
+    }
+    
+    // Prepare export data
+    const exportData = ordersToExport.map(order => ({
       'Order ID': order.id,
-      'Customer': exportOptions.includeCustomerInfo ? order.customer : 'Hidden',
+      'Customer Name': exportOptions.includeCustomerInfo ? order.customer : 'Hidden',
       'Email': exportOptions.includeCustomerInfo ? order.email : 'Hidden',
       'Phone': exportOptions.includeCustomerInfo ? order.phone : 'Hidden',
-      'Items': exportOptions.includeItems ? order.items.join(', ') : 'Hidden',
-      'Total': order.total,
-      'Status': order.status,
-      'Date': order.date,
-      'Address': order.address
+      'Items': exportOptions.includeItems ? order.items.join('; ') : 'Hidden',
+      'Total Amount': order.total,
+      'Status': order.status.charAt(0).toUpperCase() + order.status.slice(1),
+      'Order Date': order.date
     }));
 
+    if (exportData.length === 0) {
+      alert('No orders to export with the selected filters');
+      return;
+    }
+
     // Create and download file
-    const dataStr = exportOptions.format === 'json' 
-      ? JSON.stringify(exportData, null, 2)
-      : convertToCSV(exportData);
+    let fileContent;
+    let mimeType;
+    let fileExtension;
     
-    const dataBlob = new Blob([dataStr], { type: exportOptions.format === 'json' ? 'application/json' : 'text/csv' });
+    if (exportOptions.format === 'json') {
+      fileContent = JSON.stringify(exportData, null, 2);
+      mimeType = 'application/json';
+      fileExtension = 'json';
+    } else {
+      fileContent = convertToCSV(exportData);
+      mimeType = 'text/csv;charset=utf-8;';
+      fileExtension = 'csv';
+    }
+    
+    const dataBlob = new Blob([fileContent], { type: mimeType });
     const url = URL.createObjectURL(dataBlob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `artaura-orders-export-${new Date().toISOString().split('T')[0]}.${exportOptions.format}`;
+    link.download = `artaura-orders-${new Date().toISOString().split('T')[0]}.${fileExtension}`;
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
     
     setShowExportModal(false);
   };
 
-   const convertToCSV = (data) => {
-    const headers = Object.keys(data[0]).join(',');
-    const rows = data.map(row => Object.values(row).join(','));
-    return [headers, ...rows].join('\n');
+  const handleStatusUpdate = async (orderId, newStatus) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_URL}/api/shop/orders/${orderId}/status?status=${newStatus}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update order status");
+      }
+
+      // Update the orders list
+      setOrders(orders.map(order => 
+        order.orderId === orderId 
+          ? { ...order, status: newStatus }
+          : order
+      ));
+
+      // Update selected order if it's the one being updated
+      if (selectedOrder && selectedOrder.orderId === orderId) {
+        setSelectedOrder({ ...selectedOrder, status: newStatus });
+      }
+
+    } catch (error) {
+      console.error("Error updating order status:", error);
+    }
   };
 
-  const renderStars = (rating) => {
-    if (!rating) return <span className="text-gray-400">No rating yet</span>;
-    return (
-      <div className="flex items-center gap-1">
-        {[...Array(5)].map((_, i) => (
-          <Star
-            key={i}
-            className={`w-4 h-4 ${i < rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
-          />
-        ))}
-        <span className="text-sm text-gray-600 ml-1">({rating}/5)</span>
-      </div>
+   const convertToCSV = (data) => {
+    if (data.length === 0) return '';
+    
+    // Get headers
+    const headers = Object.keys(data[0]);
+    
+    // Escape function for CSV values
+    const escapeCSVValue = (value) => {
+      if (value === null || value === undefined) return '';
+      const stringValue = String(value);
+      // If value contains comma, quote, or newline, wrap in quotes and escape existing quotes
+      if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+        return `"${stringValue.replace(/"/g, '""')}"`;
+      }
+      return stringValue;
+    };
+    
+    // Create CSV header row
+    const headerRow = headers.map(escapeCSVValue).join(',');
+    
+    // Create CSV data rows
+    const dataRows = data.map(row => 
+      headers.map(header => escapeCSVValue(row[header])).join(',')
     );
+    
+    return [headerRow, ...dataRows].join('\n');
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar /> {/* Use Navbar instead of Sidebar */}
       <div className="pt-6 px-6"> {/* Add top padding instead of left margin */}
+        {/* Loading State */}
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#D87C5A]"></div>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-4">
+            <p className="font-medium">Error loading orders</p>
+            <p className="text-sm">{error}</p>
+          </div>
+        )}
+
+        {/* Orders Content */}
+        {!loading && !error && (
+          <>
         {/* Inline Search Bar and Export Button */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-4">
           {/* Inline Search Bar and Filter Section */}
@@ -285,9 +304,7 @@ const Orders = () => {
               >
                 <option value="all">All Orders</option>
                 <option value="pending">Pending</option>
-                <option value="processing">Processing</option>
-                <option value="shipped">Shipped</option>
-                <option value="delivered">Delivered</option>
+                <option value="approved">Approved</option>
                 <option value="cancelled">Cancelled</option>
               </select>
             </div>
@@ -410,9 +427,6 @@ const Orders = () => {
                             {selectedOrder.status.charAt(0).toUpperCase() + selectedOrder.status.slice(1)}
                           </span>
                         </div>
-                        {selectedOrder.trackingNumber && (
-                          <div><span className="font-medium">Tracking Number:</span> {selectedOrder.trackingNumber}</div>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -432,10 +446,6 @@ const Orders = () => {
                         <div className="flex items-center gap-1">
                           <Phone className="w-3 h-3 text-[#D87C5A]" />
                           {selectedOrder.phone}
-                        </div>
-                        <div className="flex items-start gap-1">
-                          <MapPin className="w-3 h-3 text-[#D87C5A] mt-1 flex-shrink-0" />
-                          <span className="text-xs">{selectedOrder.address}</span>
                         </div>
                       </div>
                     </div>
@@ -460,18 +470,27 @@ const Orders = () => {
                   </div>
                 </div>
 
-                {/* Rating */}
-                <div>
-                  <h3 className="text-lg font-semibold text-[#5D3A00] mb-3">Customer Rating</h3>
-                  {renderStars(selectedOrder.rating)}
-                </div>
-
-                {/* Notes */}
-                {selectedOrder.notes && (
-                  <div>
-                    <h3 className="text-lg font-semibold text-[#5D3A00] mb-3">Notes</h3>
-                    <div className="bg-[#FFF5E1] rounded-lg p-4 text-sm text-[#5D3A00]">
-                      {selectedOrder.notes}
+                {/* Action Buttons - Only show if status is pending */}
+                {selectedOrder.status === 'pending' && (
+                  <div className="border-t border-[#FFE4D6] pt-6">
+                    <h3 className="text-lg font-semibold text-[#5D3A00] mb-4">
+                      Update Order Status
+                    </h3>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => handleStatusUpdate(selectedOrder.orderId, 'approved')}
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-medium transition-colors"
+                      >
+                        <CheckCircle className="w-5 h-5" />
+                        Approve Order
+                      </button>
+                      <button
+                        onClick={() => handleStatusUpdate(selectedOrder.orderId, 'cancelled')}
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-colors"
+                      >
+                        <XCircle className="w-5 h-5" />
+                        Cancel Order
+                      </button>
                     </div>
                   </div>
                 )}
@@ -535,9 +554,7 @@ const Orders = () => {
                   >
                     <option value="all">All Statuses</option>
                     <option value="pending">Pending</option>
-                    <option value="processing">Processing</option>
-                    <option value="shipped">Shipped</option>
-                    <option value="delivered">Delivered</option>
+                    <option value="approved">Approved</option>
                     <option value="cancelled">Cancelled</option>
                   </select>
                 </div>
@@ -583,6 +600,8 @@ const Orders = () => {
               </div>
             </div>
           </div>
+        )}
+        </>
         )}
       </div>
     </div>

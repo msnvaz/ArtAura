@@ -37,21 +37,45 @@ public class UserController {
         ObjectMapper objectMapper = new ObjectMapper();
         UserProfileDTO updatedProfile = objectMapper.readValue(profileJson, UserProfileDTO.class);
         String imagePath = null;
+        
         if (imageFile != null && !imageFile.isEmpty()) {
-            // Use client/public/uploads directory
+            // Manual file handling - save to ArtAura/client/public/uploads/buyer directory
             String currentDir = System.getProperty("user.dir");
-            String projectRoot = currentDir.endsWith("artaura")
-                    ? currentDir.substring(0, currentDir.lastIndexOf("artaura"))
-                    : currentDir + File.separator;
+            System.out.println("Current working directory: " + currentDir);
+            
+            // Explicitly construct path to ArtAura/client (NOT server/client)
+            // Find the ArtAura root directory
+            String artAuraRoot;
+            if (currentDir.contains("ArtAura")) {
+                artAuraRoot = currentDir.substring(0, currentDir.indexOf("ArtAura") + "ArtAura".length()) + File.separator;
+            } else {
+                // Fallback - assume we're in a subdirectory of ArtAura
+                artAuraRoot = "C:" + File.separator + "Users" + File.separator + "aaa" + File.separator + "Desktop" + File.separator + "ArtAura" + File.separator;
+            }
+            
+            System.out.println("ArtAura root: " + artAuraRoot);
 
-            String uploadDir = projectRoot + "client" + File.separator + "public" + File.separator + "uploads" + File.separator;
+            // Build path to main client folder (not server/client)
+            String uploadDir = artAuraRoot + "client" + File.separator + "public" + File.separator + "uploads" + File.separator + "buyer" + File.separator;
+            System.out.println("Target upload directory: " + uploadDir);
+            
             String fileName = "profile_" + userId + "_" + System.currentTimeMillis() + ".jpg";
             File dest = new File(uploadDir + fileName);
-            dest.getParentFile().mkdirs(); // Ensure directory exists
+            
+            // Create directory if it doesn't exist
+            if (!dest.getParentFile().exists()) {
+                boolean created = dest.getParentFile().mkdirs();
+                System.out.println("Created directory: " + created + " at " + dest.getParentFile().getAbsolutePath());
+            }
+            
             imageFile.transferTo(dest);
-            imagePath = "/uploads/" + fileName;
+            imagePath = "/uploads/buyer/" + fileName;
             updatedProfile.setImage(imagePath);
+            
+            System.out.println("File saved to: " + dest.getAbsolutePath());
+            System.out.println("Relative path: " + imagePath);
         }
+        
         UserProfileDTO profile = userService.updateUserProfile(userId, updatedProfile);
         if (profile == null) {
             return ResponseEntity.notFound().build();

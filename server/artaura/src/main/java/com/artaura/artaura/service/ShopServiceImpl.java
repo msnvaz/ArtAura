@@ -25,4 +25,9 @@ public class ShopServiceImpl implements ShopService {
     public void updateShop(Long shopId, ShopDTO shop) {
         shopDAO.updateShop(shopId, shop);
     }
+
+    @Override
+    public void deleteShop(Long shopId) {
+        shopDAO.deleteShop(shopId);
+    }
 }

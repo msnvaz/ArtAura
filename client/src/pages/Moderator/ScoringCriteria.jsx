@@ -12,7 +12,7 @@ const ScoringCriteria = () => {
     expertEvaluationWeight: 25
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [currentStep, setCurrentStep] = useState(1); // 1: Criteria, 2: Scoring, 3: Results
+  const [currentStep, setCurrentStep] = useState(1); // 1: Scoring, 2: Results
 
   // Dummy data for newly created challenges
   const availableChallenges = [
@@ -189,10 +189,9 @@ const ScoringCriteria = () => {
 
   const getStepTitle = () => {
     switch (currentStep) {
-      case 1: return 'Scoring Criteria Definition';
-      case 2: return 'Scoring & Evaluation';
-      case 3: return 'Results & Final Scoring';
-      default: return 'Scoring Criteria';
+      case 1: return 'Scoring & Evaluation';
+      case 2: return 'Results & Final Scoring';
+      default: return 'Scoring';
     }
   };
 
@@ -215,15 +214,11 @@ const ScoringCriteria = () => {
     <div className="mb-8">
       <div className="flex items-center justify-center space-x-4 mb-6">
         <div className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${getStepColor(1)}`}>
-          1. Criteria
+          1. Scoring
         </div>
         <div className="w-8 h-px bg-gray-300"></div>
         <div className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${getStepColor(2)}`}>
-          2. Scoring
-        </div>
-        <div className="w-8 h-px bg-gray-300"></div>
-        <div className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${getStepColor(3)}`}>
-          3. Results
+          2. Results
         </div>
       </div>
       
@@ -242,9 +237,9 @@ const ScoringCriteria = () => {
         
         <button
           onClick={handleNextStep}
-          disabled={currentStep === 3 || !selectedChallenge}
+          disabled={currentStep === 2 || !selectedChallenge}
           className={`px-4 py-2 rounded-lg transition-all duration-200 ${
-            currentStep === 3 || !selectedChallenge
+            currentStep === 2 || !selectedChallenge
               ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
               : 'bg-[#7f5539] text-[#fdf9f4] hover:bg-[#6e4c34] btn-animate'
           }`}
@@ -257,10 +252,21 @@ const ScoringCriteria = () => {
 
   const handleWeightChange = (field, value) => {
     const numValue = parseInt(value) || 0;
-    setCriteria(prev => ({
-      ...prev,
-      [field]: numValue
-    }));
+    setCriteria(prev => {
+      // Calculate the sum if this field is set to numValue
+      const newCriteria = { ...prev, [field]: numValue };
+      const total =
+        newCriteria.likesWeight +
+        newCriteria.commentsWeight +
+        newCriteria.buyerInterestWeight +
+        newCriteria.expertEvaluationWeight;
+      // If total is over 100, adjust the changed field to not exceed 100
+      if (total > 100) {
+        const over = total - 100;
+        newCriteria[field] = Math.max(0, numValue - over);
+      }
+      return newCriteria;
+    });
   };
 
   const getTotalWeight = () => {
@@ -366,9 +372,8 @@ const ScoringCriteria = () => {
                 <div>
                   <h1 className="text-2xl font-bold text-white">{getStepTitle()}</h1>
                   <p className="text-gray-200">
-                    {currentStep === 1 && (selectedChallengeData ? `Challenge: ${selectedChallengeData.name}` : 'Select a challenge to begin')}
-                    {currentStep === 2 && 'Review and adjust scoring parameters'}
-                    {currentStep === 3 && 'View detailed results and scoring breakdowns'}
+                    {currentStep === 1 && 'Review contestant performance and scoring metrics'}
+                    {currentStep === 2 && 'View detailed results and scoring breakdowns'}
                   </p>
                 </div>
               </div>
@@ -392,285 +397,53 @@ const ScoringCriteria = () => {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
+          {/* Challenge Selection */}
+          <div className="bg-white rounded-lg border border-[#d87c5a] p-6 mb-6 shadow-sm">
+            <label className="block text-sm font-medium mb-3" style={{color: '#362625'}}>
+              Select Challenge for Winner Selection
+            </label>
+            <select
+              value={selectedChallenge}
+              onChange={(e) => setSelectedChallenge(e.target.value)}
+              className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent text-lg"
+              style={{borderColor: '#d87c5a', backgroundColor: 'white', color: '#362625'}}
+            >
+              <option value="">Select a challenge...</option>
+              {availableChallenges.map(challenge => (
+                <option key={challenge.id} value={challenge.id}>
+                  {challenge.name} ({challenge.status}) - {challenge.participants} participants
+                </option>
+              ))}
+            </select>
+
+            {/* Challenge Details */}
+            {selectedChallengeData && (
+              <div className="mt-4 p-4 rounded-lg" style={{backgroundColor: '#f4e8dc'}}>
+                <h4 className="font-semibold mb-2" style={{color: '#362625'}}>{selectedChallengeData.name}</h4>
+                <p className="text-sm mb-3" style={{color: '#7f5539'}}>{selectedChallengeData.description}</p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium" style={{color: '#362625'}}>Status:</span>
+                    <span className={`ml-1 px-2 py-1 rounded text-xs ${
+                      selectedChallengeData.status === 'active' ? 'bg-green-100 text-green-800' : 
+                      selectedChallengeData.status === 'draft' ? 'bg-gray-100 text-gray-800' : 'bg-blue-100 text-blue-800'
+                    }`}>
+                      {selectedChallengeData.status}
+                    </span>
+                  </div>
+                  <div><span className="font-medium" style={{color: '#362625'}}>Participants:</span> <span style={{color: '#7f5539'}}>{selectedChallengeData.participants}</span></div>
+                  <div><span className="font-medium" style={{color: '#362625'}}>Submissions:</span> <span style={{color: '#7f5539'}}>{selectedChallengeData.submissions}</span></div>
+                  <div><span className="font-medium" style={{color: '#362625'}}>Deadline:</span> <span style={{color: '#7f5539'}}>{selectedChallengeData.deadline}</span></div>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Step Navigation */}
           {renderStepNavigation()}
 
-          {/* Challenge Selection - Step 1 */}
-          {currentStep === 1 && (
-            <div className="rounded-lg shadow-sm border h-full relative overflow-hidden" style={{backgroundColor: '#FFF5E1'}}>
-              <div className="p-8">
-                {/* Challenge Selection Section */}
-                <div className="mb-8">
-                  <div className="flex items-center gap-3 mb-6">
-                    <Trophy className="h-6 w-6 text-[#7f5539]" />
-                    <h2 className="text-2xl font-semibold text-[#362625]">Select Challenge & Set Scoring Criteria</h2>
-                  </div>
-
-              {/* Challenge Selection */}
-              <div className="bg-white rounded-lg border border-[#d87c5a] p-6 mb-6">
-                <label className="block text-sm font-medium mb-3" style={{color: '#362625'}}>
-                  Choose a Challenge to Define Scoring Criteria
-                </label>
-                <select
-                  value={selectedChallenge}
-                  onChange={(e) => setSelectedChallenge(e.target.value)}
-                  className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent text-lg"
-                  style={{borderColor: '#d87c5a', backgroundColor: 'white', color: '#362625'}}
-                  disabled={isSubmitted}
-                >
-                  <option value="">Select a challenge...</option>
-                  {availableChallenges.map(challenge => (
-                    <option key={challenge.id} value={challenge.id}>
-                      {challenge.name} ({challenge.status}) - {challenge.participants} participants
-                    </option>
-                  ))}
-                </select>
-
-                {/* Challenge Details */}
-                {selectedChallengeData && (
-                  <div className="mt-4 p-4 rounded-lg" style={{backgroundColor: '#f4e8dc'}}>
-                    <h4 className="font-semibold mb-2" style={{color: '#362625'}}>{selectedChallengeData.name}</h4>
-                    <p className="text-sm mb-3" style={{color: '#7f5539'}}>{selectedChallengeData.description}</p>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                      <div>
-                        <span className="font-medium" style={{color: '#362625'}}>Status:</span>
-                        <span className={`ml-1 px-2 py-1 rounded text-xs ${
-                          selectedChallengeData.status === 'active' ? 'bg-green-100 text-green-800' : 
-                          selectedChallengeData.status === 'draft' ? 'bg-gray-100 text-gray-800' : 'bg-blue-100 text-blue-800'
-                        }`}>
-                          {selectedChallengeData.status}
-                        </span>
-                      </div>
-                      <div><span className="font-medium" style={{color: '#362625'}}>Participants:</span> <span style={{color: '#7f5539'}}>{selectedChallengeData.participants}</span></div>
-                      <div><span className="font-medium" style={{color: '#362625'}}>Submissions:</span> <span style={{color: '#7f5539'}}>{selectedChallengeData.submissions}</span></div>
-                      <div><span className="font-medium" style={{color: '#362625'}}>Deadline:</span> <span style={{color: '#7f5539'}}>{selectedChallengeData.deadline}</span></div>
-                    </div>
-                    
-                    {/* Criteria Status */}
-                    <div className="mt-3 pt-3 border-t" style={{borderColor: '#d87c5a'}}>
-                      <div className={`flex items-center gap-2 text-sm ${
-                        selectedChallengeData.hasCriteria ? 'text-green-700' : 'text-orange-700'
-                      }`}>
-                        <Settings size={16} />
-                        <span className="font-medium">
-                          {selectedChallengeData.hasCriteria ? 'Scoring criteria already defined' : 'No scoring criteria set - define below'}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Current Contestants Preview */}
-                    {contestants.length > 0 && (
-                      <div className="mt-4 pt-3 border-t" style={{borderColor: '#d87c5a'}}>
-                        <h5 className="font-medium mb-2" style={{color: '#362625'}}>Current Contestants ({contestants.length})</h5>
-                        <div className="flex -space-x-2">
-                          {contestants.slice(0, 5).map(contestant => (
-                            <img
-                              key={contestant.id}
-                              src={contestant.imageUrl}
-                              alt={contestant.name}
-                              className="w-8 h-8 rounded-full border-2 border-white object-cover"
-                              title={`${contestant.name} - ${contestant.artworkTitle}`}
-                            />
-                          ))}
-                          {contestants.length > 5 && (
-                            <div className="w-8 h-8 rounded-full border-2 border-white bg-gray-200 flex items-center justify-center text-xs font-medium" style={{color: '#362625'}}>
-                              +{contestants.length - 5}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Scoring Criteria Section - Only show if challenge is selected */}
-            {selectedChallenge && (
-              <>
-                <div className="flex items-center gap-3 mb-6">
-                  <Settings className="h-6 w-6 text-[#7f5539]" />
-                  <h3 className="text-xl font-semibold text-[#362625]">Define Scoring Criteria</h3>
-                </div>
-
-            {/* Important Notice */}
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-8">
-              <p className="text-[#7f5539]">
-                <span className="font-semibold">Important:</span> Once you lock these criteria, they cannot be changed. Make sure the total percentage equals 100% before proceeding.
-              </p>
-            </div>
-
-          {/* Scoring Criteria Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            {/* Likes & Engagement Weight */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-[#362625]">
-                <Heart className="h-5 w-5 text-red-500" />
-                <h3 className="text-lg font-semibold">Likes & Engagement Weight</h3>
-              </div>
-              
-              <div className="relative">
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={criteria.likesWeight}
-                  onChange={(e) => handleWeightChange('likesWeight', e.target.value)}
-                  disabled={isSubmitted}
-                  className="w-full h-2 bg-yellow-200 rounded-lg appearance-none cursor-pointer slider"
-                  style={{
-                    background: `linear-gradient(to right, #7f5539 0%, #7f5539 ${criteria.likesWeight}%, #f4e8dc ${criteria.likesWeight}%, #f4e8dc 100%)`
-                  }}
-                />
-                <div className="flex justify-end mt-2">
-                  <span className="text-2xl font-bold text-[#362625]">{criteria.likesWeight}%</span>
-                </div>
-              </div>
-              
-              <p className="text-sm text-[#7f5539]">Based on the number of likes received</p>
-            </div>
-
-            {/* Comments & Interaction Weight */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-[#362625]">
-                <MessageCircle className="h-5 w-5 text-blue-500" />
-                <h3 className="text-lg font-semibold">Comments & Interaction Weight</h3>
-              </div>
-              
-              <div className="relative">
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={criteria.commentsWeight}
-                  onChange={(e) => handleWeightChange('commentsWeight', e.target.value)}
-                  disabled={isSubmitted}
-                  className="w-full h-2 bg-yellow-200 rounded-lg appearance-none cursor-pointer slider"
-                  style={{
-                    background: `linear-gradient(to right, #7f5539 0%, #7f5539 ${criteria.commentsWeight}%, #f4e8dc ${criteria.commentsWeight}%, #f4e8dc 100%)`
-                  }}
-                />
-                <div className="flex justify-end mt-2">
-                  <span className="text-2xl font-bold text-[#362625]">{criteria.commentsWeight}%</span>
-                </div>
-              </div>
-              
-              <p className="text-sm text-[#7f5539]">Based on the number of comments received</p>
-            </div>
-
-            {/* Buyer Interest Weight */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-[#362625]">
-                <ShoppingCart className="h-5 w-5 text-green-500" />
-                <h3 className="text-lg font-semibold">Buyer Interest Weight</h3>
-              </div>
-              
-              <div className="relative">
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={criteria.buyerInterestWeight}
-                  onChange={(e) => handleWeightChange('buyerInterestWeight', e.target.value)}
-                  disabled={isSubmitted}
-                  className="w-full h-2 bg-yellow-200 rounded-lg appearance-none cursor-pointer slider"
-                  style={{
-                    background: `linear-gradient(to right, #7f5539 0%, #7f5539 ${criteria.buyerInterestWeight}%, #f4e8dc ${criteria.buyerInterestWeight}%, #f4e8dc 100%)`
-                  }}
-                />
-                <div className="flex justify-end mt-2">
-                  <span className="text-2xl font-bold text-[#362625]">{criteria.buyerInterestWeight}%</span>
-                </div>
-              </div>
-              
-              <p className="text-sm text-[#7f5539]">Based on buyer interest and purchase inquiries</p>
-            </div>
-
-            {/* Expert Evaluation Weight */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-[#362625]">
-                <Star className="h-5 w-5 text-yellow-500" />
-                <h3 className="text-lg font-semibold">Expert Evaluation Weight</h3>
-              </div>
-              
-              <div className="relative">
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={criteria.expertEvaluationWeight}
-                  onChange={(e) => handleWeightChange('expertEvaluationWeight', e.target.value)}
-                  disabled={isSubmitted}
-                  className="w-full h-2 bg-yellow-200 rounded-lg appearance-none cursor-pointer slider"
-                  style={{
-                    background: `linear-gradient(to right, #7f5539 0%, #7f5539 ${criteria.expertEvaluationWeight}%, #f4e8dc ${criteria.expertEvaluationWeight}%, #f4e8dc 100%)`
-                  }}
-                />
-                <div className="flex justify-end mt-2">
-                  <span className="text-2xl font-bold text-[#362625]">{criteria.expertEvaluationWeight}%</span>
-                </div>
-              </div>
-              
-              <p className="text-sm text-[#7f5539]">Based on scores from expert artist evaluators</p>
-            </div>
-          </div>
-
-          {/* Total Percentage */}
-          <div className="bg-gray-50 rounded-lg p-6 mb-8">
-            <div className="flex items-center justify-between">
-              <span className="text-lg font-semibold text-gray-700">Total Percentage:</span>
-              <span className={`text-3xl font-bold ${totalPercentage === 100 ? 'text-green-600' : 'text-red-600'}`}>
-                {totalPercentage}%
-              </span>
-            </div>
-          </div>
-
-            {/* Submit Button */}
-            {!isSubmitted ? (
-              <div className="flex justify-center">
-                <button
-                  onClick={handleSubmit}
-                  disabled={!isValidCriteria() || !selectedChallenge}
-                  className={`px-8 py-4 rounded-lg font-medium text-lg transition-colors btn-animate flex items-center space-x-2 ${
-                    isValidCriteria() && selectedChallenge
-                      ? 'bg-[#7f5539] text-[#fdf9f4] hover:bg-[#6e4c34]'
-                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  }`}
-                >
-                  <span>🔒 Lock Criteria & Calculate Scores</span>
-                </button>
-              </div>
-            ) : (
-              <div className="text-center">
-                <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-                  <div className="flex items-center justify-center gap-2 text-green-800 mb-2">
-                    <Trophy className="h-6 w-6" />
-                    <span className="text-lg font-semibold">Criteria Successfully Locked!</span>
-                  </div>
-                  <p className="text-green-700">
-                    The scoring criteria for "{selectedChallengeData?.name}" has been saved and cannot be modified. 
-                    Winners will be calculated based on these weights.
-                  </p>
-                </div>
-              </div>
-            )}
-            </>
-            )}
-
-            {/* No Challenge Selected Message */}
-            {!selectedChallenge && (
-              <div className="text-center py-12">
-                <Trophy className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No Challenge Selected</h3>
-                <p className="text-gray-500">Please select a challenge above to define its scoring criteria.</p>
-              </div>
-            )}
-          </div>
-        </div>
-          )}
-
-          {/* Scoring Step - Step 2 */}
-          {currentStep === 2 && selectedChallenge && (
+          {/* Scoring Step - Step 1 */}
+          {currentStep === 1 && selectedChallenge && (
             <div className="rounded-lg shadow-sm border h-full relative overflow-hidden" style={{backgroundColor: '#FFF5E1'}}>
               <div className="p-8">
                 <div className="flex items-center gap-3 mb-6">
@@ -749,8 +522,8 @@ const ScoringCriteria = () => {
             </div>
           )}
 
-          {/* Results Step - Step 3 */}
-          {currentStep === 3 && selectedChallenge && (
+          {/* Results Step - Step 2 */}
+          {currentStep === 2 && selectedChallenge && (
             <div className="rounded-lg shadow-sm border h-full relative overflow-hidden" style={{backgroundColor: '#FFF5E1'}}>
               <div className="p-8">
                 <div className="flex items-center gap-3 mb-6">

@@ -39,7 +39,7 @@ public class ExhibitionPostDAOImpl implements ExhibitionPostDAO {
 
     @Override
     public List<ExhibitionPostDTO> getAllExhibitions() {
-        String sql = "SELECT e.*, CONCAT(b.first_name, ' ', b.last_name) AS creator_name FROM exhibitions e LEFT JOIN buyers b ON e.created_by = b.buyer_id";
+        String sql = "SELECT e.*, CONCAT(b.first_name, ' ', b.last_name) AS creator_name, b.image AS creator_avatar FROM exhibitions e LEFT JOIN buyers b ON e.created_by = b.buyer_id";
         return jdbcTemplate.query(sql, (rs, rowNum) -> {
             ExhibitionPostDTO exhibition = new ExhibitionPostDTO();
             exhibition.setId(rs.getLong("id"));
@@ -61,6 +61,7 @@ public class ExhibitionPostDAOImpl implements ExhibitionPostDAO {
             exhibition.setCreatedAt(rs.getString("created_at"));
             exhibition.setStatus(rs.getString("status"));
             exhibition.setCreatorName(rs.getString("creator_name"));
+            exhibition.setCreatorAvatar(rs.getString("creator_avatar")); // Add creator avatar
             exhibition.setLikes(rs.getInt("likes")); // <-- Add this line
             return exhibition;
         });
