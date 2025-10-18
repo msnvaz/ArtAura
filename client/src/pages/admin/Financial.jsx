@@ -46,6 +46,7 @@ const Financial = () => {
   const [successMessage, setSuccessMessage] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
   const [payments, setPayments] = useState([]);
+  const [allPayments, setAllPayments] = useState([]); // Store all unfiltered payments for stats
   const [pagination, setPagination] = useState({
     currentPage: 0,
     totalPages: 0,
@@ -61,6 +62,7 @@ const Financial = () => {
     // Try to make API calls if we have a token (regardless of role for testing)
     if (token) {
       console.log('Making API calls for authenticated user');
+      fetchAllPayments(); // Fetch all payments for stats
       fetchPayments();
       fetchPaymentStatistics();
     } else {
@@ -71,6 +73,12 @@ const Financial = () => {
   }, [token, role]);
 
   useEffect(() => {
+    // Reset to first page when filters change
+    if (pagination.currentPage !== 0) {
+      setPagination(prev => ({ ...prev, currentPage: 0 }));
+      return;
+    }
+
     // Try to make API calls if we have a token (regardless of role for testing)
     if (token) {
       fetchPayments();
@@ -79,6 +87,27 @@ const Financial = () => {
       loadMockPayments();
     }
   }, [filterStatus, filterType, pagination.currentPage, token, role]);
+
+  // Fetch all payments for statistics (without filters)
+  const fetchAllPayments = async () => {
+    try {
+      if (!token) {
+        return;
+      }
+
+      const params = {
+        page: 0,
+        size: 1000, // Get a large number to calculate accurate stats
+        sortBy: 'created_at',
+        sortOrder: 'DESC'
+      };
+
+      const data = await adminPaymentApi.getPayments(params);
+      setAllPayments(data.payments || []);
+    } catch (error) {
+      console.error('Error fetching all payments for stats:', error);
+    }
+  };
 
   // Fetch payments from API
   const fetchPayments = async () => {
@@ -198,6 +227,7 @@ const Financial = () => {
     ];
 
     setPayments(mockPayments);
+    setAllPayments(mockPayments); // Also set allPayments for stats
     setPagination({
       currentPage: 0,
       totalPages: 1,
@@ -215,6 +245,7 @@ const Financial = () => {
       }
 
       const data = await adminPaymentApi.getPaymentStatistics();
+      console.log('Payment statistics received:', data);
       setPaymentStatistics(data);
     } catch (error) {
       console.error('Error fetching payment statistics:', error);
@@ -299,74 +330,55 @@ const Financial = () => {
     }
   }, [errorMessage]);
 
-  // Calculate financial stats from payment statistics
+  // Calculate financial stats from payment statistics or actual payment data
   const getFinancialStats = () => {
-    if (!paymentStatistics) {
-      return [
-        {
-          label: 'Total Revenue',
-          value: formatPrice(0),
-          change: '0%',
-          changeType: 'neutral',
-          icon: DollarSign,
-          color: '#10B981'
-        },
-        {
-          label: 'Escrow Balance',
-          value: formatPrice(0),
-          change: '0%',
-          changeType: 'neutral',
-          icon: Shield,
-          color: '#3B82F6'
-        },
-        {
-          label: 'Paid Amount',
-          value: formatPrice(0),
-          change: '0%',
-          changeType: 'neutral',
-          icon: Wallet,
-          color: '#8B5CF6'
-        },
-        {
-          label: 'Total Payments',
-          value: '0',
-          change: '0',
-          changeType: 'neutral',
-          icon: CreditCard,
-          color: '#F59E0B'
-        }
-      ];
-    }
+    // Always calculate from ALL unfiltered payment data to ensure accuracy
+    const dataSource = allPayments.length > 0 ? allPayments : payments;
+    
+    const totalAmount = dataSource.reduce((sum, payment) => sum + (payment.amount || 0), 0);
+    const escrowAmount = dataSource
+      .filter(p => p.status === 'escrow')
+      .reduce((sum, payment) => sum + (payment.amount || 0), 0);
+    const paidAmount = dataSource
+      .filter(p => p.status === 'paid')
+      .reduce((sum, payment) => sum + (payment.amount || 0), 0);
+    const refundedAmount = dataSource
+      .filter(p => p.status === 'refunded')
+      .reduce((sum, payment) => sum + (payment.amount || 0), 0);
+    const orderPayments = dataSource.filter(p => p.paymentType === 'order').length;
+    const commissionPayments = dataSource.filter(p => p.paymentType === 'commission').length;
+    const escrowCount = dataSource.filter(p => p.status === 'escrow').length;
+    const paidCount = dataSource.filter(p => p.status === 'paid').length;
 
     return [
       {
         label: 'Total Revenue',
-        value: formatPrice(paymentStatistics.total_amount || 0, 'LKR'),
-        change: '+12.5%', // You can calculate this from historical data
-        changeType: 'positive',
+        value: formatPrice(totalAmount, 'LKR'),
+        change: `${dataSource.length} transactions`,
+        changeType: 'neutral',
         icon: DollarSign,
         color: '#10B981'
       },
       {
         label: 'Escrow Balance',
-        value: formatPrice(paymentStatistics.escrow_amount || 0, 'LKR'),
-        change: '+18.7%',
-        changeType: 'positive',
+        value: formatPrice(escrowAmount, 'LKR'),
+        change: `${escrowCount} in escrow`,
+        changeType: 'neutral',
         icon: Shield,
         color: '#3B82F6'
       },
       {
         label: 'Paid Amount',
-        value: formatPrice(paymentStatistics.paid_amount || 0, 'LKR'),
-        change: '+8.3%',
-        changeType: 'positive',
+        value: formatPrice(paidAmount, 'LKR'),
+        change: `${paidCount} paid`,
+        changeType: 'neutral',
         icon: Wallet,
         color: '#8B5CF6'
       },
       {
         label: 'Total Payments',
-        value: paymentStatistics.total_payments?.toString() || '0',
-        change: `+${paymentStatistics.order_payments || 0} orders, +${paymentStatistics.commission_payments || 0} commissions`,
+        value: dataSource.length.toString(),
+        change: `${orderPayments} orders, ${commissionPayments} commissions`,
         changeType: 'neutral',
         icon: CreditCard,
         color: '#F59E0B'
@@ -377,7 +389,8 @@ const Financial = () => {
   const financialStats = getFinancialStats();
 
   // Filter transactions based on search and filters
-  const filteredTransactions = payments.filter(payment => {
+  // Note: When authenticated, API handles filtering. Client-side filtering only for demo data.
+  const filteredTransactions = token ? payments : payments.filter(payment => {
     const matchesSearch = !searchTerm || 
       payment.orderDescription?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       payment.buyerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -996,13 +1009,15 @@ const Financial = () => {
                       <span 
                         className="text-xs font-medium px-2 py-1 rounded-full"
                         style={{
-                          backgroundColor: stat.changeType === 'positive' ? '#d4edda' : '#f8d7da',
-                          color: stat.changeType === 'positive' ? '#155724' : '#721c24'
+                          backgroundColor: stat.changeType === 'positive' ? '#d4edda' : stat.changeType === 'neutral' ? '#e2e8f0' : '#f8d7da',
+                          color: stat.changeType === 'positive' ? '#155724' : stat.changeType === 'neutral' ? '#475569' : '#721c24'
                         }}
                       >
                         {stat.change}
                       </span>
-                      <span className="text-xs opacity-75" style={{color: '#5D3A00'}}>vs last month</span>
+                      {stat.changeType === 'positive' && (
+                        <span className="text-xs opacity-75" style={{color: '#5D3A00'}}>vs last month</span>
+                      )}
                     </div>
                   </div>
                   <div className="p-2 rounded-lg shadow-lg" style={{backgroundColor: stat.color}}>
@@ -1025,6 +1040,7 @@ const Financial = () => {
             <button
               onClick={() => {
                 if (token) {
+                  fetchAllPayments(); // Refresh stats
                   fetchPayments();
                   fetchPaymentStatistics();
                 } else {
