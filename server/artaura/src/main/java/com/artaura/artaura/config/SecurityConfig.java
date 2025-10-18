@@ -34,23 +34,26 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable()) // ❌ CSRF disabled for JWT stateless
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 🚫 No session
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/api/auth/login",
-                                "/api/auth/logout",
-                                "/api/auth/verify",
-                                "/api/artist/signup",
-                                "/api/buyer/signup",
-                                "/api/shop/signup",
-                                "/uploads/**",   // <<< THIS ALLOWS IMAGE ACCESS
-                                "/api/admin/artworks/**", // <<< TEMPORARY: Allow admin artwork endpoints for development
-                                "/api/buyer/exhibitions/**",
-                                "/api/users/**",
-                                "/ws/**" // <-- Make sure this is present and permitted
-                        ).permitAll() // ✅ Public endpoints
+                .requestMatchers(
+                        "/api/auth/login",
+                        "/api/auth/logout",
+                        "/api/auth/verify",
+                        "/api/artist/signup",
+                        "/api/buyer/signup",
+                        "/api/shop/signup",
+                        "/uploads/**", // <<< THIS ALLOWS IMAGE ACCESS
+                        "/api/admin/artworks/**", // <<< TEMPORARY: Allow admin artwork endpoints for development
+                        "/api/buyer/exhibitions/**",
+                        "/api/users/**",
+                        "/ws/**", // <-- Make sure this is present and permitted
+                        "/api/posts/*/comments", // Allow GET access to comments without authentication
+                        "/api/posts/*/like-status" // Allow GET access to like status without authentication
+                ).permitAll() // ✅ Public endpoints
 
-                        .requestMatchers("/api/posts/create").authenticated()
-                        .requestMatchers("/api/posts/{role}/{userId}").authenticated()// ✅ allow this
-                        .anyRequest().authenticated() // 🔒 Everything else secured
+                .requestMatchers("/api/posts/create").authenticated()
+                .requestMatchers("/api/posts/{role}/{userId}").authenticated()// ✅ allow this
+                .requestMatchers("/api/artist/artwork-orders/**").authenticated() // Artist artwork orders endpoints
+                .anyRequest().authenticated() // 🔒 Everything else secured
 
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class); // 🔐 JWT Filter

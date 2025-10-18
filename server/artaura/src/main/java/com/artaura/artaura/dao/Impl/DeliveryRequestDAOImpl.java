@@ -9,10 +9,6 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -40,6 +36,18 @@ public class DeliveryRequestDAOImpl implements DeliveryRequestDAO {
         dto.setTotalAmount(rs.getBigDecimal("total_amount"));
         dto.setArtistId(rs.getLong("artist_id"));
         dto.setArtistName(rs.getString("artist_name"));
+        // Handle shipping fee
+        try {
+            dto.setShippingFee(rs.getBigDecimal("shipping_fee"));
+        } catch (Exception e) {
+            dto.setShippingFee(BigDecimal.ZERO);
+        }
+        // Handle payment amount from payment table
+        try {
+            dto.setPaymentAmount(rs.getBigDecimal("payment_amount"));
+        } catch (Exception e) {
+            dto.setPaymentAmount(null);
+        }
         return dto;
     };
 
@@ -64,6 +72,20 @@ public class DeliveryRequestDAOImpl implements DeliveryRequestDAO {
         dto.setDeadline(rs.getDate("deadline") != null ? rs.getDate("deadline").toLocalDate() : null);
         dto.setAdditionalNotes(rs.getString("additional_notes"));
         dto.setUrgency(rs.getString("urgency"));
+        
+        // Handle shipping fee
+        try {
+            dto.setShippingFee(rs.getBigDecimal("shipping_fee"));
+        } catch (Exception e) {
+            dto.setShippingFee(BigDecimal.ZERO);
+        }
+        
+        // Handle payment amount from payment table
+        try {
+            dto.setPaymentAmount(rs.getBigDecimal("payment_amount"));
+        } catch (Exception e) {
+            dto.setPaymentAmount(null);
+        }
         
         // Parse budget string to BigDecimal
         String budget = rs.getString("budget");
@@ -350,6 +372,268 @@ public class DeliveryRequestDAOImpl implements DeliveryRequestDAO {
         } catch (Exception e) {
             System.out.println("🔍 DeliveryRequestDAO: Error fetching commission pickup addresses: " + e.getMessage());
             return new ArrayList<>();
+        }
+    }
+    
+    @Override
+    public List<DeliveryRequestDTO> getAllActiveDeliveryRequests() {
+        List<DeliveryRequestDTO> allRequests = new ArrayList<>();
+        allRequests.addAll(getActiveArtworkOrderDeliveryRequests());
+        allRequests.addAll(getActiveCommissionDeliveryRequests());
+        return allRequests;
+    }
+
+    @Override
+    public List<DeliveryRequestDTO> getActiveArtworkOrderDeliveryRequests() {
+        try {
+            String sql = """
+                SELECT 
+                    ao.id,
+                    ao.buyer_id,
+                    CONCAT(ao.first_name, ' ', ao.last_name) AS buyer_name,
+                    ao.email,
+                    ao.contact_number,
+                    ao.shipping_address,
+                    ao.delivery_status,
+                    ao.order_date,
+                    ao.total_amount,
+                    ao.shipping_fee,
+                    aoi.title AS artwork_title,
+                    aoi.artist_id,
+                    CONCAT(a.first_name, ' ', a.last_name) AS artist_name,
+                    p.amount AS payment_amount
+                FROM AW_orders ao
+                LEFT JOIN AW_order_items aoi ON ao.id = aoi.order_id
+                LEFT JOIN artists a ON aoi.artist_id = a.artist_id
+                LEFT JOIN payment p ON ao.id = p.AW_order_id
+                WHERE ao.delivery_status IN ('accepted', 'outForDelivery')
+                ORDER BY ao.order_date DESC
+            """;
+            
+            return jdbc.query(sql, artworkOrderRowMapper);
+        } catch (Exception e) {
+            System.out.println("🔍 DeliveryRequestDAO: Error fetching active artwork orders: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public List<DeliveryRequestDTO> getActiveCommissionDeliveryRequests() {
+        try {
+            String sql = """
+                SELECT 
+                    cr.id,
+                    cr.buyer_id,
+                    cr.name,
+                    cr.email,
+                    cr.phone,
+                    cr.shipping_address,
+                    cr.delivery_status,
+                    cr.submitted_at,
+                    cr.title,
+                    cr.artwork_type,
+                    cr.style,
+                    cr.dimensions,
+                    cr.budget,
+                    cr.deadline,
+                    cr.additional_notes,
+                    cr.urgency,
+                    cr.shipping_fee,
+                    cr.artist_id,
+                    CONCAT(a.first_name, ' ', a.last_name) AS artist_name,
+                    p.amount AS payment_amount
+                FROM commission_requests cr
+                LEFT JOIN artists a ON cr.artist_id = a.artist_id
+                LEFT JOIN payment p ON cr.id = p.commission_request_id
+                WHERE cr.delivery_status IN ('accepted', 'outForDelivery')
+                ORDER BY cr.submitted_at DESC
+            """;
+            
+            return jdbc.query(sql, commissionRowMapper);
+        } catch (Exception e) {
+            System.out.println("🔍 DeliveryRequestDAO: Error fetching active commission requests: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+    
+    @Override
+    public List<DeliveryRequestDTO> getAllDeliveredDeliveryRequests() {
+        List<DeliveryRequestDTO> allRequests = new ArrayList<>();
+        allRequests.addAll(getDeliveredArtworkOrderDeliveryRequests());
+        allRequests.addAll(getDeliveredCommissionDeliveryRequests());
+        return allRequests;
+    }
+
+    @Override
+    public List<DeliveryRequestDTO> getDeliveredArtworkOrderDeliveryRequests() {
+        try {
+            String sql = """
+                SELECT 
+                    ao.id,
+                    ao.buyer_id,
+                    CONCAT(ao.first_name, ' ', ao.last_name) AS buyer_name,
+                    ao.email,
+                    ao.contact_number,
+                    ao.shipping_address,
+                    ao.delivery_status,
+                    ao.order_date,
+                    ao.total_amount,
+                    aoi.title AS artwork_title,
+                    aoi.artist_id,
+                    CONCAT(a.first_name, ' ', a.last_name) AS artist_name
+                FROM AW_orders ao
+                LEFT JOIN AW_order_items aoi ON ao.id = aoi.order_id
+                LEFT JOIN artists a ON aoi.artist_id = a.artist_id
+                WHERE ao.delivery_status = 'delivered'
+                ORDER BY ao.order_date DESC
+            """;
+            
+            return jdbc.query(sql, artworkOrderRowMapper);
+        } catch (Exception e) {
+            System.out.println("🔍 DeliveryRequestDAO: Error fetching delivered artwork orders: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public List<DeliveryRequestDTO> getDeliveredCommissionDeliveryRequests() {
+        try {
+            String sql = """
+                SELECT 
+                    cr.id,
+                    cr.buyer_id,
+                    cr.name,
+                    cr.email,
+                    cr.phone,
+                    cr.shipping_address,
+                    cr.delivery_status,
+                    cr.submitted_at,
+                    cr.title,
+                    cr.artwork_type,
+                    cr.style,
+                    cr.dimensions,
+                    cr.budget,
+                    cr.deadline,
+                    cr.additional_notes,
+                    cr.urgency,
+                    cr.artist_id,
+                    CONCAT(a.first_name, ' ', a.last_name) AS artist_name
+                FROM commission_requests cr
+                LEFT JOIN artists a ON cr.artist_id = a.artist_id
+                WHERE cr.delivery_status = 'delivered'
+                ORDER BY cr.submitted_at DESC
+            """;
+            
+            return jdbc.query(sql, commissionRowMapper);
+        } catch (Exception e) {
+            System.out.println("🔍 DeliveryRequestDAO: Error fetching delivered commission requests: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+    
+    @Override
+    public String getPlatformFee() {
+        try {
+            String sql = "SELECT setting_value FROM admin_settings WHERE setting_name = 'platform_fee'";
+            String platformFee = jdbc.queryForObject(sql, String.class);
+            System.out.println("✅ Platform fee retrieved: " + platformFee + "%");
+            return platformFee != null ? platformFee : "0";
+        } catch (Exception e) {
+            System.out.println("❌ Error fetching platform fee: " + e.getMessage());
+            return "0";
+        }
+    }
+    
+    @Override
+    public BigDecimal getPaymentAmount(String orderType, Long orderId) {
+        try {
+            String sql;
+            if ("artwork".equalsIgnoreCase(orderType)) {
+                sql = "SELECT amount FROM payment WHERE AW_order_id = ?";
+            } else if ("commission".equalsIgnoreCase(orderType)) {
+                sql = "SELECT amount FROM payment WHERE commission_request_id = ?";
+            } else {
+                System.out.println("❌ Invalid order type: " + orderType);
+                return null;
+            }
+            
+            BigDecimal amount = jdbc.queryForObject(sql, BigDecimal.class, orderId);
+            System.out.println("✅ Payment amount retrieved: Rs " + amount + " for " + orderType + " order ID: " + orderId);
+            return amount;
+        } catch (Exception e) {
+            System.out.println("❌ Error fetching payment amount for " + orderType + " order ID " + orderId + ": " + e.getMessage());
+            return null;
+        }
+    }
+    
+    @Override
+    public boolean insertPlatformFee(String orderType, Long orderId, BigDecimal platformCommissionFee) {
+        try {
+            // First, get the payment_id for this order
+            String paymentIdSql;
+            if ("artwork".equalsIgnoreCase(orderType)) {
+                paymentIdSql = "SELECT id FROM payment WHERE AW_order_id = ?";
+            } else if ("commission".equalsIgnoreCase(orderType)) {
+                paymentIdSql = "SELECT id FROM payment WHERE commission_request_id = ?";
+            } else {
+                System.out.println("❌ Invalid order type for platform fee insertion: " + orderType);
+                return false;
+            }
+            
+            // Get payment_id
+            Integer paymentId = jdbc.queryForObject(paymentIdSql, Integer.class, orderId);
+            
+            if (paymentId == null) {
+                System.out.println("❌ No payment record found for " + orderType + " order ID: " + orderId);
+                return false;
+            }
+            
+            // Insert platform fee
+            String insertSql = "INSERT INTO platform_fees (payment_id, fee_amount, entered_at) VALUES (?, ?, NOW())";
+            int rowsAffected = jdbc.update(insertSql, paymentId, platformCommissionFee);
+            
+            if (rowsAffected > 0) {
+                System.out.println("✅ Platform fee inserted: Rs " + platformCommissionFee + " for payment ID: " + paymentId);
+                
+                // Update payment status to 'paid' in payment table
+                String updatePaymentSql = "UPDATE payment SET status = 'paid' WHERE id = ?";
+                int paymentUpdateRows = jdbc.update(updatePaymentSql, paymentId);
+                System.out.println("📝 Updating payment table - SQL: " + updatePaymentSql + " with paymentId: " + paymentId);
+                System.out.println("📊 Rows affected in payment table: " + paymentUpdateRows);
+                
+                if (paymentUpdateRows > 0) {
+                    System.out.println("✅ Payment status updated to 'paid' in payment table for payment ID: " + paymentId);
+                } else {
+                    System.out.println("⚠️ Warning: Failed to update payment status in payment table for payment ID: " + paymentId);
+                }
+                
+                // Update payment status to 'paid' in the respective order table
+                String updateStatusSql;
+                if ("artwork".equalsIgnoreCase(orderType)) {
+                    updateStatusSql = "UPDATE AW_orders SET status = 'paid' WHERE id = ?";
+                } else { // commission
+                    updateStatusSql = "UPDATE commission_requests SET payment_status = 'paid' WHERE id = ?";
+                }
+                
+                System.out.println("📝 Executing SQL: " + updateStatusSql + " with orderId: " + orderId);
+                int statusUpdateRows = jdbc.update(updateStatusSql, orderId);
+                System.out.println("📊 Rows affected by status update: " + statusUpdateRows);
+                
+                if (statusUpdateRows > 0) {
+                    System.out.println("✅ Payment status updated to 'paid' for " + orderType + " order ID: " + orderId);
+                } else {
+                    System.out.println("⚠️ Warning: Failed to update payment status for " + orderType + " order ID: " + orderId);
+                }
+                
+                return true;
+            } else {
+                System.out.println("❌ Failed to insert platform fee");
+                return false;
+            }
+        } catch (Exception e) {
+            System.out.println("❌ Error inserting platform fee: " + e.getMessage());
+            e.printStackTrace();
+            return false;
         }
     }
 }

@@ -10,15 +10,104 @@ import {
   User,
 } from "lucide-react";
 import ReviewModal from "./ReviewModal";
+import Toast from "./Toast";
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 const OrderDetailsModal = ({ order, isOpen, onClose }) => {
   const [showReviewModal, setShowReviewModal] = useState(false);
-  const [selectedArtist, setSelectedArtist] = useState({
-    name: "",
-    id: null,
+  const [selectedArtist, setSelectedArtist] = useState({ name: "", id: null });
+  const [ratedArtists, setRatedArtists] = useState(new Set());
+  const [toast, setToast] = useState({
+    isVisible: false,
+    message: "",
+    type: "success",
   });
 
   if (!isOpen || !order) return null;
+
+  const makeRatedKey = (artistId) =>
+    `rated:shop:${order.id}:${artistId ?? "unknown"}`;
+  const isDelivered =
+    ["delivered", "completed"].includes(
+      String(order.status || "").toLowerCase()
+    ) || String(order.deliveryStatus || "").toLowerCase() === "delivered";
+
+  const syncRatedFromStorage = () => {
+    const next = new Set();
+    (order.items || []).forEach((it) => {
+      const key = makeRatedKey(it.artistId);
+      if (localStorage.getItem(key) === "1") next.add(it.artistId);
+    });
+    setRatedArtists(next);
+  };
+
+  const handleReviewSubmit = async (reviewData) => {
+    const artistId = selectedArtist.id;
+    const orderId = order.id;
+    const buyerId = order.buyerId;
+    const token = localStorage.getItem("token"); // or your actual token key
+    console.log(
+      "Submitting review for artistId:",
+      artistId,
+      "orderId:",
+      orderId,
+      "buyerId:",
+      buyerId,
+      reviewData
+    );
+    try {
+      const res = await fetch(`${API_URL}/api/reviews`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+        body: JSON.stringify({
+          artistId,
+          buyerId,
+          orderId,
+          rating: reviewData.rating,
+          comment: reviewData.comment,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.text();
+        setToast({
+          isVisible: true,
+          message: "Failed to submit review: " + err,
+          type: "error",
+        });
+        return;
+      }
+      // Persist rated flag locally to prevent duplicates client-side
+      if (artistId != null) {
+        localStorage.setItem(makeRatedKey(artistId), "1");
+        setRatedArtists((prev) => new Set(prev).add(artistId));
+      }
+      setToast({
+        isVisible: true,
+        message: "Review submitted successfully!",
+        type: "success",
+      });
+      setShowReviewModal(false);
+    } catch (e) {
+      setToast({
+        isVisible: true,
+        message: "Error submitting review: " + e.message,
+        type: "error",
+      });
+    }
+  };
+
+  const openReviewModal = (artistName, artistId) => {
+    setSelectedArtist({ name: artistName, id: artistId });
+    setShowReviewModal(true);
+  };
+
+  const closeReviewModal = () => {
+    setShowReviewModal(false);
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -76,25 +165,6 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
       month: "long",
       day: "numeric",
     });
-  };
-
-  const handleReviewSubmit = (reviewData) => {
-    // Here you would typically send the review to your backend
-    console.log("Review submitted:", reviewData);
-    alert("Review submitted successfully!");
-  };
-
-  const openReviewModal = (artistName, artistId) => {
-    setSelectedArtist({
-      name: artistName,
-      id: artistId,
-    });
-    setShowReviewModal(true);
-  };
-
-  const closeReviewModal = () => {
-    setShowReviewModal(false);
-    setSelectedArtist({ name: "", id: null });
   };
 
   return (
@@ -244,62 +314,81 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
               </h3>
               <div className="space-y-4">
                 {order.items && order.items.length > 0 ? (
-                  order.items.map((item, index) => (
-                    <div
-                      key={index}
-                      className="flex flex-col md:flex-row gap-4 p-4 border border-[#FFD95A] rounded-lg"
-                    >
-                      {/* Artwork Image */}
-                      {item.imageUrl && (
-                        <img
-                          src={item.imageUrl}
-                          alt={item.title}
-                          className="w-24 h-24 object-cover rounded-lg border border-[#FFD95A] mb-2"
-                        />
-                      )}
-                      <div className="flex-1">
-                        <h4 className="font-medium text-[#7f5539] text-lg">
-                          {item.title}
-                        </h4>
-                        <div className="text-[#7f5539]/70 text-sm">
-                          Medium: {item.medium}
-                        </div>
-                        <div className="text-[#7f5539]/70 text-sm">
-                          Size: {item.size}
-                        </div>
-                        <div className="text-[#7f5539]/70 text-sm">
-                          Quantity: {item.quantity}
-                        </div>
-                        <div className="text-[#7f5539]/70 text-sm">
-                          Price: LKR {item.price?.toLocaleString()}
-                        </div>
-                        {/* Artist Info */}
-                        <div className="flex items-center gap-2 mt-2">
-                          {item.artistAvatarUrl && (
-                            <img
-                              src={item.artistAvatarUrl}
-                              alt="Artist Avatar"
-                              className="w-8 h-8 rounded-full border border-[#FFD95A]"
-                            />
-                          )}
-                          <div>
-                            <div className="font-medium text-[#7f5539]">
-                              {item.artistName}
+                  order.items.map((item, index) => {
+                    const alreadyRated =
+                      ratedArtists.has(item.artistId) ||
+                      localStorage.getItem(makeRatedKey(item.artistId)) === "1";
+                    return (
+                      <div
+                        key={index}
+                        className="flex flex-col md:flex-row gap-4 p-4 border border-[#FFD95A] rounded-lg"
+                      >
+                        {/* Artwork Image */}
+                        {item.imageUrl && (
+                          <img
+                            src={item.imageUrl}
+                            alt={item.title}
+                            className="w-24 h-24 object-cover rounded-lg border border-[#FFD95A] mb-2"
+                          />
+                        )}
+                        <div className="flex-1">
+                          <h4 className="font-medium text-[#7f5539] text-lg">
+                            {item.title}
+                          </h4>
+                          <div className="text-[#7f5539]/70 text-sm">
+                            Medium: {item.medium}
+                          </div>
+                          <div className="text-[#7f5539]/70 text-sm">
+                            Size: {item.size}
+                          </div>
+                          <div className="text-[#7f5539]/70 text-sm">
+                            Quantity: {item.quantity}
+                          </div>
+                          <div className="text-[#7f5539]/70 text-sm">
+                            Price: LKR {item.price?.toLocaleString()}
+                          </div>
+                          {/* Artist Info */}
+                          <div className="flex items-center gap-2 mt-2">
+                            {item.artistAvatarUrl && (
+                              <img
+                                src={item.artistAvatarUrl}
+                                alt="Artist Avatar"
+                                className="w-8 h-8 rounded-full border border-[#FFD95A]"
+                              />
+                            )}
+                            <div className="flex-1">
+                              <div className="font-medium text-[#7f5539]">
+                                {item.artistName}
+                              </div>
+                              <div className="text-xs text-[#7f5539]/70">
+                                Email: {item.artistEmail}
+                              </div>
+                              <div className="text-xs text-[#7f5539]/70">
+                                Location: {item.artistLocation}
+                              </div>
+                              <div className="text-xs text-[#7f5539]/70">
+                                Contact: {item.artistContactNo}
+                              </div>
                             </div>
-                            <div className="text-xs text-[#7f5539]/70">
-                              Email: {item.artistEmail}
-                            </div>
-                            <div className="text-xs text-[#7f5539]/70">
-                              Location: {item.artistLocation}
-                            </div>
-                            <div className="text-xs text-[#7f5539]/70">
-                              Contact: {item.artistContactNo}
-                            </div>
+                            <button
+                              disabled={!isDelivered || alreadyRated}
+                              onClick={() =>
+                                openReviewModal(item.artistName, order.artistId)
+                              }
+                              className={`shrink-0 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                !isDelivered || alreadyRated
+                                  ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                                  : "bg-[#D87C5A] hover:bg-[#7f5539] text-white"
+                              }`}
+                              onMouseEnter={syncRatedFromStorage}
+                            >
+                              {alreadyRated ? "Rated" : "Rate"}
+                            </button>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 ) : (
                   <div className="text-[#7f5539]/70">
                     No items in this order.
@@ -328,6 +417,14 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
         artistName={selectedArtist.name}
         artistId={selectedArtist.id}
         onSubmitReview={handleReviewSubmit}
+      />
+
+      {/* Toast Notification */}
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={() => setToast((t) => ({ ...t, isVisible: false }))}
       />
     </>
   );

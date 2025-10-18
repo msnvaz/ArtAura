@@ -7,12 +7,15 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "sync-images": "node sync-dev-images.js sync",
+    "clean-images": "node sync-dev-images.js clean",
+    "setup-dev": "npm run sync-images && npm run dev"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",
     "@stomp/stompjs": "^7.1.1",
-    "@stripe/react-stripe-js": "^3.9.2",
+    "@stripe/react-stripe-js": "^3.10.0",
     "@stripe/stripe-js": "^7.9.0",
     "axios": "^1.10.0",
     "bootstrap": "^5.3.7",

@@ -13,4 +13,6 @@ public interface DeliveryPartnerDAO {
     Optional<Map<String, String>> getPartnerProfileById(Long partnerId);
     boolean updatePartnerName(Long partnerId, String newName);
     boolean updatePartnerPassword(Long partnerId, String hashedPassword);
+    Optional<String> getCurrentPasswordById(Long partnerId);
+    boolean verifyCurrentPassword(Long partnerId, String currentPassword);
 }

@@ -500,15 +500,6 @@ public class AdminDeliveryDAOImpl implements AdminDeliveryDAO {
             Integer pendingRequests = jdbc.queryForObject(pendingRequestsQuery, Integer.class);
             stats.put("pendingRequests", pendingRequests != null ? pendingRequests : 0);
             
-            // Total revenue from delivered orders
-            String totalRevenueQuery = """
-                SELECT COALESCE(SUM(total_amount), 0) as total_revenue
-                FROM AW_orders 
-                WHERE delivery_status = 'delivered'
-                """;
-            BigDecimal totalRevenue = jdbc.queryForObject(totalRevenueQuery, BigDecimal.class);
-            stats.put("totalRevenue", totalRevenue != null ? totalRevenue : BigDecimal.ZERO);
-            
             // Count delivery partners (assuming there's a delivery_partners table)
             try {
                 String partnersQuery = "SELECT COUNT(*) FROM delivery_partners";
@@ -518,9 +509,21 @@ public class AdminDeliveryDAOImpl implements AdminDeliveryDAO {
                 stats.put("totalDeliveryPartners", 0);
             }
             
-            // Average delivery time and rating (placeholder values)
-            stats.put("avgDeliveryTime", 2.3);
-            stats.put("avgRating", 4.7);
+            // Calculate actual average delivery time based on delivered orders
+            try {
+                String avgTimeQuery = """
+                    SELECT AVG(DATEDIFF(CURDATE(), order_date)) as avg_delivery_time
+                    FROM AW_orders 
+                    WHERE delivery_status = 'delivered'
+                    """;
+                Double avgDeliveryTime = jdbc.queryForObject(avgTimeQuery, Double.class);
+                stats.put("avgDeliveryTime", avgDeliveryTime != null ? Math.round(avgDeliveryTime * 10.0) / 10.0 : 0.0);
+            } catch (Exception e) {
+                stats.put("avgDeliveryTime", 0.0);
+            }
+            
+            // Set rating to 0 since we don't have rating data
+            stats.put("avgRating", 0.0);
             
         } catch (Exception e) {
             System.err.println("Error fetching delivery statistics: " + e.getMessage());
@@ -529,7 +532,6 @@ public class AdminDeliveryDAOImpl implements AdminDeliveryDAO {
             stats.put("activeDeliveries", 0);
             stats.put("completedDeliveries", 0);
             stats.put("pendingRequests", 0);
-            stats.put("totalRevenue", BigDecimal.ZERO);
             stats.put("totalDeliveryPartners", 0);
             stats.put("avgDeliveryTime", 0.0);
             stats.put("avgRating", 0.0);

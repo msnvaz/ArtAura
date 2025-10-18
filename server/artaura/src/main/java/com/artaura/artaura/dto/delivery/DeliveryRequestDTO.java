@@ -20,6 +20,8 @@ public class DeliveryRequestDTO {
     private String artworkType;
     private String artworkDimensions;
     private BigDecimal totalAmount;
+    private BigDecimal shippingFee;
+    private BigDecimal paymentAmount; // Amount from payment table
     private Long artistId;
     private String artistName;
     
@@ -97,6 +99,12 @@ public class DeliveryRequestDTO {
 
     public BigDecimal getTotalAmount() { return totalAmount; }
     public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
+
+    public BigDecimal getShippingFee() { return shippingFee; }
+    public void setShippingFee(BigDecimal shippingFee) { this.shippingFee = shippingFee; }
+
+    public BigDecimal getPaymentAmount() { return paymentAmount; }
+    public void setPaymentAmount(BigDecimal paymentAmount) { this.paymentAmount = paymentAmount; }
 
     public Long getArtistId() { return artistId; }
     public void setArtistId(Long artistId) { this.artistId = artistId; }
