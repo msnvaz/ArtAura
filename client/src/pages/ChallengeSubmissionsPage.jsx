@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import Navbar from "../components/common/Navbar";
 import CartSidebar from "../components/cart/CartSidebar";
+import ImageZoomLens from "../components/artworks/ImageZoomLense";
 
 const ChallengeSubmissionsPage = () => {
   const { challengeId } = useParams();
@@ -284,7 +285,7 @@ const ChallengeSubmissionsPage = () => {
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[75vh] overflow-y-auto">
           <div className="relative">
             <button
               onClick={onClose}
@@ -292,14 +293,25 @@ const ChallengeSubmissionsPage = () => {
             >
               ✕
             </button>
-            <img
-              src={currentSubmission.image}
-              alt={currentSubmission.title}
-              className="w-full h-96 object-cover"
-            />
+            {/* More compact image container */}
+            <div className="w-full h-[40vh] overflow-hidden rounded-t-2xl bg-gray-100 flex items-center justify-center">
+              <ImageZoomLens
+                src={currentSubmission.image}
+                alt={currentSubmission.title}
+                zoom={2.5}
+                lensSize={120}
+                className="w-full h-full object-contain"
+                onError={(e) => {
+                  console.error(
+                    "Failed to load submission image:",
+                    currentSubmission.image
+                  );
+                }}
+              />
+            </div>
           </div>
 
-          <div className="p-6">
+          <div className="p-3">
             <div className="flex items-center gap-4 mb-4">
               <img
                 src={currentSubmission.artist.avatar}

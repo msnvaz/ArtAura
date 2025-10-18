@@ -105,31 +105,82 @@ const CommunityPage = () => {
       post.status === "verified" || post.verification_status === "verified"
   );
 
-  // Combine and filter posts
+  // Combine and filter posts with proper chronological sorting
   const getAllPosts = () => {
-    // Ensure exhibitionPosts are sorted by created_at DESC
-    const sortedExhibitionPosts = [...verifiedExhibitionPosts].sort(
-      (a, b) =>
-        new Date(b.createdAt || b.created_at) -
-        new Date(a.createdAt || a.created_at)
-    );
-    // Ensure regular posts are sorted by created_at DESC
-    const sortedRegularPosts = [...posts].sort(
-      (a, b) => new Date(b.created_at) - new Date(a.created_at)
-    );
-    // Exhibition posts should appear first, then regular posts
-    return [...sortedExhibitionPosts, ...sortedRegularPosts];
+    // Add type identifier to regular posts if not present
+    const regularPostsWithType = posts.map((post) => ({
+      ...post,
+      type: "regular",
+      // Ensure consistent date field
+      sortDate: new Date(post.createdAt || post.created_at || Date.now()),
+    }));
+
+    // Add type identifier to exhibition posts and filter verified ones
+    const exhibitionPostsWithType = verifiedExhibitionPosts.map((post) => ({
+      ...post,
+      type: "exhibition",
+      // Ensure consistent date field
+      sortDate: new Date(post.createdAt || post.created_at || Date.now()),
+    }));
+
+    // Combine all posts and sort by creation date (latest first)
+    const allCombinedPosts = [
+      ...regularPostsWithType,
+      ...exhibitionPostsWithType,
+    ];
+
+    return allCombinedPosts.sort((a, b) => {
+      return b.sortDate - a.sortDate; // Latest posts first
+    });
   };
 
   const getFilteredPosts = () => {
     const allPosts = getAllPosts();
     if (activeFilter === "all") return allPosts;
-    return allPosts.filter((post) => post.type === activeFilter);
+    if (activeFilter === "regular") {
+      return allPosts.filter((post) => post.type === "regular");
+    }
+    if (activeFilter === "exhibition") {
+      return allPosts.filter(
+        (post) => post.type === "exhibition" || post.category
+      );
+    }
+    return allPosts;
   };
 
   const safeImageSrc = (src) => {
     return src && src.trim() !== "" ? src : null;
   }; // Helper function to prevent empty src
+
+  // Helper function to get correct avatar path for both artists and buyers
+  const getAvatarPath = (avatarUrl, userType = "artist") => {
+    if (!avatarUrl) {
+      // Return appropriate default avatar based on user type
+      return userType === "buyer"
+        ? "/uploads/buyer/default-buyer-avatar.svg"
+        : "/uploads/profiles/default-avatar.svg";
+    }
+
+    // If it's already a full URL or starts with /, return as is
+    if (avatarUrl.startsWith("http") || avatarUrl.startsWith("/")) {
+      return avatarUrl;
+    }
+
+    // If it's a relative path, determine the correct directory
+    if (userType === "buyer") {
+      // For buyers, check if path already includes buyer directory
+      if (avatarUrl.includes("buyer/")) {
+        return `/${avatarUrl}`;
+      }
+      return `/uploads/buyer/${avatarUrl}`;
+    } else {
+      // For artists, check if path already includes profiles directory
+      if (avatarUrl.includes("profiles/")) {
+        return `/${avatarUrl}`;
+      }
+      return `/uploads/profiles/${avatarUrl}`;
+    }
+  };
 
   const handleImageError = (e) => {
     e.target.alt = "Image not available"; // Set alt attribute to default text
@@ -277,7 +328,6 @@ const CommunityPage = () => {
                 filteredPosts.map((post, index) => {
                   console.log("Rendering post:", post);
                   if (post.type === "exhibition" || post.category) {
-                    // Use a unique key for each exhibition post
                     return (
                       <ExhibitionPost
                         key={post.id || post.postId || `exh-${index}`}
@@ -301,7 +351,7 @@ const CommunityPage = () => {
                         comments={post.comments || 0}
                         artist={{
                           name: post.creatorName || "Unknown User",
-                          avatar: safeImageSrc(post.avatar), // Use safeImageSrc
+                          avatar: getAvatarPath(post.creatorAvatar, "buyer"), // Use creatorAvatar from backend response
                         }}
                       />
                     );
@@ -310,7 +360,7 @@ const CommunityPage = () => {
                       <Post
                         key={post.post_id || `post-${index}`}
                         username={post.artistName || "Unknown Artist"}
-                        avatar={post.artistAvatar || "/assets/user.png"}
+                        avatar={getAvatarPath(post.artistAvatar)}
                         timeAgo={safeFormatDistanceToNow(post.createdAt)}
                         image={post.image.replace(/\[|\]|"/g, "")}
                         likes={post.likes || 0}

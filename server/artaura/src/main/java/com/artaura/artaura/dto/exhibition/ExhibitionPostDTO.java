@@ -23,6 +23,7 @@ public class ExhibitionPostDTO {
     private String createdAt;
     private String status; // pending, verified, rejected
     private String creatorName;
+    private String creatorAvatar; // Add creator avatar field
     private Integer likes;
     // getters and setters
 
@@ -35,6 +36,8 @@ public class ExhibitionPostDTO {
     public void setId(Long id) { this.id = id; }
     public String getCreatorName() { return creatorName; }
     public void setCreatorName(String creatorName) { this.creatorName = creatorName; }
+    public String getCreatorAvatar() { return creatorAvatar; }
+    public void setCreatorAvatar(String creatorAvatar) { this.creatorAvatar = creatorAvatar; }
     public Integer getLikes() { return likes; }
     public void setLikes(Integer likes) { this.likes = likes; }
 }

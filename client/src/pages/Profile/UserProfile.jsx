@@ -139,9 +139,9 @@ const UserProfile = () => {
                     <img
                       src={
                         profileData?.image
-                          ? `${import.meta.env.VITE_API_URL}${
-                              profileData.image
-                            }`
+                          ? profileData.image.startsWith("/uploads/")
+                            ? profileData.image // Use direct path for images in public/uploads
+                            : `/uploads/buyer/${profileData.image}` // Fallback for relative paths
                           : "/default-avatar.png"
                       }
                       alt="Profile"
