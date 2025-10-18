@@ -36,8 +36,11 @@ export const getImageUrl = (imagePath, bustCache = false) => {
     cleanPath = '/' + cleanPath;
   }
 
-  // Add cache busting for recent uploads or when explicitly requested
+  // For development, always serve images from the current frontend server (Vite dev server)
+  // This ensures images stored in client/public/ are accessible
   let finalUrl = cleanPath;
+
+  // Add cache busting for recent uploads or when explicitly requested
   if (bustCache) {
     // Use multiple cache busting parameters for better reliability
     const timestamp = Date.now();
@@ -168,6 +171,8 @@ export const getAvatarUrl = (avatarPath) => {
   // Always use cache busting for profile images to ensure fresh content
   const processedUrl = getImageUrl(avatarPath, true); // Always bust cache for avatars
   debugImagePath(avatarPath, processedUrl, 'avatar');
+
+  console.log(`🖼️ Final avatar URL: ${processedUrl}`);
   return processedUrl;
 };
 
@@ -212,6 +217,8 @@ export const getCoverUrl = (coverPath) => {
   // Always use cache busting for cover images to ensure fresh content
   const processedUrl = getImageUrl(coverPath, true); // Always bust cache for covers
   debugImagePath(coverPath, processedUrl, 'cover');
+
+  console.log(`🖼️ Final cover URL: ${processedUrl}`);
   return processedUrl;
 };
 
