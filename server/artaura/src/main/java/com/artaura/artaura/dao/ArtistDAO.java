@@ -12,7 +12,7 @@ public interface ArtistDAO {
     // ✅ Declare it here
     boolean emailExists(String email);
 
-    void save(ArtistSignupRequest request, String hashedPassword);
+    void save(ArtistSignupRequest request, String hashedPassword, String nicImageUrl);
 
     Optional<LoginUserDataDTO> findByEmail(String email);
 

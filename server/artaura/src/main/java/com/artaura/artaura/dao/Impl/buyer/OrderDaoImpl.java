@@ -6,11 +6,14 @@ import com.artaura.artaura.dto.buyer.OrderRequest;
 import com.artaura.artaura.dto.buyer.OrderItemRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 @Repository
 public class OrderDaoImpl implements OrderDao {
@@ -20,7 +23,7 @@ public class OrderDaoImpl implements OrderDao {
     @Override
     @Transactional
     public Long saveOrder(OrderRequest orderRequest) {
-        String orderSql = "INSERT INTO AW_orders (status, order_date, buyer_id, first_name, last_name, email, total_amount, shipping_address, contact_number, payment_method, stripe_payment_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String orderSql = "INSERT INTO AW_orders (order_date, buyer_id, first_name, last_name, email, shipping_address, contact_number, payment_method, stripe_payment_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         String shippingAddress = orderRequest.getBillingAddress();
         if (orderRequest.getBillingCity() != null) shippingAddress += ", " + orderRequest.getBillingCity();
         if (orderRequest.getBillingState() != null) shippingAddress += ", " + orderRequest.getBillingState();
@@ -37,7 +40,6 @@ public class OrderDaoImpl implements OrderDao {
         }
         // Use total_amount from DTO for DB insert
         jdbcTemplate.update(orderSql,
-                "excrow", // force status to excrow
                 mysqlDateTime,
                 orderRequest.getBuyerId(),
                 orderRequest.getBillingFirstName(),
@@ -175,5 +177,84 @@ public class OrderDaoImpl implements OrderDao {
             return order;
         });
         return orders;
+    }
+
+    // Add these methods to your payment DAO implementation
+    @Override
+    public boolean savePayment(Map<String, Object> paymentData) {
+        String sql = "INSERT INTO payment (commission_request_id, artist_id, buyer_id, amount, status, created_at) " +
+                "VALUES (?, ?, ?, ?, ?, ?)";
+
+        try {
+            int rowsAffected = jdbcTemplate.update(sql,
+                    paymentData.get("commissionRequestId"),
+                    paymentData.get("artistId"),
+                    paymentData.get("buyerId"),
+                    paymentData.get("amount"),
+                    paymentData.get("status"),
+                    paymentData.get("createdAt")
+            );
+            return rowsAffected > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // Fix the commission DAO implementation
+    @Override
+    public Map<String, Object> getCommissionRequestById(Long id) {
+        String sql = "SELECT id, artist_id, buyer_id, budget FROM commission_requests WHERE id = ?";
+        
+        try {
+            Map<String, Object> result = jdbcTemplate.queryForMap(sql, id);
+            
+            // Debug logging to see what we're getting
+            System.out.println("Commission request data for ID " + id + ": " + result);
+            
+            // Ensure artist_id is properly converted to Long
+            Object artistIdObj = result.get("artist_id");
+            if (artistIdObj != null) {
+                if (artistIdObj instanceof Number) {
+                    result.put("artistId", ((Number) artistIdObj).longValue());
+                } else {
+                    result.put("artistId", Long.parseLong(artistIdObj.toString()));
+                }
+            } else {
+                throw new RuntimeException("Artist ID is null for commission request ID: " + id);
+            }
+            
+            return result;
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.err.println("Failed to get commission request with ID: " + id + ", Error: " + e.getMessage());
+            return null;
+        }
+    }
+
+    @Override
+    public boolean updateCommissionShippingAddress(Long commissionId, String shippingAddress) {
+        String sql = "UPDATE commission_requests SET shipping_address = ? WHERE id = ?";
+
+        try {
+            int rowsAffected = jdbcTemplate.update(sql, shippingAddress, commissionId);
+            return rowsAffected > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    @Override
+    public boolean updateCommissionPaymentStatus(Long commissionId, String paymentStatus) {
+        String sql = "UPDATE commission_requests SET payment_status = ? WHERE id = ?";
+
+        try {
+            int rowsAffected = jdbcTemplate.update(sql, paymentStatus, commissionId);
+            return rowsAffected > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }

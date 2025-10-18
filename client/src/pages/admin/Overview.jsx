@@ -163,43 +163,43 @@ const Overview = () => {
       value: loading ? '...' : overviewData.totalUsers.toLocaleString(), 
       icon: Users, 
       color: '#D87C5A',
-      trend: '+12%'
+      trend: ''
     },
     { 
       label: 'Total Artists', 
       value: loading ? '...' : overviewData.totalArtists.toLocaleString(), 
       icon: User, 
       color: '#FFD95A',
-      trend: '+8%'
+      trend: ''
     },
     { 
       label: 'Platform Fees Earned', 
       value: loading ? '...' : overviewData.platformFees.toLocaleString(undefined, { style: 'currency', currency: 'LKR' }),
       icon: DollarSign, 
       color: '#5D3A00',
-      trend: '+15%'
+      trend: ''
     },
     { 
       label: 'Total Transactions', 
       value: loading ? '...' : overviewData.totalTransactions.toLocaleString(), 
       icon: CreditCard, 
       color: '#4CAF50',
-      trend: '+22%'
+      trend: ''
     },
     { 
       label: 'Pending Payments', 
       value: loading ? '...' : overviewData.pendingPayments.toLocaleString(), 
       icon: Calendar, 
       color: '#FF9800',
-      trend: '-5%'
+      trend: ''
     }
   ];
 
   // Mini chart component for trend visualization
   const MiniChart = ({ trend }) => (
     <div className="flex items-center">
-      <TrendingUp className={`w-4 h-4 mr-1 ${trend.startsWith('+') ? 'text-green-500' : 'text-red-500'}`} />
-      <span className={`text-sm font-medium ${trend.startsWith('+') ? 'text-green-500' : 'text-red-500'}`}>
+      <TrendingUp className={`w-4 h-4 mr-1 ${trend.startsWith('+') ? 'text-red-500' : 'text-green-500'}`} />
+      <span className={`text-sm font-medium ${trend.startsWith('+') ? 'text-red-500' : 'text-green-500'}`}>
         {trend}
       </span>
     </div>

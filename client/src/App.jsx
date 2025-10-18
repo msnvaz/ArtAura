@@ -35,6 +35,8 @@ import ChallengesPage from "./pages/ChallengesPage";
 import ChallengeSubmissionPage from "./pages/ChallengeSubmissionPage";
 import ChallengeSubmissionsPage from "./pages/ChallengeSubmissionsPage";
 import MyPosts from "./pages/MyPosts";
+import CommissionPayment from "./pages/CommissionPayment";
+import CommissionPaymentConfirmation from "./pages/CommissionPaymentConfirmation";
 
 // Cart and Checkout Pages
 import CartPage from "./pages/CartPage";
@@ -107,6 +109,8 @@ function AppWrapper() {
         <Route path="/scoring-criteria" element={<Layout><ScoringCriteria /></Layout>} />
         <Route path="/delivery/dashboard" element={<PageTransition><DeliveryPartnerPage /></PageTransition>} />
         <Route path="/delivery-partner" element={<PageTransition><DeliveryPartnerPage /></PageTransition>} />
+        <Route path="/commission-payment/:commissionId" element={<PageTransition><CommissionPayment /></PageTransition>} />
+        <Route path="/commission-payment-confirmation" element={<PageTransition><CommissionPaymentConfirmation /></PageTransition>} />
       </Routes>
       {isLargeFooter ? <FooterLarge /> : <Footer />}
     </>
