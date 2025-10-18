@@ -13,10 +13,17 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/uploads")
 public class UploadController {
+
     @PostMapping("/image")
     public ResponseEntity<?> uploadImage(@RequestParam("image") MultipartFile imageFile) {
         try {
-            String uploadDir = System.getProperty("user.dir") + File.separator + "uploads" + File.separator;
+            // Use client/public/uploads directory
+            String currentDir = System.getProperty("user.dir");
+            String projectRoot = currentDir.endsWith("artaura")
+                    ? currentDir.substring(0, currentDir.lastIndexOf("artaura"))
+                    : currentDir + File.separator;
+
+            String uploadDir = projectRoot + "client" + File.separator + "public" + File.separator + "uploads" + File.separator;
             Files.createDirectories(Paths.get(uploadDir));
             String fileName = System.currentTimeMillis() + "_" + imageFile.getOriginalFilename();
             File dest = new File(uploadDir + fileName);
