@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Image Test</title>
+</head>
+
+<body>
+    <h1>Direct Image Test</h1>
+
+    <h2>Avatar Test</h2>
+    <img src="/uploads/profiles/11_avatar_1760780925615.jpg" alt="Avatar"
+        style="max-width: 200px; border: 2px solid blue;">
+    <p>Avatar: /uploads/profiles/11_avatar_1760780925615.jpg</p>
+
+    <h2>Cover Test</h2>
+    <img src="/uploads/profiles/11_cover_1760781232329.PNG" alt="Cover"
+        style="max-width: 300px; border: 2px solid red;">
+    <p>Cover: /uploads/profiles/11_cover_1760781232329.PNG</p>
+
+    <h2>Debug Info</h2>
+    <script>
+        console.log('Testing image loading...');
+
+        const avatarImg = new Image();
+        avatarImg.onload = () => console.log('✅ Avatar loaded successfully');
+        avatarImg.onerror = () => console.log('❌ Avatar failed to load');
+        avatarImg.src = '/uploads/profiles/11_avatar_1760780925615.jpg';
+
+        const coverImg = new Image();
+        coverImg.onload = () => console.log('✅ Cover loaded successfully');
+        coverImg.onerror = () => console.log('❌ Cover failed to load');
+        coverImg.src = '/uploads/profiles/11_cover_1760781232329.PNG';
+    </script>
+</body>
+
+</html>

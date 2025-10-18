@@ -47,7 +47,8 @@ public class SecurityConfig {
                         "/api/users/**",
                         "/ws/**", // <-- Make sure this is present and permitted
                         "/api/posts/*/comments", // Allow GET access to comments without authentication
-                        "/api/posts/*/like-status" // Allow GET access to like status without authentication
+                        "/api/posts/*/like-status", // Allow GET access to like status without authentication
+                        "/api/challenges/active" // Allow public access to view active challenges
                 ).permitAll() // ✅ Public endpoints
 
                 .requestMatchers("/api/posts/create").authenticated()

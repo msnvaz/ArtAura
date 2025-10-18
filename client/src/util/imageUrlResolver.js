@@ -1,35 +1,54 @@
+import { debugImagePath } from './debugImageUpload';
+
 /**
  * Image URL utility with fallback support
  * Handles multiple image sources for development team sharing
  */
 
 // Get API URL from environment
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+
+// Default images from public folder
+export const DEFAULT_IMAGES = {
+  avatar: '/art1.jpeg',
+  cover: '/heritage.jpeg',
+  artwork: '/art2.jpeg'
+};
 
 /**
- * Get image URL with fallback logic
+ * Get image URL with fallback logic and cache busting
  * @param {string} imagePath - Relative image path from backend (e.g., "/uploads/profiles/image.jpg")
- * @param {boolean} usePublicFallback - Whether to use public folder as fallback
+ * @param {boolean} bustCache - Whether to add cache busting parameter
  * @returns {string} Complete image URL
  */
-export const getImageUrl = (imagePath, usePublicFallback = true) => {
+export const getImageUrl = (imagePath, bustCache = false) => {
   if (!imagePath) return '';
 
-  // If image path already starts with http, return as is
+  // If image path already starts with http, strip the domain to make it relative
   if (imagePath.startsWith('http')) {
-    return imagePath;
+    const url = new URL(imagePath);
+    imagePath = url.pathname;
   }
 
-  // Primary: Backend served image
-  const backendUrl = `${API_URL}${imagePath}`;
-
-  if (!usePublicFallback) {
-    return backendUrl;
+  // Ensure we have a clean path that starts with /
+  let cleanPath = imagePath;
+  if (!cleanPath.startsWith('/')) {
+    cleanPath = '/' + cleanPath;
   }
 
-  // For development: Check if image exists in public folder
-  // This is a synchronous check, for async use checkImageExists()
-  return backendUrl;
+  // Add cache busting for recent uploads or when explicitly requested
+  let finalUrl = cleanPath;
+  if (bustCache) {
+    // Use multiple cache busting parameters for better reliability
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(7);
+    finalUrl += `?t=${timestamp}&r=${random}&v=${Math.floor(timestamp / 1000)}`;
+  }
+
+  // Log the image URL being generated for debugging
+  console.log(`🖼️ Image URL generated: ${imagePath} -> ${finalUrl}`);
+
+  return finalUrl;
 };
 
 /**
@@ -60,30 +79,31 @@ export const checkImageExists = async (url) => {
 };
 
 /**
- * Get image URL with automatic fallback checking
+ * Get image URL with smart fallback checking
  * @param {string} imagePath - Relative image path
- * @returns {Promise<string>} Best available image URL
+ * @returns {Promise<string>} Resolved image URL
  */
 export const getImageUrlWithFallback = async (imagePath) => {
-  if (!imagePath) return '';
-
-  const backendUrl = getImageUrl(imagePath, false);
   const publicUrl = getPublicImageUrl(imagePath);
+  const backendUrl = `${API_URL}${imagePath}`;
 
-  // Try backend first
-  const backendExists = await checkImageExists(backendUrl);
-  if (backendExists) {
-    return backendUrl;
-  }
-
-  // Fallback to public folder
+  // Try frontend Vite server first (more reliable in development)
   const publicExists = await checkImageExists(publicUrl);
   if (publicExists) {
+    console.log(`✅ Image found on frontend server: ${publicUrl}`);
     return publicUrl;
   }
 
-  // Return backend URL anyway (might work or show 404)
-  return backendUrl;
+  // Fallback to backend server
+  const backendExists = await checkImageExists(backendUrl);
+  if (backendExists) {
+    console.log(`✅ Image found on backend server: ${backendUrl}`);
+    return backendUrl;
+  }
+
+  // If neither works, return frontend URL (Vite server is more reliable)
+  console.log(`⚠️ Image not found on either server, using frontend URL: ${publicUrl}`);
+  return publicUrl;
 };
 
 /**
@@ -101,40 +121,98 @@ export const useImageUrl = (imagePath, fallbackUrl = '') => {
       return;
     }
 
-    getImageUrlWithFallback(imagePath).then(url => {
-      setResolvedUrl(url || fallbackUrl);
-    });
+    getImageUrlWithFallback(imagePath).then(setResolvedUrl);
   }, [imagePath, fallbackUrl]);
 
   return resolvedUrl;
 };
 
-// Default fallback images for different types
-export const DEFAULT_IMAGES = {
-  avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=200',
-  cover: 'https://images.pexels.com/photos/1070981/pexels-photo-1070981.jpeg?auto=compress&cs=tinysrgb&w=800',
-  artwork: 'https://images.pexels.com/photos/1070981/pexels-photo-1070981.jpeg?auto=compress&cs=tinysrgb&w=400',
-  post: 'https://images.pexels.com/photos/1070981/pexels-photo-1070981.jpeg?auto=compress&cs=tinysrgb&w=400'
-};
-
 /**
- * Get artist avatar URL with fallbacks
+ * Get artist avatar URL with fallbacks and smart matching
  * @param {string} avatarPath - Avatar path from backend
  * @returns {string} Avatar URL with fallbacks
  */
 export const getAvatarUrl = (avatarPath) => {
-  if (!avatarPath) return DEFAULT_IMAGES.avatar;
-  return getImageUrl(avatarPath);
+  if (!avatarPath) {
+    debugImagePath(avatarPath, DEFAULT_IMAGES.avatar, 'avatar');
+    return DEFAULT_IMAGES.avatar;
+  }
+
+  // Handle legacy paths - if it's a profile image not in profiles subdirectory, redirect it
+  if (avatarPath.includes('/uploads/profile_') && !avatarPath.includes('/uploads/profiles/')) {
+    const filename = avatarPath.split('/').pop();
+    const redirectedPath = `/uploads/profiles/${filename}`;
+    debugImagePath(avatarPath, redirectedPath, 'avatar');
+    return redirectedPath;
+  }
+
+  // For any path that exists, always trust the database and use cache busting for recent uploads
+  console.log(`🖼️ Processing avatar URL: ${avatarPath}`);
+
+  // Check if this is a recent upload (based on timestamp in filename)
+  const timestampMatch = avatarPath.match(/_(\d{13})\./);
+  let shouldBustCache = false;
+
+  if (timestampMatch) {
+    const timestamp = parseInt(timestampMatch[1]);
+    const now = Date.now();
+    const oneDayAgo = now - (24 * 60 * 60 * 1000); // 24 hours in milliseconds
+
+    // If uploaded within the last day, use aggressive cache busting
+    if (timestamp > oneDayAgo) {
+      console.log(`🕐 Recent avatar upload detected: ${avatarPath}, using aggressive cache busting`);
+      shouldBustCache = true;
+    }
+  }
+
+  // Always use cache busting for profile images to ensure fresh content
+  const processedUrl = getImageUrl(avatarPath, true); // Always bust cache for avatars
+  debugImagePath(avatarPath, processedUrl, 'avatar');
+  return processedUrl;
 };
 
 /**
- * Get artist cover URL with fallbacks  
+ * Get artist cover URL with fallbacks and smart matching  
  * @param {string} coverPath - Cover path from backend
  * @returns {string} Cover URL with fallbacks
  */
 export const getCoverUrl = (coverPath) => {
-  if (!coverPath) return DEFAULT_IMAGES.cover;
-  return getImageUrl(coverPath);
+  if (!coverPath) {
+    debugImagePath(coverPath, DEFAULT_IMAGES.cover, 'cover');
+    return DEFAULT_IMAGES.cover;
+  }
+
+  // Handle legacy paths - if it's a cover image not in profiles subdirectory, redirect it
+  if (coverPath.includes('/uploads/') && (coverPath.includes('cover') || coverPath.includes('bg')) && !coverPath.includes('/uploads/profiles/')) {
+    const filename = coverPath.split('/').pop();
+    const redirectedPath = `/uploads/profiles/${filename}`;
+    debugImagePath(coverPath, redirectedPath, 'cover');
+    return redirectedPath;
+  }
+
+  // For any path that exists, always trust the database and use cache busting for recent uploads
+  console.log(`🖼️ Processing cover URL: ${coverPath}`);
+
+  // Check if this is a recent upload (based on timestamp in filename)
+  const timestampMatch = coverPath.match(/_(\d{13})\./);
+  if (timestampMatch) {
+    const timestamp = parseInt(timestampMatch[1]);
+    const now = Date.now();
+    const oneDayAgo = now - (24 * 60 * 60 * 1000); // 24 hours in milliseconds
+
+    // If uploaded within the last day, trust the database path and bust cache
+    if (timestamp > oneDayAgo) {
+      console.log(`🕐 Recent cover upload detected: ${coverPath}, using aggressive cache busting`);
+      const processedUrl = getImageUrl(coverPath, true); // Enable cache busting for recent uploads
+      debugImagePath(coverPath, processedUrl, 'cover');
+      return processedUrl;
+    }
+  }
+
+  // Always use cache busting for cover images to ensure fresh content
+  const processedUrl = getImageUrl(coverPath, true); // Always bust cache for covers
+  debugImagePath(coverPath, processedUrl, 'cover');
+  return processedUrl;
 };
 
 /**
@@ -144,5 +222,16 @@ export const getCoverUrl = (coverPath) => {
  */
 export const getArtworkUrl = (artworkPath) => {
   if (!artworkPath) return DEFAULT_IMAGES.artwork;
-  return getImageUrl(artworkPath);
+
+  // Handle both old and new artwork paths
+  console.log(`🖼️ Processing artwork URL: ${artworkPath}`);
+
+  // If it's an old path in root uploads but not in artworks subdirectory, keep it as is for backward compatibility
+  if (artworkPath.includes('/uploads/') && !artworkPath.includes('/uploads/artworks/') && !artworkPath.includes('/uploads/profiles/')) {
+    console.log(`📁 Legacy artwork path detected: ${artworkPath}`);
+    return getImageUrl(artworkPath, true); // Use cache busting for legacy paths too
+  }
+
+  // For new artworks in /uploads/artworks/, use cache busting
+  return getImageUrl(artworkPath, true);
 };
