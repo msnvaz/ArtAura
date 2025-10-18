@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '../../components/Navbar';
 import {
   DollarSign,
@@ -14,45 +14,91 @@ import {
 } from 'lucide-react';
 
 const Dashboard = () => {
-  // --- Statistics Card Data (Sri Lankan Context) ---
-  const stats = [
+  const API_URL = import.meta.env.VITE_API_URL;
+  
+  // State for dashboard data
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [dashboardData, setDashboardData] = useState(null);
+
+  // Fetch dashboard statistics from backend
+  useEffect(() => {
+    const fetchDashboardStats = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const token = localStorage.getItem("token");
+        const shopId = localStorage.getItem("shopId");
+
+        if (!shopId) {
+          throw new Error("Shop ID not found. Please log in again.");
+        }
+
+        const response = await fetch(
+          `${API_URL}/api/shop/dashboard/stats?shopId=${shopId}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch dashboard data");
+        }
+
+        const data = await response.json();
+        console.log("Dashboard data received:", data);
+        setDashboardData(data);
+        setLoading(false);
+
+      } catch (err) {
+        console.error("Error fetching dashboard stats:", err);
+        setError(err.message);
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardStats();
+  }, [API_URL]);
+
+  // Get current month name
+  const currentMonth = new Date().toLocaleString('en-US', { month: 'long' });
+
+  // --- Statistics Card Data (Dynamic from backend) ---
+  const stats = dashboardData ? [
     {
       title: 'Total Revenue',
-      value: 'Rs. 3,25,000',
-      change: '+12.5%',
-      trend: 'up',
+      value: `Rs. ${Number(dashboardData.totalRevenue || 0).toLocaleString()}`,
+      change: dashboardData.revenueChange || '0.0%',
+      trend: dashboardData.revenueChange?.startsWith('+') ? 'up' : 'down',
       icon: DollarSign,
       iconBg: 'bg-[#D87C5A]',
       textColor: 'text-[#D87C5A]',
     },
     {
       title: 'Products in Stock',
-      value: '847',
-      change: '-3.2%',
-      trend: 'down',
+      value: String(dashboardData.productsInStock || 0),
+      change: dashboardData.stockChange || '0.0%',
+      trend: dashboardData.stockChange?.startsWith('+') ? 'up' : 'down',
       icon: Package,
       iconBg: 'bg-[#ffd95a]',
       textColor: 'text-[#bfa100]',
     },
     {
-      title: 'Active Sponsorships',
-      value: '23',
-      change: '+8.1%',
-      trend: 'up',
-      icon: Handshake,
-      iconBg: 'bg-[#66bb6a]',
-      textColor: 'text-[#2e7d32]',
-    },
-    {
-      title: 'Monthly Orders',
-      value: '156',
-      change: '+15.3%',
-      trend: 'up',
+      title: `${currentMonth} Orders`,
+      subtitle: 'This month',
+      value: String(dashboardData.monthlyOrders || 0),
+      change: dashboardData.ordersChange || '0.0%',
+      trend: dashboardData.ordersChange?.startsWith('+') ? 'up' : 'down',
       icon: ShoppingCart,
       iconBg: 'bg-[#ffb74d]',
       textColor: 'text-[#e65100]',
     }
-  ];
+  ] : [];
 
   // --- Recent Activities Data (Sri Lankan Context) ---
   const recentActivities = [
@@ -103,6 +149,41 @@ const Dashboard = () => {
     }
   ];
 
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="pt-4 px-1 sm:px-2 lg:px-4 max-w-full mx-0">
+          <div className="flex items-center justify-center h-96">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#D87C5A] mx-auto mb-4"></div>
+              <p className="text-[#5D3A00] font-semibold">Loading dashboard...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="pt-4 px-1 sm:px-2 lg:px-4 max-w-full mx-0">
+          <div className="flex items-center justify-center h-96">
+            <div className="text-center">
+              <div className="text-red-500 text-5xl mb-4">⚠️</div>
+              <p className="text-[#5D3A00] font-semibold text-lg mb-2">Failed to load dashboard</p>
+              <p className="text-gray-600">{error}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -112,7 +193,7 @@ const Dashboard = () => {
         
         {/* Stats Cards Section */}
         <div className="mb-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
             {stats.map((stat, index) => {
               const Icon = stat.icon;
               return (
@@ -134,6 +215,9 @@ const Dashboard = () => {
                   </div>
                   <div>
                     <h3 className="text-sm font-medium text-[#5D3A00] mb-1">{stat.title}</h3>
+                    {stat.subtitle && (
+                      <p className="text-xs text-[#5D3A00] opacity-60 mb-2">{stat.subtitle}</p>
+                    )}
                     <p className={`text-2xl font-bold ${stat.textColor}`}>{stat.value}</p>
                   </div>
                 </div>
@@ -211,15 +295,21 @@ const Dashboard = () => {
               <div className="space-y-3">
                 <div className="flex justify-between items-center p-4 bg-[#FFF5E1] rounded-xl border border-[#FFD95A]/20">
                   <span className="text-sm text-[#5D3A00] font-medium">Orders</span>
-                  <span className="text-lg font-bold text-[#5D3A00]">12</span>
+                  <span className="text-lg font-bold text-[#5D3A00]">
+                    {dashboardData ? dashboardData.todayOrders || 0 : 0}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center p-4 bg-[#FFE4D6] rounded-xl border border-[#D87C5A]/20">
                   <span className="text-sm text-[#5D3A00] font-medium">Revenue</span>
-                  <span className="text-lg font-bold text-[#5D3A00]">Rs. 28,500</span>
+                  <span className="text-lg font-bold text-[#5D3A00]">
+                    Rs. {dashboardData ? Number(dashboardData.todayRevenue || 0).toLocaleString() : 0}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center p-4 bg-[#E8F5E9] rounded-xl border border-green-200">
                   <span className="text-sm text-[#5D3A00] font-medium">New Customers</span>
-                  <span className="text-lg font-bold text-[#5D3A00]">3</span>
+                  <span className="text-lg font-bold text-[#5D3A00]">
+                    {dashboardData ? dashboardData.todayNewCustomers || 0 : 0}
+                  </span>
                 </div>
               </div>
             </div>
