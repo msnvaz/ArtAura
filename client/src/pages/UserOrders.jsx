@@ -19,6 +19,17 @@ import CommissionOrderDetailsModal from "../components/modals/CommissionOrderDet
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+// Helper function to get correct image path from uploads folder
+const getImagePath = (imagePath) => {
+  if (!imagePath) return "/uploads/default-artwork.jpg"; // fallback image
+  // If it's already a full URL or starts with /, return as is (served from public folder)
+  if (imagePath.startsWith("http") || imagePath.startsWith("/")) {
+    return imagePath;
+  }
+  // Otherwise, assume it's a relative path and prepend /
+  return `/${imagePath}`;
+};
+
 const fetchCommissionOrders = async (setCommissionOrders, setLoading) => {
   setLoading(true);
   try {
@@ -400,11 +411,21 @@ const UserOrders = () => {
                       <div className="flex items-center gap-3">
                         {order.items && order.items.length > 0 ? (
                           order.items.slice(0, 3).map((item, index) => (
-                            <div
-                              key={index}
-                              className="w-12 h-12 rounded-lg bg-[#FFF5E1] border border-[#FFD95A] flex items-center justify-center text-[#7f5539] text-xs font-medium"
-                            >
-                              {item.title || "No Image"}
+                            <div key={index} className="relative">
+                              {item.imageUrl ? (
+                                <img
+                                  src={getImagePath(item.imageUrl)}
+                                  alt={item.title}
+                                  className="w-12 h-12 rounded-lg object-cover border border-[#FFD95A]"
+                                  onError={(e) => {
+                                    e.target.src = '/uploads/default-artwork.jpg';
+                                  }}
+                                />
+                              ) : (
+                                <div className="w-12 h-12 rounded-lg bg-[#FFF5E1] border border-[#FFD95A] flex items-center justify-center text-[#7f5539] text-xs font-medium">
+                                  {item.title ? item.title.substring(0, 2).toUpperCase() : "No"}
+                                </div>
+                              )}
                             </div>
                           ))
                         ) : (
