@@ -18,6 +18,7 @@ import { useCurrency } from '../../context/CurrencyContext';
 import { useAuth } from '../../context/AuthContext';
 import adminOverviewApi from '../../services/adminOverviewApi';
 import adminPaymentApi from '../../services/adminPaymentApi';
+import adminSettingsApi from '../../services/adminSettingsApi';
 
 const Overview = () => {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -114,6 +115,47 @@ const Overview = () => {
     fetchRecentPayments();
     setIsLoaded(true);
   }, [token]);
+
+  // Admin settings state
+  const [adminSettings, setAdminSettings] = useState([]);
+  const [savingId, setSavingId] = useState(null);
+
+  const fetchAdminSettings = async () => {
+    try {
+      const data = await adminSettingsApi.getAllSettings();
+      // normalize to settings array
+      const settings = data.settings || data || [];
+      setAdminSettings(settings);
+    } catch (err) {
+      console.error('Error fetching admin settings:', err);
+    }
+  };
+
+  const handleSettingChange = (id, value) => {
+    setAdminSettings(prev => prev.map(s => s.settingId === id ? { ...s, settingValue: value } : s));
+  };
+
+  const handleUpdateAllSettings = async () => {
+    try {
+      setSavingId('all');
+      // Update all settings
+      await Promise.all(
+        adminSettings.map(setting => 
+          adminSettingsApi.updateSetting(setting.settingId, setting.settingValue)
+        )
+      );
+      // optionally refetch
+      await fetchAdminSettings();
+    } catch (err) {
+      console.error('Failed to save settings:', err);
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  useEffect(() => {
+    fetchAdminSettings();
+  }, []);
 
   const stats = [
     { 
@@ -302,8 +344,9 @@ const Overview = () => {
           ))}
         </div>
 
-        {/* Recent Activities Section */}
-        <div className="grid grid-cols-1 gap-6">
+        {/* Recent Activities & Admin Settings */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Recent Activities Section */}
           <div className="rounded-lg shadow-sm border h-full relative overflow-hidden" style={{backgroundColor: '#FFF5E1'}}>
             <div 
               className="absolute inset-0 opacity-10"
@@ -370,7 +413,58 @@ const Overview = () => {
                 )}
               </div>
               
-            
+            </div>
+          </div>
+
+          {/* Admin Settings Section */}
+          <div className="rounded-lg shadow-sm border h-full relative overflow-hidden" style={{backgroundColor: '#FFF5E1'}}>
+            <div className="p-6 relative z-10">
+              <h2 className="text-xl font-bold mb-4" style={{color: '#5D3A00'}}>Admin Settings</h2>
+              <div className="space-y-2">
+                {adminSettings.length > 0 ? (
+                  adminSettings.map((setting) => (
+                    <div key={setting.settingId} className="p-2 bg-white rounded border">
+                      <p className="text-xs font-medium mb-1" style={{color: '#5D3A00'}}>
+                        {setting.settingName.replace(/_/g, ' ')}
+                      </p>
+                      <input
+                        type="text"
+                        className="w-full border px-2 py-1 text-sm rounded"
+                        value={setting.settingValue}
+                        onChange={(e) => handleSettingChange(setting.settingId, e.target.value)}
+                      />
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-4">
+                    <p className="text-sm opacity-60" style={{color: '#5D3A00'}}>No settings available</p>
+                  </div>
+                )}
+              </div>
+              
+              {/* Single Update All Button */}
+              {adminSettings.length > 0 && (
+                <div className="mt-4 pt-3 border-t border-gray-200">
+                  <button
+                    className="w-full py-2 px-4 rounded font-medium text-sm transition-all duration-200"
+                    style={{ backgroundColor: '#D87C5A', color: 'white' }}
+                    onClick={handleUpdateAllSettings}
+                    disabled={savingId === 'all'}
+                    onMouseOver={(e) => {
+                      if (savingId !== 'all') {
+                        e.target.style.backgroundColor = '#C06F4A';
+                      }
+                    }}
+                    onMouseOut={(e) => {
+                      if (savingId !== 'all') {
+                        e.target.style.backgroundColor = '#D87C5A';
+                      }
+                    }}
+                  >
+                    {savingId === 'all' ? 'Updating...' : 'Update All Settings'}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
