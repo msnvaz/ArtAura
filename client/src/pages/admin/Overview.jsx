@@ -8,23 +8,76 @@ import {
   Shield,
   Settings,
   User,
-  Trophy
+  Trophy,
+  RefreshCw
 } from 'lucide-react';
 import { useCurrency } from '../../context/CurrencyContext';
+import adminOverviewApi from '../../services/adminOverviewApi';
 
 const Overview = () => {
   const [isLoaded, setIsLoaded] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [overviewData, setOverviewData] = useState({
+    totalUsers: 0,
+    totalArtists: 0,
+    activeArtists: 0,
+    platformFees: 0
+  });
   const { formatPrice } = useCurrency();
 
+  // Fetch overview data from backend
+  const fetchOverviewData = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const data = await adminOverviewApi.getOverviewStatistics();
+      setOverviewData({
+        totalUsers: data.totalUsers || 0,
+        totalArtists: data.totalArtists || 0,
+        activeArtists: data.activeArtists || 0,
+        platformFees: data.platformFees || 0
+      });
+    } catch (err) {
+      console.error('Error fetching overview data:', err);
+      setError('Failed to load overview data - using mock data');
+      // Use mock data that matches expected values when backend is not available
+      setOverviewData({
+        totalUsers: 4, // This should match Users.jsx count (artists + buyers + moderators)
+        totalArtists: 2, // Total artists in system
+        activeArtists: 1, // Active artists only
+        platformFees: 137.55 // Sum of all fee_amount from platform_fees table
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
+    fetchOverviewData();
     setIsLoaded(true);
   }, []);
 
   const stats = [
-    { label: 'Total Users', value: '2,847', icon: Users, color: '#D87C5A' },
-    { label: 'Active Artists', value: '1,234', icon: Palette, color: '#FFD95A' },
-    { label: 'Total Revenue', value: formatPrice(45230), icon: DollarSign, color: '#5D3A00' },
-    { label: 'Pending Reports', value: '12', icon: AlertTriangle, color: '#D87C5A' }
+    { 
+      label: 'Total Users', 
+      value: loading ? '...' : overviewData.totalUsers.toLocaleString(), 
+      icon: Users, 
+      color: '#D87C5A' 
+    },
+    { 
+      label: 'Total Artists', 
+      value: loading ? '...' : overviewData.totalArtists.toLocaleString(), 
+      icon: Palette, 
+      color: '#FFD95A' 
+    },
+    { 
+      label: 'Platform Fees Earned', 
+      value: loading ? '...' : overviewData.platformFees.toLocaleString(undefined, { style: 'currency', currency: 'LKR' }),
+      icon: DollarSign, 
+      color: '#5D3A00' 
+    }
   ];
 
   const quickActions = [
@@ -35,16 +88,36 @@ const Overview = () => {
   ];
 
   const recentActivity = [
-    { type: 'user', message: 'New artist registration: Alex Johnson', time: '2 hours ago', icon: User },
-    { type: 'payment', message: 'Payment processed: $1,250 to Elena Rodriguez', time: '4 hours ago', icon: DollarSign },
-    { type: 'report', message: 'Content reported: Inappropriate artwork', time: '6 hours ago', icon: AlertTriangle },
-    { type: 'exhibition', message: 'Exhibition approved: Digital Art Showcase', time: '8 hours ago', icon: Trophy }
+    { 
+      type: 'user', 
+      message: `Total of ${overviewData.totalUsers} users registered on platform`, 
+      time: 'System stats', 
+      icon: User 
+    },
+    { 
+      type: 'payment', 
+      message: `Platform earned ${formatPrice(overviewData.platformFees)} in fees`, 
+      time: 'Financial stats', 
+      icon: DollarSign 
+    },
+    { 
+      type: 'artists', 
+      message: `${overviewData.totalArtists} total artists on platform`, 
+      time: 'Artist stats', 
+      icon: Palette 
+    },
+    { 
+      type: 'active', 
+      message: `${overviewData.activeArtists} artists currently active`, 
+      time: 'Active stats', 
+      icon: Trophy 
+    }
   ];
 
   return (
     <>
       {/* Add smooth animations */}
-      <style jsx>{`
+      <style>{`
         @keyframes smoothFadeIn {
           from {
             opacity: 0;
@@ -94,8 +167,48 @@ const Overview = () => {
       `}</style>
 
       <div className="w-full overview-container">
+        {/* Header with Refresh Button */}
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <h1 className="text-3xl font-bold" style={{color: '#5D3A00'}}>Admin Overview</h1>
+            <p className="text-lg" style={{color: '#D87C5A'}}>Platform statistics and insights</p>
+          </div>
+          <button
+            onClick={fetchOverviewData}
+            disabled={loading}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200"
+            style={{
+              backgroundColor: loading ? '#cccccc' : '#D87C5A',
+              color: 'white'
+            }}
+            onMouseOver={(e) => {
+              if (!loading) {
+                e.target.style.backgroundColor = '#C06F4A';
+              }
+            }}
+            onMouseOut={(e) => {
+              if (!loading) {
+                e.target.style.backgroundColor = '#D87C5A';
+              }
+            }}
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            {loading ? 'Refreshing...' : 'Refresh Data'}
+          </button>
+        </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+            <div className="flex items-center">
+              <AlertTriangle className="h-5 w-5 mr-2" />
+              <span>{error}</span>
+            </div>
+          </div>
+        )}
+
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-4 stats-grid">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-4 stats-grid">
           {stats.map((stat, index) => (
             <div key={index} className="rounded-lg shadow-sm border h-full relative overflow-hidden stat-card" style={{backgroundColor: '#FFF5E1'}}>
               {/* Background Image */}
@@ -106,9 +219,7 @@ const Overview = () => {
                     ? 'url("https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80")' // Users - people working
                     : index === 1 
                     ? 'url("https://images.unsplash.com/photo-1541961017774-22349e4a1262?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80")' // Artists - art gallery
-                    : index === 2 
-                    ? 'url("https://images.unsplash.com/photo-1554224155-6726b3ff858f?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80")' // Revenue - money/coins
-                    : 'url("https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80")', // Reports - warning/alert
+                    : 'url("https://images.unsplash.com/photo-1554224155-6726b3ff858f?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80")', // Platform fees - money/coins
                   backgroundSize: 'cover',
                   backgroundPosition: 'center',
                   backgroundRepeat: 'no-repeat'
@@ -118,7 +229,13 @@ const Overview = () => {
                 <div className="flex justify-between items-center">
                   <div>
                     <p className="text-sm font-semibold mb-1" style={{color: '#5D3A00'}}>{stat.label}</p>
-                    <h2 className="text-2xl font-bold" style={{color: '#5D3A00'}}>{stat.value}</h2>
+                    <h2 className="text-2xl font-bold" style={{color: '#5D3A00'}}>
+                      {loading ? (
+                        <div className="animate-pulse bg-gray-300 h-8 w-20 rounded"></div>
+                      ) : (
+                        stat.value
+                      )}
+                    </h2>
                   </div>
                   <div className="p-3 rounded-lg shadow-lg" style={{backgroundColor: stat.color}}>
                     <stat.icon size={24} className="text-white" />
