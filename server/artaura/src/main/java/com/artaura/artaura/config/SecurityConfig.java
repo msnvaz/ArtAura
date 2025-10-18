@@ -1,6 +1,5 @@
 package com.artaura.artaura.config;
 
-import com.artaura.artaura.util.EnvUtil;
 import com.artaura.artaura.security.JwtAuthFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -32,7 +31,8 @@ public class SecurityConfig {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource())) // 🔁 CORS here
                 .csrf(csrf -> csrf.disable()) // ❌ CSRF disabled for JWT stateless
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 🚫 No session
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 🚫 No
+                                                                                                              // session
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/api/auth/login",
@@ -41,8 +41,9 @@ public class SecurityConfig {
                                 "/api/artist/signup",
                                 "/api/buyer/signup",
                                 "/api/shop/signup",
-                                "/uploads/**",   // <<< THIS ALLOWS IMAGE ACCESS
-                                "/api/admin/artworks/**", // <<< TEMPORARY: Allow admin artwork endpoints for development
+                                "/uploads/**", // <<< THIS ALLOWS IMAGE ACCESS
+                                "/api/admin/artworks/**", // <<< TEMPORARY: Allow admin artwork endpoints for
+                                                          // development
                                 "/api/buyer/exhibitions/**",
                                 "/api/users/**",
                                 "/ws/**" // <-- Make sure this is present and permitted
@@ -60,13 +61,12 @@ public class SecurityConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        String clientPort = EnvUtil.getEnv("CLIENT_PORT", "5173"); // Default to 5173 if not set
-        String clientOrigin = "http://localhost:" + clientPort;
-
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of(clientOrigin)); // Use the client-side port from .env
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS")); // Methods allowed
-        config.setAllowedHeaders(List.of("Authorization", "Cache-Control", "Content-Type")); // JWT, etc.
+        // Allow both common frontend ports
+        config.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:5174"));
+        // Include PATCH method for order status updates
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*")); // Allow all headers including Authorization
         config.setAllowCredentials(true); // Allows sending cookies or Authorization headers
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

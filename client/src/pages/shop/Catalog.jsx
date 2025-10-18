@@ -157,8 +157,13 @@ const CatalogManagement = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
+      const shopId = localStorage.getItem("shopId");
 
-      const response = await fetch(`${API_URL}/api/products`, {
+      if (!shopId) {
+        throw new Error("Shop ID not found. Please log in again.");
+      }
+
+      const response = await fetch(`${API_URL}/api/products?shopId=${shopId}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -196,14 +201,21 @@ const CatalogManagement = () => {
     e.preventDefault();
 
     const token = localStorage.getItem("token");
+    const shopId = localStorage.getItem("shopId");
 
     if (!token) {
       showToast("❌ You must be logged in to add a product.", "error", 3000);
       return;
     }
 
+    if (!shopId) {
+      showToast("❌ Shop ID not found. Please log in again.", "error", 3000);
+      return;
+    }
+
     try {
       const productData = {
+        shopId: parseInt(shopId),
         name: newProduct.name,
         sku: newProduct.sku,
         category: newProduct.category,
@@ -255,14 +267,21 @@ const CatalogManagement = () => {
     e.preventDefault();
 
     const token = localStorage.getItem("token");
+    const shopId = localStorage.getItem("shopId");
 
     if (!token) {
       showToast("❌ You must be logged in to edit a product.", "error", 3000);
       return;
     }
 
+    if (!shopId) {
+      showToast("❌ Shop ID not found. Please log in again.", "error", 3000);
+      return;
+    }
+
     try {
       const productData = {
+        shopId: parseInt(shopId),
         name: productToEdit.name,
         sku: productToEdit.sku,
         category: productToEdit.category,
