@@ -33,6 +33,16 @@ public class ImageUploadService {
             System.out.println("Created upload directory: " + created + " at " + uploadDirPath);
         }
 
+        // Generate unique filename
+        String originalFilename = file.getOriginalFilename();
+        String extension = originalFilename != null && originalFilename.contains(".") 
+            ? originalFilename.substring(originalFilename.lastIndexOf(".")) 
+            : ".jpg";
+        String filename = UUID.randomUUID().toString() + extension;
+        
+        // Generate relative path for URL
+        String relativePath = "/uploads/profiles/" + filename;
+
         // Save file
         Path filePath = Paths.get(uploadDirPath + filename);
         Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
