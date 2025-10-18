@@ -3,10 +3,15 @@ import {
   Calendar,
   Clock,
   FileText,
+  Heart,
+  MessageCircle,
   Plus,
   Send,
+  Settings,
   Shield,
+  ShoppingCart,
   Sparkles,
+  Star,
   Target,
   Trophy,
   Users,
@@ -30,6 +35,14 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [requestSponsorship, setRequestSponsorship] = useState(false);
+  
+  // Scoring criteria state
+  const [criteria, setCriteria] = useState({
+    likesWeight: 34,
+    commentsWeight: 33,
+    shareWeight: 33
+  });
+  
   const navigate = useNavigate();
 
   const categories = [
@@ -76,6 +89,12 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
     if (!formData.rewards.trim())
       newErrors.rewards = "Rewards information is required";
 
+    // Validate scoring criteria
+    const totalWeight = getTotalWeight();
+    if (totalWeight !== 100) {
+      newErrors.criteria = "Scoring criteria weights must total exactly 100%";
+    }
+
     if (
       formData.publishDate &&
       formData.publishTime &&
@@ -115,6 +134,12 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
         maxParticipants: parseInt(formData.maxParticipants),
         rewards: formData.rewards.trim(),
         requestSponsorship: requestSponsorship,
+        // Include scoring criteria
+        scoringCriteria: {
+          likesWeight: criteria.likesWeight,
+          commentsWeight: criteria.commentsWeight,
+          shareWeight: criteria.shareWeight
+        }
       };
 
       // Get JWT token from localStorage (adjust key if needed)
@@ -161,6 +186,28 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
     }
   };
 
+  // Scoring criteria helper functions
+  const handleWeightChange = (field, value) => {
+    const numValue = parseInt(value) || 0;
+    setCriteria(prev => {
+      // Calculate the sum if this field is set to numValue
+      const newCriteria = { ...prev, [field]: numValue };
+      const total =
+        newCriteria.likesWeight +
+        newCriteria.commentsWeight +
+        newCriteria.shareWeight;
+      // If total is over 100, adjust the changed field to not exceed 100
+      if (total > 100) {
+        const over = total - 100;
+        newCriteria[field] = Math.max(0, numValue - over);
+      }
+      return newCriteria;
+    });
+  };
+
+  const getTotalWeight = () => {
+    return criteria.likesWeight + criteria.commentsWeight + criteria.shareWeight;
+  };
 
 
   const getCurrentDateTime = () => {
@@ -225,6 +272,37 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
         * {
           -webkit-font-smoothing: antialiased;
           -moz-osx-font-smoothing: grayscale;
+        }
+
+        .slider::-webkit-slider-thumb {
+          appearance: none;
+          height: 20px;
+          width: 20px;
+          border-radius: 50%;
+          background: #7f5539;
+          cursor: pointer;
+          border: 2px solid #ffffff;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .slider::-moz-range-thumb {
+          height: 20px;
+          width: 20px;
+          border-radius: 50%;
+          background: #7f5539;
+          cursor: pointer;
+          border: 2px solid #ffffff;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .slider:disabled::-webkit-slider-thumb {
+          background: #9ca3af;
+          cursor: not-allowed;
+        }
+
+        .slider:disabled::-moz-range-thumb {
+          background: #9ca3af;
+          cursor: not-allowed;
         }
       `}</style>
 
@@ -665,6 +743,128 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
                   </div>
                 </div>
 
+                {/* Scoring Criteria Section */}
+                <div className="space-y-6">
+                  <div
+                    className="flex items-center gap-2 pb-2 border-b"
+                    style={{ borderColor: "#FFE4D6" }}
+                  >
+                    <Settings size={20} style={{ color: "#D87C5A" }} />
+                    <h3
+                      className="text-lg font-semibold"
+                      style={{ color: "#5D3A00" }}
+                    >
+                      Scoring Criteria
+                    </h3>
+                  </div>
+
+                  {/* Important Notice */}
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <p className="text-sm" style={{ color: "#7f5539" }}>
+                      <span className="font-semibold">Important:</span> Define how winners will be selected. The total percentage must equal 100%.
+                    </p>
+                  </div>
+
+                  {/* Scoring Criteria Grid */}
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Likes & Engagement Weight */}
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2" style={{ color: "#362625" }}>
+                        <Heart size={18} style={{ color: "#ef4444" }} />
+                        <h4 className="text-base font-semibold">Likes & Engagement Weight</h4>
+                      </div>
+                      
+                      <div className="relative">
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={criteria.likesWeight}
+                          onChange={(e) => handleWeightChange('likesWeight', e.target.value)}
+                          className="w-full h-2 bg-yellow-200 rounded-lg appearance-none cursor-pointer slider"
+                          style={{
+                            background: `linear-gradient(to right, #7f5539 0%, #7f5539 ${criteria.likesWeight}%, #f4e8dc ${criteria.likesWeight}%, #f4e8dc 100%)`
+                          }}
+                        />
+                        <div className="flex justify-end mt-2">
+                          <span className="text-xl font-bold" style={{ color: "#362625" }}>{criteria.likesWeight}%</span>
+                        </div>
+                      </div>
+                      
+                      <p className="text-xs" style={{ color: "#7f5539" }}>Based on the number of likes received</p>
+                    </div>
+
+                    {/* Comments & Interaction Weight */}
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2" style={{ color: "#362625" }}>
+                        <MessageCircle size={18} style={{ color: "#3b82f6" }} />
+                        <h4 className="text-base font-semibold">Comments & Interaction Weight</h4>
+                      </div>
+                      
+                      <div className="relative">
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={criteria.commentsWeight}
+                          onChange={(e) => handleWeightChange('commentsWeight', e.target.value)}
+                          className="w-full h-2 bg-yellow-200 rounded-lg appearance-none cursor-pointer slider"
+                          style={{
+                            background: `linear-gradient(to right, #7f5539 0%, #7f5539 ${criteria.commentsWeight}%, #f4e8dc ${criteria.commentsWeight}%, #f4e8dc 100%)`
+                          }}
+                        />
+                        <div className="flex justify-end mt-2">
+                          <span className="text-xl font-bold" style={{ color: "#362625" }}>{criteria.commentsWeight}%</span>
+                        </div>
+                      </div>
+                      
+                      <p className="text-xs" style={{ color: "#7f5539" }}>Based on the number of comments received</p>
+                    </div>
+
+                    {/* Share Weight */}
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2" style={{ color: "#362625" }}>
+                        <Send size={18} style={{ color: "#10b981" }} />
+                        <h4 className="text-base font-semibold">Share Weight</h4>
+                      </div>
+                      
+                      <div className="relative">
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={criteria.shareWeight}
+                          onChange={(e) => handleWeightChange('shareWeight', e.target.value)}
+                          className="w-full h-2 bg-yellow-200 rounded-lg appearance-none cursor-pointer slider"
+                          style={{
+                            background: `linear-gradient(to right, #7f5539 0%, #7f5539 ${criteria.shareWeight}%, #f4e8dc ${criteria.shareWeight}%, #f4e8dc 100%)`
+                          }}
+                        />
+                        <div className="flex justify-end mt-2">
+                          <span className="text-xl font-bold" style={{ color: "#362625" }}>{criteria.shareWeight}%</span>
+                        </div>
+                      </div>
+                      
+                      <p className="text-xs" style={{ color: "#7f5539" }}>Based on the number of shares and social engagement</p>
+                    </div>
+                  </div>
+
+                  {/* Total Percentage */}
+                  <div className={`rounded-lg p-4 ${getTotalWeight() === 100 ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+                    <div className="flex items-center justify-between">
+                      <span className="text-base font-semibold" style={{ color: getTotalWeight() === 100 ? '#15803d' : '#b91c1c' }}>Total Percentage:</span>
+                      <span className={`text-2xl font-bold ${getTotalWeight() === 100 ? 'text-green-600' : 'text-red-600'}`}>
+                        {getTotalWeight()}%
+                      </span>
+                    </div>
+                    {errors.criteria && (
+                      <p className="mt-2 text-sm text-red-600">
+                        {errors.criteria}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
                 {/* Sponsorship Request (inside form) */}
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
                   <label className="flex items-center gap-2 text-amber-800 font-medium mb-2">
@@ -712,3 +912,5 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
 };
 
 export default CreateChallenge;
+
+//this is the end of the code
