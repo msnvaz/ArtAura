@@ -16,6 +16,7 @@ import {
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import deliveryPartnerApi from '../../services/deliveryPartnerApi';
+import Toast from '../Toast';
 
 const ActiveDeliveries = () => {
   const { token } = useAuth();
@@ -25,6 +26,25 @@ const ActiveDeliveries = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'accepted', 'picked_up', 'in_transit'
+  
+  // Toast notification state
+  const [toast, setToast] = useState({
+    isVisible: false,
+    message: '',
+    type: 'success'
+  });
+
+  const showToast = (message, type = 'success') => {
+    setToast({
+      isVisible: true,
+      message,
+      type
+    });
+  };
+
+  const closeToast = () => {
+    setToast(prev => ({ ...prev, isVisible: false }));
+  };
 
   // Mock data for active deliveries
   const mockActiveDeliveries = [
@@ -383,7 +403,7 @@ const ActiveDeliveries = () => {
                           newStatus.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
         
         // Show alert with platform fee and payment amount when delivered
-        let alertMessage = `✅ Delivery status updated successfully to: ${statusLabel}\n\n`;
+        /* let alertMessage = `✅ Delivery status updated successfully to: ${statusLabel}\n\n`;
         
         if (newStatus === 'delivered') {
           // Use payment amount from the delivery object (fetched from payment table)
@@ -408,7 +428,25 @@ const ActiveDeliveries = () => {
           alertMessage += `Response: ${response.message || 'Success'}`;
         }
         
-        alert(alertMessage);
+        alert(alertMessage); */
+        
+        // Show toast notification
+        if (newStatus === 'delivered') {
+          const paymentAmount = delivery.paymentAmount || response.paymentAmount;
+          const formattedPaymentAmount = paymentAmount 
+            ? parseFloat(paymentAmount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+            : 'N/A';
+          
+          showToast(`✅ Delivery completed! Payment: Rs ${formattedPaymentAmount} | Fee: ${response.platformFee || 'N/A'}%`, 'success');
+          
+          console.log('✅ Delivered status - Payment details:', {
+            paymentAmount: delivery.paymentAmount,
+            responsePaymentAmount: response.paymentAmount,
+            platformFee: response.platformFee
+          });
+        } else {
+          showToast(`✅ Status updated to: ${statusLabel}`, 'success');
+        }
       } else {
         throw new Error(response.error || 'Failed to update status');
       }
@@ -427,7 +465,8 @@ const ActiveDeliveries = () => {
         errorMessage += ` ${error.message}`;
       }
       
-      alert(errorMessage);
+      // alert(errorMessage);
+      showToast('Failed to update delivery status. Please try again.', 'error');
     }
   };
 
@@ -684,6 +723,15 @@ const ActiveDeliveries = () => {
           })
         )}
       </div>
+
+      {/* Toast Notification */}
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={closeToast}
+        duration={3000}
+      />
     </div>
   );
 };
