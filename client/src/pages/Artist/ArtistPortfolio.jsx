@@ -23,6 +23,7 @@ import { getImageUrl, getAvatarUrl, getCoverUrl, getArtworkUrl } from '../../uti
 import { logProfileUpdate, clearImageCache, forceReloadProfileImages } from '../../util/debugImageUpload';
 import { useAuth } from "../../context/AuthContext";
 import artistArtworkOrderApi from '../../services/artistArtworkOrderApi';
+import challengeParticipationApi from '../../services/challengeParticipationApi';
 import {
   Plus,
   Edit,
@@ -182,6 +183,9 @@ const ArtistPortfolio = () => {
   const [artworkOrdersCount, setArtworkOrdersCount] = useState(0);
   const [pendingDeliveryOrdersCount, setPendingDeliveryOrdersCount] = useState(0);
   const [loadingArtworkOrders, setLoadingArtworkOrders] = useState(false);
+
+  // Challenge count state
+  const [challengesCount, setChallengesCount] = useState(0);
 
   const [editedProfile, setEditedProfile] = useState({
     name: '',
@@ -445,6 +449,28 @@ const ArtistPortfolio = () => {
   // Fetch initial exhibitions count
   useEffect(() => {
     fetchExhibitionsCount();
+  }, [userId, token]);
+
+  // Fetch challenges count function
+  const fetchChallengesCount = async () => {
+    if (!userId || !token) {
+      console.warn("Missing userId or token. Skipping challenges count fetch.");
+      return;
+    }
+
+    try {
+      const challengesData = await challengeParticipationApi.getActiveChallenges();
+      setChallengesCount(challengesData.length);
+      console.log('Initial challenges count loaded:', challengesData.length);
+    } catch (error) {
+      console.error("Error fetching challenges count:", error);
+      setChallengesCount(0);
+    }
+  };
+
+  // Fetch initial challenges count
+  useEffect(() => {
+    fetchChallengesCount();
   }, [userId, token]);
 
   // Fetch commission requests data
@@ -1908,7 +1934,7 @@ const ArtistPortfolio = () => {
               {[
                 { id: 'portfolio', label: 'Portfolio', count: portfolioPosts.length },
                 { id: 'tosell', label: 'To sell', count: Array.isArray(artworks) ? artworks.length : 0 },
-                { id: 'challenges', label: 'Challenges', icon: Trophy },
+                { id: 'challenges', label: 'Challenges', count: challengesCount, icon: Trophy },
                 { id: 'orders', label: 'Commission Requests', count: requestsCount },
                 { id: 'artwork-orders', label: 'Orders', count: artworkOrdersCount },
                 { id: 'exhibitions', label: 'Exhibitions', count: exhibitionsCount },
@@ -2849,7 +2875,7 @@ const ArtistPortfolio = () => {
 
         {/* Challenges Tab */}
         {activeTab === 'challenges' && (
-          <ChallengeParticipation />
+          <ChallengeParticipation onChallengeCountChange={setChallengesCount} />
         )}
 
         {/* Exhibitions Tab */}
