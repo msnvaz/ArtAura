@@ -18,6 +18,7 @@ import SmartImage from '../../components/common/SmartImage';
 import PostInteractions from '../../components/social/PostInteractions';
 import { getImageUrl, getAvatarUrl, getCoverUrl, getArtworkUrl } from '../../util/imageUrlResolver';
 import { useAuth } from "../../context/AuthContext";
+import artistArtworkOrderApi from '../../services/artistArtworkOrderApi';
 import {
   Plus,
   Edit,
@@ -56,7 +57,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Truck,
-  CheckCircle
+  CheckCircle,
+  Package
 } from 'lucide-react';
 
 import { useImageWithFallback } from '../../util/imageUtils';
@@ -170,6 +172,12 @@ const ArtistPortfolio = () => {
   const [showCommissionActionModal, setShowCommissionActionModal] = useState(false);
   const [selectedCommissionRequest, setSelectedCommissionRequest] = useState(null);
   const [commissionAction, setCommissionAction] = useState('accept'); // 'accept' or 'reject'
+
+  // Artwork orders state
+  const [artworkOrders, setArtworkOrders] = useState([]);
+  const [artworkOrdersCount, setArtworkOrdersCount] = useState(0);
+  const [pendingDeliveryOrdersCount, setPendingDeliveryOrdersCount] = useState(0);
+  const [loadingArtworkOrders, setLoadingArtworkOrders] = useState(false);
 
   const [editedProfile, setEditedProfile] = useState({
     name: '',
@@ -443,10 +451,63 @@ const ArtistPortfolio = () => {
     }
   };
 
-  // Fetch initial commission requests data
+  // Fetch artwork orders data
+  const fetchArtworkOrdersData = async () => {
+    if (!userId || !token) {
+      console.warn("Missing userId or token. Skipping artwork orders fetch.");
+      return;
+    }
+
+    try {
+      setLoadingArtworkOrders(true);
+
+      // Fetch artwork orders
+      const ordersResponse = await artistArtworkOrderApi.getArtworkOrders();
+      if (ordersResponse && ordersResponse.success) {
+        setArtworkOrders(ordersResponse.data || []);
+      }
+
+      // Fetch artwork orders count
+      const countResponse = await artistArtworkOrderApi.getArtworkOrdersCount();
+      if (countResponse && countResponse.success) {
+        const countData = countResponse.data;
+        setArtworkOrdersCount(countData.total || 0);
+        setPendingDeliveryOrdersCount(countData.pendingDelivery || 0);
+      }
+
+      console.log('Artwork orders data loaded successfully');
+    } catch (error) {
+      console.error("Error fetching artwork orders data:", error);
+      setArtworkOrders([]);
+      setArtworkOrdersCount(0);
+      setPendingDeliveryOrdersCount(0);
+    } finally {
+      setLoadingArtworkOrders(false);
+    }
+  };
+
+  // Handle request delivery for artwork order
+  const handleArtworkOrderDeliveryRequest = async (orderId) => {
+    try {
+      const response = await artistArtworkOrderApi.requestDelivery(orderId);
+      if (response && response.success) {
+        showSuccess(response.message);
+        // Refresh artwork orders data to show updated delivery status
+        await fetchArtworkOrdersData();
+      } else {
+        showError(response.message || 'Failed to request delivery');
+      }
+    } catch (error) {
+      console.error('Error requesting delivery:', error);
+      showError(error.message || 'An error occurred while requesting delivery');
+    }
+  };
+
+  // Fetch initial data
   useEffect(() => {
     if (userId && token) {
       fetchCommissionRequestsData();
+      fetchArtworkOrdersData();
     }
   }, [userId, token]);
 
@@ -1663,14 +1724,14 @@ const ArtistPortfolio = () => {
                 alt={artistProfile.name}
                 className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
               />
-              
+
               {/* Verified Badge */}
               {artistProfile.status === 'Active' && (
                 <div className="absolute -top-1 -right-1 bg-blue-500 text-white rounded-full p-1.5 shadow-lg border-2 border-white" title="Verified Artist">
                   <CheckCircle className="h-4 w-4" />
                 </div>
               )}
-              
+
               <button
                 onClick={() => setIsEditingProfile(true)}
                 className="absolute bottom-0 right-0 bg-[#7f5539] text-[#fdf9f4] p-2 rounded-full hover:bg-[#6e4c34] transition-colors"
@@ -1776,6 +1837,7 @@ const ArtistPortfolio = () => {
                 { id: 'portfolio', label: 'Portfolio', count: portfolioPosts.length },
                 { id: 'tosell', label: 'To sell', count: Array.isArray(artworks) ? artworks.length : 0 },
                 { id: 'orders', label: 'Commission Requests', count: requestsCount },
+                { id: 'artwork-orders', label: 'Orders', count: artworkOrdersCount },
                 { id: 'exhibitions', label: 'Exhibitions', count: exhibitionsCount },
                 { id: 'achievements', label: 'Achievements', count: achievementsCount },
                 { id: 'analytics', label: 'Analytics' }
@@ -1792,6 +1854,10 @@ const ArtistPortfolio = () => {
                       // Refresh commission requests data when tab is clicked
                       if (tab.id === 'orders' && userId && token) {
                         fetchCommissionRequestsData();
+                      }
+                      // Refresh artwork orders data when tab is clicked
+                      if (tab.id === 'artwork-orders' && userId && token) {
+                        fetchArtworkOrdersData();
                       }
                     }}
                     className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors ${activeTab === tab.id
@@ -2073,8 +2139,8 @@ const ArtistPortfolio = () => {
                     </div>
 
                     {/* Post Interactions */}
-                    <PostInteractions 
-                      postId={post.post_id} 
+                    <PostInteractions
+                      postId={post.post_id}
                       initialLikesCount={post.likes || 0}
                       initialCommentsCount={post.comments || 0}
                     />
@@ -2499,9 +2565,9 @@ const ArtistPortfolio = () => {
                           {request.status === 'ACCEPTED' && request.delivery_status && request.delivery_status !== 'N/A' && (
                             <div className="flex items-center space-x-2">
                               <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center space-x-1 ${request.delivery_status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                  request.delivery_status === 'outForDelivery' ? 'bg-blue-100 text-blue-800' :
-                                    request.delivery_status === 'delivered' ? 'bg-green-100 text-green-800' :
-                                      'bg-gray-100 text-gray-800'
+                                request.delivery_status === 'outForDelivery' ? 'bg-blue-100 text-blue-800' :
+                                  request.delivery_status === 'delivered' ? 'bg-green-100 text-green-800' :
+                                    'bg-gray-100 text-gray-800'
                                 }`}>
                                 <Truck className="h-3 w-3" />
                                 <span>
@@ -2519,6 +2585,183 @@ const ArtistPortfolio = () => {
                             <Clock className="h-3 w-3 mr-1" />
                             {request.submittedAt}
                           </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Artwork Orders Tab */}
+        {activeTab === 'artwork-orders' && (
+          <div className="space-y-8">
+            {/* Artwork Orders Header */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-[#7f5539] mb-2">Artwork Orders</h3>
+                  <p className="text-[#7f5539]/70">Manage orders for your artworks and request delivery</p>
+                </div>
+                <div className="mt-4 md:mt-0 flex items-center space-x-4">
+                  <div className="bg-blue-50 px-4 py-2 rounded-lg">
+                    <span className="text-blue-600 font-medium">Total Orders: </span>
+                    <span className="text-blue-800 font-bold">{artworkOrdersCount}</span>
+                  </div>
+                  <div className="bg-orange-50 px-4 py-2 rounded-lg">
+                    <span className="text-orange-600 font-medium">Pending Delivery: </span>
+                    <span className="text-orange-800 font-bold">{pendingDeliveryOrdersCount}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Artwork Orders List */}
+            <div className="bg-white rounded-lg shadow-sm">
+              {loadingArtworkOrders ? (
+                <div className="p-8 text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#7f5539] mx-auto"></div>
+                  <p className="mt-2 text-[#7f5539]/70">Loading artwork orders...</p>
+                </div>
+              ) : artworkOrders.length === 0 ? (
+                <div className="p-8 text-center">
+                  <Package className="h-16 w-16 text-[#7f5539]/30 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-[#7f5539] mb-2">No Artwork Orders Yet</h3>
+                  <p className="text-[#7f5539]/70">You haven't received any artwork orders yet.</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-[#fdf9f4]/50">
+                  {artworkOrders.map((order) => (
+                    <div key={order.orderId} className="p-6">
+                      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between space-y-4 lg:space-y-0">
+                        {/* Order Info */}
+                        <div className="flex-1">
+                          <div className="flex items-start space-x-4">
+                            <div className="flex-1">
+                              {/* Order Header */}
+                              <div className="flex items-center space-x-3 mb-3">
+                                <h4 className="text-lg font-semibold text-[#7f5539]">
+                                  Order #{order.orderId}
+                                </h4>
+                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${order.status === 'paid' ? 'bg-green-100 text-green-800' :
+                                  order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                    'bg-gray-100 text-gray-800'
+                                  }`}>
+                                  {order.status}
+                                </span>
+                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${order.deliveryStatus === 'pending' ? 'bg-orange-100 text-orange-800' :
+                                  order.deliveryStatus === 'accepted' ? 'bg-blue-100 text-blue-800' :
+                                    order.deliveryStatus === 'outForDelivery' ? 'bg-purple-100 text-purple-800' :
+                                      order.deliveryStatus === 'delivered' ? 'bg-green-100 text-green-800' :
+                                        'bg-gray-100 text-gray-800'
+                                  }`}>
+                                  {order.deliveryStatus === 'outForDelivery' ? 'Out for Delivery' :
+                                    order.deliveryStatus === 'N/A' ? 'No Delivery' :
+                                      order.deliveryStatus}
+                                </span>
+                              </div>
+
+                              {/* Buyer Information */}
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                  <p className="text-sm text-[#7f5539]/70">Buyer</p>
+                                  <p className="font-medium text-[#7f5539]">{order.buyerFullName}</p>
+                                  <p className="text-sm text-[#7f5539]/60">{order.buyerEmail}</p>
+                                  {order.buyerContactNumber && (
+                                    <p className="text-sm text-[#7f5539]/60">{order.buyerContactNumber}</p>
+                                  )}
+                                </div>
+                                <div>
+                                  <p className="text-sm text-[#7f5539]/70">Order Details</p>
+                                  <p className="font-medium text-[#7f5539]">
+                                    Total: LKR {order.totalAmount?.toFixed(2)}
+                                  </p>
+                                  <p className="text-sm text-[#7f5539]/60">
+                                    Items: {order.totalItemsCount}
+                                  </p>
+                                  <p className="text-sm text-[#7f5539]/60">
+                                    {formatDistanceToNow(new Date(order.orderDate))} ago
+                                  </p>
+                                </div>
+                              </div>
+
+                              {/* Order Items */}
+                              {order.orderItems && order.orderItems.length > 0 && (
+                                <div className="mb-4">
+                                  <p className="text-sm text-[#7f5539]/70 mb-2">Ordered Items:</p>
+                                  <div className="space-y-2">
+                                    {order.orderItems.map((item) => (
+                                      <div key={item.itemId} className="flex items-center space-x-3 p-2 bg-[#fdf9f4]/30 rounded-lg">
+                                        {item.artworkImageUrl && (
+                                          <img
+                                            src={getArtworkUrl(item.artworkImageUrl)}
+                                            alt={item.artworkTitle}
+                                            className="w-12 h-12 rounded-lg object-cover"
+                                          />
+                                        )}
+                                        <div className="flex-1">
+                                          <p className="font-medium text-[#7f5539] text-sm">{item.artworkTitle}</p>
+                                          <div className="flex items-center space-x-4 text-xs text-[#7f5539]/60">
+                                            <span>Qty: {item.quantity}</span>
+                                            <span>LKR {item.price?.toFixed(2)}</span>
+                                            {item.artworkMedium && <span>{item.artworkMedium}</span>}
+                                            {item.artworkSize && <span>{item.artworkSize}</span>}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Shipping Address */}
+                              {order.shippingAddress && (
+                                <div className="mb-4">
+                                  <p className="text-sm text-[#7f5539]/70 mb-1">Shipping Address:</p>
+                                  <p className="text-sm text-[#7f5539]/80">{order.shippingAddress}</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Order Actions */}
+                        <div className="flex flex-col items-end space-y-3">
+                          {/* Order Date */}
+                          <div className="flex items-center text-xs text-[#7f5539]/50">
+                            <Clock className="h-3 w-3 mr-1" />
+                            {formatDistanceToNow(new Date(order.orderDate))} ago
+                          </div>
+
+                          {/* Delivery Request Button */}
+                          {(order.deliveryStatus === 'N/A' || order.deliveryStatus === null) && order.status === 'paid' && (
+                            <button
+                              onClick={() => handleArtworkOrderDeliveryRequest(order.orderId)}
+                              className="px-4 py-2 bg-[#7f5539] text-white rounded-lg hover:bg-[#6e4c34] transition-colors text-sm font-medium flex items-center space-x-2"
+                            >
+                              <Truck className="h-4 w-4" />
+                              <span>Request Delivery</span>
+                            </button>
+                          )}
+
+                          {/* Status Messages */}
+                          {order.deliveryStatus === 'pending' && (
+                            <div className="text-xs text-orange-600 bg-orange-50 px-3 py-1 rounded-lg">
+                              Delivery request sent
+                            </div>
+                          )}
+                          {order.deliveryStatus === 'accepted' && (
+                            <div className="text-xs text-blue-600 bg-blue-50 px-3 py-1 rounded-lg">
+                              Delivery accepted
+                            </div>
+                          )}
+                          {order.deliveryStatus === 'delivered' && (
+                            <div className="text-xs text-green-600 bg-green-50 px-3 py-1 rounded-lg">
+                              Order delivered
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>

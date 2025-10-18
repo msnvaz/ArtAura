@@ -18,29 +18,13 @@ public class ImageUploadService {
         String currentDir = System.getProperty("user.dir");
         System.out.println("Current working directory: " + currentDir);
 
-        String uploadDirPath;
-        String relativePath;
-        String filename;
+        // Calculate the correct path to client/public/uploads
+        String projectRoot = currentDir.endsWith("artaura")
+                ? currentDir.substring(0, currentDir.lastIndexOf("artaura"))
+                : currentDir + File.separator;
 
-        // Generate unique filename
-        String originalFilename = file.getOriginalFilename();
-        String extension = originalFilename != null
-                ? originalFilename.substring(originalFilename.lastIndexOf('.')) : ".jpg";
-
-        if ("nic".equals(imageType)) {
-            // Save to client/public/nic
-            uploadDirPath = "c:/Users/aaa/Desktop/ArtAura/client/public/nic/";
-            filename = System.currentTimeMillis() + "_" + originalFilename;
-            relativePath = "/nic/" + filename;
-        } else {
-            // Save to default uploads/profiles
-            String serverDir = currentDir.endsWith("artaura")
-                    ? currentDir.substring(0, currentDir.lastIndexOf("artaura"))
-                    : currentDir + File.separator;
-            uploadDirPath = serverDir + "uploads" + File.separator + "profiles" + File.separator;
-            filename = artistId + "_" + imageType + "_" + System.currentTimeMillis() + extension;
-            relativePath = "/uploads/profiles/" + filename;
-        }
+        String uploadDirPath = projectRoot + "client" + File.separator + "public" + File.separator + "uploads" + File.separator + "profiles" + File.separator;
+        System.out.println("Upload directory path: " + uploadDirPath);
 
         // Create upload directory if it doesn't exist
         File uploadDir = new File(uploadDirPath);
@@ -61,12 +45,12 @@ public class ImageUploadService {
         try {
             if (imagePath != null && !imagePath.isEmpty()) {
                 String currentDir = System.getProperty("user.dir");
-                String serverDir = currentDir.endsWith("artaura")
+                String projectRoot = currentDir.endsWith("artaura")
                         ? currentDir.substring(0, currentDir.lastIndexOf("artaura"))
                         : currentDir + File.separator;
 
-                // Convert URL path back to file path
-                String filePath = imagePath.replace("/uploads/", serverDir + "uploads" + File.separator);
+                // Convert URL path back to file path for client/public/uploads
+                String filePath = imagePath.replace("/uploads/", projectRoot + "client" + File.separator + "public" + File.separator + "uploads" + File.separator);
                 Path path = Paths.get(filePath);
                 boolean deleted = Files.deleteIfExists(path);
                 System.out.println("Deleted file: " + deleted + " at " + path.toAbsolutePath());

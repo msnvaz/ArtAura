@@ -272,4 +272,48 @@ public class DeliveryRequestService {
             throw new RuntimeException("Failed to fetch delivered commission delivery requests", e);
         }
     }
+    
+    /**
+     * Get platform fee percentage from admin_settings table
+     * @return Platform fee percentage as String
+     */
+    public String getPlatformFee() {
+        try {
+            return deliveryRequestDAO.getPlatformFee();
+        } catch (Exception e) {
+            System.out.println("❌ DeliveryRequestService: Error fetching platform fee: " + e.getMessage());
+            return "0";
+        }
+    }
+    
+    /**
+     * Get payment amount from payment table based on order type and order ID
+     * @param orderType either "artwork" or "commission"
+     * @param orderId the order ID
+     * @return Payment amount as BigDecimal
+     */
+    public java.math.BigDecimal getPaymentAmount(String orderType, Long orderId) {
+        try {
+            return deliveryRequestDAO.getPaymentAmount(orderType, orderId);
+        } catch (Exception e) {
+            System.out.println("❌ DeliveryRequestService: Error fetching payment amount: " + e.getMessage());
+            return null;
+        }
+    }
+    
+    /**
+     * Insert platform fee commission into platform_fees table
+     * @param orderType either "artwork" or "commission"
+     * @param orderId the order ID
+     * @param platformCommissionFee the calculated platform commission fee
+     * @return true if insertion was successful
+     */
+    public boolean insertPlatformFee(String orderType, Long orderId, java.math.BigDecimal platformCommissionFee) {
+        try {
+            return deliveryRequestDAO.insertPlatformFee(orderType, orderId, platformCommissionFee);
+        } catch (Exception e) {
+            System.out.println("❌ DeliveryRequestService: Error inserting platform fee: " + e.getMessage());
+            return false;
+        }
+    }
 }

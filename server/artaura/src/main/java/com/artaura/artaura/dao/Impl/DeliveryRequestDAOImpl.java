@@ -42,6 +42,12 @@ public class DeliveryRequestDAOImpl implements DeliveryRequestDAO {
         } catch (Exception e) {
             dto.setShippingFee(BigDecimal.ZERO);
         }
+        // Handle payment amount from payment table
+        try {
+            dto.setPaymentAmount(rs.getBigDecimal("payment_amount"));
+        } catch (Exception e) {
+            dto.setPaymentAmount(null);
+        }
         return dto;
     };
 
@@ -72,6 +78,13 @@ public class DeliveryRequestDAOImpl implements DeliveryRequestDAO {
             dto.setShippingFee(rs.getBigDecimal("shipping_fee"));
         } catch (Exception e) {
             dto.setShippingFee(BigDecimal.ZERO);
+        }
+        
+        // Handle payment amount from payment table
+        try {
+            dto.setPaymentAmount(rs.getBigDecimal("payment_amount"));
+        } catch (Exception e) {
+            dto.setPaymentAmount(null);
         }
         
         // Parse budget string to BigDecimal
@@ -387,10 +400,12 @@ public class DeliveryRequestDAOImpl implements DeliveryRequestDAO {
                     ao.shipping_fee,
                     aoi.title AS artwork_title,
                     aoi.artist_id,
-                    CONCAT(a.first_name, ' ', a.last_name) AS artist_name
+                    CONCAT(a.first_name, ' ', a.last_name) AS artist_name,
+                    p.amount AS payment_amount
                 FROM AW_orders ao
                 LEFT JOIN AW_order_items aoi ON ao.id = aoi.order_id
                 LEFT JOIN artists a ON aoi.artist_id = a.artist_id
+                LEFT JOIN payment p ON ao.id = p.AW_order_id
                 WHERE ao.delivery_status IN ('accepted', 'outForDelivery')
                 ORDER BY ao.order_date DESC
             """;
@@ -425,9 +440,11 @@ public class DeliveryRequestDAOImpl implements DeliveryRequestDAO {
                     cr.urgency,
                     cr.shipping_fee,
                     cr.artist_id,
-                    CONCAT(a.first_name, ' ', a.last_name) AS artist_name
+                    CONCAT(a.first_name, ' ', a.last_name) AS artist_name,
+                    p.amount AS payment_amount
                 FROM commission_requests cr
                 LEFT JOIN artists a ON cr.artist_id = a.artist_id
+                LEFT JOIN payment p ON cr.id = p.commission_request_id
                 WHERE cr.delivery_status IN ('accepted', 'outForDelivery')
                 ORDER BY cr.submitted_at DESC
             """;
@@ -511,6 +528,122 @@ public class DeliveryRequestDAOImpl implements DeliveryRequestDAO {
         } catch (Exception e) {
             System.out.println("🔍 DeliveryRequestDAO: Error fetching delivered commission requests: " + e.getMessage());
             return new ArrayList<>();
+        }
+    }
+    
+    @Override
+    public String getPlatformFee() {
+        try {
+            String sql = "SELECT setting_value FROM admin_settings WHERE setting_name = 'platform_fee'";
+            String platformFee = jdbc.queryForObject(sql, String.class);
+            System.out.println("✅ Platform fee retrieved: " + platformFee + "%");
+            return platformFee != null ? platformFee : "0";
+        } catch (Exception e) {
+            System.out.println("❌ Error fetching platform fee: " + e.getMessage());
+            return "0";
+        }
+    }
+    
+    @Override
+    public BigDecimal getPaymentAmount(String orderType, Long orderId) {
+        try {
+            String sql;
+            if ("artwork".equalsIgnoreCase(orderType)) {
+                sql = "SELECT amount FROM payment WHERE AW_order_id = ?";
+            } else if ("commission".equalsIgnoreCase(orderType)) {
+                sql = "SELECT amount FROM payment WHERE commission_request_id = ?";
+            } else {
+                System.out.println("❌ Invalid order type: " + orderType);
+                return null;
+            }
+            
+            BigDecimal amount = jdbc.queryForObject(sql, BigDecimal.class, orderId);
+            System.out.println("✅ Payment amount retrieved: Rs " + amount + " for " + orderType + " order ID: " + orderId);
+            return amount;
+        } catch (Exception e) {
+            System.out.println("❌ Error fetching payment amount for " + orderType + " order ID " + orderId + ": " + e.getMessage());
+            return null;
+        }
+    }
+    
+    @Override
+    public boolean insertPlatformFee(String orderType, Long orderId, BigDecimal platformCommissionFee) {
+        try {
+            // First, get the payment_id for this order
+            String paymentIdSql;
+            if ("artwork".equalsIgnoreCase(orderType)) {
+                paymentIdSql = "SELECT id FROM payment WHERE AW_order_id = ?";
+            } else if ("commission".equalsIgnoreCase(orderType)) {
+                paymentIdSql = "SELECT id FROM payment WHERE commission_request_id = ?";
+            } else {
+                System.out.println("❌ Invalid order type for platform fee insertion: " + orderType);
+                return false;
+            }
+            
+            // Get payment_id
+            Integer paymentId = jdbc.queryForObject(paymentIdSql, Integer.class, orderId);
+            
+            if (paymentId == null) {
+                System.out.println("❌ No payment record found for " + orderType + " order ID: " + orderId);
+                return false;
+            }
+            
+            // Check if platform fee already exists for this payment_id
+            String checkExistingSql = "SELECT COUNT(*) FROM platform_fees WHERE payment_id = ?";
+            Integer existingCount = jdbc.queryForObject(checkExistingSql, Integer.class, paymentId);
+            
+            if (existingCount != null && existingCount > 0) {
+                System.out.println("⚠️ Platform fee already exists for payment ID: " + paymentId + " (" + orderType + " order ID: " + orderId + ")");
+                System.out.println("ℹ️ Skipping duplicate insertion. Existing records: " + existingCount);
+                return true; // Return true as the fee already exists (idempotent operation)
+            }
+            
+            // Insert platform fee
+            String insertSql = "INSERT INTO platform_fees (payment_id, fee_amount, entered_at) VALUES (?, ?, NOW())";
+            int rowsAffected = jdbc.update(insertSql, paymentId, platformCommissionFee);
+            
+            if (rowsAffected > 0) {
+                System.out.println("✅ Platform fee inserted: Rs " + platformCommissionFee + " for payment ID: " + paymentId);
+                
+                // Update payment status to 'paid' in payment table
+                String updatePaymentSql = "UPDATE payment SET status = 'paid' WHERE id = ?";
+                int paymentUpdateRows = jdbc.update(updatePaymentSql, paymentId);
+                System.out.println("📝 Updating payment table - SQL: " + updatePaymentSql + " with paymentId: " + paymentId);
+                System.out.println("📊 Rows affected in payment table: " + paymentUpdateRows);
+                
+                if (paymentUpdateRows > 0) {
+                    System.out.println("✅ Payment status updated to 'paid' in payment table for payment ID: " + paymentId);
+                } else {
+                    System.out.println("⚠️ Warning: Failed to update payment status in payment table for payment ID: " + paymentId);
+                }
+                
+                // Update payment status to 'paid' in the respective order table
+                String updateStatusSql;
+                if ("artwork".equalsIgnoreCase(orderType)) {
+                    updateStatusSql = "UPDATE AW_orders SET status = 'paid' WHERE id = ?";
+                } else { // commission
+                    updateStatusSql = "UPDATE commission_requests SET payment_status = 'paid' WHERE id = ?";
+                }
+                
+                System.out.println("📝 Executing SQL: " + updateStatusSql + " with orderId: " + orderId);
+                int statusUpdateRows = jdbc.update(updateStatusSql, orderId);
+                System.out.println("📊 Rows affected by status update: " + statusUpdateRows);
+                
+                if (statusUpdateRows > 0) {
+                    System.out.println("✅ Payment status updated to 'paid' for " + orderType + " order ID: " + orderId);
+                } else {
+                    System.out.println("⚠️ Warning: Failed to update payment status for " + orderType + " order ID: " + orderId);
+                }
+                
+                return true;
+            } else {
+                System.out.println("❌ Failed to insert platform fee");
+                return false;
+            }
+        } catch (Exception e) {
+            System.out.println("❌ Error inserting platform fee: " + e.getMessage());
+            e.printStackTrace();
+            return false;
         }
     }
 }
