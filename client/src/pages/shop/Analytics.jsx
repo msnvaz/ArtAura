@@ -10,36 +10,398 @@ import {
   Download,
   ArrowUpRight,
   ArrowDownRight,
-  Package,
-  Eye,
   Star,
   ShoppingCart,
-  Zap,
-  CheckCircle,
-  Truck,
-  Clock,
-  XCircle,
   X
 } from 'lucide-react';
 
 const SalesAnalytics = () => {
+  const API_URL = import.meta.env.VITE_API_URL;
+
   const [selectedPeriod, setSelectedPeriod] = useState('30days');
   const [selectedMetric, setSelectedMetric] = useState('revenue');
   const [isChartVisible, setIsChartVisible] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // State for analytics data
+  const [metricsSummary, setMetricsSummary] = useState(null);
+  const [salesData, setSalesData] = useState([]);
+  const [topProducts, setTopProducts] = useState([]);
 
   const [exportOptions, setExportOptions] = useState({
     format: 'csv',
-    dateRange: 'all',
-    status: 'all',
-    includeCustomerInfo: true,
-    includeItems: true,
+    dateRange: selectedPeriod,
+    includeMetrics: true,
+    includeSalesChart: true,
+    includeTopProducts: true,
   });
 
   const handleExport = () => {
-    console.log("Exporting with options:", exportOptions);
-    setShowExportModal(false);
+    try {
+      const exportData = {
+        period: selectedPeriod,
+        exportDate: new Date().toLocaleString(),
+        metrics: exportOptions.includeMetrics ? {
+          totalRevenue: totalRevenue,
+          totalOrders: totalOrders,
+          totalCustomers: totalCustomers,
+          revenueChange: metricsSummary?.revenueChange || '0.0%',
+          ordersChange: metricsSummary?.ordersChange || '0.0%',
+          customersChange: metricsSummary?.customersChange || '0.0%',
+        } : null,
+        salesData: exportOptions.includeSalesChart ? salesData : null,
+        topProducts: exportOptions.includeTopProducts ? topProducts : null,
+      };
+
+      if (exportOptions.format === 'csv') {
+        exportToCSV(exportData);
+      } else if (exportOptions.format === 'json') {
+        exportToJSON(exportData);
+      } else if (exportOptions.format === 'pdf') {
+        exportToPDF(exportData);
+      }
+
+      setShowExportModal(false);
+    } catch (error) {
+      console.error('Export error:', error);
+      alert('Failed to export data. Please try again.');
+    }
   };
+
+  const exportToCSV = (data) => {
+    let csvContent = "Analytics Report\n";
+    csvContent += `Generated: ${data.exportDate}\n`;
+    csvContent += `Period: ${selectedPeriod}\n\n`;
+
+    if (data.metrics) {
+      csvContent += "METRICS SUMMARY\n";
+      csvContent += "Metric,Value,Change\n";
+      csvContent += `Total Revenue,Rs. ${data.metrics.totalRevenue.toLocaleString()},${data.metrics.revenueChange}\n`;
+      csvContent += `Total Orders,${data.metrics.totalOrders},${data.metrics.ordersChange}\n`;
+      csvContent += `Total Customers,${data.metrics.totalCustomers},${data.metrics.customersChange}\n\n`;
+    }
+
+    if (data.salesData && data.salesData.length > 0) {
+      csvContent += "SALES DATA\n";
+      csvContent += "Month,Revenue,Orders,Customers\n";
+      data.salesData.forEach(item => {
+        csvContent += `${item.month},${item.revenue},${item.orders},${item.customers}\n`;
+      });
+      csvContent += "\n";
+    }
+
+    if (data.topProducts && data.topProducts.length > 0) {
+      csvContent += "TOP PRODUCTS\n";
+      csvContent += "Rank,Product Name,Category,Sales,Revenue\n";
+      data.topProducts.slice(0, 5).forEach((product, index) => {
+        csvContent += `${index + 1},${product.name},${product.category},${product.sales},Rs. ${product.revenue.toLocaleString()}\n`;
+      });
+    }
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `analytics_report_${new Date().getTime()}.csv`;
+    link.click();
+  };
+
+  const exportToJSON = (data) => {
+    const jsonContent = JSON.stringify(data, null, 2);
+    const blob = new Blob([jsonContent], { type: 'application/json' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `analytics_report_${new Date().getTime()}.json`;
+    link.click();
+  };
+
+  const exportToPDF = (data) => {
+    // Create PDF content as HTML
+    const pdfWindow = window.open('', '_blank');
+    
+    let htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Analytics Report</title>
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { 
+            font-family: Arial, sans-serif; 
+            padding: 40px; 
+            background: white;
+            color: #333;
+          }
+          .header { 
+            text-align: center; 
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #D87C5A;
+          }
+          .header h1 { 
+            color: #5D3A00; 
+            font-size: 32px;
+            margin-bottom: 10px;
+          }
+          .header p { 
+            color: #666; 
+            font-size: 14px;
+          }
+          .section { 
+            margin-bottom: 40px;
+            page-break-inside: avoid;
+          }
+          .section-title { 
+            color: #5D3A00; 
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            padding-left: 10px;
+            border-left: 4px solid #D87C5A;
+          }
+          .metrics-grid { 
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 20px;
+            margin-bottom: 20px;
+          }
+          .metric-card { 
+            background: linear-gradient(135deg, #FFF5E1 0%, #FFE4D6 100%);
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px solid #FFE4D6;
+          }
+          .metric-label { 
+            color: #5D3A00; 
+            font-size: 12px;
+            margin-bottom: 8px;
+            opacity: 0.7;
+          }
+          .metric-value { 
+            color: #D87C5A; 
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+          }
+          .metric-change { 
+            color: #388e3c; 
+            font-size: 12px;
+            font-weight: bold;
+          }
+          table { 
+            width: 100%; 
+            border-collapse: collapse;
+            margin-top: 10px;
+          }
+          th { 
+            background: #5D3A00; 
+            color: white; 
+            padding: 12px;
+            text-align: left;
+            font-size: 14px;
+          }
+          td { 
+            padding: 12px;
+            border-bottom: 1px solid #FFE4D6;
+            font-size: 13px;
+          }
+          tr:nth-child(even) { 
+            background: #FFF5E1;
+          }
+          tr:hover { 
+            background: #FFE4D6;
+          }
+          .rank-badge {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+            text-align: center;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            background: linear-gradient(135deg, #D87C5A, #5D3A00);
+          }
+          .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #FFE4D6;
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+          }
+          @media print {
+            body { padding: 20px; }
+            .no-print { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>📊 Analytics Report</h1>
+          <p>Generated on ${data.exportDate} | Period: ${selectedPeriod}</p>
+        </div>
+    `;
+
+    if (data.metrics) {
+      htmlContent += `
+        <div class="section">
+          <h2 class="section-title">📈 Performance Metrics</h2>
+          <div class="metrics-grid">
+            <div class="metric-card">
+              <div class="metric-label">Total Revenue</div>
+              <div class="metric-value">Rs. ${data.metrics.totalRevenue.toLocaleString()}</div>
+              <div class="metric-change">${data.metrics.revenueChange}</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Total Orders</div>
+              <div class="metric-value">${data.metrics.totalOrders}</div>
+              <div class="metric-change">${data.metrics.ordersChange}</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Total Customers</div>
+              <div class="metric-value">${data.metrics.totalCustomers}</div>
+              <div class="metric-change">${data.metrics.customersChange}</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    if (data.salesData && data.salesData.length > 0) {
+      htmlContent += `
+        <div class="section">
+          <h2 class="section-title">📊 Sales Overview</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Period</th>
+                <th>Revenue</th>
+                <th>Orders</th>
+                <th>Customers</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+      data.salesData.forEach(item => {
+        htmlContent += `
+          <tr>
+            <td><strong>${item.month}</strong></td>
+            <td>Rs. ${Number(item.revenue || 0).toLocaleString()}</td>
+            <td>${item.orders}</td>
+            <td>${item.customers}</td>
+          </tr>
+        `;
+      });
+      htmlContent += `
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    if (data.topProducts && data.topProducts.length > 0) {
+      htmlContent += `
+        <div class="section">
+          <h2 class="section-title">⭐ Top Performing Products</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Product Name</th>
+                <th>Category</th>
+                <th>Units Sold</th>
+                <th>Revenue</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+      data.topProducts.slice(0, 5).forEach((product, index) => {
+        htmlContent += `
+          <tr>
+            <td><span class="rank-badge">${index + 1}</span></td>
+            <td><strong>${product.name}</strong></td>
+            <td>${product.category}</td>
+            <td>${product.sales}</td>
+            <td>Rs. ${product.revenue.toLocaleString()}</td>
+          </tr>
+        `;
+      });
+      htmlContent += `
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    htmlContent += `
+        <div class="footer">
+          <p>© ${new Date().getFullYear()} ArtAura - Analytics Report</p>
+        </div>
+        <script>
+          window.onload = function() {
+            setTimeout(function() {
+              window.print();
+            }, 500);
+          };
+        </script>
+      </body>
+      </html>
+    `;
+
+    pdfWindow.document.write(htmlContent);
+    pdfWindow.document.close();
+  };
+
+  // Fetch analytics data from backend
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const token = localStorage.getItem("token");
+        const shopId = localStorage.getItem("shopId");
+
+        if (!shopId) {
+          throw new Error("Shop ID not found. Please log in again.");
+        }
+
+        const response = await fetch(
+          `${API_URL}/api/shop/analytics?shopId=${shopId}&period=${selectedPeriod}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch analytics data");
+        }
+
+        const data = await response.json();
+        
+        // Update state with backend data
+        setMetricsSummary(data.metricsSummary);
+        setSalesData(data.salesData || []);
+        setTopProducts(data.topProducts || []);
+
+        setLoading(false);
+
+      } catch (err) {
+        console.error("Error fetching analytics:", err);
+        setError(err.message);
+        setLoading(false);
+      }
+    };
+
+    fetchAnalytics();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedPeriod]);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -48,124 +410,45 @@ const SalesAnalytics = () => {
     return () => clearTimeout(timeout);
   }, []);
 
-  const salesData = [
-    { month: 'Jan', revenue: 485000, orders: 125, customers: 98 },
-    { month: 'Feb', revenue: 532000, orders: 142, customers: 112 },
-    { month: 'Mar', revenue: 647000, orders: 167, customers: 134 },
-    { month: 'Apr', revenue: 581000, orders: 156, customers: 128 },
-    { month: 'May', revenue: 789000, orders: 189, customers: 145 },
-    { month: 'Jun', revenue: 625000, orders: 178, customers: 139 }
-  ];
+  // Calculate totals from backend data with proper number conversion
+  const totalRevenue = Number(metricsSummary?.totalRevenue || 0);
+  const totalOrders = Number(metricsSummary?.totalOrders || 0);
+  const totalCustomers = Number(metricsSummary?.totalCustomers || 0);
 
-  const topProducts = [
-    {
-      id: 1,
-      name: 'Watercolor Paint Set Professional',
-      sales: 89,
-      revenue: 253650,
-      growth: 15.2,
-      category: 'Paints',
-      icon: Package
-    },
-    {
-      id: 2,
-      name: 'Professional Brush Set',
-      sales: 67,
-      revenue: 214400,
-      growth: 8.7,
-      category: 'Brushes',
-      icon: Package
-    },
-    {
-      id: 3,
-      name: 'Canvas Stretched Pack',
-      sales: 156,
-      revenue: 195000,
-      growth: -3.2,
-      category: 'Canvas',
-      icon: Package
-    },
-    {
-      id: 4,
-      name: 'Acrylic Paint Tubes',
-      sales: 43,
-      revenue: 81270,
-      growth: 22.1,
-      category: 'Paints',
-      icon: Package
-    },
-    {
-      id: 5,
-      name: 'Easel Desktop Adjustable',
-      sales: 28,
-      revenue: 135800,
-      growth: 12.5,
-      category: 'Equipment',
-      icon: Package
-    }
-  ];
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="pt-4 px-1 sm:px-2 lg:px-4 max-w-full mx-0">
+          <div className="flex items-center justify-center h-96">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#D87C5A] mx-auto mb-4"></div>
+              <p className="text-[#5D3A00] font-semibold">Loading analytics...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  const recentOrders = [
-    {
-      id: '#ORD-2025-135',
-      customer: 'Kasun Wijesinghe',
-      amount: 4850.00,
-      status: 'shipped',
-      date: '2025-07-22',
-      items: 3
-    },
-    {
-      id: '#ORD-2025-136',
-      customer: 'Nayani Fernando',
-      amount: 2890.00,
-      status: 'processing',
-      date: '2025-07-22',
-      items: 2
-    },
-    {
-      id: '#ORD-2025-137',
-      customer: 'Rajith Perera',
-      amount: 7250.00,
-      status: 'pending',
-      date: '2025-07-21',
-      items: 5
-    },
-    {
-      id: '#ORD-2025-138',
-      customer: 'Sanduni Rajapakse',
-      amount: 1890.00,
-      status: 'delivered',
-      date: '2025-07-21',
-      items: 1
-    }
-  ];
-
-  const getOrderStatusBadge = (status) => {
-    switch (status) {
-      case 'delivered': return <CheckCircle className='bg-emerald-200 text-emerald-800' />;
-      case 'shipped': return <Truck className='bg-blue-200 text-blue-800' />;
-      case 'processing': return <Clock className='bg-amber-200 text-amber-800' />;
-      case 'pending': return <Calendar className='bg-gray-200 text-gray-800' />;
-      case 'cancelled': return <XCircle className= 'bg-red-200 text-red-800' />;
-      default: return <Clock className='bg-gray-100 text-gray-800'/>;
-    }
-  };
-
-  const getStatusBadgeClass = (status) => {
-    switch (status) {
-      case 'delivered': return 'bg-emerald-200 text-emerald-700';
-      case 'shipped': return 'bg-blue-200 text-blue-700';
-      case 'processing': return 'bg-amber-200 text-amber-700';
-      case 'pending': return 'bg-gray-200 text-gray-700';
-      case 'cancelled': return 'bg-red-200 text-red-700';
-      default: return 'bg-gray-50 text-gray-600';
-    }
-  };
-
-  const totalRevenue = salesData.reduce((sum, item) => sum + item.revenue, 0);
-  const totalOrders = salesData.reduce((sum, item) => sum + item.orders, 0);
-  const totalCustomers = salesData.reduce((sum, item) => sum + item.customers, 0);
-  const avgOrderValue = totalRevenue / totalOrders;
+  // Show error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="pt-4 px-1 sm:px-2 lg:px-4 max-w-full mx-0">
+          <div className="flex items-center justify-center h-96">
+            <div className="text-center">
+              <div className="text-red-500 text-5xl mb-4">⚠️</div>
+              <p className="text-[#5D3A00] font-semibold text-lg mb-2">Failed to load analytics</p>
+              <p className="text-gray-600">{error}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -209,14 +492,14 @@ const SalesAnalytics = () => {
 
         {/* Metric Cards Section */}
         <div className="mb-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
             {[
               { 
                 icon: DollarSign, 
                 title: 'Total Revenue', 
                 value: `Rs. ${totalRevenue.toLocaleString()}`, 
-                change: '+12.5%', 
-                trend: 'up',
+                change: metricsSummary?.revenueChange || '0.0%', 
+                trend: metricsSummary?.revenueChange?.startsWith('+') ? 'up' : 'down',
                 iconBg: 'bg-[#D87C5A]',
                 textColor: 'text-[#D87C5A]'
               },
@@ -224,8 +507,8 @@ const SalesAnalytics = () => {
                 icon: ShoppingCart, 
                 title: 'Total Orders', 
                 value: totalOrders.toString(), 
-                change: '+8.3%', 
-                trend: 'up',
+                change: metricsSummary?.ordersChange || '0.0%', 
+                trend: metricsSummary?.ordersChange?.startsWith('+') ? 'up' : 'down',
                 iconBg: 'bg-[#FFD95A]',
                 textColor: 'text-[#bfa100]'
               },
@@ -233,19 +516,10 @@ const SalesAnalytics = () => {
                 icon: Users, 
                 title: 'Customers', 
                 value: totalCustomers.toString(), 
-                change: '+15.7%', 
-                trend: 'up',
+                change: metricsSummary?.customersChange || '0.0%', 
+                trend: metricsSummary?.customersChange?.startsWith('+') ? 'up' : 'down',
                 iconBg: 'bg-[#66bb6a]',
                 textColor: 'text-[#2e7d32]'
-              },
-              { 
-                icon: TrendingUp, 
-                title: 'Avg. Order Value', 
-                value: `Rs. ${avgOrderValue.toFixed(0)}`, 
-                change: '-2.1%', 
-                trend: 'down',
-                iconBg: 'bg-[#ffb74d]',
-                textColor: 'text-[#e65100]'
               }
             ].map((metric, index) => (
               <div
@@ -298,151 +572,143 @@ const SalesAnalytics = () => {
               </select>
             </div>
             <div className="h-96 flex items-end justify-between space-x-2 p-4 bg-[#FFF5E1] rounded-xl">
-              {salesData.map((data, index) => {
-                const value = selectedMetric === 'revenue' ? data.revenue : 
-                             selectedMetric === 'orders' ? data.orders : data.customers;
-                const maxValue = Math.max(...salesData.map(d => 
-                  selectedMetric === 'revenue' ? d.revenue : 
-                  selectedMetric === 'orders' ? d.orders : d.customers
-                ));
-                const height = (value / maxValue) * 200;
-                const barColors = ['#D87C5A', '#FFD95A', '#66BB6A', '#A1887F', '#BA68C8', '#5D3A00'];
-                const barColor = barColors[index % barColors.length];
-                
-                return (
-                  <div key={index} className="flex flex-col items-center flex-1 group">
-                    <div className="w-full relative">
-                      <div 
-                        className="w-full bg-[#D87C5A] rounded-t-lg shadow-md group-hover:shadow-lg transition-all duration-300 group-hover:bg-[#c06949] relative"
-                        style={{ 
-                          height: isChartVisible ? `${height}px` : '0px',
-                          backgroundColor: barColor,
-                          transitionDelay: `${index * 120}ms` 
-                        }}
-                      >
-                        <div
-                          className="absolute -top-10 left-1/2 transform -translate-x-1/2 text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-semibold"
-                          style={{
-                            color: 'white',
+              {salesData && salesData.length > 0 ? (
+                salesData.map((data, index) => {
+                  const value = selectedMetric === 'revenue' ? Number(data.revenue || 0) : 
+                               selectedMetric === 'orders' ? Number(data.orders || 0) : Number(data.customers || 0);
+                  const maxValue = Math.max(...salesData.map(d => 
+                    selectedMetric === 'revenue' ? Number(d.revenue || 0) : 
+                    selectedMetric === 'orders' ? Number(d.orders || 0) : Number(d.customers || 0)
+                  ), 1); // Ensure at least 1 to avoid division by zero
+                  const height = maxValue > 0 ? (value / maxValue) * 200 : 0;
+                  const barColors = ['#D87C5A', '#FFD95A', '#66BB6A', '#A1887F', '#BA68C8', '#5D3A00'];
+                  const barColor = barColors[index % barColors.length];
+                  
+                  return (
+                    <div key={index} className="flex flex-col items-center flex-1 group">
+                      <div className="w-full relative">
+                        <div 
+                          className="w-full bg-[#D87C5A] rounded-t-lg shadow-md group-hover:shadow-lg transition-all duration-300 group-hover:bg-[#c06949] relative"
+                          style={{ 
+                            height: isChartVisible ? `${height}px` : '0px',
                             backgroundColor: barColor,
-                            border: `1px solid ${barColor}`,
-                            boxShadow: `0 0 5px ${barColor}`,
+                            transitionDelay: `${index * 120}ms` 
                           }}
                         >
-                          {selectedMetric === 'revenue' ? `Rs. ${value.toLocaleString()}` : value}
+                          <div
+                            className="absolute -top-10 left-1/2 transform -translate-x-1/2 text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-semibold whitespace-nowrap"
+                            style={{
+                              color: 'white',
+                              backgroundColor: barColor,
+                              border: `1px solid ${barColor}`,
+                              boxShadow: `0 0 5px ${barColor}`,
+                            }}
+                          >
+                            {selectedMetric === 'revenue' ? `Rs. ${value.toLocaleString()}` : value}
+                          </div>
                         </div>
                       </div>
+                      <span className="text-xs text-[#5D3A00] mt-2 font-semibold">{data.month}</span>
                     </div>
-                    <span className="text-xs text-[#5D3A00] mt-2 font-semibold">{data.month}</span>
-                  </div>
-                );
-              })}
+                  );
+                })
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-[#5D3A00] opacity-50">
+                  No sales data available
+                </div>
+              )}
             </div>
           </div>
 
           {/* Top Products */}
           <div className="bg-white rounded-2xl shadow-[0_0_16px_2px_rgba(93,58,0,0.15)] p-6 lg:p-8 border border-[#FFE4D6] animate-fade-in">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-[#5D3A00] flex items-center gap-2">
-                <Star className="w-5 h-5 text-[#D87C5A]" />
-                Top Products
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold text-[#5D3A00] flex items-center gap-3">
+                <div className="p-2 bg-gradient-to-br from-[#D87C5A] to-[#5D3A00] rounded-xl shadow-lg">
+                  <Star className="w-6 h-6 text-white" fill="white" />
+                </div>
+                Top Performing Products
               </h2>
-              <button className="text-[#D87C5A] hover:text-[#5D3A00] text-sm font-medium px-4 py-2 rounded-lg hover:bg-[#FFE4D6] transition">
-                View All
-              </button>
+              <p className="text-sm text-[#5D3A00] opacity-60 mt-2 ml-14">Best sellers by quantity</p>
             </div>
+            
             <div className="space-y-4">
               {topProducts.slice(0, 5).map((product, index) => {
-                const iconColors = ['#D87C5A', '#FFD95A', '#66BB6A', '#BA68C8', '#5D3A00'];
-                const iconBgColor = iconColors[index % iconColors.length];
+                const gradients = [
+                  'from-[#D87C5A] to-[#c06949]',
+                  'from-[#FFD95A] to-[#e6c24d]',
+                  'from-[#66BB6A] to-[#52a356]',
+                  'from-[#BA68C8] to-[#a155b5]',
+                  'from-[#5D3A00] to-[#3d2600]'
+                ];
+                const gradient = gradients[index];
+                const medals = ['🥇', '🥈', '🥉'];
+                const showMedal = index < 3;
 
                 return (
-                  <div key={product.id} className="flex items-center justify-between p-4 rounded-xl transition duration-300 border border-transparent hover:bg-[#FFF5E1] hover:shadow-lg hover:scale-[1.01]">
-                    <div className="flex items-center space-x-4">
-                      <div
-                        className="w-10 h-10 text-white rounded-xl flex items-center justify-center text-sm font-bold shadow-md"
-                        style={{ backgroundColor: iconBgColor }}
-                      >
-                        {index + 1}
+                  <div 
+                    key={product.id} 
+                    className="group relative bg-gradient-to-r from-white to-[#FFF5E1] rounded-2xl p-5 border-2 border-[#FFE4D6] hover:border-[#D87C5A] transition-all duration-300 hover:shadow-xl"
+                  >
+                    {/* Rank Badge */}
+                    <div className="absolute -left-3 -top-3 z-10">
+                      <div className={`w-14 h-14 bg-gradient-to-br ${gradient} rounded-2xl shadow-lg flex items-center justify-center transform rotate-3 group-hover:rotate-6 transition-transform duration-300`}>
+                        <span className="text-white text-xl font-black">{index + 1}</span>
                       </div>
-                      <div>
-                        <h4 className="font-semibold text-[#5D3A00] text-sm">{product.name}</h4>
-                        <p className="text-xs text-[#5D3A00] opacity-70">{product.sales} sold • {product.category}</p>
+                      {showMedal && (
+                        <div className="absolute -top-1 -right-1 text-2xl animate-bounce" style={{ animationDuration: '2s' }}>
+                          {medals[index]}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Content */}
+                    <div className="ml-12">
+                      <div className="flex-1">
+                        <h4 className="font-bold text-[#5D3A00] text-xl leading-tight mb-3 group-hover:text-[#D87C5A] transition-colors">
+                          {product.name}
+                        </h4>
+                        
+                        <div className="flex flex-wrap items-center gap-3">
+                          {/* Category Badge */}
+                          <div className="flex items-center gap-2 bg-white rounded-xl px-4 py-2 border-2 border-[#FFE4D6] shadow-sm group-hover:border-[#D87C5A] transition-all">
+                            <div className={`w-2.5 h-2.5 rounded-full bg-gradient-to-br ${gradient} shadow-sm`}></div>
+                            <span className="text-sm font-semibold text-[#5D3A00]">{product.category}</span>
+                          </div>
+                          
+                          {/* Sales Count - Prominent Display */}
+                          <div className={`flex items-center gap-2.5 bg-gradient-to-br ${gradient} text-white rounded-xl px-4 py-2 shadow-lg group-hover:shadow-xl transition-all`}>
+                            <ShoppingCart className="w-4 h-4" strokeWidth={2.5} />
+                            <span className="text-lg font-black">{product.sales}</span>
+                            <span className="text-sm font-medium opacity-90">units sold</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-bold text-[#5D3A00] text-sm">Rs. {product.revenue.toLocaleString()}</p>
-                      <div className={`flex items-center text-xs font-semibold ${
-                        product.growth > 0 ? 'text-[#388e3c] bg-[#e8f5e9]' : 'text-red-700 bg-red-100'
-                      }`}>
-                        {product.growth > 0 ? (
-                          <ArrowUpRight className="w-3 h-3 mr-1" />
-                        ) : (
-                          <ArrowDownRight className="w-3 h-3 mr-1" />
-                        )}
-                        {Math.abs(product.growth)}%
-                      </div>
-                    </div>
+
+                    {/* Hover Effect Bar */}
+                    <div className={`absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r ${gradient} rounded-b-2xl transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left`}></div>
                   </div>
                 );
               })}
             </div>
-          </div>
-        </div>
 
-        {/* Recent Orders Table */}
-        <div className="bg-white rounded-2xl shadow-[0_0_16px_2px_rgba(93,58,0,0.15)] border border-[#FFE4D6] overflow-hidden animate-fade-in">
-          <div className="flex items-center justify-between mb-6 p-6 lg:p-8">
-            <h2 className="text-xl font-bold text-[#5D3A00] flex items-center gap-2">
-              <Zap className="w-5 h-5 text-[#D87C5A]" />
-              Recent Orders
-            </h2>
-            <div className="flex items-center space-x-4">
-              <button className="text-[#D87C5A] hover:text-[#5D3A00] text-sm font-medium px-4 py-2 rounded-lg hover:bg-[#FFE4D6] transition">
-                View All
-              </button>
-            </div>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gradient-to-r from-[#FFF5E1] to-[#FFE4D6]">
-                <tr>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-[#5D3A00] uppercase tracking-wider">Order</th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-[#5D3A00] uppercase tracking-wider">Customer</th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-[#5D3A00] uppercase tracking-wider">Items</th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-[#5D3A00] uppercase tracking-wider">Total</th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-[#5D3A00] uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-[#5D3A00] uppercase tracking-wider">Date</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#FFF5E1]">
-                {recentOrders.map((order) => (
-                  <tr key={order.id} className="hover:bg-[#FFF5E1]/60 transition-all duration-200">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-[#5D3A00]">{order.id}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-bold text-[#5D3A00]">{order.customer}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-[#5D3A00]">{order.items} items</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-bold text-[#D87C5A]">Rs. {order.amount.toLocaleString()}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${getStatusBadgeClass(order.status)}`}>
-                        {getOrderStatusBadge(order.status)}
-                        {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#5D3A00]">
-                      {new Date(order.date).toLocaleDateString()}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            {/* Summary Footer */}
+            {topProducts.length > 0 && (
+              <div className="mt-6 pt-6 border-t-2 border-[#FFE4D6]">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-[#5D3A00] opacity-60 font-medium">
+                    Showing top {Math.min(5, topProducts.length)} products
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-[#66BB6A] animate-pulse"></div>
+                    <span className="text-[#5D3A00] font-semibold">
+                      Total: {topProducts.slice(0, 5).reduce((sum, p) => sum + p.sales, 0)} units sold
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -465,99 +731,103 @@ const SalesAnalytics = () => {
                 </div>
               </div>
 
-              <div className="p-6 space-y-4">
+              <div className="p-6 space-y-5">
                 {/* Format */}
                 <div>
-                  <label className="block text-sm font-medium text-[#5D3A00] mb-2">Export Format</label>
-                  <select
-                    value={exportOptions.format}
-                    onChange={(e) => setExportOptions({ ...exportOptions, format: e.target.value })}
-                    className="w-full border border-[#FFE4D6] focus:ring-0 outline-none rounded-lg px-3 py-2 text-sm"
-                  >
-                    <option value="csv">CSV</option>
-                    <option value="json">JSON</option>
-                  </select>
+                  <label className="block text-sm font-bold text-[#5D3A00] mb-3">Export Format</label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      { value: 'csv', label: 'CSV', icon: '📊', desc: 'Spreadsheet' },
+                      { value: 'json', label: 'JSON', icon: '📄', desc: 'Data File' },
+                      { value: 'pdf', label: 'PDF', icon: '📑', desc: 'Document' }
+                    ].map((format) => (
+                      <button
+                        key={format.value}
+                        onClick={() => setExportOptions({ ...exportOptions, format: format.value })}
+                        className={`p-4 rounded-xl border-2 transition-all ${
+                          exportOptions.format === format.value
+                            ? 'border-[#D87C5A] bg-[#FFF5E1] shadow-md'
+                            : 'border-[#FFE4D6] hover:border-[#D87C5A] hover:bg-[#FFF5E1]'
+                        }`}
+                      >
+                        <div className="text-2xl mb-1">{format.icon}</div>
+                        <div className="font-bold text-[#5D3A00] text-sm">{format.label}</div>
+                        <div className="text-xs text-[#5D3A00] opacity-60">{format.desc}</div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
-                {/* Date Range */}
-                <div>
-                  <label className="block text-sm font-medium text-[#5D3A00] mb-2">Date Range</label>
-                  <select
-                    value={exportOptions.dateRange}
-                    onChange={(e) => setExportOptions({ ...exportOptions, dateRange: e.target.value })}
-                    className="w-full border border-[#FFE4D6] focus:ring-0 outline-none rounded-lg px-3 py-2 text-sm"
-                  >
-                    <option value="all">All Time</option>
-                    <option value="today">Today</option>
-                    <option value="week">This Week</option>
-                    <option value="month">This Month</option>
-                  </select>
-                </div>
-
-                {/* Status */}
-                <div>
-                  <label className="block text-sm font-medium text-[#5D3A00] mb-2">Order Status</label>
-                  <select
-                    value={exportOptions.status}
-                    onChange={(e) => setExportOptions({ ...exportOptions, status: e.target.value })}
-                    className="w-full border border-[#FFE4D6] focus:ring-0 outline-none rounded-lg px-3 py-2 text-sm"
-                  >
-                    <option value="all">All Statuses</option>
-                    <option value="pending">Pending</option>
-                    <option value="processing">Processing</option>
-                    <option value="shipped">Shipped</option>
-                    <option value="delivered">Delivered</option>
-                    <option value="cancelled">Cancelled</option>
-                  </select>
+                {/* Period Info */}
+                <div className="bg-[#FFF5E1] rounded-xl p-4 border-2 border-[#FFE4D6]">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Calendar className="w-4 h-4 text-[#D87C5A]" />
+                    <span className="font-semibold text-[#5D3A00]">Current Period:</span>
+                    <span className="text-[#D87C5A] font-bold">
+                      {selectedPeriod === '7days' ? 'Last 7 days' :
+                       selectedPeriod === '30days' ? 'Last 30 days' :
+                       selectedPeriod === '90days' ? 'Last 90 days' : 'Last 12 months'}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Include Checkboxes */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-[#5D3A00]">Include Data</label>
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-2">
+                <div className="space-y-3">
+                  <label className="block text-sm font-bold text-[#5D3A00]">Include in Export</label>
+                  <div className="space-y-3">
+                    <label className="flex items-center gap-3 p-3 rounded-xl border-2 border-[#FFE4D6] hover:border-[#D87C5A] hover:bg-[#FFF5E1] transition-all cursor-pointer">
                       <input
                         type="checkbox"
-                        checked={exportOptions.includeCustomerInfo}
-                        onChange={(e) => setExportOptions({ ...exportOptions, includeCustomerInfo: e.target.checked })}
-                        className="rounded border-[#FFE4D6] focus:ring-0 outline-none"
+                        checked={exportOptions.includeMetrics}
+                        onChange={(e) => setExportOptions({ ...exportOptions, includeMetrics: e.target.checked })}
+                        className="w-5 h-5 rounded border-[#D87C5A] text-[#D87C5A] focus:ring-0 focus:ring-offset-0 cursor-pointer"
                       />
-                      <span className="text-sm text-[#5D3A00]">Sales Overview</span>
+                      <div className="flex-1">
+                        <div className="text-sm font-semibold text-[#5D3A00]">📈 Performance Metrics</div>
+                        <div className="text-xs text-[#5D3A00] opacity-60">Revenue, Orders, Customers</div>
+                      </div>
                     </label>
-                    <label className="flex items-center gap-2">
+                    <label className="flex items-center gap-3 p-3 rounded-xl border-2 border-[#FFE4D6] hover:border-[#D87C5A] hover:bg-[#FFF5E1] transition-all cursor-pointer">
                       <input
                         type="checkbox"
-                        checked={exportOptions.includeItems}
-                        onChange={(e) => setExportOptions({ ...exportOptions, includeItems: e.target.checked })}
-                        className="rounded border-[#FFE4D6] focus:ring-0 outline-none"
+                        checked={exportOptions.includeSalesChart}
+                        onChange={(e) => setExportOptions({ ...exportOptions, includeSalesChart: e.target.checked })}
+                        className="w-5 h-5 rounded border-[#D87C5A] text-[#D87C5A] focus:ring-0 focus:ring-offset-0 cursor-pointer"
                       />
-                      <span className="text-sm text-[#5D3A00]">Top Products</span>
+                      <div className="flex-1">
+                        <div className="text-sm font-semibold text-[#5D3A00]">📊 Sales Overview</div>
+                        <div className="text-xs text-[#5D3A00] opacity-60">Monthly/Weekly breakdown</div>
+                      </div>
                     </label>
-                    <label className="flex items-center gap-2">
+                    <label className="flex items-center gap-3 p-3 rounded-xl border-2 border-[#FFE4D6] hover:border-[#D87C5A] hover:bg-[#FFF5E1] transition-all cursor-pointer">
                       <input
                         type="checkbox"
-                        checked={exportOptions.includeItems}
-                        onChange={(e) => setExportOptions({ ...exportOptions, includeItems: e.target.checked })}
-                        className="rounded border-[#FFE4D6] focus:ring-0 outline-none"
+                        checked={exportOptions.includeTopProducts}
+                        onChange={(e) => setExportOptions({ ...exportOptions, includeTopProducts: e.target.checked })}
+                        className="w-5 h-5 rounded border-[#D87C5A] text-[#D87C5A] focus:ring-0 focus:ring-offset-0 cursor-pointer"
                       />
-                      <span className="text-sm text-[#5D3A00]">Orders</span>
+                      <div className="flex-1">
+                        <div className="text-sm font-semibold text-[#5D3A00]">⭐ Top Products</div>
+                        <div className="text-xs text-[#5D3A00] opacity-60">Best performing items</div>
+                      </div>
                     </label>
                   </div>
                 </div>
 
                 {/* Buttons */}
-                <div className="flex gap-3 pt-4">
+                <div className="flex gap-3 pt-2">
                   <button
                     onClick={() => setShowExportModal(false)}
-                    className="flex-1 px-4 py-2 text-[#5D3A00] border border-[#FFE4D6] focus:ring-0 outline-none rounded-lg hover:bg-[#FFF5E1] transition-colors"
+                    className="flex-1 px-4 py-3 text-[#5D3A00] border-2 border-[#FFE4D6] focus:ring-0 outline-none rounded-xl hover:bg-[#FFF5E1] hover:border-[#D87C5A] transition-all font-semibold"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleExport}
-                    className="flex-1 px-4 py-2 bg-gradient-to-r from-[#D87C5A] to-[#5D3A00] text-white rounded-lg hover:shadow-lg transition-all duration-300"
+                    className="flex-1 px-4 py-3 bg-gradient-to-r from-[#D87C5A] to-[#5D3A00] text-white rounded-xl hover:shadow-xl transition-all duration-300 font-semibold flex items-center justify-center gap-2"
                   >
-                    Export
+                    <Download className="w-4 h-4" />
+                    Export Now
                   </button>
                 </div>
               </div>
