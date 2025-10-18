@@ -3,27 +3,36 @@ import {
   Users, 
   DollarSign, 
   AlertTriangle, 
-  Palette,
   BarChart3,
-  Shield,
-  Settings,
   User,
   Trophy,
-  RefreshCw
+  RefreshCw,
+  TrendingUp,
+  CreditCard,
+  Calendar,
+  Activity,
+  CheckCircle,
+  Clock
 } from 'lucide-react';
 import { useCurrency } from '../../context/CurrencyContext';
+import { useAuth } from '../../context/AuthContext';
 import adminOverviewApi from '../../services/adminOverviewApi';
+import adminPaymentApi from '../../services/adminPaymentApi';
 
 const Overview = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { token } = useAuth();
   const [overviewData, setOverviewData] = useState({
     totalUsers: 0,
     totalArtists: 0,
     activeArtists: 0,
-    platformFees: 0
+    platformFees: 0,
+    totalTransactions: 0,
+    pendingPayments: 0
   });
+  const [recentPayments, setRecentPayments] = useState([]);
   const { formatPrice } = useCurrency();
 
   // Fetch overview data from backend
@@ -37,7 +46,9 @@ const Overview = () => {
         totalUsers: data.totalUsers || 0,
         totalArtists: data.totalArtists || 0,
         activeArtists: data.activeArtists || 0,
-        platformFees: data.platformFees || 0
+        platformFees: data.platformFees || 0,
+        totalTransactions: data.totalTransactions || 0,
+        pendingPayments: data.pendingPayments || 0
       });
     } catch (err) {
       console.error('Error fetching overview data:', err);
@@ -47,72 +58,110 @@ const Overview = () => {
         totalUsers: 4, // This should match Users.jsx count (artists + buyers + moderators)
         totalArtists: 2, // Total artists in system
         activeArtists: 1, // Active artists only
-        platformFees: 137.55 // Sum of all fee_amount from platform_fees table
+        platformFees: 137.55, // Sum of all fee_amount from platform_fees table
+        totalTransactions: 320,
+        pendingPayments: 8
       });
     } finally {
       setLoading(false);
     }
   };
 
+  // Fetch recent payments for recent activities
+  const fetchRecentPayments = async () => {
+    if (!token) return;
+    
+    try {
+      const params = {
+        page: 0,
+        size: 3, // Get last 3 payments for recent activities
+        sortBy: 'created_at',
+        sortOrder: 'DESC'
+      };
+      
+      const data = await adminPaymentApi.getPayments(params);
+      setRecentPayments(data.payments || []);
+    } catch (err) {
+      console.error('Error fetching recent payments:', err);
+      // Use mock data if API fails
+      setRecentPayments([
+        {
+          id: 1,
+          amount: 299.99,
+          status: 'paid',
+          paymentType: 'order',
+          buyerName: 'John Smith',
+          artistName: 'Sarah Johnson',
+          orderDescription: 'Abstract Painting Commission',
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: 2,
+          amount: 150.00,
+          status: 'escrow',
+          paymentType: 'commission',
+          buyerName: 'Emily Davis',
+          artistName: 'Michael Brown',
+          commissionTitle: 'Portrait Drawing',
+          createdAt: new Date(Date.now() - 3600000).toISOString()
+        }
+      ]);
+    }
+  };
+
   useEffect(() => {
     fetchOverviewData();
+    fetchRecentPayments();
     setIsLoaded(true);
-  }, []);
+  }, [token]);
 
   const stats = [
     { 
       label: 'Total Users', 
       value: loading ? '...' : overviewData.totalUsers.toLocaleString(), 
       icon: Users, 
-      color: '#D87C5A' 
+      color: '#D87C5A',
+      trend: '+12%'
     },
     { 
       label: 'Total Artists', 
       value: loading ? '...' : overviewData.totalArtists.toLocaleString(), 
-      icon: Palette, 
-      color: '#FFD95A' 
+      icon: User, 
+      color: '#FFD95A',
+      trend: '+8%'
     },
     { 
       label: 'Platform Fees Earned', 
       value: loading ? '...' : overviewData.platformFees.toLocaleString(undefined, { style: 'currency', currency: 'LKR' }),
       icon: DollarSign, 
-      color: '#5D3A00' 
+      color: '#5D3A00',
+      trend: '+15%'
+    },
+    { 
+      label: 'Total Transactions', 
+      value: loading ? '...' : overviewData.totalTransactions.toLocaleString(), 
+      icon: CreditCard, 
+      color: '#4CAF50',
+      trend: '+22%'
+    },
+    { 
+      label: 'Pending Payments', 
+      value: loading ? '...' : overviewData.pendingPayments.toLocaleString(), 
+      icon: Calendar, 
+      color: '#FF9800',
+      trend: '-5%'
     }
   ];
 
-  const quickActions = [
-    { id: 'users', label: 'User Management', icon: Users, desc: 'Manage user accounts and verifications' },
-    { id: 'content', label: 'Content Moderation', icon: Shield, desc: 'Review reported content and violations' },
-    { id: 'analytics', label: 'Platform Analytics', icon: BarChart3, desc: 'View detailed platform statistics' },
-    { id: 'settings', label: 'System Settings', icon: Settings, desc: 'Configure platform settings' }
-  ];
-
-  const recentActivity = [
-    { 
-      type: 'user', 
-      message: `Total of ${overviewData.totalUsers} users registered on platform`, 
-      time: 'System stats', 
-      icon: User 
-    },
-    { 
-      type: 'payment', 
-      message: `Platform earned ${formatPrice(overviewData.platformFees)} in fees`, 
-      time: 'Financial stats', 
-      icon: DollarSign 
-    },
-    { 
-      type: 'artists', 
-      message: `${overviewData.totalArtists} total artists on platform`, 
-      time: 'Artist stats', 
-      icon: Palette 
-    },
-    { 
-      type: 'active', 
-      message: `${overviewData.activeArtists} artists currently active`, 
-      time: 'Active stats', 
-      icon: Trophy 
-    }
-  ];
+  // Mini chart component for trend visualization
+  const MiniChart = ({ trend }) => (
+    <div className="flex items-center">
+      <TrendingUp className={`w-4 h-4 mr-1 ${trend.startsWith('+') ? 'text-green-500' : 'text-red-500'}`} />
+      <span className={`text-sm font-medium ${trend.startsWith('+') ? 'text-green-500' : 'text-red-500'}`}>
+        {trend}
+      </span>
+    </div>
+  );
 
   return (
     <>
@@ -208,112 +257,120 @@ const Overview = () => {
         )}
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-4 stats-grid">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 mb-6 stats-grid">
           {stats.map((stat, index) => (
             <div key={index} className="rounded-lg shadow-sm border h-full relative overflow-hidden stat-card" style={{backgroundColor: '#FFF5E1'}}>
               {/* Background Image */}
               <div 
-                className="absolute inset-0 opacity-25"
+                className="absolute inset-0 opacity-20"
                 style={{
                   backgroundImage: index === 0 
                     ? 'url("https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80")' // Users - people working
                     : index === 1 
                     ? 'url("https://images.unsplash.com/photo-1541961017774-22349e4a1262?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80")' // Artists - art gallery
-                    : 'url("https://images.unsplash.com/photo-1554224155-6726b3ff858f?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80")', // Platform fees - money/coins
+                    : index === 2
+                    ? 'url("https://images.unsplash.com/photo-1554224155-6726b3ff858f?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80")' // Platform fees - money/coins
+                    : index === 3
+                    ? 'url("https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80")' // Transactions - credit cards
+                    : 'url("https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80")', // Pending - calendar
                   backgroundSize: 'cover',
                   backgroundPosition: 'center',
                   backgroundRepeat: 'no-repeat'
                 }}
               ></div>
               <div className="p-4 relative z-10">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <p className="text-sm font-semibold mb-1" style={{color: '#5D3A00'}}>{stat.label}</p>
-                    <h2 className="text-2xl font-bold" style={{color: '#5D3A00'}}>
+                <div className="flex justify-between items-start mb-3">
+                  <div className="flex-1">
+                    <p className="text-xs font-semibold mb-1 opacity-80" style={{color: '#5D3A00'}}>{stat.label}</p>
+                    <h2 className="text-xl font-bold" style={{color: '#5D3A00'}}>
                       {loading ? (
-                        <div className="animate-pulse bg-gray-300 h-8 w-20 rounded"></div>
+                        <div className="animate-pulse bg-gray-300 h-6 w-16 rounded"></div>
                       ) : (
                         stat.value
                       )}
                     </h2>
                   </div>
-                  <div className="p-3 rounded-lg shadow-lg" style={{backgroundColor: stat.color}}>
-                    <stat.icon size={24} className="text-white" />
+                  <div className="p-2 rounded-lg shadow-md" style={{backgroundColor: stat.color}}>
+                    <stat.icon size={20} className="text-white" />
                   </div>
+                </div>
+                <div className="flex justify-between items-center">
+                  <MiniChart trend={stat.trend} />
                 </div>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Quick Actions & Recent Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="rounded-lg shadow-sm border h-full relative overflow-hidden actions-section" style={{backgroundColor: '#FFF5E1'}}>
+        {/* Recent Activities Section */}
+        <div className="grid grid-cols-1 gap-6">
+          <div className="rounded-lg shadow-sm border h-full relative overflow-hidden" style={{backgroundColor: '#FFF5E1'}}>
             <div 
-              className="absolute inset-0 opacity-5"
+              className="absolute inset-0 opacity-10"
               style={{
-                backgroundImage: 'url("https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80")',
-                backgroundSize: 'cover',
-                backgroundPosition: 'center'
-              }}
-            ></div>
-            <div className="p-5 relative z-10">
-              <h2 className="text-xl font-bold mb-4" style={{color: '#5D3A00'}}>Quick Actions</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {quickActions.map((action) => (
-                  <button
-                    key={action.id}
-                    className="border rounded-lg p-4 text-left h-full transition-all duration-200 relative overflow-hidden"
-                    style={{
-                      borderColor: '#FFE4D6',
-                      backgroundColor: '#FFE4D6'
-                    }}
-                    onMouseOver={(e) => {
-                      e.target.style.backgroundColor = '#FFD95A';
-                      e.target.style.borderColor = '#D87C5A';
-                      e.target.style.transform = 'translateY(-2px)';
-                      e.target.style.boxShadow = '0 4px 12px rgba(93, 58, 0, 0.15)';
-                    }}
-                    onMouseOut={(e) => {
-                      e.target.style.backgroundColor = '#FFE4D6';
-                      e.target.style.borderColor = '#FFE4D6';
-                      e.target.style.transform = 'translateY(0)';
-                      e.target.style.boxShadow = 'none';
-                    }}
-                  >
-                    <action.icon size={20} className="mb-2" style={{color: '#5D3A00'}} />
-                    <h6 className="font-semibold mb-1" style={{color: '#5D3A00'}}>{action.label}</h6>
-                    <small style={{color: '#5D3A00'}}>{action.desc}</small>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-lg shadow-sm border h-full relative overflow-hidden activity-section" style={{backgroundColor: '#FFF5E1'}}>
-            <div 
-              className="absolute inset-0 opacity-5"
-              style={{
-                backgroundImage: 'url("https://images.unsplash.com/photo-1611224923853-80b023f02d71?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80")',
+                backgroundImage: 'url("https://images.unsplash.com/photo-1557804506-669a67965ba0?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80")',
                 backgroundSize: 'cover',
                 backgroundPosition: 'center'
               }}
             ></div>
             <div className="p-6 relative z-10">
-              <h2 className="text-xl font-bold mb-4" style={{color: '#5D3A00'}}>Recent Activity</h2>
-              <div className="flex flex-col gap-3">
-                {recentActivity.map((activity, index) => (
-                  <div key={index} className="flex items-start gap-3 p-2 rounded-lg transition-colors hover:bg-white hover:bg-opacity-50">
-                    <div className="p-2 rounded shadow-sm" style={{backgroundColor: '#FFE4D6'}}>
-                      <activity.icon size={16} style={{color: '#5D3A00'}} />
-                    </div>
-                    <div className="flex-1">
-                      <p className="mb-1 text-sm" style={{color: '#5D3A00'}}>{activity.message}</p>
-                      <small style={{color: '#D87C5A'}}>{activity.time}</small>
-                    </div>
+              <h2 className="text-xl font-bold mb-4 flex items-center" style={{color: '#5D3A00'}}>
+                <Activity className="mr-2" size={24} />
+                Recent Activities
+              </h2>
+              <div className="space-y-3">
+                {recentPayments.length > 0 ? (
+                  recentPayments.map((payment) => {
+                    const timeAgo = new Date(payment.createdAt).toLocaleString();
+                    const paymentDescription = payment.paymentType === 'order' 
+                      ? payment.orderDescription 
+                      : payment.commissionTitle;
+                    
+                    let activityText = '';
+                    if (payment.status === 'paid') {
+                      activityText = `Payment of LKR ${payment.amount} completed for "${paymentDescription}" from ${payment.buyerName} to ${payment.artistName}.`;
+                    } else if (payment.status === 'escrow') {
+                      activityText = `Payment of LKR ${payment.amount} held in escrow between ${payment.buyerName} and ${payment.artistName}.`;
+                    } else {
+                      activityText = `New ${payment.paymentType} payment of LKR ${payment.amount} initiated for "${paymentDescription}".`;
+                    }
+
+                    return (
+                      <div key={payment.id} className="p-4 bg-white rounded-lg shadow-sm border transition-all duration-200 hover:shadow-md">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <p className="text-sm" style={{color: '#5D3A00'}}>
+                              {activityText}
+                            </p>
+                            <p className="text-xs mt-2 opacity-60" style={{color: '#D87C5A'}}>
+                              {timeAgo}
+                            </p>
+                          </div>
+                          <div className="ml-4 p-2 rounded-full" style={{
+                            backgroundColor: payment.status === 'paid' ? '#4CAF50' : 
+                                           payment.status === 'escrow' ? '#FF9800' : '#2196F3'
+                          }}>
+                            {payment.status === 'paid' ? (
+                              <CheckCircle size={16} className="text-white" />
+                            ) : payment.status === 'escrow' ? (
+                              <Clock size={16} className="text-white" />
+                            ) : (
+                              <DollarSign size={16} className="text-white" />
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-8">
+                    <Activity size={48} className="mx-auto mb-4 opacity-30" style={{color: '#5D3A00'}} />
+                    <p className="text-sm opacity-60" style={{color: '#5D3A00'}}>No recent activities</p>
                   </div>
-                ))}
+                )}
               </div>
+              
+            
             </div>
           </div>
         </div>
