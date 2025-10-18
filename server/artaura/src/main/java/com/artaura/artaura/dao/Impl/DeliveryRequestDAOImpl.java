@@ -42,6 +42,12 @@ public class DeliveryRequestDAOImpl implements DeliveryRequestDAO {
         } catch (Exception e) {
             dto.setShippingFee(BigDecimal.ZERO);
         }
+        // Handle payment amount from payment table
+        try {
+            dto.setPaymentAmount(rs.getBigDecimal("payment_amount"));
+        } catch (Exception e) {
+            dto.setPaymentAmount(null);
+        }
         return dto;
     };
 
@@ -72,6 +78,13 @@ public class DeliveryRequestDAOImpl implements DeliveryRequestDAO {
             dto.setShippingFee(rs.getBigDecimal("shipping_fee"));
         } catch (Exception e) {
             dto.setShippingFee(BigDecimal.ZERO);
+        }
+        
+        // Handle payment amount from payment table
+        try {
+            dto.setPaymentAmount(rs.getBigDecimal("payment_amount"));
+        } catch (Exception e) {
+            dto.setPaymentAmount(null);
         }
         
         // Parse budget string to BigDecimal
@@ -387,10 +400,12 @@ public class DeliveryRequestDAOImpl implements DeliveryRequestDAO {
                     ao.shipping_fee,
                     aoi.title AS artwork_title,
                     aoi.artist_id,
-                    CONCAT(a.first_name, ' ', a.last_name) AS artist_name
+                    CONCAT(a.first_name, ' ', a.last_name) AS artist_name,
+                    p.amount AS payment_amount
                 FROM AW_orders ao
                 LEFT JOIN AW_order_items aoi ON ao.id = aoi.order_id
                 LEFT JOIN artists a ON aoi.artist_id = a.artist_id
+                LEFT JOIN payment p ON ao.id = p.AW_order_id
                 WHERE ao.delivery_status IN ('accepted', 'outForDelivery')
                 ORDER BY ao.order_date DESC
             """;
@@ -425,9 +440,11 @@ public class DeliveryRequestDAOImpl implements DeliveryRequestDAO {
                     cr.urgency,
                     cr.shipping_fee,
                     cr.artist_id,
-                    CONCAT(a.first_name, ' ', a.last_name) AS artist_name
+                    CONCAT(a.first_name, ' ', a.last_name) AS artist_name,
+                    p.amount AS payment_amount
                 FROM commission_requests cr
                 LEFT JOIN artists a ON cr.artist_id = a.artist_id
+                LEFT JOIN payment p ON cr.id = p.commission_request_id
                 WHERE cr.delivery_status IN ('accepted', 'outForDelivery')
                 ORDER BY cr.submitted_at DESC
             """;

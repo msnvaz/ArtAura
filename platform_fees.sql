@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: mysql-artaura.alwaysdata.net
--- Generation Time: Oct 17, 2025 at 07:36 PM
+-- Generation Time: Oct 18, 2025 at 05:23 AM
 -- Server version: 10.11.14-MariaDB
 -- PHP Version: 7.4.33
 

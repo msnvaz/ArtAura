@@ -127,6 +127,7 @@ const ActiveDeliveries = () => {
               artistPhone: request.buyerPhone || 'N/A',
               buyerName: request.buyerName || 'Unknown Buyer',
               buyerPhone: request.buyerPhone || 'N/A',
+              paymentAmount: request.paymentAmount || 0, // Payment amount from payment table
               artwork: {
                 title: request.artworkTitle || `${request.requestType === 'artwork_order' ? 'Artwork Order' : 'Commission'} #${request.id}`,
                 type: request.artworkType || (request.requestType === 'artwork_order' ? 'Artwork' : 'Commission'),
@@ -370,14 +371,29 @@ const ActiveDeliveries = () => {
                           newStatus.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
         
         // Show alert with platform fee and payment amount when delivered
-        let alertMessage = `Delivery status updated successfully to: ${statusLabel}\n\nResponse: ${response.message || 'Success'}`;
+        let alertMessage = `✅ Delivery status updated successfully to: ${statusLabel}\n\n`;
         
         if (newStatus === 'delivered') {
-          alertMessage += `\n\n📊 Payment Details:\n`;
-          alertMessage += `💰 Platform Fee: ${response.platformFee || 'N/A'}%\n`;
-          alertMessage += `💵 Payment Amount: Rs ${response.paymentAmount || 'N/A'}`;
+          // Use payment amount from the delivery object (fetched from payment table)
+          const paymentAmount = delivery.paymentAmount || response.paymentAmount;
           
-          console.log('Alert message for delivered status:', alertMessage);
+          // Format payment amount with commas for better readability
+          const formattedPaymentAmount = paymentAmount 
+            ? parseFloat(paymentAmount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+            : 'N/A';
+          
+          alertMessage += `📊 PAYMENT DETAILS\n`;
+          alertMessage += `${'='.repeat(40)}\n`;
+          alertMessage += `💵 Payment Amount: Rs ${formattedPaymentAmount}\n`;
+          alertMessage += `💰 Platform Fee: ${response.platformFee || 'N/A'}%\n`;
+          alertMessage += `${'='.repeat(40)}\n\n`;
+          alertMessage += `Note: The payment amount shown is from the payment table.`;
+          
+          console.log('✅ Alert message for delivered status:', alertMessage);
+          console.log('💵 Payment amount from delivery object:', delivery.paymentAmount);
+          console.log('💵 Payment amount from API response:', response.paymentAmount);
+        } else {
+          alertMessage += `Response: ${response.message || 'Success'}`;
         }
         
         alert(alertMessage);
