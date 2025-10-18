@@ -9,22 +9,40 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.UUID;
 
 @Service
-public class ImageUploadService {
+public class CentralizedUploadService {
 
-    public String saveImage(MultipartFile file, String imageType, Long artistId) throws IOException {
-        // Get the current working directory and print it for debugging
+    /**
+     * Save uploaded file to client/public/uploads directory
+     * This ensures all images are accessible via the web server
+     */
+    public String saveImageToPublicUploads(MultipartFile file, String subDirectory, String prefix) throws IOException {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("File cannot be null or empty");
+        }
+
+        // Validate image file
+        if (!isValidImageFile(file)) {
+            throw new IllegalArgumentException("Invalid image file type. Only JPEG, PNG, GIF, and WebP are allowed.");
+        }
+
+        if (!isFileSizeValid(file)) {
+            throw new IllegalArgumentException("File size too large. Maximum size is 5MB.");
+        }
+
+        // Get the project root directory (parent of artaura folder)
         String currentDir = System.getProperty("user.dir");
-        System.out.println("Current working directory: " + currentDir);
-
-        // Calculate the correct path to client/public/uploads
         String projectRoot = currentDir.endsWith("artaura")
                 ? currentDir.substring(0, currentDir.lastIndexOf("artaura"))
                 : currentDir + File.separator;
 
-        String uploadDirPath = projectRoot + "client" + File.separator + "public" + File.separator + "uploads" + File.separator + "profiles" + File.separator;
+        // Build the upload path: projectRoot/client/public/uploads/subDirectory/
+        String uploadDirPath = projectRoot + "client" + File.separator + "public" + File.separator + "uploads" + File.separator;
+        if (subDirectory != null && !subDirectory.trim().isEmpty()) {
+            uploadDirPath += subDirectory + File.separator;
+        }
+
         System.out.println("Upload directory path: " + uploadDirPath);
 
         // Create upload directory if it doesn't exist
@@ -39,7 +57,7 @@ public class ImageUploadService {
         String extension = originalFilename != null
                 ? originalFilename.substring(originalFilename.lastIndexOf('.')) : ".jpg";
 
-        String filename = artistId + "_" + imageType + "_" + System.currentTimeMillis() + extension;
+        String filename = (prefix != null ? prefix + "_" : "") + System.currentTimeMillis() + extension;
         System.out.println("Generated filename: " + filename);
 
         // Save file
@@ -48,14 +66,17 @@ public class ImageUploadService {
 
         System.out.println("File saved to: " + filePath.toAbsolutePath());
 
-        // Return relative path for database storage
-        String relativePath = "/uploads/profiles/" + filename;
+        // Return relative path for database storage and frontend access
+        String relativePath = "/uploads/" + (subDirectory != null && !subDirectory.trim().isEmpty() ? subDirectory + "/" : "") + filename;
         System.out.println("Returning relative path: " + relativePath);
 
         return relativePath;
     }
 
-    public void deleteImage(String imagePath) {
+    /**
+     * Delete image from client/public/uploads directory
+     */
+    public void deleteImageFromPublicUploads(String imagePath) {
         try {
             if (imagePath != null && !imagePath.isEmpty()) {
                 String currentDir = System.getProperty("user.dir");
@@ -63,7 +84,7 @@ public class ImageUploadService {
                         ? currentDir.substring(0, currentDir.lastIndexOf("artaura"))
                         : currentDir + File.separator;
 
-                // Convert URL path back to file path for client/public/uploads
+                // Convert URL path back to file path
                 String filePath = imagePath.replace("/uploads/", projectRoot + "client" + File.separator + "public" + File.separator + "uploads" + File.separator);
                 Path path = Paths.get(filePath);
                 boolean deleted = Files.deleteIfExists(path);
@@ -75,6 +96,9 @@ public class ImageUploadService {
         }
     }
 
+    /**
+     * Validate image file type
+     */
     public boolean isValidImageFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             return false;
@@ -88,9 +112,47 @@ public class ImageUploadService {
                 || contentType.equals("image/webp"));
     }
 
+    /**
+     * Validate file size (max 5MB)
+     */
     public boolean isFileSizeValid(MultipartFile file) {
         // Max file size: 5MB
         long maxSize = 5 * 1024 * 1024;
         return file.getSize() <= maxSize;
+    }
+
+    /**
+     * Convenience method for artwork uploads
+     */
+    public String saveArtworkImage(MultipartFile file, Long artistId) throws IOException {
+        return saveImageToPublicUploads(file, "artworks", "artwork_" + artistId);
+    }
+
+    /**
+     * Convenience method for profile picture uploads
+     */
+    public String saveProfileImage(MultipartFile file, Long userId, String userType) throws IOException {
+        return saveImageToPublicUploads(file, "profiles", userType + "_" + userId);
+    }
+
+    /**
+     * Convenience method for cover image uploads
+     */
+    public String saveCoverImage(MultipartFile file, Long artistId) throws IOException {
+        return saveImageToPublicUploads(file, "covers", "cover_" + artistId);
+    }
+
+    /**
+     * Convenience method for post images
+     */
+    public String savePostImage(MultipartFile file, Long userId) throws IOException {
+        return saveImageToPublicUploads(file, "posts", "post_" + userId);
+    }
+
+    /**
+     * Convenience method for general uploads (no subdirectory)
+     */
+    public String saveGeneralImage(MultipartFile file, String prefix) throws IOException {
+        return saveImageToPublicUploads(file, null, prefix);
     }
 }

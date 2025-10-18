@@ -42,11 +42,18 @@ public class PostController {
             Long userId = jwtUtil.extractUserId(token);
             String role = jwtUtil.extractRole(token);
 
-            // 📂 Save multiple images to /uploads/
+            // 📂 Save multiple images to client/public/uploads/
             List<String> imagePaths = new ArrayList<>();
             for (MultipartFile image : images) {
                 String fileName = System.currentTimeMillis() + "_" + image.getOriginalFilename();
-                Path uploadDir = Paths.get("uploads");
+
+                // Calculate project root directory
+                String currentDir = System.getProperty("user.dir");
+                String projectRoot = currentDir.endsWith("artaura")
+                        ? currentDir.substring(0, currentDir.lastIndexOf("artaura"))
+                        : currentDir + "/";
+
+                Path uploadDir = Paths.get(projectRoot + "client/public/uploads");
                 Files.createDirectories(uploadDir); // Create folder if not exist
                 Path filePath = uploadDir.resolve(fileName);
                 Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
@@ -98,7 +105,14 @@ public class PostController {
                 List<String> imagePaths = new ArrayList<>();
                 for (MultipartFile image : images) {
                     String fileName = System.currentTimeMillis() + "_" + image.getOriginalFilename();
-                    Path uploadDir = Paths.get("uploads");
+
+                    // Calculate project root directory
+                    String currentDir = System.getProperty("user.dir");
+                    String projectRoot = currentDir.endsWith("artaura")
+                            ? currentDir.substring(0, currentDir.lastIndexOf("artaura"))
+                            : currentDir + "/";
+
+                    Path uploadDir = Paths.get(projectRoot + "client/public/uploads");
                     Files.createDirectories(uploadDir); // Create folder if not exist
                     Path filePath = uploadDir.resolve(fileName);
                     Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
