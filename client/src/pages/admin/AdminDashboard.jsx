@@ -17,7 +17,6 @@ import Overview from "./Overview";
 import UsersManagement from "./Users";
 import ArtworkManagement from "./Artwork";
 import Financial from "./Financial";
-import ComplaintsReports from "./ComplaintsReports";
 import UserVerification from "./UserVerification";
 import DeliveryManagement from "./DeliveryManagement";
 import { CurrencyProvider } from "../../context/CurrencyContext";
@@ -43,7 +42,6 @@ const AdminDashboard = () => {
     { id: "artwork", label: "Artworks", icon: Image },
     { id: "delivery", label: "Delivery Management", icon: Truck },
     { id: "financial", label: "Financial", icon: DollarSign },
-    { id: "complaints", label: "Complaints & Reports", icon: AlertTriangle },
     { id: "verification", label: "User Verification", icon: Shield },
   ];
 
@@ -59,8 +57,6 @@ const AdminDashboard = () => {
         return <DeliveryManagement />;
       case "financial":
         return <Financial />;
-      case "complaints":
-        return <ComplaintsReports />;
       case "verification":
         return <UserVerification />;
       default:
@@ -85,7 +81,7 @@ const AdminDashboard = () => {
   return (
     <CurrencyProvider>
       {/* Optimized CSS styles for smoother animations */}
-      <style jsx>{`
+      <style>{`
         @keyframes smoothFadeIn {
           from {
             opacity: 0;
@@ -210,33 +206,18 @@ const AdminDashboard = () => {
                 </div>
               </div>
               <div className="mt-4 md:mt-0 flex gap-2 items-center">
-                {[
-                  {
-                    icon: AlertTriangle,
-                    text: "Reports",
-                    fullText: "Review Reports",
-                  },
-                  {
-                    icon: FileText,
-                    text: "Generate",
-                    fullText: "Generate Report",
-                  },
-                  { icon: Users, text: "Users", fullText: "User Management" },
-                ].map((btn, index) => (
-                  <button
-                    key={index}
-                    className="border px-3 py-2 rounded-lg font-medium flex items-center space-x-1 whitespace-nowrap btn-animate"
-                    style={{
-                      borderColor: "#FFE4D6",
-                      color: "#FFE4D6",
-                      backgroundColor: "rgba(255, 228, 214, 0.1)",
-                    }}
-                  >
-                    <btn.icon size={14} />
-                    <span className="hidden sm:inline">{btn.fullText}</span>
-                    <span className="sm:hidden">{btn.text}</span>
-                  </button>
-                ))}
+                <button
+                  className="border px-3 py-2 rounded-lg font-medium flex items-center space-x-1 whitespace-nowrap btn-animate"
+                  style={{
+                    borderColor: "#FFE4D6",
+                    color: "#FFE4D6",
+                    backgroundColor: "rgba(255, 228, 214, 0.1)",
+                  }}
+                >
+                  <FileText size={14} />
+                  <span className="hidden sm:inline">Generate Report</span>
+                  <span className="sm:hidden">Generate</span>
+                </button>
 
                 {/* Auth Button */}
                 {isSignedIn ? (

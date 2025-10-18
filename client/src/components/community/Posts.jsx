@@ -1,15 +1,20 @@
 import React, { useState } from "react";
-import { Heart, MessageCircle, Share, MoreHorizontal } from "lucide-react";
+import { Heart } from "lucide-react";
+import axios from "axios";
+import PostInteractions from '../social/PostInteractions';
 
-const Post = ({ username, avatar, timeAgo, image, likes, caption }) => {
-  const [isLiked, setIsLiked] = useState(false);
-  const [likesCount, setLikesCount] = useState(likes);
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
-  const handleLike = () => {
-    setIsLiked(!isLiked);
-    setLikesCount(isLiked ? likesCount - 1 : likesCount + 1);
-  };
-
+const Post = ({
+  username,
+  avatar,
+  timeAgo,
+  image,
+  likes,
+  caption,
+  postId,
+  userId,
+}) => {
   return (
     <div className="bg-white rounded-xl shadow-md border border-[#fdf9f4]/40 overflow-hidden shadow-xl mb-6 max-w-xl mx-auto">
       <div className="flex items-center justify-between p-3 sm:p-4">
@@ -24,9 +29,6 @@ const Post = ({ username, avatar, timeAgo, image, likes, caption }) => {
             <p className="text-[#7f5539]/60 text-xs">{timeAgo}</p>
           </div>
         </div>
-        <button className="text-[#7f5539]/60 hover:text-[#7f5539] p-2 rounded-full hover:bg-[#ffe4d6]">
-          <MoreHorizontal className="w-5 h-5" />
-        </button>
       </div>
 
       <img
@@ -36,32 +38,17 @@ const Post = ({ username, avatar, timeAgo, image, likes, caption }) => {
       />
 
       <div className="p-3 sm:p-4">
-        <div className="flex items-center space-x-4 mb-2">
-          <button
-            onClick={handleLike}
-            className={`p-2 rounded-full ${
-              isLiked
-                ? "text-red-500 bg-red-500/10 hover:bg-red-500/20"
-                : "text-[#7f5539]/60 hover:text-red-500 hover:bg-[#ffe4d6]"
-            }`}
-          >
-            <Heart className={`w-5 h-5 ${isLiked ? "fill-current" : ""}`} />
-          </button>
-          <button className="text-[#7f5539]/60 hover:text-[#7f5539] p-2 rounded-full hover:bg-[#ffe4d6]">
-            <MessageCircle className="w-5 h-5" />
-          </button>
-          <button className="text-[#7f5539]/60 hover:text-[#7f5539] p-2 rounded-full hover:bg-[#ffe4d6]">
-            <Share className="w-5 h-5" />
-          </button>
-        </div>
-
-        <p className="text-[#7f5539] font-semibold text-xs mb-1">
-          {likesCount.toLocaleString()} likes
-        </p>
-        <p className="text-[#7f5539] text-sm">
+        <p className="text-[#7f5539] text-sm mb-2">
           <span className="font-semibold text-[#7f5539]">{username}</span>{" "}
           {caption}
         </p>
+        
+        {/* Post Interactions */}
+        <PostInteractions 
+          postId={postId} 
+          initialLikesCount={likes || 0}
+          initialCommentsCount={0} // You can add comments count if available
+        />
       </div>
     </div>
   );

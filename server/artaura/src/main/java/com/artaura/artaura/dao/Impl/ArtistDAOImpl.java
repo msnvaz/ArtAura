@@ -86,6 +86,7 @@ public class ArtistDAOImpl implements ArtistDAO {
                     a.total_followers,
                     a.total_sales,
                     a.specialization,
+                    a.status,
                     COUNT(aw.artwork_id) as artworks_count
                 FROM artists a
                 LEFT JOIN artworks aw ON a.artist_id = aw.artist_id
@@ -118,6 +119,7 @@ public class ArtistDAOImpl implements ArtistDAO {
                 dto.setTotalFollowers(rs.getInt("total_followers"));
                 dto.setTotalSales(rs.getInt("total_sales"));
                 dto.setSpecialization(rs.getString("specialization"));
+                dto.setStatus(rs.getString("status"));
                 dto.setArtworksCount(rs.getInt("artworks_count"));
 
                 return dto;

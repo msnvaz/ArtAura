@@ -42,8 +42,17 @@ public class ArtWorkDAOImpl implements ArtWorkDAO {
 
     @Override
     public void deleteArtWorkById(Long artworkId) {
-        String sql = "DELETE FROM artworks WHERE artwork_id = ?";
-        jdbcTemplate.update(sql, artworkId);
+        try {
+            String sql = "DELETE FROM artworks WHERE artwork_id = ?";
+            int rowsAffected = jdbcTemplate.update(sql, artworkId);
+
+            if (rowsAffected == 0) {
+                throw new RuntimeException("Artwork not found with id: " + artworkId);
+            }
+        } catch (Exception e) {
+            System.err.println("Error deleting artwork with id " + artworkId + ": " + e.getMessage());
+            throw e;
+        }
     }
 
     @Override

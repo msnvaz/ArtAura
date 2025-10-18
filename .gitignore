@@ -11,8 +11,8 @@ server/.env
 # Ignored package files
 package-lock.json
 package.json
-uploads
 .env
+.env.local
 server/.env
 server/autura/.env
 server/production/artaura/application.properties

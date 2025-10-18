@@ -31,10 +31,15 @@ export const CartProvider = ({ children }) => {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (response.data) {
-        // Map artworkId to id for consistency
+        // Map artworkId to id for consistency and normalize artistId
         const mapped = response.data.map((item) => ({
           ...item,
           id: item.id || item.artworkId,
+          // normalize artistId across possible keys or nested artist object
+          artistId:
+            item.artistId ||
+            item.artist_id ||
+            (item.artist ? item.artist.id : item.artistId),
         }));
         setCartItems(mapped);
       }
@@ -55,6 +60,11 @@ export const CartProvider = ({ children }) => {
         const mapped = response.data.map((item) => ({
           ...item,
           id: item.artwork_id || item.artworkId || item.id,
+          // normalize artistId across possible keys or nested artist object
+          artistId:
+            item.artistId ||
+            item.artist_id ||
+            (item.artist ? item.artist.id : item.artistId),
         }));
         setCartItems(mapped);
       }
@@ -84,7 +94,17 @@ export const CartProvider = ({ children }) => {
             : item
         );
       } else {
-        return [...prevItems, { ...product, id: productId, quantity }];
+        // ensure artistId is present on cart item if available on product
+        const normalizedProduct = {
+          ...product,
+          id: productId,
+          artistId:
+            product.artistId ||
+            product.artist_id ||
+            (product.artist ? product.artist.id : product.artistId),
+          quantity,
+        };
+        return [...prevItems, normalizedProduct];
       }
     });
   };

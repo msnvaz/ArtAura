@@ -93,6 +93,8 @@ public class JwtAuthFilter extends OncePerRequestFilter { //runs once per reques
             "/api/buyer/signup",
             "/api/shop/signup",
             "/uploads/",
+            "/api/admin/payments/", // Allow admin payment endpoints for testing
+            "/api/admin/artworks/", // Allow admin artwork endpoints for testing
             "/ws/" // Allow all websocket endpoints to be public
         };
         for (String publicPath : publicPaths) {

@@ -28,9 +28,13 @@ public class ShopDAOImpl implements ShopDAO {
 
     @Override
     public ShopDTO findByUserId(Long userId) {
-        // shop_id is the PK, so we use it for fetching
         String sql = "SELECT * FROM shops WHERE shop_id = ?";
-        return jdbc.queryForObject(sql, (rs, rowNum) -> mapShop(rs), userId);
+        try {
+            return jdbc.queryForObject(sql, (rs, rowNum) -> mapShop(rs), userId);
+        } catch (org.springframework.dao.EmptyResultDataAccessException e) {
+            // Return null if no shop is found for the user
+            return null;
+        }
     }
 
     @Override

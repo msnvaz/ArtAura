@@ -20,12 +20,17 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // Serve uploaded files from /uploads
+        // Get project root directory (parent of artaura folder)
+        String currentDir = System.getProperty("user.dir");
+        String projectRoot = currentDir.endsWith("artaura")
+                ? currentDir.substring(0, currentDir.lastIndexOf("artaura"))
+                : currentDir + "/";
+
+        // Serve uploaded files from client/public/uploads
         registry.addResourceHandler("/uploads/**")
                 .addResourceLocations("file:" + System.getProperty("user.dir") + "/uploads/");
-        // If you need to serve other static folders, add them here (example for
-        // /public)
-        registry.addResourceHandler("/public/**")
-                .addResourceLocations("file:" + System.getProperty("user.dir") + "/client/public/");
+        // If you need to serve other static folders, add them here (example for /public)
+         registry.addResourceHandler("/public/**")
+                 .addResourceLocations("file:" + System.getProperty("user.dir") + "/client/public/");
     }
 }

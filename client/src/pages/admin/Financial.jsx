@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   DollarSign, 
   TrendingUp, 
@@ -26,13 +26,18 @@ import {
   Store
 } from 'lucide-react';
 import { useCurrency } from '../../context/CurrencyContext';
+import { useAuth } from '../../context/AuthContext';
 import CurrencySelector from '../../components/common/CurrencySelector';
+import adminPaymentApi from '../../services/adminPaymentApi';
 
 const Financial = () => {
+  const { token, role } = useAuth();
+  const { formatPrice } = useCurrency();
   const [isLoaded, setIsLoaded] = useState(false);
   const [timeRange, setTimeRange] = useState('30days');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const [expandedPaymentId, setExpandedPaymentId] = useState(null);
   const [showTransactionModal, setShowTransactionModal] = useState(false);
   const [showRefundModal, setShowRefundModal] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
@@ -41,7 +46,285 @@ const Financial = () => {
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
-  const { formatPrice } = useCurrency();
+  const [payments, setPayments] = useState([]);
+  const [allPayments, setAllPayments] = useState([]); // Store all unfiltered payments for stats
+  const [pagination, setPagination] = useState({
+    currentPage: 0,
+    totalPages: 0,
+    totalElements: 0,
+    pageSize: 10
+  });
+  const [paymentStatistics, setPaymentStatistics] = useState(null);
+
+  // Track previous filter values to detect actual filter changes
+  const prevFiltersRef = useRef({ status: filterStatus, type: filterType });
+
+  useEffect(() => {
+    setIsLoaded(true);
+    console.log('Financial component - Auth state:', { token: !!token, role });
+    
+    // Try to make API calls if we have a token (regardless of role for testing)
+    if (token) {
+      console.log('Making API calls for authenticated user');
+      fetchAllPayments(); // Fetch all payments for stats
+      fetchPayments();
+      fetchPaymentStatistics();
+    } else {
+      console.log('Loading demo data - no token available');
+      // Load demo data immediately if not authenticated
+      loadMockPayments();
+    }
+  }, [token, role]);
+
+  useEffect(() => {
+    // Check if filters have actually changed (not just pagination)
+    const filtersChanged = 
+      prevFiltersRef.current.status !== filterStatus || 
+      prevFiltersRef.current.type !== filterType;
+
+    if (filtersChanged) {
+      console.log('Filters changed - resetting to first page');
+      prevFiltersRef.current = { status: filterStatus, type: filterType };
+      
+      if (pagination.currentPage !== 0) {
+        setExpandedPaymentId(null); // Close any expanded rows when filters change
+        setPagination(prev => ({ ...prev, currentPage: 0 }));
+        return;
+      }
+    }
+
+    console.log('useEffect triggered - currentPage:', pagination.currentPage, 'token:', !!token);
+    // Try to make API calls if we have a token (regardless of role for testing)
+    if (token) {
+      fetchPayments();
+    } else {
+      // Load demo data for non-authenticated users
+      loadMockPayments();
+    }
+  }, [filterStatus, filterType, pagination.currentPage, token, role]);
+
+  // Fetch all payments for statistics (without filters)
+  const fetchAllPayments = async () => {
+    try {
+      if (!token) {
+        return;
+      }
+
+      const params = {
+        page: 0,
+        size: 1000, // Get a large number to calculate accurate stats
+        sortBy: 'created_at',
+        sortOrder: 'DESC'
+      };
+
+      const data = await adminPaymentApi.getPayments(params);
+      setAllPayments(data.payments || []);
+    } catch (error) {
+      console.error('Error fetching all payments for stats:', error);
+    }
+  };
+
+  // Fetch payments from API
+  const fetchPayments = async () => {
+    setLoading(true);
+    console.log('fetchPayments called - token:', !!token, 'role:', role);
+    
+    try {
+      // Check if user is authenticated and has admin role
+      if (!token) {
+        console.log('No token available');
+        setErrorMessage('Authentication required - Please log in');
+        loadMockPayments();
+        return;
+      }
+
+      console.log('Making API request for payments');
+      
+      const params = {
+        page: pagination.currentPage,
+        size: pagination.pageSize,
+        sortBy: 'created_at',
+        sortOrder: 'DESC'
+      };
+
+      if (filterStatus !== 'all') {
+        params.status = filterStatus;
+      }
+      if (filterType !== 'all') {
+        params.paymentType = filterType;
+      }
+
+      const data = await adminPaymentApi.getPayments(params);
+      
+      console.log('API Response data:', data);
+      setPayments(data.payments || []);
+      setPagination({
+        currentPage: data.currentPage || 0,
+        totalPages: data.totalPages || 0,
+        totalElements: data.totalElements || 0,
+        pageSize: data.pageSize || 10
+      });
+      setErrorMessage(null); // Clear any previous errors
+    } catch (error) {
+      console.error('Error fetching payments:', error);
+      
+      // Handle specific error cases
+      if (error.error && error.error.includes('403')) {
+        setErrorMessage('Access denied - Admin privileges required');
+      } else if (error.error && error.error.includes('401')) {
+        setErrorMessage('Authentication expired - Please log in again');
+      } else {
+        setErrorMessage('Server not available - Using demo data');
+      }
+      
+      // Fallback to mock data when server is not available
+      loadMockPayments();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load mock payments when server is unavailable
+  const loadMockPayments = () => {
+    const mockPayments = [
+      {
+        id: 1001,
+        amount: 299.99,
+        status: 'escrow',
+        paymentType: 'order',
+        orderDescription: 'Abstract Painting Commission',
+        buyerName: 'John Smith',
+        buyerEmail: 'john.smith@email.com',
+        artistName: 'Sarah Johnson',
+        artistEmail: 'sarah.j@email.com',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      {
+        id: 1002,
+        amount: 599.99,
+        status: 'paid',
+        paymentType: 'commission',
+        commissionTitle: 'Portrait Commission',
+        buyerName: 'Mike Davis',
+        buyerEmail: 'mike.davis@email.com',
+        artistName: 'Emily Chen',
+        artistEmail: 'emily.chen@email.com',
+        createdAt: new Date(Date.now() - 86400000).toISOString(),
+        updatedAt: new Date(Date.now() - 43200000).toISOString()
+      },
+      {
+        id: 1003,
+        amount: 149.99,
+        status: 'refunded',
+        paymentType: 'order',
+        orderDescription: 'Digital Art Print',
+        buyerName: 'Lisa Wilson',
+        buyerEmail: 'lisa.wilson@email.com',
+        artistName: 'David Brown',
+        artistEmail: 'david.brown@email.com',
+        createdAt: new Date(Date.now() - 172800000).toISOString(),
+        updatedAt: new Date(Date.now() - 86400000).toISOString()
+      },
+      {
+        id: 1004,
+        amount: 899.99,
+        status: 'escrow',
+        paymentType: 'commission',
+        commissionTitle: 'Landscape Painting',
+        buyerName: 'Robert Taylor',
+        buyerEmail: 'robert.taylor@email.com',
+        artistName: 'Maria Garcia',
+        artistEmail: 'maria.garcia@email.com',
+        createdAt: new Date(Date.now() - 259200000).toISOString(),
+        updatedAt: new Date(Date.now() - 172800000).toISOString()
+      }
+    ];
+
+    setPayments(mockPayments);
+    setAllPayments(mockPayments); // Also set allPayments for stats
+    setPagination({
+      currentPage: 0,
+      totalPages: 1,
+      totalElements: mockPayments.length,
+      pageSize: 10
+    });
+  };
+
+  // Fetch payment statistics
+  const fetchPaymentStatistics = async () => {
+    try {
+      if (!token) {
+        console.log('No token available for payment statistics');
+        return;
+      }
+
+      const data = await adminPaymentApi.getPaymentStatistics();
+      console.log('Payment statistics received:', data);
+      setPaymentStatistics(data);
+    } catch (error) {
+      console.error('Error fetching payment statistics:', error);
+    }
+  };
+
+  // Search payments
+  const handleSearch = async () => {
+    if (!searchTerm.trim()) {
+      if (token && role === 'admin') {
+        fetchPayments();
+      } else {
+        loadMockPayments();
+      }
+      return;
+    }
+
+    if (!token || role !== 'admin') {
+      setErrorMessage('Authentication and admin privileges required for search');
+      // Filter mock data locally
+      const filtered = payments.filter(payment => 
+        payment.orderDescription?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        payment.buyerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        payment.artistName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        payment.buyerEmail?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        payment.artistEmail?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        payment.id?.toString().includes(searchTerm)
+      );
+      setPayments(filtered);
+      setPagination(prev => ({
+        ...prev,
+        currentPage: 0,
+        totalPages: 1,
+        totalElements: filtered.length
+      }));
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const data = await adminPaymentApi.searchPayments(searchTerm);
+      
+      setPayments(data);
+      setPagination(prev => ({
+        ...prev,
+        currentPage: 0,
+        totalPages: 1,
+        totalElements: data.length
+      }));
+      setErrorMessage(null);
+    } catch (error) {
+      console.error('Error searching payments:', error);
+      
+      if (error.error && error.error.includes('403')) {
+        setErrorMessage('Access denied for search - Admin privileges required');
+      } else if (error.error && error.error.includes('401')) {
+        setErrorMessage('Authentication expired - Please log in again');
+      } else {
+        setErrorMessage('Failed to search payments');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     setIsLoaded(true);
@@ -62,189 +345,146 @@ const Financial = () => {
     }
   }, [errorMessage]);
 
-  const financialStats = [
-    {
-      label: 'Total Revenue',
-      value: formatPrice(125430),
-      change: '+12.5%',
-      changeType: 'positive',
-      icon: DollarSign,
-      color: '#10B981'
-    },
-    {
-      label: 'Escrow Balance',
-      value: formatPrice(24680),
-      change: '+18.7%',
-      changeType: 'positive',
-      icon: Shield,
-      color: '#3B82F6'
-    },
-    {
-      label: 'Commission Earned',
-      value: formatPrice(18814),
-      change: '+8.3%',
-      changeType: 'positive',
-      icon: Wallet,
-      color: '#8B5CF6'
-    },
-    {
-      label: 'Pending Disputes',
-      value: '3',
-      change: '-2',
-      changeType: 'positive',
-      icon: AlertTriangle,
-      color: '#EF4444'
-    }
-  ];
+  // Calculate financial stats from payment statistics or actual payment data
+  const getFinancialStats = () => {
+    // Always calculate from ALL unfiltered payment data to ensure accuracy
+    const dataSource = allPayments.length > 0 ? allPayments : payments;
+    
+    const totalAmount = dataSource.reduce((sum, payment) => sum + (payment.amount || 0), 0);
+    const escrowAmount = dataSource
+      .filter(p => p.status === 'escrow')
+      .reduce((sum, payment) => sum + (payment.amount || 0), 0);
+    const paidAmount = dataSource
+      .filter(p => p.status === 'paid')
+      .reduce((sum, payment) => sum + (payment.amount || 0), 0);
+    const refundedAmount = dataSource
+      .filter(p => p.status === 'refunded')
+      .reduce((sum, payment) => sum + (payment.amount || 0), 0);
+    const orderPayments = dataSource.filter(p => p.paymentType === 'order').length;
+    const commissionPayments = dataSource.filter(p => p.paymentType === 'commission').length;
+    const escrowCount = dataSource.filter(p => p.status === 'escrow').length;
+    const paidCount = dataSource.filter(p => p.status === 'paid').length;
 
-  const transactions = [
-    {
-      id: 'TXN-001',
-      type: 'artwork_sale',
-      category: 'Artwork',
-      description: 'Digital Sunset by Kavinda Perera',
-      amount: 1250,
-      commission: 187.50,
-      artistPayout: 1062.50,
-      escrowAmount: 1250,
-      date: '2024-12-20',
-      status: 'escrow',
-      deliveryStatus: 'pending_delivery',
-      buyer: 'Nimali Fernando',
-      seller: 'Kavinda Perera',
-      sellerType: 'artist',
-      buyerEmail: 'nimali.fernando@email.com',
-      sellerEmail: 'kavinda.perera@email.com',
-      disputeReason: null,
-      estimatedDelivery: '2024-12-25'
-    },
-    {
-      id: 'TXN-002',
-      type: 'material_sale',
-      category: 'Art Materials',
-      description: 'Professional Paint Set - Winsor & Newton',
-      amount: 450,
-      commission: 67.50,
-      shopPayout: 382.50,
-      escrowAmount: 450,
-      date: '2024-12-19',
-      status: 'escrow',
-      deliveryStatus: 'shipped',
-      buyer: 'Ashen Jayawardena',
-      seller: 'Art Supplies Lanka',
-      sellerType: 'shop',
-      buyerEmail: 'ashen.jay@email.com',
-      sellerEmail: 'contact@artsupplieslanka.com',
-      disputeReason: null,
-      trackingNumber: 'TRK123456789',
-      estimatedDelivery: '2024-12-22'
-    },
-    {
-      id: 'TXN-003',
-      type: 'artwork_sale',
-      category: 'Artwork',
-      description: 'Kandy Temple Painting by Malini Gunawardana',
-      amount: 1750,
-      commission: 262.50,
-      artistPayout: 1487.50,
-      escrowAmount: 0,
-      date: '2024-12-18',
-      status: 'completed',
-      deliveryStatus: 'delivered',
-      buyer: 'Rajesh Kumar',
-      seller: 'Malini Gunawardana',
-      sellerType: 'artist',
-      buyerEmail: 'rajesh.kumar@email.com',
-      sellerEmail: 'malini.g@email.com',
-      disputeReason: null,
-      completedDate: '2024-12-18'
-    },
-    {
-      id: 'TXN-004',
-      type: 'gallery_sale',
-      category: 'Gallery Art',
-      description: 'Traditional Mask Collection - Gallery One',
-      amount: 3200,
-      commission: 480,
-      galleryPayout: 2720,
-      escrowAmount: 3200,
-      date: '2024-12-17',
-      status: 'dispute',
-      deliveryStatus: 'delivery_failed',
-      buyer: 'Sarah Wilson',
-      seller: 'Gallery One Colombo',
-      sellerType: 'gallery',
-      buyerEmail: 'sarah.wilson@email.com',
-      sellerEmail: 'sales@galleryone.lk',
-      disputeReason: 'Item damaged during shipping',
-      disputeDate: '2024-12-19'
-    },
-    {
-      id: 'TXN-005',
-      type: 'payout',
-      category: 'Payout',
-      description: 'Weekly payout to Kavinda Perera',
-      amount: 3200,
-      commission: 0,
-      artistPayout: 3200,
-      escrowAmount: 0,
-      date: '2024-12-16',
-      status: 'completed',
-      deliveryStatus: 'not_applicable',
-      buyer: 'Platform Payout',
-      seller: 'Kavinda Perera',
-      sellerType: 'artist',
-      buyerEmail: null,
-      sellerEmail: 'kavinda.perera@email.com',
-      disputeReason: null
-    }
-  ];
+    return [
+      {
+        label: 'Total Revenue',
+        value: formatPrice(totalAmount, 'LKR'),
+        change: `${dataSource.length} transactions`,
+        changeType: 'neutral',
+        icon: DollarSign,
+        color: '#10B981'
+      },
+      {
+        label: 'Escrow Balance',
+        value: formatPrice(escrowAmount, 'LKR'),
+        change: `${escrowCount} in escrow`,
+        changeType: 'neutral',
+        icon: Shield,
+        color: '#3B82F6'
+      },
+      {
+        label: 'Paid Amount',
+        value: formatPrice(paidAmount, 'LKR'),
+        change: `${paidCount} paid`,
+        changeType: 'neutral',
+        icon: Wallet,
+        color: '#8B5CF6'
+      },
+      {
+        label: 'Total Payments',
+        value: dataSource.length.toString(),
+        change: `${orderPayments} orders, ${commissionPayments} commissions`,
+        changeType: 'neutral',
+        icon: CreditCard,
+        color: '#F59E0B'
+      }
+    ];
+  };
+
+  const financialStats = getFinancialStats();
 
   // Filter transactions based on search and filters
-  const filteredTransactions = transactions.filter(transaction => {
+  // Note: When authenticated, API handles filtering. Client-side filtering only for demo data.
+  const filteredTransactions = token ? payments : payments.filter(payment => {
     const matchesSearch = !searchTerm || 
-      transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      transaction.buyer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      transaction.seller.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      transaction.id.toLowerCase().includes(searchTerm.toLowerCase());
+      payment.orderDescription?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      payment.buyerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      payment.artistName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      payment.buyerEmail?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      payment.artistEmail?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      payment.id?.toString().includes(searchTerm);
     
-    const matchesStatus = filterStatus === 'all' || transaction.status === filterStatus;
-    const matchesType = filterType === 'all' || transaction.type === filterType;
+    const matchesStatus = filterStatus === 'all' || payment.status === filterStatus;
+    const matchesType = filterType === 'all' || payment.paymentType === filterType;
     
     return matchesSearch && matchesStatus && matchesType;
   });
 
   // Action handlers
-  const handleRefund = async (transactionId, amount, reason) => {
+  const handleRefund = async (paymentId, amount, reason) => {
+    if (!token) {
+      setErrorMessage('Authentication required for refund operations');
+      return;
+    }
+
     setLoading(true);
     try {
-      // API call would go here
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-      setSuccessMessage(`Refund of ${formatPrice(amount)} processed successfully`);
+      await adminPaymentApi.updatePaymentStatus(paymentId, 'refunded', reason);
+      
+      setSuccessMessage(`Refund of ${formatPrice(amount, 'LKR')} processed successfully`);
       setShowRefundModal(false);
+      fetchPayments(); // Refresh the list
     } catch (error) {
+      console.error('Error processing refund:', error);
       setErrorMessage('Failed to process refund');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleReleaseEscrow = async (transactionId) => {
+  const handleReleaseEscrow = async (paymentId) => {
+    if (!token) {
+      setErrorMessage('Authentication required for escrow operations');
+      return;
+    }
+
     setLoading(true);
     try {
-      // API call would go here
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await adminPaymentApi.updatePaymentStatus(paymentId, 'paid', '');
+      
       setSuccessMessage('Escrow funds released successfully');
+      fetchPayments(); // Refresh the list
     } catch (error) {
+      console.error('Error releasing escrow:', error);
       setErrorMessage('Failed to release escrow funds');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleContactParty = (transaction, party) => {
-    setSelectedTransaction({ ...transaction, contactParty: party });
+  const handleContactParty = (payment, party) => {
+    setSelectedTransaction({ ...payment, contactParty: party });
     setShowContactModal(true);
+  };
+
+  // Pagination handlers
+  const handlePageChange = (newPage) => {
+    console.log('handlePageChange called with newPage:', newPage, 'current page:', pagination.currentPage);
+    setExpandedPaymentId(null); // Close any expanded rows when changing pages
+    setPagination(prev => {
+      console.log('Previous pagination state:', prev);
+      const newState = { ...prev, currentPage: newPage };
+      console.log('New pagination state:', newState);
+      return newState;
+    });
+  };
+
+  const handlePageSizeChange = (newSize) => {
+    setPagination(prev => ({ 
+      ...prev, 
+      pageSize: newSize, 
+      currentPage: 0 
+    }));
   };
 
   // Transaction Detail Modal Component
@@ -257,7 +497,7 @@ const Financial = () => {
           <div className="p-6 border-b" style={{borderColor: '#FFE4D6'}}>
             <div className="flex justify-between items-center">
               <h3 className="text-2xl font-bold" style={{color: '#5D3A00'}}>
-                Transaction Details - {transaction.id}
+                Payment Details - PAY-{transaction.id}
               </h3>
               <button
                 onClick={onClose}
@@ -270,14 +510,14 @@ const Financial = () => {
           </div>
 
           <div className="p-6 space-y-6">
-            {/* Transaction Status */}
+            {/* Payment Status */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-gray-50 p-4 rounded-lg">
                 <h4 className="font-semibold mb-2" style={{color: '#5D3A00'}}>Payment Status</h4>
                 <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  transaction.status === 'completed' ? 'bg-green-100 text-green-800' :
+                  transaction.status === 'paid' ? 'bg-green-100 text-green-800' :
                   transaction.status === 'escrow' ? 'bg-blue-100 text-blue-800' :
-                  transaction.status === 'dispute' ? 'bg-red-100 text-red-800' :
+                  transaction.status === 'refunded' ? 'bg-red-100 text-red-800' :
                   'bg-yellow-100 text-yellow-800'
                 }`}>
                   {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
@@ -285,21 +525,19 @@ const Financial = () => {
               </div>
               
               <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-semibold mb-2" style={{color: '#5D3A00'}}>Delivery Status</h4>
+                <h4 className="font-semibold mb-2" style={{color: '#5D3A00'}}>Payment Type</h4>
                 <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  transaction.deliveryStatus === 'delivered' ? 'bg-green-100 text-green-800' :
-                  transaction.deliveryStatus === 'shipped' ? 'bg-blue-100 text-blue-800' :
-                  transaction.deliveryStatus === 'delivery_failed' ? 'bg-red-100 text-red-800' :
-                  'bg-yellow-100 text-yellow-800'
+                  transaction.paymentType === 'order' ? 'bg-purple-100 text-purple-800' :
+                  'bg-blue-100 text-blue-800'
                 }`}>
-                  {transaction.deliveryStatus?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'N/A'}
+                  {transaction.paymentType === 'order' ? 'Order Payment' : 'Commission Payment'}
                 </span>
               </div>
 
               <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-semibold mb-2" style={{color: '#5D3A00'}}>Category</h4>
-                <span className="text-sm font-medium" style={{color: '#D87C5A'}}>
-                  {transaction.category}
+                <h4 className="font-semibold mb-2" style={{color: '#5D3A00'}}>Amount</h4>
+                <span className="text-lg font-bold" style={{color: '#D87C5A'}}>
+                  {formatPrice(transaction.amount, 'LKR')}
                 </span>
               </div>
             </div>
@@ -311,20 +549,20 @@ const Financial = () => {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span>Total Amount:</span>
-                    <span className="font-semibold">{formatPrice(transaction.amount)}</span>
+                    <span className="font-semibold">{formatPrice(transaction.amount, 'LKR')}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Commission (15%):</span>
-                    <span>{formatPrice(transaction.commission)}</span>
+                    <span>Platform Commission:</span>
+                    <span>{formatPrice(transaction.platformFee || 0, 'LKR')}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Seller Payout:</span>
-                    <span>{formatPrice(transaction.artistPayout || transaction.shopPayout || transaction.galleryPayout)}</span>
+                    <span>Artist Payout:</span>
+                    <span>{formatPrice(transaction.amount - (transaction.platformFee || 0), 'LKR')}</span>
                   </div>
-                  {transaction.escrowAmount > 0 && (
+                  {transaction.status === 'escrow' && (
                     <div className="flex justify-between text-blue-600">
                       <span>In Escrow:</span>
-                      <span className="font-semibold">{formatPrice(transaction.escrowAmount)}</span>
+                      <span className="font-semibold">{formatPrice(transaction.amount, 'LKR')}</span>
                     </div>
                   )}
                 </div>
@@ -336,7 +574,7 @@ const Financial = () => {
                   <div>
                     <span className="text-sm text-gray-600">Buyer:</span>
                     <div className="flex justify-between items-center">
-                      <span className="font-medium">{transaction.buyer}</span>
+                      <span className="font-medium">{transaction.buyerName}</span>
                       <button
                         onClick={() => handleContactParty(transaction, 'buyer')}
                         className="text-blue-600 hover:text-blue-800"
@@ -348,36 +586,49 @@ const Financial = () => {
                       <span className="text-xs text-gray-500">{transaction.buyerEmail}</span>
                     )}
                   </div>
-                  
                   <div>
-                    <span className="text-sm text-gray-600">Seller ({transaction.sellerType}):</span>
+                    <span className="text-sm text-gray-600">Artist:</span>
                     <div className="flex justify-between items-center">
-                      <span className="font-medium">{transaction.seller}</span>
+                      <span className="font-medium">{transaction.artistName}</span>
                       <button
-                        onClick={() => handleContactParty(transaction, 'seller')}
+                        onClick={() => handleContactParty(transaction, 'artist')}
                         className="text-blue-600 hover:text-blue-800"
                       >
                         <MessageCircle size={16} />
                       </button>
                     </div>
-                    {transaction.sellerEmail && (
-                      <span className="text-xs text-gray-500">{transaction.sellerEmail}</span>
+                    {transaction.artistEmail && (
+                      <span className="text-xs text-gray-500">{transaction.artistEmail}</span>
                     )}
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Dispute Information */}
-            {transaction.status === 'dispute' && (
-              <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-                <h4 className="font-semibold text-red-800 mb-2">Dispute Information</h4>
-                <p className="text-red-700">{transaction.disputeReason}</p>
-                {transaction.disputeDate && (
-                  <p className="text-sm text-red-600 mt-1">Reported on: {transaction.disputeDate}</p>
+            {/* Payment Information */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h4 className="font-semibold mb-3" style={{color: '#5D3A00'}}>Payment Information</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <span className="text-sm text-gray-600">Created:</span>
+                  <p className="font-medium">{new Date(transaction.createdAt).toLocaleString()}</p>
+                </div>
+                {transaction.updatedAt && (
+                  <div>
+                    <span className="text-sm text-gray-600">Last Updated:</span>
+                    <p className="font-medium">{new Date(transaction.updatedAt).toLocaleString()}</p>
+                  </div>
                 )}
+                <div>
+                  <span className="text-sm text-gray-600">Description:</span>
+                  <p className="font-medium">{transaction.orderDescription || transaction.commissionTitle}</p>
+                </div>
+                <div>
+                  <span className="text-sm text-gray-600">Payment Type:</span>
+                  <p className="font-medium capitalize">{transaction.paymentType}</p>
+                </div>
               </div>
-            )}
+            </div>
 
             {/* Action Buttons */}
             <div className="flex flex-wrap gap-3 pt-4 border-t" style={{borderColor: '#FFE4D6'}}>
@@ -456,7 +707,7 @@ const Financial = () => {
                 style={{borderColor: '#FFE4D6'}}
               />
               <p className="text-xs text-gray-500 mt-1">
-                Maximum: {formatPrice(transaction.escrowAmount || transaction.amount)}
+                Maximum: {formatPrice(transaction.escrowAmount || transaction.amount, 'LKR')}
               </p>
             </div>
 
@@ -592,6 +843,35 @@ const Financial = () => {
 
   return (
     <>
+      {/* Authentication Check */}
+      {!token && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+          <div className="flex items-center">
+            <AlertTriangle className="h-5 w-5 text-yellow-400 mr-2" />
+            <div>
+              <h3 className="text-sm font-medium text-yellow-800">Authentication Required</h3>
+              <p className="text-sm text-yellow-700 mt-1">
+                Please log in with admin credentials to access financial data. Showing demo data for preview.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {token && role && role !== 'admin' && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+          <div className="flex items-center">
+            <Shield className="h-5 w-5 text-red-400 mr-2" />
+            <div>
+              <h3 className="text-sm font-medium text-red-800">Access Restricted</h3>
+              <p className="text-sm text-red-700 mt-1">
+                Admin privileges required to access financial data. Showing demo data for preview.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Notifications */}
       {successMessage && (
         <div className="fixed top-4 right-4 z-50 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg shadow-lg">
@@ -622,16 +902,6 @@ const Financial = () => {
       )}
 
       {/* Modals */}
-      {showTransactionModal && (
-        <TransactionDetailModal
-          transaction={selectedTransaction}
-          onClose={() => {
-            setShowTransactionModal(false);
-            setSelectedTransaction(null);
-          }}
-        />
-      )}
-
       {showRefundModal && (
         <RefundModal
           transaction={selectedTransaction}
@@ -653,7 +923,7 @@ const Financial = () => {
         />
       )}
       {/* Add smooth animations */}
-      <style jsx>{`
+      <style>{`
         @keyframes smoothFadeIn {
           from {
             opacity: 0;
@@ -751,13 +1021,15 @@ const Financial = () => {
                       <span 
                         className="text-xs font-medium px-2 py-1 rounded-full"
                         style={{
-                          backgroundColor: stat.changeType === 'positive' ? '#d4edda' : '#f8d7da',
-                          color: stat.changeType === 'positive' ? '#155724' : '#721c24'
+                          backgroundColor: stat.changeType === 'positive' ? '#d4edda' : stat.changeType === 'neutral' ? '#e2e8f0' : '#f8d7da',
+                          color: stat.changeType === 'positive' ? '#155724' : stat.changeType === 'neutral' ? '#475569' : '#721c24'
                         }}
                       >
                         {stat.change}
                       </span>
-                      <span className="text-xs opacity-75" style={{color: '#5D3A00'}}>vs last month</span>
+                      {stat.changeType === 'positive' && (
+                        <span className="text-xs opacity-75" style={{color: '#5D3A00'}}>vs last month</span>
+                      )}
                     </div>
                   </div>
                   <div className="p-2 rounded-lg shadow-lg" style={{backgroundColor: stat.color}}>
@@ -774,33 +1046,66 @@ const Financial = () => {
           <h2 className="text-2xl font-bold flex items-center gap-2" style={{color: '#5D3A00'}}>
             <DollarSign size={24} />
             Finances
+            {loading && <RefreshCw className="animate-spin" size={20} />}
           </h2>
-          <CurrencySelector className="flex-shrink-0" />
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => {
+                if (token) {
+                  fetchAllPayments(); // Refresh stats
+                  fetchPayments();
+                  fetchPaymentStatistics();
+                } else {
+                  loadMockPayments();
+                }
+              }}
+              disabled={loading}
+              className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+              title="Refresh data"
+            >
+              <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+              Refresh
+            </button>
+            <CurrencySelector className="flex-shrink-0" />
+          </div>
         </div>
 
         {/* Controls */}
         <div className="financial-controls">
           <div className="flex flex-wrap xl:flex-nowrap gap-3 items-center justify-between">
             {/* Search Input - Left Side */}
-            <div className="relative">
-              <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 z-10" style={{color: '#5D3A00'}} />
-              <input
-                type="text"
-                placeholder="Search transactions..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-300 w-80 transition-all duration-200 hover:shadow-md bg-white shadow-sm"
-                style={{borderColor: '#FFE4D6'}}
-              />
-              {searchTerm && (
-                <button
-                  onClick={() => setSearchTerm('')}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                  title="Clear search"
-                >
-                  <X size={16} />
-                </button>
-              )}
+            <div className="relative flex items-center gap-2">
+              <div className="relative">
+                <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 z-10" style={{color: '#5D3A00'}} />
+                <input
+                  type="text"
+                  placeholder="Search payments..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                  className="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-300 w-80 transition-all duration-200 hover:shadow-md bg-white shadow-sm"
+                  style={{borderColor: '#FFE4D6'}}
+                />
+                {searchTerm && (
+                  <button
+                    onClick={() => {
+                      setSearchTerm('');
+                      fetchPayments();
+                    }}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    title="Clear search"
+                  >
+                    <X size={16} />
+                  </button>
+                )}
+              </div>
+              <button
+                onClick={handleSearch}
+                className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+                disabled={loading}
+              >
+                {loading ? <RefreshCw className="animate-spin" size={16} /> : 'Search'}
+              </button>
             </div>
 
             {/* Filters and Export - Right Side */}
@@ -822,9 +1127,8 @@ const Financial = () => {
                 >
                   <option value="all">All Status</option>
                   <option value="escrow">Escrow</option>
-                  <option value="completed">Complete</option>
-                  <option value="dispute">Dispute</option>
-                  <option value="pending">Pending</option>
+                  <option value="paid">Paid</option>
+                  <option value="refunded">Refunded</option>
                 </select>
               </div>
 
@@ -843,10 +1147,8 @@ const Financial = () => {
                   }}
                 >
                   <option value="all">All Types</option>
-                  <option value="artwork_sale">Artwork</option>
-                  <option value="material_sale">Materials</option>
-                  <option value="gallery_sale">Gallery</option>
-                  <option value="payout">Payout</option>
+                  <option value="order">Order Payments</option>
+                  <option value="commission">Commission Payments</option>
                 </select>
               </div>
               
@@ -871,23 +1173,6 @@ const Financial = () => {
                   <option value="1year">1 Year</option>
                 </select>
               </div>
-
-              {/* Export Button */}
-              <button 
-                className="px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 whitespace-nowrap hover:shadow-md shadow-sm"
-                style={{backgroundColor: '#D87C5A', color: 'white'}}
-                onMouseOver={(e) => {
-                  e.target.style.backgroundColor = '#B85A3A';
-                  e.target.style.transform = 'translateY(-1px)';
-                }}
-                onMouseOut={(e) => {
-                  e.target.style.backgroundColor = '#D87C5A';
-                  e.target.style.transform = 'translateY(0)';
-                }}
-              >
-                <Download size={16} />
-                Export
-              </button>
             </div>
           </div>
         </div>
@@ -898,10 +1183,15 @@ const Financial = () => {
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-bold" style={{color: '#5D3A00'}}>
                 Transactions ({filteredTransactions.length})
+                {(!token || (role && role !== 'admin')) && (
+                  <span className="ml-2 text-sm font-normal text-yellow-600 bg-yellow-100 px-2 py-1 rounded">
+                    Demo Data
+                  </span>
+                )}
               </h3>
               <div className="flex gap-2">
                 <span className="text-sm text-gray-600">
-                  Showing {filteredTransactions.length} of {transactions.length}
+                  Showing {filteredTransactions.length} of {payments.length}
                 </span>
               </div>
             </div>
@@ -910,165 +1200,389 @@ const Financial = () => {
             <table className="w-full">
               <thead style={{backgroundColor: '#FFF5E1'}}>
                 <tr>
-                  <th className="px-4 py-3 text-left text-sm font-medium" style={{color: '#5D3A00'}}>Transaction</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium" style={{color: '#5D3A00'}}>Payment</th>
                   <th className="px-4 py-3 text-left text-sm font-medium" style={{color: '#5D3A00'}}>Description</th>
                   <th className="px-4 py-3 text-left text-sm font-medium" style={{color: '#5D3A00'}}>Amount</th>
                   <th className="px-4 py-3 text-left text-sm font-medium" style={{color: '#5D3A00'}}>Escrow</th>
                   <th className="px-4 py-3 text-left text-sm font-medium" style={{color: '#5D3A00'}}>Status</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium" style={{color: '#5D3A00'}}>Delivery</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium" style={{color: '#5D3A00'}}>Type</th>
                   <th className="px-4 py-3 text-left text-sm font-medium" style={{color: '#5D3A00'}}>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredTransactions.map((transaction, index) => (
-                  <tr key={transaction.id} className={`transaction-row border-b`} style={{borderColor: '#FFE4D6'}}>
-                    <td className="px-4 py-3">
-                      <div>
-                        <p className="text-sm font-medium" style={{color: '#5D3A00'}}>
-                          {transaction.id}
-                        </p>
-                        <p className="text-xs" style={{color: '#8B4513'}}>
-                          {transaction.date}
-                        </p>
-                        <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium mt-1 ${
-                          transaction.type === 'artwork_sale' ? 'bg-purple-100 text-purple-800' :
-                          transaction.type === 'material_sale' ? 'bg-blue-100 text-blue-800' :
-                          transaction.type === 'gallery_sale' ? 'bg-green-100 text-green-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
-                          {transaction.type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div>
-                        <p className="text-sm font-medium" style={{color: '#5D3A00'}}>
-                          {transaction.description}
-                        </p>
-                        <div className="text-xs" style={{color: '#8B4513'}}>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="flex items-center gap-1">
-                              <Users size={12} />
-                              {transaction.buyer}
-                            </span>
-                            <span>→</span>
-                            <span className="flex items-center gap-1">
-                              {transaction.sellerType === 'artist' ? <Users size={12} /> : <Store size={12} />}
-                              {transaction.seller}
-                            </span>
+                {filteredTransactions.map((payment, index) => (
+                  <>
+                    <tr key={payment.id} className={`transaction-row border-b`} style={{borderColor: '#FFE4D6'}}>
+                      <td className="px-4 py-3">
+                        <div>
+                          <p className="text-sm font-medium" style={{color: '#5D3A00'}}>
+                            PAY-{payment.id}
+                          </p>
+                          <p className="text-xs" style={{color: '#8B4513'}}>
+                            {new Date(payment.createdAt).toLocaleDateString()}
+                          </p>
+                          <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium mt-1 ${
+                            payment.paymentType === 'order' ? 'bg-purple-100 text-purple-800' :
+                            payment.paymentType === 'commission' ? 'bg-blue-100 text-blue-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {payment.paymentType?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div>
+                          <p className="text-sm font-medium" style={{color: '#5D3A00'}}>
+                            {payment.orderDescription || payment.commissionTitle || 'Payment'}
+                          </p>
+                          <div className="text-xs" style={{color: '#8B4513'}}>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="flex items-center gap-1">
+                                <Users size={12} />
+                                {payment.buyerName}
+                              </span>
+                              <span>→</span>
+                              <span className="flex items-center gap-1">
+                                <Users size={12} />
+                                {payment.artistName}
+                              </span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div>
-                        <p className="text-sm font-bold" style={{color: '#5D3A00'}}>
-                          {formatPrice(transaction.amount)}
-                        </p>
-                        <p className="text-xs" style={{color: '#8B4513'}}>
-                          Commission: {formatPrice(transaction.commission)}
-                        </p>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      {transaction.escrowAmount > 0 ? (
+                      </td>
+                      <td className="px-4 py-3">
                         <div>
-                          <p className="text-sm font-medium text-blue-600">
-                            {formatPrice(transaction.escrowAmount)}
+                          <p className="text-sm font-bold" style={{color: '#5D3A00'}}>
+                            {formatPrice(payment.amount, 'LKR')}
                           </p>
-                          <p className="text-xs text-blue-500">Held in escrow</p>
+                          <p className="text-xs" style={{color: '#8B4513'}}>
+                            Commission: {formatPrice(payment.platformFee || 0, 'LKR')}
+                          </p>
                         </div>
-                      ) : (
-                        <span className="text-xs text-gray-500">Released</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        transaction.status === 'completed' ? 'bg-green-100 text-green-800' :
-                        transaction.status === 'escrow' ? 'bg-blue-100 text-blue-800' :
-                        transaction.status === 'dispute' ? 'bg-red-100 text-red-800' :
-                        'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      {transaction.deliveryStatus !== 'not_applicable' && (
+                      </td>
+                      <td className="px-4 py-3">
+                        {payment.status === 'escrow' ? (
+                          <div>
+                            <p className="text-sm font-medium text-blue-600">
+                              {formatPrice(payment.amount, 'LKR')}
+                            </p>
+                            <p className="text-xs text-blue-500">Held in escrow</p>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-500">Released</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          transaction.deliveryStatus === 'delivered' ? 'bg-green-100 text-green-800' :
-                          transaction.deliveryStatus === 'shipped' ? 'bg-blue-100 text-blue-800' :
-                          transaction.deliveryStatus === 'delivery_failed' ? 'bg-red-100 text-red-800' :
+                          payment.status === 'paid' ? 'bg-green-100 text-green-800' :
+                          payment.status === 'escrow' ? 'bg-blue-100 text-blue-800' :
+                          payment.status === 'refunded' ? 'bg-red-100 text-red-800' :
                           'bg-yellow-100 text-yellow-800'
                         }`}>
-                          {transaction.deliveryStatus?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
                         </span>
-                      )}
-                      {transaction.disputeReason && (
-                        <div className="text-xs text-red-600 mt-1">
-                          <AlertTriangle size={12} className="inline mr-1" />
-                          Dispute
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => {
-                            setSelectedTransaction(transaction);
-                            setShowTransactionModal(true);
-                          }}
-                          className="p-1 rounded text-blue-600 hover:bg-blue-50 transition-colors"
-                          title="View Details"
-                        >
-                          <Eye size={16} />
-                        </button>
-                        
-                        {transaction.status === 'escrow' && (
-                          <button
-                            onClick={() => handleReleaseEscrow(transaction.id)}
-                            className="p-1 rounded text-green-600 hover:bg-green-50 transition-colors"
-                            title="Release Escrow"
-                            disabled={loading}
-                          >
-                            {loading ? <RefreshCw className="animate-spin" size={16} /> : <CheckCircle size={16} />}
-                          </button>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-xs text-gray-500">
+                          {payment.paymentType === 'order' ? 'Order Payment' : 'Commission Payment'}
+                        </span>
+                        {payment.updatedAt && (
+                          <div className="text-xs text-gray-400 mt-1">
+                            Updated: {new Date(payment.updatedAt).toLocaleDateString()}
+                          </div>
                         )}
-                        
-                        {(transaction.status === 'escrow' || transaction.status === 'dispute') && (
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
                           <button
                             onClick={() => {
-                              setSelectedTransaction(transaction);
-                              setShowRefundModal(true);
+                              setExpandedPaymentId(expandedPaymentId === payment.id ? null : payment.id);
                             }}
-                            className="p-1 rounded text-red-600 hover:bg-red-50 transition-colors"
-                            title="Process Refund"
+                            className={`p-1 rounded transition-colors ${
+                              expandedPaymentId === payment.id 
+                                ? 'bg-blue-100 text-blue-600' 
+                                : 'text-blue-600 hover:bg-blue-50'
+                            }`}
+                            title={expandedPaymentId === payment.id ? "Hide Details" : "View Details"}
                           >
-                            <XCircle size={16} />
+                            <Eye size={16} />
                           </button>
-                        )}
-                        
-                        <button
-                          onClick={() => handleContactParty(transaction, 'buyer')}
-                          className="p-1 rounded text-purple-600 hover:bg-purple-50 transition-colors"
-                          title="Contact Buyer"
-                        >
-                          <MessageCircle size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
+                          
+                          {payment.status === 'escrow' && (
+                            <button
+                              onClick={() => handleReleaseEscrow(payment.id)}
+                              className="p-1 rounded text-green-600 hover:bg-green-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              title={!token ? "Authentication required" : "Release Escrow"}
+                              disabled={loading || !token}
+                            >
+                              {loading ? <RefreshCw className="animate-spin" size={16} /> : <CheckCircle size={16} />}
+                            </button>
+                          )}
+                          
+                          {(payment.status === 'escrow' || payment.status === 'dispute') && (
+                            <button
+                              onClick={() => {
+                                if (!token) {
+                                  setErrorMessage('Authentication required for refund operations');
+                                  return;
+                                }
+                                setSelectedTransaction(payment);
+                                setShowRefundModal(true);
+                              }}
+                              className="p-1 rounded text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              title={!token ? "Authentication required" : "Process Refund"}
+                              disabled={!token}
+                            >
+                              <XCircle size={16} />
+                            </button>
+                          )}
+                          
+                          <button
+                            onClick={() => {
+                              if (!token) {
+                                setErrorMessage('Authentication required for contact operations');
+                                return;
+                              }
+                              handleContactParty(payment, 'buyer');
+                            }}
+                            className="p-1 rounded text-purple-600 hover:bg-purple-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            title={!token ? "Authentication required" : "Contact Buyer"}
+                            disabled={!token}
+                          >
+                            <MessageCircle size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    
+                    {/* Expandable Details Row */}
+                    {expandedPaymentId === payment.id && (
+                      <tr key={`${payment.id}-details`} className="bg-gray-50" style={{borderColor: '#FFE4D6'}}>
+                        <td colSpan="7" className="px-4 py-6">
+                          <div className="space-y-6 animate-slideDown">
+                            {/* Payment Status */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div className="bg-white p-4 rounded-lg shadow-sm border" style={{borderColor: '#FFE4D6'}}>
+                                <h4 className="font-semibold mb-2 text-sm" style={{color: '#5D3A00'}}>Payment Status</h4>
+                                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                  payment.status === 'paid' ? 'bg-green-100 text-green-800' :
+                                  payment.status === 'escrow' ? 'bg-blue-100 text-blue-800' :
+                                  payment.status === 'refunded' ? 'bg-red-100 text-red-800' :
+                                  'bg-yellow-100 text-yellow-800'
+                                }`}>
+                                  {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
+                                </span>
+                              </div>
+                              
+                              <div className="bg-white p-4 rounded-lg shadow-sm border" style={{borderColor: '#FFE4D6'}}>
+                                <h4 className="font-semibold mb-2 text-sm" style={{color: '#5D3A00'}}>Payment Type</h4>
+                                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                  payment.paymentType === 'order' ? 'bg-purple-100 text-purple-800' :
+                                  'bg-blue-100 text-blue-800'
+                                }`}>
+                                  {payment.paymentType === 'order' ? 'Order Payment' : 'Commission Payment'}
+                                </span>
+                              </div>
+
+                              <div className="bg-white p-4 rounded-lg shadow-sm border" style={{borderColor: '#FFE4D6'}}>
+                                <h4 className="font-semibold mb-2 text-sm" style={{color: '#5D3A00'}}>Amount</h4>
+                                <span className="text-lg font-bold" style={{color: '#D87C5A'}}>
+                                  {formatPrice(payment.amount, 'LKR')}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Financial Details */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              <div className="bg-white p-4 rounded-lg shadow-sm border" style={{borderColor: '#FFE4D6'}}>
+                                <h4 className="font-semibold mb-3 text-sm" style={{color: '#5D3A00'}}>Financial Breakdown</h4>
+                                <div className="space-y-2 text-sm">
+                                  <div className="flex justify-between">
+                                    <span>Total Amount:</span>
+                                    <span className="font-semibold">{formatPrice(payment.amount, 'LKR')}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>Platform Commission:</span>
+                                    <span>{formatPrice(payment.platformFee || 0, 'LKR')}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span>Artist Payout:</span>
+                                    <span>{formatPrice(payment.amount - (payment.platformFee || 0), 'LKR')}</span>
+                                  </div>
+                                  {payment.status === 'escrow' && (
+                                    <div className="flex justify-between text-blue-600 pt-2 border-t" style={{borderColor: '#FFE4D6'}}>
+                                      <span>In Escrow:</span>
+                                      <span className="font-semibold">{formatPrice(payment.amount, 'LKR')}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="bg-white p-4 rounded-lg shadow-sm border" style={{borderColor: '#FFE4D6'}}>
+                                <h4 className="font-semibold mb-3 text-sm" style={{color: '#5D3A00'}}>Party Information</h4>
+                                <div className="space-y-3 text-sm">
+                                  <div>
+                                    <span className="text-xs text-gray-600">Buyer:</span>
+                                    <div className="flex justify-between items-center mt-1">
+                                      <span className="font-medium">{payment.buyerName}</span>
+                                      <button
+                                        onClick={() => handleContactParty(payment, 'buyer')}
+                                        className="text-blue-600 hover:text-blue-800"
+                                      >
+                                        <MessageCircle size={14} />
+                                      </button>
+                                    </div>
+                                    {payment.buyerEmail && (
+                                      <span className="text-xs text-gray-500">{payment.buyerEmail}</span>
+                                    )}
+                                  </div>
+                                  <div className="pt-2 border-t" style={{borderColor: '#FFE4D6'}}>
+                                    <span className="text-xs text-gray-600">Artist:</span>
+                                    <div className="flex justify-between items-center mt-1">
+                                      <span className="font-medium">{payment.artistName}</span>
+                                      <button
+                                        onClick={() => handleContactParty(payment, 'artist')}
+                                        className="text-blue-600 hover:text-blue-800"
+                                      >
+                                        <MessageCircle size={14} />
+                                      </button>
+                                    </div>
+                                    {payment.artistEmail && (
+                                      <span className="text-xs text-gray-500">{payment.artistEmail}</span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Payment Information */}
+                            <div className="bg-white p-4 rounded-lg shadow-sm border" style={{borderColor: '#FFE4D6'}}>
+                              <h4 className="font-semibold mb-3 text-sm" style={{color: '#5D3A00'}}>Payment Information</h4>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                <div>
+                                  <span className="text-xs text-gray-600">Created:</span>
+                                  <p className="font-medium">{new Date(payment.createdAt).toLocaleString()}</p>
+                                </div>
+                                {payment.updatedAt && (
+                                  <div>
+                                    <span className="text-xs text-gray-600">Last Updated:</span>
+                                    <p className="font-medium">{new Date(payment.updatedAt).toLocaleString()}</p>
+                                  </div>
+                                )}
+                                <div>
+                                  <span className="text-xs text-gray-600">Description:</span>
+                                  <p className="font-medium">{payment.orderDescription || payment.commissionTitle}</p>
+                                </div>
+                                <div>
+                                  <span className="text-xs text-gray-600">Payment ID:</span>
+                                  <p className="font-medium">PAY-{payment.id}</p>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex flex-wrap gap-3 pt-4 border-t" style={{borderColor: '#FFE4D6'}}>
+                              {payment.status === 'escrow' && (
+                                <button
+                                  onClick={() => handleReleaseEscrow(payment.id)}
+                                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+                                  disabled={loading}
+                                >
+                                  {loading ? <RefreshCw className="animate-spin inline" size={14} /> : 'Release Escrow'}
+                                </button>
+                              )}
+                              
+                              {(payment.status === 'escrow' || payment.status === 'dispute') && (
+                                <button
+                                  onClick={() => {
+                                    setSelectedTransaction(payment);
+                                    setShowRefundModal(true);
+                                  }}
+                                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
+                                >
+                                  Process Refund
+                                </button>
+                              )}
+                              
+                              <button
+                                onClick={() => handleContactParty(payment, 'buyer')}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                              >
+                                Contact Buyer
+                              </button>
+                              
+                              <button
+                                onClick={() => handleContactParty(payment, 'artist')}
+                                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm"
+                              >
+                                Contact Artist
+                              </button>
+                              
+                              <button
+                                onClick={() => setExpandedPaymentId(null)}
+                                className="px-4 py-2 border rounded-lg hover:bg-gray-50 transition-colors text-sm"
+                                style={{borderColor: '#FFE4D6', color: '#5D3A00'}}
+                              >
+                                Close Details
+                              </button>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </>
                 ))}
                 
                 {filteredTransactions.length === 0 && (
                   <tr>
                     <td colSpan="7" className="px-4 py-8 text-center text-gray-500">
-                      No transactions found matching your filters.
+                      No payments found matching your filters.
                     </td>
                   </tr>
                 )}
               </tbody>
             </table>
           </div>
+
+          {/* Pagination */}
+          {pagination.totalPages > 1 && (
+            <div className="mt-6 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">
+                  Showing {pagination.currentPage * pagination.pageSize + 1} to {Math.min((pagination.currentPage + 1) * pagination.pageSize, pagination.totalElements)} of {pagination.totalElements} payments
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handlePageChange(pagination.currentPage - 1)}
+                  disabled={pagination.currentPage === 0}
+                  className="px-3 py-2 text-sm border rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                {Array.from({ length: pagination.totalPages }, (_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handlePageChange(i)}
+                    className={`px-3 py-2 text-sm border rounded-md ${
+                      i === pagination.currentPage 
+                        ? 'bg-blue-500 text-white border-blue-500' 
+                        : 'hover:bg-gray-50'
+                    }`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+                <button
+                  onClick={() => handlePageChange(pagination.currentPage + 1)}
+                  disabled={pagination.currentPage === pagination.totalPages - 1}
+                  className="px-3 py-2 text-sm border rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </>

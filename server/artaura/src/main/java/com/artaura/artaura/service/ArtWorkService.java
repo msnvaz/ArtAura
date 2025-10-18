@@ -25,12 +25,12 @@ public class ArtWorkService {
         if (imageFile != null && !imageFile.isEmpty()) {
             String filename = System.currentTimeMillis() + "_" + imageFile.getOriginalFilename();
 
-            // Use same logic as WebConfig to find correct upload directory
+            // Use client/public/uploads directory
             String currentDir = System.getProperty("user.dir");
-            String serverDir = currentDir.endsWith("artaura")
+            String projectRoot = currentDir.endsWith("artaura")
                     ? currentDir.substring(0, currentDir.lastIndexOf("artaura"))
                     : currentDir + "/";
-            Path uploadPath = Paths.get(serverDir + "uploads");
+            Path uploadPath = Paths.get(projectRoot + "client/public/uploads");
 
             Files.createDirectories(uploadPath);
             Path filePath = uploadPath.resolve(filename);
@@ -48,12 +48,12 @@ public class ArtWorkService {
         if (imageFile != null && !imageFile.isEmpty()) {
             String filename = System.currentTimeMillis() + "_" + imageFile.getOriginalFilename();
 
-            // Use same logic as WebConfig to find correct upload directory
+            // Use client/public/uploads directory
             String currentDir = System.getProperty("user.dir");
-            String serverDir = currentDir.endsWith("artaura")
+            String projectRoot = currentDir.endsWith("artaura")
                     ? currentDir.substring(0, currentDir.lastIndexOf("artaura"))
                     : currentDir + "/";
-            Path uploadPath = Paths.get(serverDir + "uploads");
+            Path uploadPath = Paths.get(projectRoot + "client/public/uploads");
 
             Files.createDirectories(uploadPath);
             Path filePath = uploadPath.resolve(filename);
