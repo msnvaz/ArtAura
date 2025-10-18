@@ -15,7 +15,7 @@ import {
 import challengeParticipationApi from '../../services/challengeParticipationApi';
 import { useAuth } from '../../context/AuthContext';
 
-const ChallengeParticipation = () => {
+const ChallengeParticipation = ({ onChallengeCountChange }) => {
     const { userId, token } = useAuth();
     const [activeChallenges, setActiveChallenges] = useState([]);
     const [participations, setParticipations] = useState([]);
@@ -39,18 +39,40 @@ const ChallengeParticipation = () => {
     const fetchData = async () => {
         try {
             setLoading(true);
-            // Only fetch active challenges for participation
-            const challengesData = await challengeParticipationApi.getActiveChallenges();
+            // Fetch active challenges and artist's existing participations
+            const [challengesData, participationsData] = await Promise.all([
+                challengeParticipationApi.getActiveChallenges(),
+                challengeParticipationApi.getArtistParticipations(userId)
+            ]);
+
             setActiveChallenges(challengesData);
-            setParticipations([]); // No existing participations needed for now
+            setParticipations(participationsData || []);
+
+            // Notify parent component about the challenge count
+            if (onChallengeCountChange) {
+                onChallengeCountChange(challengesData.length);
+            }
         } catch (error) {
             console.error('Error fetching data:', error);
+            setActiveChallenges([]);
+            setParticipations([]);
+            // Still notify parent about count even if there's an error
+            if (onChallengeCountChange) {
+                onChallengeCountChange(0);
+            }
         } finally {
             setLoading(false);
         }
     };
 
     const handleParticipate = (challenge) => {
+        // Check if artist has already participated in this challenge
+        const hasParticipated = isParticipated(challenge.id);
+        if (hasParticipated) {
+            alert('You have already submitted your artwork for this challenge.\n\nTo maintain fairness, each artist can only submit one artwork per challenge.');
+            return;
+        }
+
         setSelectedChallenge(challenge);
         setShowSubmissionModal(true);
         setSubmissionForm({
@@ -104,7 +126,16 @@ const ChallengeParticipation = () => {
             alert('Successfully submitted your artwork for the challenge!');
         } catch (error) {
             console.error('Error submitting participation:', error);
-            alert('Error submitting your artwork. Please try again.');
+
+            // Check if the error is about duplicate participation
+            if (error.response && error.response.status === 400 &&
+                error.response.data && error.response.data.includes('already participated')) {
+                alert('You have already submitted artwork for this challenge.\n\nEach artist can only submit one artwork per challenge.');
+                // Refresh data to update the UI
+                await fetchData();
+            } else {
+                alert('Error submitting your artwork. Please try again.');
+            }
         } finally {
             setSubmitting(false);
         }
@@ -200,21 +231,31 @@ const ChallengeParticipation = () => {
 
                                 {/* Participation Status or Action */}
                                 {participated ? (
-                                    <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(status)}`}>
-                                        <CheckCircle className="h-4 w-4 mr-1" />
-                                        {status === 'submitted' && 'Submitted'}
-                                        {status === 'under_review' && 'Under Review'}
-                                        {status === 'approved' && 'Approved'}
-                                        {status === 'rejected' && 'Rejected'}
+                                    <div className="space-y-2">
+                                        <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(status)}`}>
+                                            <CheckCircle className="h-4 w-4 mr-1" />
+                                            {status === 'submitted' && 'Submitted'}
+                                            {status === 'under_review' && 'Under Review'}
+                                            {status === 'approved' && 'Approved'}
+                                            {status === 'rejected' && 'Rejected'}
+                                        </div>
+                                        <p className="text-xs text-gray-500">
+                                            ✓ You have already submitted to this challenge
+                                        </p>
                                     </div>
                                 ) : (
-                                    <button
-                                        onClick={() => handleParticipate(challenge)}
-                                        className="w-full bg-[#7f5539] text-white py-2 px-4 rounded-lg hover:bg-[#6d4830] transition-colors flex items-center justify-center"
-                                    >
-                                        <Upload className="h-4 w-4 mr-2" />
-                                        Participate
-                                    </button>
+                                    <div className="space-y-2">
+                                        <button
+                                            onClick={() => handleParticipate(challenge)}
+                                            className="w-full bg-[#7f5539] text-white py-2 px-4 rounded-lg hover:bg-[#6d4830] transition-colors flex items-center justify-center"
+                                        >
+                                            <Upload className="h-4 w-4 mr-2" />
+                                            Submit Artwork
+                                        </button>
+                                        <p className="text-xs text-gray-500 text-center">
+                                            One submission per challenge allowed
+                                        </p>
+                                    </div>
                                 )}
                             </div>
                         </div>
@@ -248,13 +289,17 @@ const ChallengeParticipation = () => {
                             </div>
 
                             {selectedChallenge && (
-                                <div className="mb-6 p-4 bg-[#fdf9f4] rounded-lg">
+                                <div className="mb-6 p-4 bg-[#fdf9f4] rounded-lg border border-[#FFD95A]/20">
                                     <h4 className="font-medium text-[#7f5539] mb-1">
                                         {selectedChallenge.title}
                                     </h4>
-                                    <p className="text-sm text-gray-600">
+                                    <p className="text-sm text-gray-600 mb-2">
                                         {selectedChallenge.description}
                                     </p>
+                                    <div className="flex items-center text-xs text-[#D87C5A] bg-[#FFD95A]/10 p-2 rounded border border-[#FFD95A]/30">
+                                        <AlertCircle className="h-3 w-3 mr-1 flex-shrink-0" />
+                                        <span>Important: You can only submit one artwork per challenge</span>
+                                    </div>
                                 </div>
                             )}
 

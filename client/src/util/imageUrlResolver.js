@@ -48,9 +48,6 @@ export const getImageUrl = (imagePath, bustCache = false) => {
     finalUrl += `?t=${timestamp}&r=${random}&v=${Math.floor(timestamp / 1000)}`;
   }
 
-  // Log the image URL being generated for debugging
-  console.log(`🖼️ Image URL generated: ${imagePath} -> ${finalUrl}`);
-
   return finalUrl;
 };
 
@@ -93,19 +90,16 @@ export const getImageUrlWithFallback = async (imagePath) => {
   // Try frontend Vite server first (more reliable in development)
   const publicExists = await checkImageExists(publicUrl);
   if (publicExists) {
-    console.log(`✅ Image found on frontend server: ${publicUrl}`);
     return publicUrl;
   }
 
   // Fallback to backend server
   const backendExists = await checkImageExists(backendUrl);
   if (backendExists) {
-    console.log(`✅ Image found on backend server: ${backendUrl}`);
     return backendUrl;
   }
 
   // If neither works, return frontend URL (Vite server is more reliable)
-  console.log(`⚠️ Image not found on either server, using frontend URL: ${publicUrl}`);
   return publicUrl;
 };
 
@@ -150,7 +144,6 @@ export const getAvatarUrl = (avatarPath) => {
   }
 
   // For any path that exists, always trust the database and use cache busting for recent uploads
-  console.log(`🖼️ Processing avatar URL: ${avatarPath}`);
 
   // Check if this is a recent upload (based on timestamp in filename)
   const timestampMatch = avatarPath.match(/_(\d{13})\./);
@@ -163,7 +156,6 @@ export const getAvatarUrl = (avatarPath) => {
 
     // If uploaded within the last day, use aggressive cache busting
     if (timestamp > oneDayAgo) {
-      console.log(`🕐 Recent avatar upload detected: ${avatarPath}, using aggressive cache busting`);
       shouldBustCache = true;
     }
   }
@@ -172,7 +164,6 @@ export const getAvatarUrl = (avatarPath) => {
   const processedUrl = getImageUrl(avatarPath, true); // Always bust cache for avatars
   debugImagePath(avatarPath, processedUrl, 'avatar');
 
-  console.log(`🖼️ Final avatar URL: ${processedUrl}`);
   return processedUrl;
 };
 
@@ -196,7 +187,6 @@ export const getCoverUrl = (coverPath) => {
   }
 
   // For any path that exists, always trust the database and use cache busting for recent uploads
-  console.log(`🖼️ Processing cover URL: ${coverPath}`);
 
   // Check if this is a recent upload (based on timestamp in filename)
   const timestampMatch = coverPath.match(/_(\d{13})\./);
@@ -207,7 +197,6 @@ export const getCoverUrl = (coverPath) => {
 
     // If uploaded within the last day, trust the database path and bust cache
     if (timestamp > oneDayAgo) {
-      console.log(`🕐 Recent cover upload detected: ${coverPath}, using aggressive cache busting`);
       const processedUrl = getImageUrl(coverPath, true); // Enable cache busting for recent uploads
       debugImagePath(coverPath, processedUrl, 'cover');
       return processedUrl;
@@ -218,7 +207,6 @@ export const getCoverUrl = (coverPath) => {
   const processedUrl = getImageUrl(coverPath, true); // Always bust cache for covers
   debugImagePath(coverPath, processedUrl, 'cover');
 
-  console.log(`🖼️ Final cover URL: ${processedUrl}`);
   return processedUrl;
 };
 
@@ -231,11 +219,9 @@ export const getArtworkUrl = (artworkPath) => {
   if (!artworkPath) return DEFAULT_IMAGES.artwork;
 
   // Handle both old and new artwork paths
-  console.log(`🖼️ Processing artwork URL: ${artworkPath}`);
 
   // If it's an old path in root uploads but not in artworks subdirectory, keep it as is for backward compatibility
   if (artworkPath.includes('/uploads/') && !artworkPath.includes('/uploads/artworks/') && !artworkPath.includes('/uploads/profiles/')) {
-    console.log(`📁 Legacy artwork path detected: ${artworkPath}`);
     return getImageUrl(artworkPath, true); // Use cache busting for legacy paths too
   }
 
