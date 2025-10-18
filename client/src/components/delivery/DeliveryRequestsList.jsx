@@ -81,8 +81,8 @@ const DeliveryRequestsList = () => {
                 },
                 artwork: {
                   title: order.artwork_title || `Artwork Order #${order.id}`,
-                  type: 'Artwork',
-                  size: 'N/A',
+                  type: order.artwork_type || 'Artwork',
+                  size: order.artwork_dimensions || order.dimensions || 'N/A',
                   weight: 'TBD',
                   fragile: true,
                   value: `Rs ${order.total_amount || 0}`

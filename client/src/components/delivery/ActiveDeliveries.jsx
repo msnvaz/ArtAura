@@ -24,6 +24,7 @@ const ActiveDeliveries = () => {
   const [activeDeliveries, setActiveDeliveries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'accepted', 'picked_up', 'in_transit'
 
   // Mock data for active deliveries
   const mockActiveDeliveries = [
@@ -127,6 +128,7 @@ const ActiveDeliveries = () => {
               artistPhone: request.buyerPhone || 'N/A',
               buyerName: request.buyerName || 'Unknown Buyer',
               buyerPhone: request.buyerPhone || 'N/A',
+              paymentAmount: request.paymentAmount || 0, // Payment amount from payment table
               artwork: {
                 title: request.artworkTitle || `${request.requestType === 'artwork_order' ? 'Artwork Order' : 'Commission'} #${request.id}`,
                 type: request.artworkType || (request.requestType === 'artwork_order' ? 'Artwork' : 'Commission'),
@@ -313,6 +315,17 @@ const ActiveDeliveries = () => {
     fetchActiveDeliveries();
   }, [token]);
 
+  // Filter function for active deliveries
+  const filterDeliveries = (deliveries) => {
+    if (statusFilter === 'all') {
+      return deliveries;
+    }
+    return deliveries.filter(delivery => delivery.status === statusFilter);
+  };
+
+  // Get filtered deliveries
+  const filteredDeliveries = filterDeliveries(activeDeliveries);
+
   const updateDeliveryStatus = async (delivery, newStatus) => {
     try {
       console.log('Updating delivery status:', { delivery, newStatus });
@@ -370,14 +383,29 @@ const ActiveDeliveries = () => {
                           newStatus.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
         
         // Show alert with platform fee and payment amount when delivered
-        let alertMessage = `Delivery status updated successfully to: ${statusLabel}\n\nResponse: ${response.message || 'Success'}`;
+        let alertMessage = `✅ Delivery status updated successfully to: ${statusLabel}\n\n`;
         
         if (newStatus === 'delivered') {
-          alertMessage += `\n\n📊 Payment Details:\n`;
-          alertMessage += `💰 Platform Fee: ${response.platformFee || 'N/A'}%\n`;
-          alertMessage += `💵 Payment Amount: Rs ${response.paymentAmount || 'N/A'}`;
+          // Use payment amount from the delivery object (fetched from payment table)
+          const paymentAmount = delivery.paymentAmount || response.paymentAmount;
           
-          console.log('Alert message for delivered status:', alertMessage);
+          // Format payment amount with commas for better readability
+          const formattedPaymentAmount = paymentAmount 
+            ? parseFloat(paymentAmount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+            : 'N/A';
+          
+          alertMessage += `📊 PAYMENT DETAILS\n`;
+          alertMessage += `${'='.repeat(40)}\n`;
+          alertMessage += `💵 Payment Amount: Rs ${formattedPaymentAmount}\n`;
+          alertMessage += `💰 Platform Fee: ${response.platformFee || 'N/A'}%\n`;
+          alertMessage += `${'='.repeat(40)}\n\n`;
+          alertMessage += `Note: The payment amount shown is from the payment table.`;
+          
+          console.log('✅ Alert message for delivered status:', alertMessage);
+          console.log('💵 Payment amount from delivery object:', delivery.paymentAmount);
+          console.log('💵 Payment amount from API response:', response.paymentAmount);
+        } else {
+          alertMessage += `Response: ${response.message || 'Success'}`;
         }
         
         alert(alertMessage);
@@ -424,69 +452,51 @@ const ActiveDeliveries = () => {
 
   return (
     <div className="space-y-8">
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-          <div className="flex items-center">
-            <div 
-              className="p-3 rounded-full"
-              style={{ backgroundColor: '#FFE4D6' }}
-            >
-              <Package className="h-8 w-8" style={{ color: '#5D3A00' }} />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium" style={{ color: '#D87C5A' }}>Total Active</p>
-              <p className="text-2xl font-bold" style={{ color: '#5D3A00' }}>{activeDeliveries.length}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-          <div className="flex items-center">
-            <div 
-              className="p-3 rounded-full"
-              style={{ backgroundColor: '#FFD95A' }}
-            >
-              <Truck className="h-8 w-8" style={{ color: '#5D3A00' }} />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium" style={{ color: '#D87C5A' }}>In Transit</p>
-              <p className="text-2xl font-bold" style={{ color: '#5D3A00' }}>
-                {activeDeliveries.filter(d => d.status === 'in_transit').length}
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-          <div className="flex items-center">
-            <div 
-              className="p-3 rounded-full"
-              style={{ backgroundColor: '#FFE4D6' }}
-            >
-              <Clock className="h-8 w-8" style={{ color: '#D87C5A' }} />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium" style={{ color: '#D87C5A' }}>Pending Pickup</p>
-              <p className="text-2xl font-bold" style={{ color: '#5D3A00' }}>
-                {activeDeliveries.filter(d => ['accepted', 'picked_up'].includes(d.status)).length}
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-          <div className="flex items-center">
-            <div 
-              className="p-3 rounded-full flex items-center justify-center"
-              style={{ backgroundColor: '#FFD95A', width: '56px', height: '56px' }}
-            >
-              <span className="text-xl font-bold" style={{ color: '#5D3A00' }}>Rs</span>
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium" style={{ color: '#D87C5A' }}>Total Earnings</p>
-              <p className="text-2xl font-bold" style={{ color: '#5D3A00' }}>
-                {activeDeliveries.reduce((total, delivery) => total + (delivery.shippingFee || 0), 0).toLocaleString()}
-              LKR</p>
-            </div>
-          </div>
+      {/* Filter Buttons */}
+      <div className="bg-white p-4 rounded-lg shadow-md border border-gray-100">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="font-medium mr-2" style={{ color: '#5D3A00' }}>Filter by Status:</span>
+          <button
+            onClick={() => setStatusFilter('all')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 ${
+              statusFilter === 'all' 
+                ? 'text-white' 
+                : 'bg-gray-100 hover:bg-gray-200'
+            }`}
+            style={statusFilter === 'all' ? { backgroundColor: '#5D3A00' } : { color: '#5D3A00' }}
+          >
+            All ({activeDeliveries.length})
+          </button>
+          <button
+            onClick={() => setStatusFilter('accepted')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 ${
+              statusFilter === 'accepted' 
+                ? 'bg-blue-600 text-white' 
+                : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+            }`}
+          >
+            Accepted ({activeDeliveries.filter(d => d.status === 'accepted').length})
+          </button>
+          <button
+            onClick={() => setStatusFilter('picked_up')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 ${
+              statusFilter === 'picked_up' 
+                ? 'bg-yellow-600 text-white' 
+                : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+            }`}
+          >
+            Picked Up ({activeDeliveries.filter(d => d.status === 'picked_up').length})
+          </button>
+          <button
+            onClick={() => setStatusFilter('in_transit')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 ${
+              statusFilter === 'in_transit' 
+                ? 'bg-orange-600 text-white' 
+                : 'bg-orange-100 text-orange-800 hover:bg-orange-200'
+            }`}
+          >
+            In Transit ({activeDeliveries.filter(d => d.status === 'in_transit').length})
+          </button>
         </div>
       </div>
 
@@ -502,14 +512,20 @@ const ActiveDeliveries = () => {
             </div>
             <p className="mt-4" style={{ color: '#D87C5A' }}>Loading active deliveries...</p>
           </div>
-        ) : activeDeliveries.length === 0 ? (
+        ) : filteredDeliveries.length === 0 ? (
           <div className="bg-white rounded-lg shadow-md p-12 text-center border border-gray-100">
             <Truck className="h-16 w-16 mx-auto mb-4" style={{ color: '#D87C5A' }} />
-            <h3 className="text-lg font-medium mb-2" style={{ color: '#5D3A00' }}>No active deliveries</h3>
-            <p style={{ color: '#D87C5A' }}>When you accept delivery requests, they will appear here for tracking.</p>
+            <h3 className="text-lg font-medium mb-2" style={{ color: '#5D3A00' }}>
+              {statusFilter === 'all' ? 'No active deliveries' : `No deliveries with status: ${statusFilter.replace('_', ' ')}`}
+            </h3>
+            <p style={{ color: '#D87C5A' }}>
+              {statusFilter === 'all' 
+                ? 'When you accept delivery requests, they will appear here for tracking.'
+                : 'Try selecting a different status filter to view other deliveries.'}
+            </p>
           </div>
         ) : (
-          activeDeliveries.map((delivery) => {
+          filteredDeliveries.map((delivery) => {
             const nextAction = getNextAction(delivery.status);
             
             return (
