@@ -28,7 +28,24 @@ public class ChallengeDAOImpl implements ChallengeDAO {
         int requestSponsorshipValue = requestSponsorship ? 1 : 0;
         String status = requestSponsorship ? "draft" : "active";
 
-        String sql = "INSERT INTO challenges (title, category, publish_date_time, deadline_date_time, description, max_participants, rewards, request_sponsorship, status, moderator_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        // Get scoring criteria, use defaults if not provided
+        int likesWeight = 34;
+        int commentsWeight = 33;
+        int shareWeight = 33;
+        
+        if (challenge.getScoringCriteria() != null) {
+            likesWeight = challenge.getScoringCriteria().getLikesWeight();
+            commentsWeight = challenge.getScoringCriteria().getCommentsWeight();
+            shareWeight = challenge.getScoringCriteria().getShareWeight();
+            
+            // Validate that the total equals 100
+            if (!challenge.getScoringCriteria().isValid()) {
+                throw new IllegalArgumentException("Scoring criteria weights must total 100%. Current total: " + 
+                    challenge.getScoringCriteria().getTotalWeight());
+            }
+        }
+
+        String sql = "INSERT INTO challenges (title, category, publish_date_time, deadline_date_time, description, max_participants, rewards, request_sponsorship, status, moderator_id, likes_weight, comments_weight, share_weight) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         jdbcTemplate.update(sql,
             challenge.getTitle(),
             challenge.getCategory(),
@@ -39,7 +56,10 @@ public class ChallengeDAOImpl implements ChallengeDAO {
             challenge.getRewards(),
             requestSponsorshipValue,
             status,
-            moderatorId
+            moderatorId,
+            likesWeight,
+            commentsWeight,
+            shareWeight
         );
     }
     @Override
@@ -50,7 +70,7 @@ public class ChallengeDAOImpl implements ChallengeDAO {
 
     @Override
     public void updateChallenge(ChallengeDTO challenge, String moderatorId) {
-        String sql = "UPDATE challenges SET title=?, category=?, deadline_date_time=?, description=?, max_participants=?, rewards=?, request_sponsorship=? WHERE id=? AND moderator_id=?";
+        String sql = "UPDATE challenges SET title=?, category=?, deadline_date_time=?, description=?, max_participants=?, rewards=?, request_sponsorship=?, likes_weight=?, comments_weight=?, share_weight=? WHERE id=? AND moderator_id=?";
         
         // Clean and validate the deadline datetime
         String formattedDeadline = challenge.getDeadlineDateTime();
@@ -93,6 +113,23 @@ public class ChallengeDAOImpl implements ChallengeDAO {
             throw new IllegalArgumentException("Deadline datetime cannot be null or empty");
         }
         
+        // Get scoring criteria, use defaults if not provided
+        int likesWeight = 34;
+        int commentsWeight = 33;
+        int shareWeight = 33;
+        
+        if (challenge.getScoringCriteria() != null) {
+            likesWeight = challenge.getScoringCriteria().getLikesWeight();
+            commentsWeight = challenge.getScoringCriteria().getCommentsWeight();
+            shareWeight = challenge.getScoringCriteria().getShareWeight();
+            
+            // Validate that the total equals 100
+            if (!challenge.getScoringCriteria().isValid()) {
+                throw new IllegalArgumentException("Scoring criteria weights must total 100%. Current total: " + 
+                    challenge.getScoringCriteria().getTotalWeight());
+            }
+        }
+        
         jdbcTemplate.update(sql,
             challenge.getTitle(),
             challenge.getCategory(),
@@ -101,8 +138,19 @@ public class ChallengeDAOImpl implements ChallengeDAO {
             challenge.getMaxParticipants(),
             challenge.getRewards(),
             challenge.isRequestSponsorship() ? 1 : 0,
+            likesWeight,
+            commentsWeight,
+            shareWeight,
             challenge.getId(),
             moderatorId
         );
+    }
+
+    @Override
+    public int updateExpiredChallenges() {
+        String sql = "UPDATE challenges SET status = 'completed' " +
+                     "WHERE status != 'completed' " +
+                     "AND deadline_date_time < NOW()";
+        return jdbcTemplate.update(sql);
     }
 }

@@ -1,35 +1,29 @@
-  // Get left bar color for card based on status (verification-list style)
-  // Exhibition verification style: use Tailwind border-l-4 and color classes
-  const getStatusBorderClass = (status) => {
-    switch (status) {
-      case 'active':
-        return 'border-l-4 border-green-400';
-      case 'draft':
-        return 'border-l-4 border-gray-400';
-      case 'completed':
-        return 'border-l-4 border-blue-400';
-      case 'review':
-        return 'border-l-4 border-yellow-400';
-      default:
-        return 'border-l-4 border-gray-200';
-    }
-  };
-import axios from 'axios';
-import { Calendar, CheckCircle, Clock, Edit, Eye, Filter, Search, Trash2, Trophy, Users, AlertCircle, FileText } from 'lucide-react';
+  import axios from 'axios';
+import { Calendar, CheckCircle, Clock, Edit, Eye, Filter, Search, Trash2, Trophy, Users, AlertCircle, FileText, Heart, MessageCircle, Send } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 const ChallengeList = () => {
-  const navigate = useNavigate();
   const { token } = useAuth();
+  
+  // State Management
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
-
   const [challenges, setChallenges] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Modal States
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [challengeToDelete, setChallengeToDelete] = useState(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [challengeToView, setChallengeToView] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [challengeToEdit, setChallengeToEdit] = useState(null);
+  const [editForm, setEditForm] = useState({ title: '', description: '', requestSponsorship: false });
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
+  // Fetch Challenges
   const fetchChallenges = async () => {
     setLoading(true);
     setError(null);
@@ -39,8 +33,9 @@ const ChallengeList = () => {
         token ? { headers: { Authorization: `Bearer ${token}` } } : {}
       );
       setChallenges(response.data);
-    } catch (err) {
+    } catch (error) {
       setError('Failed to load challenges.');
+      console.error('Error fetching challenges:', error);
     } finally {
       setLoading(false);
     }
@@ -48,51 +43,72 @@ const ChallengeList = () => {
 
   useEffect(() => {
     fetchChallenges();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
+  // Helper Functions
   const getStatusColor = (status) => {
     switch (status) {
       case 'active':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 text-green-800 border-green-300';
       case 'review':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-100 text-yellow-800 border-yellow-300';
       case 'completed':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-100 text-blue-800 border-blue-300';
       case 'draft':
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800 border-gray-300';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800 border-gray-300';
     }
   };
 
-  // Function to get challenge statistics
+  const getStatusBorderClass = (status) => {
+    switch (status) {
+      case 'active':
+        return 'border-l-4 border-green-500';
+      case 'draft':
+        return 'border-l-4 border-gray-400';
+      case 'completed':
+        return 'border-l-4 border-blue-500';
+      case 'review':
+        return 'border-l-4 border-yellow-500';
+      default:
+        return 'border-l-4 border-gray-300';
+    }
+  };
+
   const getChallengeStats = () => {
     return {
       total: challenges.length,
-      draft: challenges.filter(c => c.status === 'draft').length,
-      active: challenges.filter(c => c.status === 'active').length,
-      review: challenges.filter(c => c.status === 'review').length,
-      completed: challenges.filter(c => c.status === 'completed').length
+      draft: challenges.filter(c => getActualStatus(c) === 'draft').length,
+      active: challenges.filter(c => getActualStatus(c) === 'active').length,
+      review: challenges.filter(c => getActualStatus(c) === 'review').length,
+      completed: challenges.filter(c => getActualStatus(c) === 'completed').length
     };
   };
 
+  // Helper function to determine actual status based on deadline
+  const getActualStatus = (challenge) => {
+    // If challenge is already marked as completed, keep it completed
+    if (challenge.status === 'completed') {
+      return 'completed';
+    }
 
+    // Check if deadline has passed
+    if (challenge.deadlineDateTime) {
+      const deadline = new Date(challenge.deadlineDateTime);
+      const now = new Date();
+      
+      if (now > deadline) {
+        return 'completed';
+      }
+    }
 
-  // State for delete confirmation popup
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [challengeToDelete, setChallengeToDelete] = useState(null);
+    // Return the original status if deadline hasn't passed
+    return challenge.status;
+  };
 
-  // State for details modal
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [challengeToView, setChallengeToView] = useState(null);
-
-  // State for edit form popup
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [challengeToEdit, setChallengeToEdit] = useState(null);
-  const [editForm, setEditForm] = useState({ title: '', description: '', requestSponsorship: false });
-
-
-
+  // Event Handlers
   const handleEditClick = (challenge) => {
     setChallengeToEdit(challenge);
     
@@ -288,9 +304,6 @@ const ChallengeList = () => {
     setChallengeToDelete(null);
   };
 
-  // State for delete loading
-  const [deleteLoading, setDeleteLoading] = useState(false);
-
   const handleConfirmDelete = async () => {
     if (!challengeToDelete) return;
     setDeleteLoading(true);
@@ -303,8 +316,9 @@ const ChallengeList = () => {
       setChallenges((prev) => prev.filter((c) => c.id !== challengeToDelete.id));
       setShowDeleteModal(false);
       setChallengeToDelete(null);
-    } catch (err) {
+    } catch (error) {
       setError('Failed to delete challenge.');
+      console.error('Error deleting challenge:', error);
     } finally {
       setDeleteLoading(false);
     }
@@ -313,7 +327,8 @@ const ChallengeList = () => {
   const filteredChallenges = challenges.filter(challenge => {
     const matchesSearch = challenge.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          challenge.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterStatus === 'all' || challenge.status === filterStatus;
+    const actualStatus = getActualStatus(challenge);
+    const matchesFilter = filterStatus === 'all' || actualStatus === filterStatus;
     return matchesSearch && matchesFilter;
   });
 
@@ -335,8 +350,8 @@ const ChallengeList = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-xl font-bold text-amber-900">All Challenges</h2>
-          <p className="text-amber-700 mt-1">View and manage challenge details</p>
+          <h2 className="text-3xl font-extrabold text-amber-900 tracking-tight">All Challenges</h2>
+          <p className="text-base font-light text-amber-600 mt-2 italic">View and manage challenge details</p>
         </div>
       </div>
 
@@ -345,20 +360,20 @@ const ChallengeList = () => {
         const stats = getChallengeStats();
         return (
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-            <div className="bg-white rounded-lg p-4 border border-gray-200">
+            <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg p-4 border-2 border-amber-300 shadow-md hover:shadow-lg transition-all duration-300">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total Challenges</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+                  <p className="text-xs font-bold text-amber-700 uppercase tracking-widest">Total Challenges</p>
+                  <p className="text-3xl font-black text-amber-900 mt-1">{stats.total}</p>
                 </div>
-                <Trophy className="h-8 w-8 text-gray-400" />
+                <Trophy className="h-8 w-8 text-amber-500" />
               </div>
             </div>
             <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-800">Draft</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.draft}</p>
+                  <p className="text-xs font-semibold text-gray-700 uppercase tracking-wider">Draft</p>
+                  <p className="text-3xl font-extrabold text-gray-900 mt-1">{stats.draft}</p>
                 </div>
                 <FileText className="h-8 w-8 text-gray-500" />
               </div>
@@ -366,8 +381,8 @@ const ChallengeList = () => {
             <div className="bg-green-50 rounded-lg p-4 border border-green-200">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-green-800">Active</p>
-                  <p className="text-2xl font-bold text-green-900">{stats.active}</p>
+                  <p className="text-xs font-semibold text-green-700 uppercase tracking-wider">Active</p>
+                  <p className="text-3xl font-extrabold text-green-900 mt-1">{stats.active}</p>
                 </div>
                 <CheckCircle className="h-8 w-8 text-green-500" />
               </div>
@@ -375,8 +390,8 @@ const ChallengeList = () => {
             <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-yellow-800">Under Review</p>
-                  <p className="text-2xl font-bold text-yellow-900">{stats.review}</p>
+                  <p className="text-xs font-semibold text-yellow-700 uppercase tracking-wider">Under Review</p>
+                  <p className="text-3xl font-extrabold text-yellow-900 mt-1">{stats.review}</p>
                 </div>
                 <AlertCircle className="h-8 w-8 text-yellow-500" />
               </div>
@@ -384,8 +399,8 @@ const ChallengeList = () => {
             <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-blue-800">Completed</p>
-                  <p className="text-2xl font-bold text-blue-900">{stats.completed}</p>
+                  <p className="text-xs font-semibold text-blue-700 uppercase tracking-wider">Completed</p>
+                  <p className="text-3xl font-extrabold text-blue-900 mt-1">{stats.completed}</p>
                 </div>
                 <Clock className="h-8 w-8 text-blue-500" />
               </div>
@@ -405,7 +420,7 @@ const ChallengeList = () => {
                 placeholder="Search challenges..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-medium text-gray-700 placeholder:font-normal placeholder:text-gray-400"
               />
             </div>
           </div>
@@ -414,7 +429,7 @@ const ChallengeList = () => {
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+              className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-semibold text-gray-700"
             >
               <option value="all">All Status</option>
               <option value="draft">Draft</option>
@@ -438,10 +453,12 @@ const ChallengeList = () => {
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredChallenges.map((challenge) => (
+            {filteredChallenges.map((challenge) => {
+              const actualStatus = getActualStatus(challenge);
+              return (
               <div
                 key={challenge.id}
-                className={`bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow card-animate ${getStatusBorderClass(challenge.status)} flex flex-col h-full`}
+                className={`bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow card-animate ${getStatusBorderClass(actualStatus)} flex flex-col h-full`}
               >
                 <div className="flex flex-col flex-1 p-6">
                   <div className="flex justify-between items-start mb-4">
@@ -449,8 +466,8 @@ const ChallengeList = () => {
                       <Trophy className="h-5 w-5 text-amber-600" />
                       <span className="text-sm font-medium text-amber-800">{challenge.category}</span>
                     </div>
-                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(challenge.status)}`}>
-                      {challenge.status?.charAt(0).toUpperCase() + challenge.status?.slice(1)}
+                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(actualStatus)}`}>
+                      {actualStatus?.charAt(0).toUpperCase() + actualStatus?.slice(1)}
                     </span>
                   </div>
 
@@ -501,6 +518,41 @@ const ChallengeList = () => {
                     )}
                   </div>
 
+                  {/* Scoring Criteria Preview */}
+                  {challenge.scoringCriteria && (
+                    <div className="bg-gradient-to-br from-amber-50 via-orange-50 to-amber-50 rounded-lg p-4 mb-4 border-2 border-amber-300 shadow-sm">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="p-1.5 bg-amber-600 rounded-full">
+                          <Trophy size={12} className="text-white" />
+                        </div>
+                        <span className="text-sm font-bold text-amber-900">Scoring Criteria</span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="bg-white rounded-lg p-2 border border-amber-200 shadow-sm">
+                          <div className="flex justify-center mb-1">
+                            <Heart size={14} className="text-red-500" />
+                          </div>
+                          <div className="text-xl font-bold text-amber-900 text-center">{challenge.scoringCriteria.likesWeight}%</div>
+                          <div className="text-xs text-amber-700 text-center font-medium">Likes</div>
+                        </div>
+                        <div className="bg-white rounded-lg p-2 border border-green-200 shadow-sm">
+                          <div className="flex justify-center mb-1">
+                            <MessageCircle size={14} className="text-green-600" />
+                          </div>
+                          <div className="text-xl font-bold text-green-900 text-center">{challenge.scoringCriteria.commentsWeight}%</div>
+                          <div className="text-xs text-green-700 text-center font-medium">Comments</div>
+                        </div>
+                        <div className="bg-white rounded-lg p-2 border border-purple-200 shadow-sm">
+                          <div className="flex justify-center mb-1">
+                            <Send size={14} className="text-purple-600" />
+                          </div>
+                          <div className="text-xl font-bold text-purple-900 text-center">{challenge.scoringCriteria.shareWeight}%</div>
+                          <div className="text-xs text-purple-700 text-center font-medium">Shares</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex-1"></div>
                   {/* Action icons always at the bottom, now aligned left */}
                   <div className="flex justify-start gap-2 pt-4 border-t border-gray-200 mt-4">
@@ -531,7 +583,8 @@ const ChallengeList = () => {
                   </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Single Challenge Details Modal rendered only once outside the map */}
@@ -630,14 +683,56 @@ const ChallengeList = () => {
                   )}
 
                   {challengeToView.scoringCriteria && (
-                    <div className="bg-amber-50 rounded-lg p-3 mt-2">
-                      <div className="font-semibold text-amber-700 mb-1">Scoring Criteria</div>
-                      <ul className="ml-4 mt-1 text-sm text-amber-800">
-                        <li>Likes Weight: {challengeToView.scoringCriteria.likesWeight}%</li>
-                        <li>Comments Weight: {challengeToView.scoringCriteria.commentsWeight}%</li>
-                        <li>Buyer Interest Weight: {challengeToView.scoringCriteria.buyerInterestWeight}%</li>
-                        <li>Expert Evaluation Weight: {challengeToView.scoringCriteria.expertEvaluationWeight}%</li>
-                      </ul>
+                    <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-4 mt-2 border border-amber-200">
+                      <div className="font-semibold text-amber-800 mb-3 flex items-center gap-2">
+                        <Trophy size={18} className="text-amber-600" />
+                        Scoring Criteria
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-amber-800">Likes & Engagement Weight:</span>
+                          <span className="text-sm font-bold text-amber-900">{challengeToView.scoringCriteria.likesWeight}%</span>
+                        </div>
+                        <div className="w-full bg-amber-200 rounded-full h-2">
+                          <div 
+                            className="bg-amber-600 h-2 rounded-full transition-all" 
+                            style={{width: `${challengeToView.scoringCriteria.likesWeight}%`}}
+                          ></div>
+                        </div>
+                        
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-amber-800">Comments & Interaction Weight:</span>
+                          <span className="text-sm font-bold text-amber-900">{challengeToView.scoringCriteria.commentsWeight}%</span>
+                        </div>
+                        <div className="w-full bg-green-200 rounded-full h-2">
+                          <div 
+                            className="bg-green-600 h-2 rounded-full transition-all" 
+                            style={{width: `${challengeToView.scoringCriteria.commentsWeight}%`}}
+                          ></div>
+                        </div>
+                        
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-amber-800">Share Weight:</span>
+                          <span className="text-sm font-bold text-amber-900">{challengeToView.scoringCriteria.shareWeight}%</span>
+                        </div>
+                        <div className="w-full bg-purple-200 rounded-full h-2">
+                          <div 
+                            className="bg-purple-600 h-2 rounded-full transition-all" 
+                            style={{width: `${challengeToView.scoringCriteria.shareWeight}%`}}
+                          ></div>
+                        </div>
+                        
+                        <div className="mt-3 pt-3 border-t border-amber-200">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-semibold text-amber-900">Total:</span>
+                            <span className="text-sm font-bold text-green-700">
+                              {challengeToView.scoringCriteria.likesWeight + 
+                               challengeToView.scoringCriteria.commentsWeight + 
+                               challengeToView.scoringCriteria.shareWeight}% ✓
+                            </span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>

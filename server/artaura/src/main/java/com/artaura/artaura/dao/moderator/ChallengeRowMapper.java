@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import org.springframework.jdbc.core.RowMapper;
 
 import com.artaura.artaura.dto.moderator.ChallengeListDTO;
+import com.artaura.artaura.dto.moderator.ScoringCriteriaDTO;
 
 public class ChallengeRowMapper implements RowMapper<ChallengeListDTO> {
     @Override
@@ -22,6 +23,14 @@ public class ChallengeRowMapper implements RowMapper<ChallengeListDTO> {
         challenge.setRequestSponsorship(rs.getInt("request_sponsorship") == 1);
         challenge.setStatus(rs.getString("status"));
         challenge.setModeratorId(rs.getInt("moderator_id"));
+        
+        // Map scoring criteria
+        ScoringCriteriaDTO scoringCriteria = new ScoringCriteriaDTO();
+        scoringCriteria.setLikesWeight(rs.getInt("likes_weight"));
+        scoringCriteria.setCommentsWeight(rs.getInt("comments_weight"));
+        scoringCriteria.setShareWeight(rs.getInt("share_weight"));
+        challenge.setScoringCriteria(scoringCriteria);
+        
         return challenge;
     }
 }
