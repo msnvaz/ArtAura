@@ -8,4 +8,6 @@ public interface ShopService {
     ShopDTO getShopByUserId(Long userId); // <-- Needed for profile fetch
 
     void updateShop(Long shopId, ShopDTO shop);
+
+    void deleteShop(Long shopId); // <-- Needed for deactivation
 }

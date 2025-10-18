@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import {
   Route,
   BrowserRouter as Router,
@@ -13,7 +12,6 @@ import Marketplace from "./pages/Marketplace";
 import UserOrders from "./pages/UserOrders";
 import UserProfile from "./pages/Profile/UserProfile";
 
-import Dashboard from "./pages/shop/Dashboard";
 import ShopOrders from "./pages/shop/Orders";
 import Sponsorships from "./pages/shop/Sponsorships";
 import SalesAnalytics from "./pages/shop/Analytics";
@@ -90,7 +88,6 @@ function AppWrapper() {
         <Route path="/checkout" element={<PageTransition><CheckoutPage /></PageTransition>} />
         <Route path="/payment" element={<PageTransition><PaymentPage /></PageTransition>} />
         <Route path="/order-confirmation" element={<PageTransition><OrderConfirmationPage /></PageTransition>} />
-        <Route path="/shop/dashboard" element={<PageTransition><Dashboard /></PageTransition>} />
         <Route path="/shop/orders" element={<PageTransition><ShopOrders /></PageTransition>} />
         <Route path="/shop/sponsorships" element={<PageTransition><Sponsorships /></PageTransition>} />
         <Route path="/shop/analytics" element={<PageTransition><SalesAnalytics /></PageTransition>} />

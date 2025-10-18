@@ -23,7 +23,8 @@ public class ImageUploadService {
                 ? currentDir.substring(0, currentDir.lastIndexOf("artaura"))
                 : currentDir + File.separator;
 
-        String uploadDirPath = projectRoot + "client" + File.separator + "public" + File.separator + "uploads" + File.separator + "profiles" + File.separator;
+        String uploadDirPath = projectRoot + "client" + File.separator + "public" + File.separator + "uploads"
+                + File.separator + "profiles" + File.separator;
         System.out.println("Upload directory path: " + uploadDirPath);
 
         // Create upload directory if it doesn't exist
@@ -35,12 +36,10 @@ public class ImageUploadService {
 
         // Generate unique filename
         String originalFilename = file.getOriginalFilename();
-        String extension = originalFilename != null && originalFilename.contains(".") 
-            ? originalFilename.substring(originalFilename.lastIndexOf(".")) 
-            : ".jpg";
+        String extension = originalFilename != null && originalFilename.contains(".")
+                ? originalFilename.substring(originalFilename.lastIndexOf("."))
+                : "";
         String filename = UUID.randomUUID().toString() + extension;
-        
-        // Generate relative path for URL
         String relativePath = "/uploads/profiles/" + filename;
 
         // Save file
@@ -60,7 +59,8 @@ public class ImageUploadService {
                         : currentDir + File.separator;
 
                 // Convert URL path back to file path for client/public/uploads
-                String filePath = imagePath.replace("/uploads/", projectRoot + "client" + File.separator + "public" + File.separator + "uploads" + File.separator);
+                String filePath = imagePath.replace("/uploads/", projectRoot + "client" + File.separator + "public"
+                        + File.separator + "uploads" + File.separator);
                 Path path = Paths.get(filePath);
                 boolean deleted = Files.deleteIfExists(path);
                 System.out.println("Deleted file: " + deleted + " at " + path.toAbsolutePath());

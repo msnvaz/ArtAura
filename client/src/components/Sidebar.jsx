@@ -1,5 +1,4 @@
 import {
-  Home,
   ShoppingCart,
   Bell,
   LogOut,
@@ -19,7 +18,6 @@ const mockUser = {
 };
 
 const mainLinks = [
-  { name: "Dashboard", path: "/shop/dashboard", icon: Home },
   { name: "Orders", path: "/shop/orders", icon: ShoppingCart },
   { name: "Catalog", path: "/shop/catalog", icon: Package },
   { name: "Analytics", path: "/shop/analytics", icon: BarChart3 },

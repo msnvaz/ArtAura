@@ -9,5 +9,7 @@ public interface ShopDAO {
 
     void updateShop(Long shopId, ShopDTO shop);
 
+    void deleteShop(Long shopId); // <-- Needed for deactivation
+
     ShopDTO findByEmail(String email);
 }

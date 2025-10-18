@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 // Use API_URL constant for base URL from .env
 const API_URL = import.meta.env.VITE_API_URL;
 import Navbar from '../../components/Navbar';
@@ -30,10 +31,12 @@ import {
 } from 'lucide-react';
 
 const ProfileDetails = () => {
+  const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [showDeactivateModal, setShowDeactivateModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isDeactivating, setIsDeactivating] = useState(false);
   const { toast, showToast, hideToast } = useToast();
   
   const [profileData, setProfileData] = useState({
@@ -60,49 +63,27 @@ const ProfileDetails = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-      let shopId = localStorage.getItem("shopId");
+      const userId = localStorage.getItem("userId"); // This is actually the shop_id from authentication
       
       // Debug: Check what's in localStorage
       console.log("LocalStorage contents:", {
-        token: localStorage.getItem("token"),
-        shopId: localStorage.getItem("shopId"),
-        userId: localStorage.getItem("userId"),
-        userEmail: localStorage.getItem("userEmail")
+        token: token ? "present" : "missing",
+        userId: userId,
+        role: localStorage.getItem("role")
       });
       
-      // If no shopId, try to get it using email
-      if (!shopId) {
-        const userEmail = localStorage.getItem("userEmail");
-        
-        if (!userEmail) {
-          throw new Error("No shop ID or email found. Please log in again.");
-        }
-        
-        console.log("No shopId found, trying to fetch using email:", userEmail);
-        
-    // Try to get shop by email first
-  const emailResponse = await fetch(`${API_URL}/api/shop/profile?email=${encodeURIComponent(userEmail)}`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        
-        if (emailResponse.ok) {
-          const shopData = await emailResponse.json();
-          shopId = shopData.shopId;
-          // Store the shopId for future use
-          localStorage.setItem("shopId", shopId);
-          console.log("Found and stored shopId:", shopId);
-        } else {
-          throw new Error("Shop not found for your email. Please contact support.");
-        }
+      if (!userId) {
+        throw new Error("No user ID found. Please log in again.");
       }
       
-      console.log("Fetching profile for shop ID:", shopId);
+      if (!token) {
+        throw new Error("No authentication token found. Please log in again.");
+      }
+      
+      console.log("Fetching profile for userId (shopId):", userId);
 
-  const response = await fetch(`${API_URL}/api/shop/${shopId}`, {
+      // Fetch shop using the userId (which is the shop_id)
+      const response = await fetch(`${API_URL}/api/shop/profile/${userId}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -111,26 +92,22 @@ const ProfileDetails = () => {
       });
 
       console.log("Response status:", response.status);
-      console.log("Response URL:", response.url);
 
       if (!response.ok) {
         if (response.status === 404) {
-          throw new Error(`Shop not found for ID: ${shopId}. Please contact support.`);
+          throw new Error(`Shop not found. Please contact support.`);
+        } else if (response.status === 401) {
+          throw new Error("Authentication failed. Please log in again.");
         } else if (response.status === 500) {
           const errorText = await response.text();
           console.error("Server error:", errorText);
-          throw new Error(`Server error: ${errorText}`);
+          throw new Error(`Server error. Please try again later.`);
         }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
-      console.log("Received data from database:", data);
-      
-      // Verify we got the correct shop
-      if (data.shopId != shopId) {
-        console.warn(`Warning: Expected shop ID ${shopId}, but got ${data.shopId}`);
-      }
+      console.log("✅ Received shop data:", data);
       
       // Make sure all fields exist, provide defaults if needed
       const formattedData = {
@@ -144,7 +121,7 @@ const ProfileDetails = () => {
         businessLicense: data.businessLicense || '',
         taxId: data.taxId || '',
         description: data.description || '',
-        status: data.status || '',
+        status: data.status || 'Active',
         agreedTerms: data.agreedTerms || false,
         createdAt: data.createdAt || null,
         avatar: '/src/assets/user.png',
@@ -155,17 +132,17 @@ const ProfileDetails = () => {
         }) : 'N/A'
       };
       
-      console.log("Formatted data for shop ID", shopId, ":", formattedData);
+      console.log("📋 Formatted profile data:", formattedData);
       
       setProfileData(formattedData);
       setEditData(formattedData);
       setError(null);
       
-      // Show success message with shop ID
-      showToast(`✅ Profile loaded for Shop ID: ${shopId}`, "success", 2000);
+      // Show success message
+      showToast(`✅ Profile loaded successfully`, "success", 2000);
       
     } catch (err) {
-      console.error("Error fetching shop profile:", err);
+      console.error("❌ Error fetching shop profile:", err);
       setError(err.message);
       showToast(`❌ ${err.message}`, "error", 4000);
     } finally {
@@ -175,6 +152,7 @@ const ProfileDetails = () => {
 
   useEffect(() => {
     fetchShopProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run once on mount
 
   const handleEdit = () => {
@@ -186,18 +164,25 @@ const ProfileDetails = () => {
     try {
       const token = localStorage.getItem("token");
 
+      if (!profileData.shopId) {
+        showToast("❌ Shop ID not found. Please reload the page.", "error", 3000);
+        return;
+      }
+
       const updateData = {
-        shopName: editData.shopName,
-        ownerName: editData.ownerName,
-        email: editData.email,
-        contactNo: editData.contactNo,
-        businessType: editData.businessType,
-        businessLicense: editData.businessLicense,
-        taxId: editData.taxId,
-        description: editData.description
+        shopName: editData.shopName.trim(),
+        ownerName: editData.ownerName.trim(),
+        email: editData.email.trim(),
+        contactNo: editData.contactNo.trim(),
+        businessType: editData.businessType.trim(),
+        businessLicense: editData.businessLicense.trim(),
+        taxId: editData.taxId.trim(),
+        description: editData.description.trim()
       };
 
-  const response = await fetch(`${API_URL}/api/shop/update/${profileData.shopId}`, {
+      console.log("📝 Updating shop profile:", updateData);
+
+      const response = await fetch(`${API_URL}/api/shop/update/${profileData.shopId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -207,16 +192,28 @@ const ProfileDetails = () => {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        showToast(`❌ ${error.message || "Failed to update profile"}`, "error", 3000);
+        const errorText = await response.text();
+        console.error("Update failed:", errorText);
+        showToast(`❌ Failed to update profile: ${errorText}`, "error", 3000);
         return;
       }
 
-      setProfileData(editData);
+      console.log("✅ Profile updated successfully");
+      
+      // Update the local state with trimmed data
+      const updatedData = {
+        ...editData,
+        ...updateData,
+        joinDate: profileData.joinDate // Preserve calculated fields
+      };
+      
+      setProfileData(updatedData);
+      setEditData(updatedData);
       setIsEditing(false);
-      showToast("✅ Profile updated successfully!", "update", 2500);
+      showToast("✅ Profile updated successfully!", "success", 2500);
+      
     } catch (err) {
-      console.error("Error updating profile:", err);
+      console.error("❌ Error updating profile:", err);
       showToast("❌ Server error. Please try again later.", "error", 3000);
     }
   };
@@ -226,10 +223,60 @@ const ProfileDetails = () => {
     setIsEditing(false);
   };
 
-  const handleDeactivate = () => {
-    setShowDeactivateModal(false);
-    // Handle deactivation logic here
-    showToast("⚠️ Profile deactivated successfully", "delete", 2500);
+  const handleDeactivate = async () => {
+    try {
+      setIsDeactivating(true);
+      const token = localStorage.getItem("token");
+      
+      if (!profileData.shopId) {
+        showToast("❌ Shop ID not found. Please reload the page.", "error", 3000);
+        return;
+      }
+
+      console.log("🗑️ Deactivating shop with ID:", profileData.shopId);
+
+      const response = await fetch(`${API_URL}/api/shop/deactivate/${profileData.shopId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Deactivation failed:", errorText);
+        showToast(`❌ Failed to deactivate account: ${errorText}`, "error", 3000);
+        return;
+      }
+
+      console.log("✅ Shop account deactivated successfully");
+      
+      // Close modal
+      setShowDeactivateModal(false);
+      
+      // Show success message
+      showToast("✅ Account deactivated successfully. Logging out...", "success", 2000);
+      
+      // Wait a moment for user to see the message
+      setTimeout(() => {
+        // Clear all localStorage
+        localStorage.removeItem("token");
+        localStorage.removeItem("role");
+        localStorage.removeItem("userId");
+        
+        console.log("🔓 Logged out and cleared localStorage");
+        
+        // Redirect to home/login page
+        navigate("/");
+      }, 2000);
+      
+    } catch (err) {
+      console.error("❌ Error deactivating account:", err);
+      showToast("❌ Server error. Please try again later.", "error", 3000);
+    } finally {
+      setIsDeactivating(false);
+    }
   };
 
   const stats = [
@@ -576,22 +623,34 @@ const ProfileDetails = () => {
               </div>
 
               <div className="p-6">
+                <p className="text-[#5D3A00] mb-2 font-semibold">
+                  ⚠️ Warning: This action is permanent!
+                </p>
                 <p className="text-[#5D3A00] mb-6">
-                  Are you sure you want to deactivate your shop? This action will temporarily disable your shop profile and you won't be able to manage products until you reactivate it.
+                  Are you sure you want to deactivate your shop? This will <strong>permanently delete</strong> your shop account and all associated data from our system. You will be logged out and redirected to the login page. This action cannot be undone.
                 </p>
                 
                 <div className="flex gap-3">
                   <button
                     onClick={() => setShowDeactivateModal(false)}
-                    className="flex-1 px-4 py-2 text-[#5D3A00] border border-[#FFE4D6] focus:ring-0 outline-none rounded-lg hover:bg-[#FFF5E1] transition-colors"
+                    disabled={isDeactivating}
+                    className="flex-1 px-4 py-2 text-[#5D3A00] border border-[#FFE4D6] focus:ring-0 outline-none rounded-lg hover:bg-[#FFF5E1] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleDeactivate}
-                    className="flex-1 px-4 py-2 bg-gradient-to-r from-red-500 to-red-700 text-white rounded-lg hover:shadow-lg transition-all duration-300"
+                    disabled={isDeactivating}
+                    className="flex-1 px-4 py-2 bg-gradient-to-r from-red-500 to-red-700 text-white rounded-lg hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                    Deactivate
+                    {isDeactivating ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        Deactivating...
+                      </>
+                    ) : (
+                      'Deactivate Permanently'
+                    )}
                   </button>
                 </div>
               </div>
