@@ -104,31 +104,38 @@ public class BuyerChallengeService {
     }
 
     /**
-     * Toggle vote for a submission (vote if not voted, unvote if already voted)
+     * Handle like/dislike for a submission
      * @param submissionId Submission ID
      * @param userId User ID
-     * @return true if vote was added, false if vote was removed
+     * @param action "like" or "dislike"
+     * @return Map containing success status, counts, and user reaction
      */
+    public Map<String, Object> handleLikeDislike(Long submissionId, Long userId, String action) {
+        return challengeDAO.handleLikeDislike(submissionId, userId, action);
+    }
+
+    /**
+     * Get like/dislike counts and user's reaction for a submission
+     * @param submissionId Submission ID
+     * @param userId User ID
+     * @return Map containing likes, dislikes, and userReaction
+     */
+    public Map<String, Object> getSubmissionLikes(Long submissionId, Long userId) {
+        return challengeDAO.getSubmissionLikes(submissionId, userId);
+    }
+
+    // Remove or comment out the old voting methods
+    /*
     public boolean toggleVote(Long submissionId, Long userId) {
         return challengeDAO.toggleVote(submissionId, userId);
     }
 
-    /**
-     * Check if user has voted for a submission
-     * @param submissionId Submission ID
-     * @param userId User ID
-     * @return true if user has voted, false otherwise
-     */
     public boolean hasUserVoted(Long submissionId, Long userId) {
         return challengeDAO.hasUserVoted(submissionId, userId);
     }
 
-    /**
-     * Get total vote count for a submission
-     * @param submissionId Submission ID
-     * @return Total vote count
-     */
     public int getSubmissionVoteCount(Long submissionId) {
         return challengeDAO.getSubmissionVoteCount(submissionId);
     }
+    */
 }

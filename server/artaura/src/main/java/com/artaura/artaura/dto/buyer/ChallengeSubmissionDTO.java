@@ -26,6 +26,11 @@ public class ChallengeSubmissionDTO {
     private Integer votesCount;
     private Boolean userHasVoted;
 
+    // Like/Dislike information (for the new reaction system)
+    private Integer likesCount;
+    private Integer dislikesCount;
+    private String userReaction; // "like", "dislike", or null
+
     // Constructors
     public ChallengeSubmissionDTO() {}
 
@@ -82,6 +87,16 @@ public class ChallengeSubmissionDTO {
 
     public Boolean getUserHasVoted() { return userHasVoted; }
     public void setUserHasVoted(Boolean userHasVoted) { this.userHasVoted = userHasVoted; }
+
+    // Like/Dislike information getters and setters
+    public Integer getLikesCount() { return likesCount; }
+    public void setLikesCount(Integer likesCount) { this.likesCount = likesCount; }
+
+    public Integer getDislikesCount() { return dislikesCount; }
+    public void setDislikesCount(Integer dislikesCount) { this.dislikesCount = dislikesCount; }
+
+    public String getUserReaction() { return userReaction; }
+    public void setUserReaction(String userReaction) { this.userReaction = userReaction; }
 
     // Legacy compatibility methods for backward compatibility
     public Long getSubmissionId() { return this.id; }

@@ -18,6 +18,8 @@ import {
   Download,
   Share2,
   Flag,
+  ThumbsUp,
+  ThumbsDown,
 } from "lucide-react";
 import Navbar from "../components/common/Navbar";
 import CartSidebar from "../components/cart/CartSidebar";
@@ -32,7 +34,8 @@ const ChallengeSubmissionsPage = () => {
   const [viewMode, setViewMode] = useState("grid");
   const [sortBy, setSortBy] = useState("newest");
   const [selectedSubmission, setSelectedSubmission] = useState(null);
-  const [votingInProgress, setVotingInProgress] = useState(new Set()); // Track which submissions are being voted on
+  const [likes, setLikes] = useState({}); // Store likes/dislikes for each submission
+  const [likeDislikeInProgress, setLikeDislikeInProgress] = useState(new Set()); // Track like/dislike operations
 
   useEffect(() => {
     fetchSubmissions();
@@ -190,103 +193,104 @@ const ChallengeSubmissionsPage = () => {
     }
   };
 
-  const handleVote = async (submissionId) => {
-    // Prevent multiple simultaneous votes for the same submission
-    if (votingInProgress.has(submissionId)) {
-      console.log("Vote already in progress for submission", submissionId);
+  const fetchSubmissionLikes = React.useCallback(async (submissionId) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      console.log(`Fetching likes for submission ${submissionId}`);
+
+      const response = await axios.get(
+        `${
+          import.meta.env.VITE_API_URL
+        }/api/buyer/challenges/submissions/${submissionId}/likes`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (response.data) {
+        setLikes((prev) => ({
+          ...prev,
+          [submissionId]: {
+            likes: response.data.likes || 0,
+            dislikes: response.data.dislikes || 0,
+            userReaction: response.data.userReaction || null,
+          },
+        }));
+      }
+    } catch (error) {
+      console.error("Error fetching likes:", error);
+      // Set default values if error
+      setLikes((prev) => ({
+        ...prev,
+        [submissionId]: { likes: 0, dislikes: 0, userReaction: null },
+      }));
+    }
+  }, []);
+
+  const handleLikeDislike = async (submissionId, action) => {
+    // Prevent multiple simultaneous operations for the same submission
+    if (likeDislikeInProgress.has(submissionId)) {
+      console.log(
+        "Like/dislike already in progress for submission",
+        submissionId
+      );
       return;
     }
 
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        console.error("No authentication token found");
-        alert("Please log in to vote");
+        alert("Please log in to react to submissions");
         return;
       }
 
-      // Add to voting progress set
-      setVotingInProgress((prev) => new Set(prev).add(submissionId));
+      setLikeDislikeInProgress((prev) => new Set(prev).add(submissionId));
 
-      console.log(`Attempting to vote for submission ${submissionId}`);
-
-      // Make API call to vote endpoint
       const response = await axios.post(
         `${
           import.meta.env.VITE_API_URL
-        }/api/buyer/challenges/submissions/${submissionId}/vote`,
-        {},
+        }/api/buyer/challenges/submissions/${submissionId}/like-dislike`,
+        {
+          action: action, // 'like' or 'dislike'
+        },
         {
           headers: { Authorization: `Bearer ${token}` },
-          timeout: 10000, // 10 second timeout
+          timeout: 10000,
         }
       );
 
-      console.log("Vote response:", response.data);
-
       if (response.data.success) {
-        const { voted } = response.data;
-
-        // Update the submission state immediately for better UX
-        setSubmissions((prev) =>
-          prev.map((sub) =>
-            sub.id === submissionId
-              ? {
-                  ...sub,
-                  userHasVoted: voted,
-                  votes: voted ? sub.votes + 1 : Math.max(sub.votes - 1, 0),
-                }
-              : sub
-          )
-        );
-
-        // Also update selected submission if it's open in modal
-        if (selectedSubmission && selectedSubmission.id === submissionId) {
-          setSelectedSubmission((prev) => ({
-            ...prev,
-            userHasVoted: voted,
-            votes: voted ? prev.votes + 1 : Math.max(prev.votes - 1, 0),
-          }));
-        }
+        // Update the likes state with new values from backend
+        setLikes((prev) => ({
+          ...prev,
+          [submissionId]: {
+            likes: response.data.likes,
+            dislikes: response.data.dislikes,
+            userReaction: response.data.userReaction,
+          },
+        }));
 
         console.log(
-          voted ? "Vote added successfully" : "Vote removed successfully"
+          `${action} operation successful for submission ${submissionId}`
         );
-
-        // Optional: Show success message to user
-        // You can add a toast notification here if you have one
       } else {
-        console.error("Vote operation failed:", response.data.message);
-        alert("Failed to process vote. Please try again.");
+        alert("Failed to process reaction. Please try again.");
       }
     } catch (error) {
-      console.error("Error voting:", error);
+      console.error("Error with like/dislike:", error);
 
       if (error.response?.status === 401) {
-        console.error("Authentication failed - redirecting to login");
         alert("Your session has expired. Please log in again.");
         navigate("/login");
       } else if (error.response?.status === 403) {
-        console.error("Access forbidden - insufficient permissions");
-        alert(
-          "You don't have permission to vote. Please ensure you're logged in as a buyer."
-        );
-      } else if (error.response?.status === 500) {
-        console.error("Server error:", error.response?.data?.message);
-        alert("Server error occurred. Please try again later.");
-      } else if (error.code === "ECONNABORTED") {
-        console.error("Request timeout");
-        alert("Request timed out. Please check your connection and try again.");
+        alert("You don't have permission to react to submissions.");
       } else {
-        console.error(
-          "Vote operation failed:",
-          error.response?.data?.message || error.message
-        );
-        alert("Failed to process vote. Please try again.");
+        alert("Failed to process reaction. Please try again.");
       }
     } finally {
-      // Remove from voting progress set
-      setVotingInProgress((prev) => {
+      setLikeDislikeInProgress((prev) => {
         const newSet = new Set(prev);
         newSet.delete(submissionId);
         return newSet;
@@ -307,135 +311,193 @@ const ChallengeSubmissionsPage = () => {
     }
   };
 
-  const SubmissionCard = ({ submission }) => (
-    <div className="bg-white rounded-xl shadow-md border border-[#FFD95A] overflow-hidden hover:shadow-lg transition-all duration-300">
-      <div
-        className="relative cursor-pointer"
-        onClick={() => setSelectedSubmission(submission)}
-      >
-        <img
-          src={submission.artworkImagePath || submission.image}
-          alt={submission.artworkTitle || submission.title}
-          className="w-full h-64 object-cover hover:scale-105 transition-transform duration-300"
-        />
-        {/* Display rating badge if available */}
-        {submission.rating && (
-          <div className="absolute top-4 left-4 bg-yellow-500 text-white px-3 py-1 rounded-full text-sm font-bold flex items-center gap-1">
-            <Star className="w-4 h-4 fill-current" />
-            {submission.rating.toFixed(1)}
-          </div>
-        )}
-        {/* Display status badge */}
+  const SubmissionCard = ({ submission }) => {
+    // Fetch likes when card is rendered - only once per submission ID
+    React.useEffect(() => {
+      if (submission.id && !likes[submission.id]) {
+        fetchSubmissionLikes(submission.id);
+      }
+    }, [submission.id]); // Remove fetchSubmissionLikes from dependencies
+
+    return (
+      <div className="bg-white rounded-xl shadow-md border border-[#FFD95A] overflow-hidden hover:shadow-lg transition-all duration-300">
         <div
-          className={`absolute top-4 right-4 px-3 py-1 rounded-full text-sm font-bold ${
-            submission.status === "approved"
-              ? "bg-green-500 text-white"
-              : submission.status === "rejected"
-              ? "bg-red-500 text-white"
-              : submission.status === "pending"
-              ? "bg-yellow-500 text-white"
-              : "bg-blue-500 text-white"
-          }`}
+          className="relative cursor-pointer"
+          onClick={() => setSelectedSubmission(submission)}
         >
-          {submission.status}
-        </div>
-      </div>
-
-      <div className="p-4">
-        <div className="flex items-center gap-3 mb-3">
           <img
-            src={submission.artist.avatar}
-            alt={submission.artist.name}
-            className="w-8 h-8 rounded-full object-cover"
+            src={submission.artworkImagePath || submission.image}
+            alt={submission.artworkTitle || submission.title}
+            className="w-full h-64 object-cover hover:scale-105 transition-transform duration-300"
           />
-          <div className="flex-1">
-            <h4 className="font-medium text-[#7f5539] text-sm">
-              {submission.artist.name}
-            </h4>
-            <p className="text-xs text-[#7f5539]/60">
-              {submission.artist.followers} followers
-            </p>
+          {/* Display rating badge if available */}
+          {submission.rating && (
+            <div className="absolute top-4 left-4 bg-yellow-500 text-white px-3 py-1 rounded-full text-sm font-bold flex items-center gap-1">
+              <Star className="w-4 h-4 fill-current" />
+              {submission.rating.toFixed(1)}
+            </div>
+          )}
+          {/* Display status badge */}
+          <div
+            className={`absolute top-4 right-4 px-3 py-1 rounded-full text-sm font-bold ${
+              submission.status === "approved"
+                ? "bg-green-500 text-white"
+                : submission.status === "rejected"
+                ? "bg-red-500 text-white"
+                : submission.status === "pending"
+                ? "bg-yellow-500 text-white"
+                : "bg-blue-500 text-white"
+            }`}
+          >
+            {submission.status}
           </div>
-          <span className="text-xs text-[#7f5539]/60">
-            {formatTimeAgo(submission.submissionDate || submission.submittedAt)}
-          </span>
         </div>
 
-        <h3 className="font-bold text-[#7f5539] text-lg mb-2">
-          {submission.artworkTitle || submission.title}
-        </h3>
-        <p className="text-[#7f5539]/80 text-sm mb-3 line-clamp-2">
-          {submission.artworkDescription || submission.description}
-        </p>
-
-        {/* Display judge comments if available */}
-        {submission.judgeComments && (
-          <div className="bg-blue-50 rounded-lg p-2 mb-3">
-            <div className="flex items-center gap-1 mb-1">
-              <User className="w-3 h-3 text-blue-600" />
-              <span className="text-xs font-medium text-blue-800">
-                Judge Feedback
-              </span>
+        <div className="p-4">
+          <div className="flex items-center gap-3 mb-3">
+            <img
+              src={submission.artist.avatar}
+              alt={submission.artist.name}
+              className="w-8 h-8 rounded-full object-cover"
+            />
+            <div className="flex-1">
+              <h4 className="font-medium text-[#7f5539] text-sm">
+                {submission.artist.name}
+              </h4>
+              <p className="text-xs text-[#7f5539]/60">
+                {submission.artist.followers} followers
+              </p>
             </div>
-            <p className="text-xs text-blue-700 line-clamp-2">
-              {submission.judgeComments}
-            </p>
-          </div>
-        )}
-
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => handleVote(submission.id)}
-              className={`flex items-center gap-1 transition-colors ${
-                submission.userHasVoted
-                  ? "text-[#7f5539] bg-[#FFD95A] px-2 py-1 rounded-full"
-                  : "text-[#D87C5A] hover:text-[#7f5539]"
-              }`}
-            >
-              <Star
-                className={`w-4 h-4 ${
-                  submission.userHasVoted ? "fill-current" : ""
-                }`}
-              />
-              <span className="text-sm">{submission.votes}</span>
-            </button>
-            {submission.rating && (
-              <div className="flex items-center gap-1 text-yellow-600">
-                <Award className="w-4 h-4" />
-                <span className="text-sm">{submission.rating.toFixed(1)}</span>
-              </div>
-            )}
-          </div>
-          <div className="text-right">
-            <span
-              className={`text-xs px-2 py-1 rounded-full ${
-                submission.status === "approved"
-                  ? "bg-green-100 text-green-800"
-                  : submission.status === "rejected"
-                  ? "bg-red-100 text-red-800"
-                  : submission.status === "pending"
-                  ? "bg-yellow-100 text-yellow-800"
-                  : "bg-blue-100 text-blue-800"
-              }`}
-            >
-              {submission.status}
-            </span>
-            <div className="text-xs text-[#7f5539]/60 mt-1">
-              {new Date(
+            <span className="text-xs text-[#7f5539]/60">
+              {formatTimeAgo(
                 submission.submissionDate || submission.submittedAt
-              ).toLocaleDateString()}
+              )}
+            </span>
+          </div>
+
+          <h3 className="font-bold text-[#7f5539] text-lg mb-2">
+            {submission.artworkTitle || submission.title}
+          </h3>
+          <p className="text-[#7f5539]/80 text-sm mb-3 line-clamp-2">
+            {submission.artworkDescription || submission.description}
+          </p>
+
+          {/* Display judge comments if available */}
+          {submission.judgeComments && (
+            <div className="bg-blue-50 rounded-lg p-2 mb-3">
+              <div className="flex items-center gap-1 mb-1">
+                <User className="w-3 h-3 text-blue-600" />
+                <span className="text-xs font-medium text-blue-800">
+                  Judge Feedback
+                </span>
+              </div>
+              <p className="text-xs text-blue-700 line-clamp-2">
+                {submission.judgeComments}
+              </p>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {/* Like/Dislike Buttons */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent modal from opening
+                  handleLikeDislike(submission.id, "like");
+                }}
+                disabled={likeDislikeInProgress.has(submission.id)}
+                className={`flex items-center gap-1 transition-colors ${
+                  likes[submission.id]?.userReaction === "like"
+                    ? "text-green-600 bg-green-50 px-2 py-1 rounded-full"
+                    : "text-[#7f5539] hover:text-green-600"
+                } ${
+                  likeDislikeInProgress.has(submission.id)
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
+                }`}
+              >
+                <ThumbsUp
+                  className={`w-4 h-4 ${
+                    likes[submission.id]?.userReaction === "like"
+                      ? "fill-current"
+                      : ""
+                  }`}
+                />
+                <span className="text-sm">
+                  {likes[submission.id]?.likes || 0}
+                </span>
+              </button>
+
+              <button
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent modal from opening
+                  handleLikeDislike(submission.id, "dislike");
+                }}
+                disabled={likeDislikeInProgress.has(submission.id)}
+                className={`flex items-center gap-1 transition-colors ${
+                  likes[submission.id]?.userReaction === "dislike"
+                    ? "text-red-600 bg-red-50 px-2 py-1 rounded-full"
+                    : "text-[#7f5539] hover:text-red-600"
+                }`}
+              >
+                <ThumbsDown
+                  className={`w-4 h-4 ${
+                    likes[submission.id]?.userReaction === "dislike"
+                      ? "fill-current"
+                      : ""
+                  }`}
+                />
+                <span className="text-sm">
+                  {likes[submission.id]?.dislikes || 0}
+                </span>
+              </button>
+
+              {submission.rating && (
+                <div className="flex items-center gap-1 text-yellow-600">
+                  <Award className="w-4 h-4" />
+                  <span className="text-sm">
+                    {submission.rating.toFixed(1)}
+                  </span>
+                </div>
+              )}
+            </div>
+            <div className="text-right">
+              <span
+                className={`text-xs px-2 py-1 rounded-full ${
+                  submission.status === "approved"
+                    ? "bg-green-100 text-green-800"
+                    : submission.status === "rejected"
+                    ? "bg-red-100 text-red-800"
+                    : submission.status === "pending"
+                    ? "bg-yellow-100 text-yellow-800"
+                    : "bg-blue-100 text-blue-800"
+                }`}
+              >
+                {submission.status}
+              </span>
+              <div className="text-xs text-[#7f5539]/60 mt-1">
+                {new Date(
+                  submission.submissionDate || submission.submittedAt
+                ).toLocaleDateString()}
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const SubmissionModal = ({ submission, onClose }) => {
     // Get the current submission data from the main submissions array
     const currentSubmission =
       submissions.find((s) => s.id === submission.id) || submission;
+
+    // Fetch likes when modal opens - only if not already fetched
+    React.useEffect(() => {
+      if (currentSubmission.id && !likes[currentSubmission.id]) {
+        fetchSubmissionLikes(currentSubmission.id);
+      }
+    }, [currentSubmission.id]); // Remove fetchSubmissionLikes from dependencies
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4">
@@ -455,7 +517,7 @@ const ChallengeSubmissionsPage = () => {
                   currentSubmission.artworkImagePath || currentSubmission.image
                 }
                 alt={currentSubmission.artworkTitle || currentSubmission.title}
-                zoom={2.5}
+                zoom={4.5}
                 lensSize={200}
                 className="w-full h-full object-contain"
                 onError={(e) => {
@@ -497,45 +559,11 @@ const ChallengeSubmissionsPage = () => {
                     </p>
                   </div>
                 )}
-
-                {/* Vote button */}
-                <button
-                  onClick={() => handleVote(currentSubmission.id)}
-                  disabled={votingInProgress.has(currentSubmission.id)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-                    currentSubmission.userHasVoted
-                      ? "bg-[#FFD95A] text-[#7f5539] border-2 border-[#7f5539]"
-                      : "border border-[#FFD95A] text-[#7f5539] hover:bg-[#FFD95A]"
-                  } ${
-                    votingInProgress.has(currentSubmission.id)
-                      ? "opacity-50 cursor-not-allowed"
-                      : ""
-                  }`}
-                >
-                  <Star
-                    className={`w-4 h-4 ${
-                      currentSubmission.userHasVoted ? "fill-current" : ""
-                    }`}
-                  />
-                  <span className="text-sm">
-                    {votingInProgress.has(currentSubmission.id)
-                      ? "Voting..."
-                      : `${currentSubmission.votes}`}
-                  </span>
-                </button>
               </div>
             </div>
 
             {/* Status and submission info - compact grid */}
-            <div className="grid grid-cols-4 gap-2 mb-3">
-              <div className="text-center p-2 bg-[#FFF5E1] rounded-lg">
-                <Trophy className="w-4 h-4 text-[#D87C5A] mx-auto mb-1" />
-                <p className="text-sm font-bold text-[#7f5539]">
-                  {currentSubmission.votes}
-                </p>
-                <p className="text-xs text-[#7f5539]/60">Votes</p>
-              </div>
-
+            <div className="grid grid-cols-3 gap-2 mb-3">
               <div className="text-center p-2 bg-[#FFF5E1] rounded-lg">
                 <Calendar className="w-4 h-4 text-[#D87C5A] mx-auto mb-1" />
                 <p className="text-xs font-medium text-[#7f5539]">
@@ -572,6 +600,7 @@ const ChallengeSubmissionsPage = () => {
                 >
                   {currentSubmission.status}
                 </p>
+                <p className="text-xs text-[#7f5539]/60">Status</p>
               </div>
 
               {currentSubmission.rating && (
@@ -580,6 +609,7 @@ const ChallengeSubmissionsPage = () => {
                   <p className="text-xs font-bold text-yellow-700">
                     {currentSubmission.rating.toFixed(1)}/5
                   </p>
+                  <p className="text-xs text-[#7f5539]/60">Rating</p>
                 </div>
               )}
             </div>
@@ -609,6 +639,91 @@ const ChallengeSubmissionsPage = () => {
                 </p>
               </div>
             )}
+
+            {/* Like/Dislike Section */}
+            <div className="border-t border-[#FFD95A] pt-3 mb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <h4 className="font-bold text-[#7f5539] text-sm">
+                    Community Reaction
+                  </h4>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  {/* Like Button */}
+                  <button
+                    onClick={() =>
+                      handleLikeDislike(currentSubmission.id, "like")
+                    }
+                    disabled={likeDislikeInProgress.has(currentSubmission.id)}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                      likes[currentSubmission.id]?.userReaction === "like"
+                        ? "bg-green-100 text-green-700 border-2 border-green-500"
+                        : "border border-[#FFD95A] text-[#7f5539] hover:bg-green-50"
+                    } ${
+                      likeDislikeInProgress.has(currentSubmission.id)
+                        ? "opacity-50 cursor-not-allowed"
+                        : ""
+                    }`}
+                  >
+                    <ThumbsUp
+                      className={`w-4 h-4 ${
+                        likes[currentSubmission.id]?.userReaction === "like"
+                          ? "fill-current"
+                          : ""
+                      }`}
+                    />
+                    <span className="text-sm font-medium">
+                      {likes[currentSubmission.id]?.likes || 0}
+                    </span>
+                  </button>
+
+                  {/* Dislike Button */}
+                  <button
+                    onClick={() =>
+                      handleLikeDislike(currentSubmission.id, "dislike")
+                    }
+                    disabled={likeDislikeInProgress.has(currentSubmission.id)}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                      likes[currentSubmission.id]?.userReaction === "dislike"
+                        ? "bg-red-100 text-red-700 border-2 border-red-500"
+                        : "border border-[#FFD95A] text-[#7f5539] hover:bg-red-50"
+                    } ${
+                      likeDislikeInProgress.has(currentSubmission.id)
+                        ? "opacity-50 cursor-not-allowed"
+                        : ""
+                    }`}
+                  >
+                    <ThumbsDown
+                      className={`w-4 h-4 ${
+                        likes[currentSubmission.id]?.userReaction === "dislike"
+                          ? "fill-current"
+                          : ""
+                      }`}
+                    />
+                    <span className="text-sm font-medium">
+                      {likes[currentSubmission.id]?.dislikes || 0}
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Reaction Status */}
+              {likes[currentSubmission.id]?.userReaction && (
+                <div className="mt-2 text-xs text-center">
+                  <span
+                    className={`px-2 py-1 rounded-full ${
+                      likes[currentSubmission.id]?.userReaction === "like"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-100 text-red-700"
+                    }`}
+                  >
+                    You {likes[currentSubmission.id]?.userReaction}d this
+                    submission
+                  </span>
+                </div>
+              )}
+            </div>
 
             {/* Timestamps - compact */}
             <div className="border-t border-[#FFD95A] pt-2 text-xs text-[#7f5539]/70">
