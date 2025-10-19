@@ -32,26 +32,34 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource())) // 🔁 CORS here
                 .csrf(csrf -> csrf.disable()) // ❌ CSRF disabled for JWT stateless
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 🚫 No
-                                                                                                              // session
+                // session
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/api/auth/login",
-                                "/api/auth/logout",
-                                "/api/auth/verify",
-                                "/api/artist/signup",
-                                "/api/buyer/signup",
-                                "/api/shop/signup",
-                                "/uploads/**", // <<< THIS ALLOWS IMAGE ACCESS
-                                "/api/admin/artworks/**", // <<< TEMPORARY: Allow admin artwork endpoints for
-                                                          // development
-                                "/api/buyer/exhibitions/**",
-                                "/api/users/**",
-                                "/ws/**", // <-- Make sure this is present and permitted
-                                "/api/posts/*/comments", // Allow GET access to comments without authentication
-                                "/api/posts/*/like-status", // Allow GET access to like status without authentication
-                                "/api/challenges/active", // Allow public access to view active challenges
-                                "/api/sponsorships/**" // Allow access to sponsorship endpoints
-                        ).permitAll() // ✅ Public endpoints
+                .requestMatchers(
+                        "/api/auth/login",
+                        "/api/auth/logout",
+                        "/api/auth/verify",
+                        "/api/artist/signup",
+                        "/api/buyer/signup",
+                        "/api/shop/signup",
+                        "/uploads/**", // <<< THIS ALLOWS IMAGE ACCESS
+                        "/api/admin/artworks/**", // <<< TEMPORARY: Allow admin artwork endpoints for development
+                        "/api/buyer/exhibitions/**",
+                        "/api/users/**",
+                        "/ws/**", // <-- Make sure this is present and permitted
+                        "/api/posts/*/comments", // Allow GET access to comments without authentication
+                        "/api/posts/*/like-status", // Allow GET access to like status without authentication
+                        "/api/challenges/active",
+                  "/api/sponsorships/**",// Allow public access to view active challenges
+                        "/api/shop/all", // Allow public access to discover shops
+                        "/api/products", // Allow public access to discover products
+                        "/api/buyer/artists/*/profile", // Allow public access to artist profiles
+                        "/api/artworks/artist/*", // Allow public access to artist artworks
+                        "/api/posts/artist/*", // Allow public access to artist posts
+                        "/api/exhibitions/artist/*", // Allow public access to artist exhibitions
+                        "/api/achievements/artist/*" // Allow public access to artist achievements
+                ).permitAll() // ✅ Public endpoints
+
+                        
 
                         .requestMatchers("/api/posts/create").authenticated()
                         .requestMatchers("/api/posts/{role}/{userId}").authenticated()// ✅ allow this
