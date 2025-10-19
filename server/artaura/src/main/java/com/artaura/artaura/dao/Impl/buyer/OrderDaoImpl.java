@@ -29,6 +29,7 @@ public class OrderDaoImpl implements OrderDao {
         if (orderRequest.getBillingState() != null) shippingAddress += ", " + orderRequest.getBillingState();
         if (orderRequest.getBillingZipCode() != null) shippingAddress += ", " + orderRequest.getBillingZipCode();
         if (orderRequest.getBillingCountry() != null) shippingAddress += ", " + orderRequest.getBillingCountry();
+        
         // Convert ISO date string to MySQL DATETIME format
         String mysqlDateTime = orderRequest.getOrderDate();
         try {
@@ -38,14 +39,14 @@ public class OrderDaoImpl implements OrderDao {
             // fallback: use current time if parsing fails
             mysqlDateTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         }
-        // Use total_amount from DTO for DB insert
+        
+        // Insert order without total_amount
         jdbcTemplate.update(orderSql,
                 mysqlDateTime,
                 orderRequest.getBuyerId(),
                 orderRequest.getBillingFirstName(),
                 orderRequest.getBillingLastName(),
                 orderRequest.getBillingEmail(),
-                orderRequest.getTotalAmount(), // <-- use total_amount
                 shippingAddress,
                 orderRequest.getBillingPhone(),
                 orderRequest.getPaymentMethod(),
