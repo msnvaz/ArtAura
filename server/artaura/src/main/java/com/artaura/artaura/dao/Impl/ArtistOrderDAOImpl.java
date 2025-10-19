@@ -176,7 +176,7 @@ public class ArtistOrderDAOImpl implements ArtistOrderDAO {
 
         Timestamp timestamp = rs.getTimestamp("date");
         if (timestamp != null) {
-            dto.setDate(timestamp.toLocalDateTime());
+            dto.setDateTime(timestamp.toLocalDateTime());
         }
 
         return dto;
