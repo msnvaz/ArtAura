@@ -37,7 +37,8 @@ function Navbar() {
   const [shopData, setShopData] = useState({
     ownerName: 'Loading...',
     shopName: '',
-    avatar: '/src/assets/user.png'
+    avatar: '/src/assets/user.png',
+    status: ''
   });
   const [loading, setLoading] = useState(true);
 
@@ -82,14 +83,16 @@ function Navbar() {
           setShopData({
             ownerName: data.ownerName || 'Shop Owner',
             shopName: data.shopName || 'Unknown Shop',
-            avatar: '/src/assets/user.png' // You can add avatar field to database later
+            avatar: '/src/assets/user.png', // You can add avatar field to database later
+            status: data.status || 'Active'
           });
         } else {
           console.error("Failed to fetch shop data:", response.status);
           setShopData({
             ownerName: 'Shop Owner',
             shopName: 'Unknown Shop',
-            avatar: '/src/assets/user.png'
+            avatar: '/src/assets/user.png',
+            status: 'Active'
           });
         }
       } catch (error) {
@@ -97,7 +100,8 @@ function Navbar() {
         setShopData({
           ownerName: 'Shop Owner',
           shopName: 'Unknown Shop',
-          avatar: '/src/assets/user.png'
+          avatar: '/src/assets/user.png',
+          status: 'Active'
         });
       } finally {
         setLoading(false);
@@ -208,15 +212,25 @@ function Navbar() {
                     onClick={toggleProfileDropdown}
                     className="flex items-center space-x-2 p-2 rounded-lg text-[#FFD95A] hover:bg-[#FFE9A0]/20 transition-all duration-200"
                   >
-                    <Avatar className="h-8 w-8 ring-2 ring-[#FFD95A] bg-[#362625]">
-                      {shopData.avatar ? (
-                        <AvatarImage src={shopData.avatar} alt={shopData.ownerName} />
-                      ) : (
-                        <AvatarFallback className="text-[#FFD95A] font-bold text-sm">
-                          {loading ? "..." : shopData.ownerName[0]?.toUpperCase() || "U"}
-                        </AvatarFallback>
+                    <div className="relative">
+                      <Avatar className="h-8 w-8 ring-2 ring-[#FFD95A] bg-[#362625]">
+                        {shopData.avatar ? (
+                          <AvatarImage src={shopData.avatar} alt={shopData.ownerName} />
+                        ) : (
+                          <AvatarFallback className="text-[#FFD95A] font-bold text-sm">
+                            {loading ? "..." : shopData.ownerName[0]?.toUpperCase() || "U"}
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+                      {/* Active Status Badge */}
+                      {shopData.status === 'Active' && (
+                        <div className="absolute -top-0.5 -right-0.5 bg-[#66bb6a] text-white p-0.5 rounded-full shadow-lg border border-[#362625]">
+                          <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        </div>
                       )}
-                    </Avatar>
+                    </div>
                     <ChevronDown
                       className={`h-4 w-4 transition-transform duration-200 ${
                         showProfileDropdown ? "rotate-180" : ""
@@ -327,15 +341,25 @@ function Navbar() {
                 <div className="border-t border-[#FFD95A]/30 pt-3 mt-3 space-y-1">
                   <div className="px-4 py-2">
                     <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10 ring-2 ring-[#FFD95A] bg-[#362625]">
-                        {shopData.avatar ? (
-                          <AvatarImage src={shopData.avatar} alt={shopData.ownerName} />
-                        ) : (
-                          <AvatarFallback className="text-[#FFD95A] font-bold">
-                            {loading ? "..." : shopData.ownerName[0]?.toUpperCase() || "U"}
-                          </AvatarFallback>
+                      <div className="relative">
+                        <Avatar className="h-10 w-10 ring-2 ring-[#FFD95A] bg-[#362625]">
+                          {shopData.avatar ? (
+                            <AvatarImage src={shopData.avatar} alt={shopData.ownerName} />
+                          ) : (
+                            <AvatarFallback className="text-[#FFD95A] font-bold">
+                              {loading ? "..." : shopData.ownerName[0]?.toUpperCase() || "U"}
+                            </AvatarFallback>
+                          )}
+                        </Avatar>
+                        {/* Active Status Badge - Mobile */}
+                        {shopData.status === 'Active' && (
+                          <div className="absolute -top-0.5 -right-0.5 bg-[#66bb6a] text-white p-1 rounded-full shadow-lg border border-[#362625]">
+                            <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          </div>
                         )}
-                      </Avatar>
+                      </div>
                       <div>
                         <p className="text-sm font-medium text-[#FFD95A]">
                           {loading ? "Loading..." : shopData.ownerName}
