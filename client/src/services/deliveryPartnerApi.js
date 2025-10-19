@@ -84,6 +84,21 @@ class DeliveryPartnerApi {
   }
 
   /**
+   * Update delivery partner password
+   * @param {number} userId - The user ID
+   * @param {Object} passwordData - Object containing currentPassword, newPassword, confirmPassword
+   */
+  async updatePassword(userId, passwordData) {
+    try {
+      const response = await axiosInstance.put(`${BASE_URL}/profile/${userId}/password`, passwordData);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating password:', error);
+      throw error.response?.data || { success: false, error: 'Failed to update password' };
+    }
+  }
+
+  /**
    * Accept a delivery request (enhanced endpoint)
    * @param {Object} acceptData - Object containing orderType, orderId, shippingFee, deliveryPartnerId
    */
