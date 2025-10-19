@@ -156,6 +156,26 @@ public class BuyerChallangeDAOImpl implements BuyerChallengeDAO {
                 try {
                     connection.setAutoCommit(false);
                     
+                    // First, get the challenge_id and challenge_name for this submission
+                    String getChallengeInfoSql = "SELECT cp.challenge_id, c.title as challenge_name " +
+                            "FROM challenge_participants cp " +
+                            "JOIN challenges c ON cp.challenge_id = c.id " +
+                            "WHERE cp.id = ?";
+                    PreparedStatement getChallengeStmt = connection.prepareStatement(getChallengeInfoSql);
+                    getChallengeStmt.setLong(1, submissionId);
+                    ResultSet challengeRs = getChallengeStmt.executeQuery();
+                    
+                    Long challengeId = null;
+                    String challengeName = null;
+                    if (challengeRs.next()) {
+                        challengeId = challengeRs.getLong("challenge_id");
+                        challengeName = challengeRs.getString("challenge_name");
+                    }
+                    
+                    if (challengeId == null) {
+                        throw new RuntimeException("Could not find challenge information for submission: " + submissionId);
+                    }
+                    
                     // Check if user has already reacted to this submission
                     String checkSql = "SELECT reaction_type FROM challenge_submission_reactions WHERE submission_id = ? AND buyer_id = ?";
                     PreparedStatement checkStmt = connection.prepareStatement(checkSql);
@@ -172,12 +192,14 @@ public class BuyerChallangeDAOImpl implements BuyerChallengeDAO {
                     String message = "";
                     
                     if (existingReaction == null) {
-                        // User hasn't reacted - add new reaction
-                        String insertSql = "INSERT INTO challenge_submission_reactions (submission_id, buyer_id, reaction_type, created_at, updated_at) VALUES (?, ?, ?, NOW(), NOW())";
+                        // User hasn't reacted - add new reaction with challenge_id and challenge_name
+                        String insertSql = "INSERT INTO challenge_submission_reactions (submission_id, buyer_id, reaction_type, challenge_id, challenge_name, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NOW(), NOW())";
                         PreparedStatement insertStmt = connection.prepareStatement(insertSql);
                         insertStmt.setLong(1, submissionId);
                         insertStmt.setLong(2, userId);
                         insertStmt.setString(3, action);
+                        insertStmt.setLong(4, challengeId);
+                        insertStmt.setString(5, challengeName);
                         insertStmt.executeUpdate();
                         
                         userReaction = action;
@@ -193,12 +215,14 @@ public class BuyerChallangeDAOImpl implements BuyerChallengeDAO {
                         userReaction = null;
                         message = "Reaction removed successfully";
                     } else {
-                        // User clicked different reaction - update it
-                        String updateSql = "UPDATE challenge_submission_reactions SET reaction_type = ?, updated_at = NOW() WHERE submission_id = ? AND buyer_id = ?";
+                        // User clicked different reaction - update it (also update challenge info in case it changed)
+                        String updateSql = "UPDATE challenge_submission_reactions SET reaction_type = ?, challenge_id = ?, challenge_name = ?, updated_at = NOW() WHERE submission_id = ? AND buyer_id = ?";
                         PreparedStatement updateStmt = connection.prepareStatement(updateSql);
                         updateStmt.setString(1, action);
-                        updateStmt.setLong(2, submissionId);
-                        updateStmt.setLong(3, userId);
+                        updateStmt.setLong(2, challengeId);
+                        updateStmt.setString(3, challengeName);
+                        updateStmt.setLong(4, submissionId);
+                        updateStmt.setLong(5, userId);
                         updateStmt.executeUpdate();
                         
                         userReaction = action;
@@ -230,7 +254,7 @@ public class BuyerChallangeDAOImpl implements BuyerChallengeDAO {
                     result.put("dislikes", dislikes);
                     result.put("userReaction", userReaction);
                     
-                    System.out.println("Like/Dislike operation completed - " + message + " for submission " + submissionId + " by user " + userId);
+                    System.out.println("Like/Dislike operation completed - " + message + " for submission " + submissionId + " by user " + userId + " (Challenge: " + challengeName + ")");
                     return result;
                     
                 } catch (SQLException e) {
