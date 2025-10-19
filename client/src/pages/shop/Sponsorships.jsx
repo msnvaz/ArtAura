@@ -23,6 +23,9 @@ const ShopSponsorships = () => {
   const [loading, setLoading] = useState(true);
   const [discountPercentage, setDiscountPercentage] = useState(15);
   const [shopData, setShopData] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showCustomDiscountModal, setShowCustomDiscountModal] = useState(false);
+  const [customDiscountInput, setCustomDiscountInput] = useState('');
 
   // Fetch shop data from localStorage
   useEffect(() => {
@@ -76,58 +79,61 @@ const ShopSponsorships = () => {
 
   const handleOfferSponsorship = async () => {
     if (!shopData?.shop_id) {
-      alert('Please log in to offer sponsorship');
+      console.error('Shop not logged in');
       return;
     }
 
+    setIsSubmitting(true);
+
     try {
+      console.log('🔄 Creating sponsorship...', {
+        shopId: shopData.shop_id,
+        challengeId: selectedCampaign.id,
+        discountPercentage: discountPercentage
+      });
+
       const response = await axios.post(`${API_BASE_URL}/api/sponsorships/offers`, {
         shopId: shopData.shop_id,
         challengeId: selectedCampaign.id,
         discountPercentage: discountPercentage
       });
 
-      // Show success with discount code
-      alert(`Sponsorship successful!\n\nYour Discount Code: ${response.data.discountCode}\nDiscount: ${discountPercentage}%\n\nChallenge winners can use this code at your shop!`);
-      
+      console.log('✅ Sponsorship created successfully:', response.data);
+
+      // Close modal
       setShowOfferModal(false);
       
       // Refresh data
+      console.log('🔄 Refreshing data...');
       const challengesResponse = await axios.get(`${API_BASE_URL}/api/sponsorships/challenges/active`);
       setCampaigns(challengesResponse.data);
       
       const offersResponse = await axios.get(`${API_BASE_URL}/api/sponsorships/offers/shop/${shopData.shop_id}`);
       setGivenSponsorships(offersResponse.data);
+      
+      console.log('✅ Data refreshed successfully');
       
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Failed to create sponsorship';
-      alert(errorMessage);
-    }
-  };
-
-  const handleDeleteSponsorship = async (offerId) => {
-    if (!window.confirm('Are you sure you want to delete this sponsorship?')) {
-      return;
-    }
-
-    try {
-      await axios.delete(`${API_BASE_URL}/api/sponsorships/offers/${offerId}`);
-      alert('Sponsorship deleted successfully');
-      
-      // Refresh data
-      const offersResponse = await axios.get(`${API_BASE_URL}/api/sponsorships/offers/shop/${shopData.shop_id}`);
-      setGivenSponsorships(offersResponse.data);
-      
-      const challengesResponse = await axios.get(`${API_BASE_URL}/api/sponsorships/challenges/active`);
-      setCampaigns(challengesResponse.data);
-    } catch {
-      alert('Failed to delete sponsorship');
+      console.error('❌ Failed to create sponsorship:', error);
+      console.error('Error details:', error.response?.data || error.message);
+      // Keep modal open so user can try again
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleOfferClick = (campaign) => {
     setSelectedCampaign(campaign);
     setShowOfferModal(true);
+  };
+
+  const handleCustomDiscountSubmit = () => {
+    const value = parseInt(customDiscountInput);
+    if (!isNaN(value) && value >= 1 && value <= 50) {
+      setDiscountPercentage(value);
+      setShowCustomDiscountModal(false);
+      setCustomDiscountInput('');
+    }
   };
 
   return (
@@ -283,18 +289,11 @@ const ShopSponsorships = () => {
                         </div>
                       </div>
                       
-                      <div className="p-4 bg-[#FFF5E1] rounded-xl border border-[#FFE4D6] mb-4">
+                      <div className="p-4 bg-[#FFF5E1] rounded-xl border border-[#FFE4D6]">
                         <p className="text-sm text-[#5D3A00]/70">
                           Winners of this challenge can use discount code <span className="font-bold text-[#D87C5A]">{sponsorship.discountCode}</span> at your shop to get {sponsorship.discountPercentage}% off their purchase.
                         </p>
                       </div>
-                      
-                      <button
-                        onClick={() => handleDeleteSponsorship(sponsorship.id)}
-                        className="w-full py-2 px-4 rounded-xl font-semibold text-sm transition-all duration-300 border-2 border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
-                      >
-                        Delete Sponsorship
-                      </button>
                     </div>
                   ))}
                 </div>
@@ -362,12 +361,7 @@ const ShopSponsorships = () => {
                         </button>
                       ))}
                       <button
-                        onClick={() => {
-                          const custom = prompt('Enter custom discount percentage (1-50):', '35');
-                          if (custom && !isNaN(custom) && custom >= 1 && custom <= 50) {
-                            setDiscountPercentage(parseInt(custom));
-                          }
-                        }}
+                        onClick={() => setShowCustomDiscountModal(true)}
                         className={`py-4 px-4 rounded-xl font-bold text-lg transition-all duration-300 transform hover:scale-105 ${
                           ![10, 15, 20, 25, 30].includes(discountPercentage)
                             ? 'bg-gradient-to-r from-[#D87C5A] to-[#5D3A00] text-white shadow-lg scale-105'
@@ -391,15 +385,94 @@ const ShopSponsorships = () => {
                 <div className="flex gap-4 pt-4">
                   <button
                     onClick={() => setShowOfferModal(false)}
-                    className="flex-1 px-6 py-3 text-[#5D3A00] border border-[#FFE4D6] rounded-xl hover:bg-[#FFF5E1] transition-all duration-300 font-semibold"
+                    disabled={isSubmitting}
+                    className="flex-1 px-6 py-3 text-[#5D3A00] border border-[#FFE4D6] rounded-xl hover:bg-[#FFF5E1] transition-all duration-300 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleOfferSponsorship}
-                    className="flex-1 px-6 py-3 bg-gradient-to-r from-[#D87C5A] to-[#5D3A00] text-white rounded-xl hover:shadow-lg transition-all duration-300 font-semibold transform hover:scale-105"
+                    disabled={isSubmitting}
+                    className="flex-1 px-6 py-3 bg-gradient-to-r from-[#D87C5A] to-[#5D3A00] text-white rounded-xl hover:shadow-lg transition-all duration-300 font-semibold transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                   >
-                    Confirm Sponsorship ({discountPercentage}% OFF)
+                    {isSubmitting ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Processing...
+                      </span>
+                    ) : (
+                      `Confirm Sponsorship (${discountPercentage}% OFF)`
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Custom Discount Modal */}
+        {showCustomDiscountModal && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+            <div className="bg-white max-w-md w-full rounded-2xl border border-[#f3f3f3] overflow-hidden shadow-2xl">
+              <div className="bg-gradient-to-r from-[#FFF5E1] to-[#FFE4D6] p-6 border-b border-[#FFE4D6] flex justify-between items-center">
+                <h3 className="text-lg font-bold text-[#5D3A00]">Custom Discount</h3>
+                <button
+                  onClick={() => {
+                    setShowCustomDiscountModal(false);
+                    setCustomDiscountInput('');
+                  }}
+                  className="text-[#D87C5A] hover:text-[#5D3A00] transition-colors p-2 hover:bg-white/50 rounded-lg"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <div className="p-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-[#5D3A00] mb-2">
+                    Enter Discount Percentage
+                  </label>
+                  <p className="text-sm text-[#5D3A00]/70 mb-4">
+                    Enter a value between 1% and 50%
+                  </p>
+                  <input
+                    type="number"
+                    min="1"
+                    max="50"
+                    value={customDiscountInput}
+                    onChange={(e) => setCustomDiscountInput(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        handleCustomDiscountSubmit();
+                      }
+                    }}
+                    placeholder="e.g., 35"
+                    className="w-full px-4 py-3 border-2 border-[#FFE4D6] rounded-xl focus:border-[#D87C5A] focus:outline-none text-lg font-semibold text-[#5D3A00] transition-colors"
+                    autoFocus
+                  />
+                  {customDiscountInput && (parseInt(customDiscountInput) < 1 || parseInt(customDiscountInput) > 50) && (
+                    <p className="text-sm text-red-600 mt-2">
+                      Please enter a value between 1 and 50
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={() => {
+                      setShowCustomDiscountModal(false);
+                      setCustomDiscountInput('');
+                    }}
+                    className="flex-1 px-4 py-3 text-[#5D3A00] border border-[#FFE4D6] rounded-xl hover:bg-[#FFF5E1] transition-all duration-300 font-semibold"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleCustomDiscountSubmit}
+                    disabled={!customDiscountInput || parseInt(customDiscountInput) < 1 || parseInt(customDiscountInput) > 50}
+                    className="flex-1 px-4 py-3 bg-gradient-to-r from-[#D87C5A] to-[#5D3A00] text-white rounded-xl hover:shadow-lg transition-all duration-300 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Apply
                   </button>
                 </div>
               </div>

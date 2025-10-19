@@ -26,9 +26,9 @@ public class SponsorshipDAOImpl implements SponsorshipDAO {
     @Override
     public List<ChallengeForSponsorshipDTO> getActiveChallengesRequestingSponsorship() {
         String sql = "SELECT c.id, c.title, c.category, c.publish_date_time, c.deadline_date_time, " +
-                "c.description, c.max_participants, c.rewards, c.request_sponsorship, c.status " +
+                "c.description, c.max_participants, c.rewards, c.sponsorship, c.status " +
                 "FROM challenges c " +
-                "WHERE c.status = 'active' AND c.request_sponsorship = 1 " +
+                "WHERE c.status = 'active' AND c.sponsorship = 'pending' " +
                 "ORDER BY c.deadline_date_time DESC";
 
         return jdbcTemplate.query(sql, this::mapChallengeForSponsorship);
@@ -108,7 +108,7 @@ public class SponsorshipDAOImpl implements SponsorshipDAO {
 
     @Override
     public void updateChallengeToSponsored(Long challengeId) {
-        String sql = "UPDATE challenges SET request_sponsorship = 2 WHERE id = ? AND request_sponsorship = 1";
+        String sql = "UPDATE challenges SET sponsorship = 'active' WHERE id = ? AND sponsorship = 'pending'";
         jdbcTemplate.update(sql, challengeId);
         System.out.println("✅ Updated challenge " + challengeId + " to sponsored status");
     }
@@ -132,9 +132,9 @@ public class SponsorshipDAOImpl implements SponsorshipDAO {
             String countSql = "SELECT COUNT(*) FROM sponsorship_offers WHERE challenge_id = ?";
             Integer count = jdbcTemplate.queryForObject(countSql, Integer.class, challengeId);
 
-            // If no more sponsors, set back to requesting (1)
+            // If no more sponsors, set back to pending
             if (count != null && count == 0) {
-                String updateSql = "UPDATE challenges SET request_sponsorship = 1 WHERE id = ?";
+                String updateSql = "UPDATE challenges SET sponsorship = 'pending' WHERE id = ?";
                 jdbcTemplate.update(updateSql, challengeId);
                 System.out.println("✅ Updated challenge " + challengeId + " back to requesting sponsorship");
             }
@@ -186,7 +186,7 @@ public class SponsorshipDAOImpl implements SponsorshipDAO {
         dto.setDescription(rs.getString("description"));
         dto.setMaxParticipants(rs.getInt("max_participants"));
         dto.setRewards(rs.getString("rewards"));
-        dto.setRequestSponsorship(rs.getInt("request_sponsorship"));
+        dto.setSponsorship(rs.getString("sponsorship"));
         dto.setStatus(rs.getString("status"));
         // Set current_participants to 0 since we're not counting submissions for
         // sponsorship

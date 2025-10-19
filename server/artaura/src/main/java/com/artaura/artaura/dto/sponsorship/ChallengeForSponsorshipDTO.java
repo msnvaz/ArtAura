@@ -11,7 +11,7 @@ public class ChallengeForSponsorshipDTO {
     private String description;
     private Integer maxParticipants;
     private String rewards;
-    private Integer requestSponsorship; // 0 = no, 1 = yes
+    private String sponsorship; // "none", "pending", "active"
     private String status; // active, completed, etc.
     private Integer currentParticipants; // Count of submissions
 
@@ -22,7 +22,7 @@ public class ChallengeForSponsorshipDTO {
     public ChallengeForSponsorshipDTO(Long id, String title, String category,
             LocalDateTime publishDateTime, LocalDateTime deadlineDateTime,
             String description, Integer maxParticipants, String rewards,
-            Integer requestSponsorship, String status, Integer currentParticipants) {
+            String sponsorship, String status, Integer currentParticipants) {
         this.id = id;
         this.title = title;
         this.category = category;
@@ -31,7 +31,7 @@ public class ChallengeForSponsorshipDTO {
         this.description = description;
         this.maxParticipants = maxParticipants;
         this.rewards = rewards;
-        this.requestSponsorship = requestSponsorship;
+        this.sponsorship = sponsorship;
         this.status = status;
         this.currentParticipants = currentParticipants;
     }
@@ -101,12 +101,12 @@ public class ChallengeForSponsorshipDTO {
         this.rewards = rewards;
     }
 
-    public Integer getRequestSponsorship() {
-        return requestSponsorship;
+    public String getSponsorship() {
+        return sponsorship;
     }
 
-    public void setRequestSponsorship(Integer requestSponsorship) {
-        this.requestSponsorship = requestSponsorship;
+    public void setSponsorship(String sponsorship) {
+        this.sponsorship = sponsorship;
     }
 
     public String getStatus() {
