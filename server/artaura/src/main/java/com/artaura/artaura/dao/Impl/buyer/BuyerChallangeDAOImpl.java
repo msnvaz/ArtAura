@@ -2,8 +2,6 @@ package com.artaura.artaura.dao.Impl.buyer;
 
 import com.artaura.artaura.dao.buyer.BuyerChallengeDAO;
 import com.artaura.artaura.dto.buyer.ChallengeSubmissionDTO;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -13,7 +11,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -22,9 +19,6 @@ import java.util.Optional;
 public class BuyerChallangeDAOImpl implements BuyerChallengeDAO {
     @Autowired
     private JdbcTemplate jdbcTemplate;
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     @Override
     public List<Map<String, Object>> findActiveChallenges() {
@@ -65,102 +59,85 @@ public class BuyerChallangeDAOImpl implements BuyerChallengeDAO {
     @Override
     public List<ChallengeSubmissionDTO> getSubmissionsByChallengeWithSort(Integer challengeId, Long userId, String userType, String sortBy) {
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT cs.*, ");
-        sql.append("CONCAT(a.first_name, ' ', a.last_name) as artist_name, ");
+        sql.append("SELECT cp.*, ");
+        sql.append("CONCAT(COALESCE(a.first_name, ''), ' ', COALESCE(a.last_name, '')) as artist_name, ");
         sql.append("a.avatar_url as artist_avatar, ");
-        sql.append("a.total_followers as artist_followers, ");
-        sql.append("CASE WHEN csv.vote_id IS NOT NULL THEN TRUE ELSE FALSE END as user_has_voted ");
-        sql.append("FROM challenge_submissions cs ");
-        sql.append("JOIN artists a ON cs.artist_id = a.artist_id ");
-        sql.append("LEFT JOIN challenge_submission_votes csv ON cs.submission_id = csv.submission_id ");
-
-        if (userId != null) {
-            sql.append("AND csv.buyer_id = ? ");
-        }
-
-        sql.append("WHERE cs.challenge_id = ? ");
+        sql.append("COALESCE(a.total_followers, 0) as artist_followers, ");
+        sql.append("COALESCE(csv.vote_count, 0) as votes_count, ");
+        sql.append("CASE WHEN csv.user_voted IS NOT NULL THEN TRUE ELSE FALSE END as user_has_voted ");
+        sql.append("FROM challenge_participants cp ");
+        sql.append("JOIN artists a ON cp.artist_id = a.artist_id ");
+        sql.append("LEFT JOIN (");
+        sql.append("    SELECT submission_id, ");
+        sql.append("           COUNT(*) as vote_count, ");
+        sql.append("           MAX(CASE WHEN buyer_id = ? THEN 1 END) as user_voted ");
+        sql.append("    FROM challenge_submission_votes ");
+        sql.append("    GROUP BY submission_id");
+        sql.append(") csv ON cp.id = csv.submission_id ");
+        sql.append("WHERE cp.challenge_id = ? ");
 
         // Add sorting
         switch (sortBy.toLowerCase()) {
             case "oldest":
-                sql.append("ORDER BY cs.submitted_at ASC");
+                sql.append("ORDER BY cp.submission_date ASC");
                 break;
             case "mostvoted":
-                sql.append("ORDER BY cs.votes_count DESC, cs.submitted_at DESC");
+                sql.append("ORDER BY votes_count DESC, cp.submission_date DESC");
                 break;
             case "newest":
             default:
-                sql.append("ORDER BY cs.submitted_at DESC");
+                sql.append("ORDER BY cp.submission_date DESC");
                 break;
         }
 
         if (userId != null) {
             return jdbcTemplate.query(sql.toString(), submissionRowMapper, userId, challengeId);
         } else {
-            return jdbcTemplate.query(sql.toString(), submissionRowMapper, challengeId);
+            return jdbcTemplate.query(sql.toString(), submissionRowMapper, 0, challengeId);
         }
     }
 
-    private final RowMapper<ChallengeSubmissionDTO> submissionRowMapper = new RowMapper<ChallengeSubmissionDTO>() {
-        @Override
-        public ChallengeSubmissionDTO mapRow(ResultSet rs, int rowNum) throws SQLException {
-            ChallengeSubmissionDTO dto = new ChallengeSubmissionDTO();
-            dto.setSubmissionId(rs.getLong("submission_id"));
-            dto.setChallengeId(rs.getInt("challenge_id"));
-            dto.setArtistId(rs.getLong("artist_id"));
-            dto.setTitle(rs.getString("title"));
-            dto.setDescription(rs.getString("description"));
-            dto.setImageUrl(rs.getString("image_url"));
+    private final RowMapper<ChallengeSubmissionDTO> submissionRowMapper = (rs, rowNum) -> {
+        ChallengeSubmissionDTO dto = new ChallengeSubmissionDTO();
+        
+        // Map challenge_participants table columns - handle nulls properly
+        dto.setId(rs.getObject("id") != null ? rs.getLong("id") : null);
+        dto.setChallengeId(rs.getObject("challenge_id") != null ? rs.getInt("challenge_id") : null);
+        dto.setArtistId(rs.getObject("artist_id") != null ? rs.getLong("artist_id") : null);
+        dto.setArtworkTitle(rs.getString("artwork_title"));
+        dto.setArtworkDescription(rs.getString("artwork_description"));
+        dto.setArtworkImagePath(rs.getString("artwork_image_path"));
+        dto.setSubmissionDate(rs.getTimestamp("submission_date") != null ?
+                rs.getTimestamp("submission_date").toLocalDateTime() : null);
+        dto.setStatus(rs.getString("status"));
+        dto.setRating(rs.getObject("rating") != null ? rs.getDouble("rating") : null);
+        dto.setJudgeComments(rs.getString("judge_comments"));
+        dto.setCreatedAt(rs.getTimestamp("created_at") != null ?
+                rs.getTimestamp("created_at").toLocalDateTime() : null);
+        dto.setUpdatedAt(rs.getTimestamp("updated_at") != null ?
+                rs.getTimestamp("updated_at").toLocalDateTime() : null);
 
-            // Parse tags JSON
-            String tagsJson = rs.getString("tags");
-            try {
-                if (tagsJson != null && !tagsJson.trim().isEmpty()) {
-                    List<String> tags = objectMapper.readValue(tagsJson, new TypeReference<List<String>>() {});
-                    dto.setTags(tags);
-                } else {
-                    dto.setTags(new ArrayList<>());
-                }
-            } catch (Exception e) {
-                dto.setTags(new ArrayList<>());
-            }
+        // Artist information - handle nulls
+        dto.setArtistName(rs.getString("artist_name"));
+        dto.setArtistAvatar(rs.getString("artist_avatar"));
+        dto.setArtistFollowers(rs.getObject("artist_followers") != null ? rs.getInt("artist_followers") : 0);
 
-            dto.setSoftwareUsed(rs.getString("software_used"));
-            dto.setTimeSpent(rs.getString("time_spent"));
-            dto.setVotesCount(rs.getInt("votes_count"));
-            
-            // Set default values for fields not in your schema
-            dto.setViewsCount(0);
-            dto.setStatus("submitted");
-            
-            dto.setSubmittedAt(rs.getTimestamp("submitted_at") != null ?
-                    rs.getTimestamp("submitted_at").toLocalDateTime() : null);
-            dto.setUpdatedAt(rs.getTimestamp("updated_at") != null ?
-                    rs.getTimestamp("updated_at").toLocalDateTime() : null);
+        // Voting information - handle nulls
+        dto.setVotesCount(rs.getObject("votes_count") != null ? rs.getInt("votes_count") : 0);
+        dto.setUserHasVoted(rs.getObject("user_has_voted") != null ? rs.getBoolean("user_has_voted") : false);
 
-            // Artist information
-            dto.setArtistName(rs.getString("artist_name"));
-            dto.setArtistAvatar(rs.getString("artist_avatar"));
-            dto.setArtistFollowers(rs.getInt("artist_followers"));
-
-            // User vote status
-            dto.setUserHasVoted(rs.getBoolean("user_has_voted"));
-
-            return dto;
-        }
+        return dto;
     };
 
     @Override
     public boolean toggleVote(Long submissionId, Long userId) {
         try {
-            // Use database transaction to prevent race conditions
             return jdbcTemplate.execute((Connection connection) -> {
                 try {
-                    // Start transaction
                     connection.setAutoCommit(false);
                     
-                    // First, check if user has already voted (with row lock)
-                    String checkSql = "SELECT COUNT(*) FROM challenge_submission_votes WHERE submission_id = ? AND buyer_id = ? FOR UPDATE";
+                    // Check if user has already voted for this submission
+                    String checkSql = "SELECT COUNT(*) FROM challenge_submission_votes WHERE submission_id = ? AND buyer_id = ?";
                     PreparedStatement checkStmt = connection.prepareStatement(checkSql);
                     checkStmt.setLong(1, submissionId);
                     checkStmt.setLong(2, userId);
@@ -177,12 +154,6 @@ public class BuyerChallangeDAOImpl implements BuyerChallengeDAO {
                         int deletedRows = deleteStmt.executeUpdate();
                         
                         if (deletedRows > 0) {
-                            // Only decrement if we actually deleted a vote
-                            String updateCountSql = "UPDATE challenge_submissions SET votes_count = GREATEST(votes_count - 1, 0) WHERE submission_id = ?";
-                            PreparedStatement updateStmt = connection.prepareStatement(updateCountSql);
-                            updateStmt.setLong(1, submissionId);
-                            updateStmt.executeUpdate();
-                            
                             connection.commit();
                             System.out.println("Vote removed for submission " + submissionId + " by user " + userId);
                             return false; // Vote removed
@@ -196,12 +167,6 @@ public class BuyerChallangeDAOImpl implements BuyerChallengeDAO {
                         int insertedRows = insertStmt.executeUpdate();
                         
                         if (insertedRows > 0) {
-                            // Only increment if we actually inserted a vote
-                            String updateCountSql = "UPDATE challenge_submissions SET votes_count = votes_count + 1 WHERE submission_id = ?";
-                            PreparedStatement updateStmt = connection.prepareStatement(updateCountSql);
-                            updateStmt.setLong(1, submissionId);
-                            updateStmt.executeUpdate();
-                            
                             connection.commit();
                             System.out.println("Vote added for submission " + submissionId + " by user " + userId);
                             return true; // Vote added
@@ -211,9 +176,13 @@ public class BuyerChallangeDAOImpl implements BuyerChallengeDAO {
                     connection.commit();
                     return hasVoted; // Return current state if no changes were made
                     
-                } catch (Exception e) {
-                    connection.rollback();
-                    throw new RuntimeException("Transaction failed", e);
+                } catch (SQLException e) {
+                    try {
+                        connection.rollback();
+                    } catch (SQLException rollbackEx) {
+                        System.err.println("Rollback failed: " + rollbackEx.getMessage());
+                    }
+                    throw new RuntimeException("Database transaction failed", e);
                 }
             });
             
@@ -239,17 +208,36 @@ public class BuyerChallangeDAOImpl implements BuyerChallengeDAO {
     @Override
     public int getSubmissionVoteCount(Long submissionId) {
         try {
-            // Get count from actual votes table to ensure accuracy
             String countSql = "SELECT COUNT(*) FROM challenge_submission_votes WHERE submission_id = ?";
             Integer actualCount = jdbcTemplate.queryForObject(countSql, Integer.class, submissionId);
-            
-            // Update the stored count to match actual count
-            String updateSql = "UPDATE challenge_submissions SET votes_count = ? WHERE submission_id = ?";
-            jdbcTemplate.update(updateSql, actualCount, submissionId);
             
             return actualCount != null ? actualCount : 0;
         } catch (Exception e) {
             System.err.println("Error getting vote count: " + e.getMessage());
+            return 0;
+        }
+    }
+
+    @Override
+    public int getParticipantCount(Long challengeId) {
+        try {
+            String sql = "SELECT COUNT(DISTINCT artist_id) FROM challenge_participants WHERE challenge_id = ?";
+            Integer count = jdbcTemplate.queryForObject(sql, Integer.class, challengeId);
+            return count != null ? count : 0;
+        } catch (Exception e) {
+            System.err.println("Error getting participant count: " + e.getMessage());
+            return 0;
+        }
+    }
+
+    @Override
+    public int getSubmissionCount(Long challengeId) {
+        try {
+            String sql = "SELECT COUNT(*) FROM challenge_participants WHERE challenge_id = ?";
+            Integer count = jdbcTemplate.queryForObject(sql, Integer.class, challengeId);
+            return count != null ? count : 0;
+        } catch (Exception e) {
+            System.err.println("Error getting submission count: " + e.getMessage());
             return 0;
         }
     }

@@ -262,19 +262,6 @@ const PaymentPage = () => {
                       })}
                     </span>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-[#7f5539]">Shipping</span>
-                    <span className="font-medium text-[#7f5539]">
-                      {orderSummary.shipping === 0
-                        ? "FREE"
-                        : `LKR ${orderSummary.shipping.toLocaleString(
-                            undefined,
-                            {
-                              maximumFractionDigits: 2,
-                            }
-                          )}`}
-                    </span>
-                  </div>
                   <hr className="border-[#FFE4D6]" />
                   <div className="flex justify-between text-lg">
                     <span className="font-semibold text-[#7f5539]">Total</span>
@@ -284,6 +271,30 @@ const PaymentPage = () => {
                         maximumFractionDigits: 2,
                       })}
                     </span>
+                  </div>
+                </div>
+
+                {/* Delivery Charge Notice */}
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+                  <div className="flex items-start gap-2">
+                    <div className="flex-shrink-0 w-5 h-5 bg-amber-100 rounded-full flex items-center justify-center mt-0.5">
+                      <span className="text-amber-600 text-xs font-bold">
+                        !
+                      </span>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-sm font-semibold text-amber-800 mb-1">
+                        Additional Delivery Charges
+                      </h4>
+                      <p className="text-xs text-amber-700 leading-relaxed">
+                        Please note: A delivery charge of{" "}
+                        <span className="font-semibold">LKR 500 - 1,500</span>{" "}
+                        will apply when the delivery partner delivers your
+                        artwork. This charge is collected directly by the
+                        delivery partner and varies based on artwork size and
+                        weight.
+                      </p>
+                    </div>
                   </div>
                 </div>
 

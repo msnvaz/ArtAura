@@ -104,13 +104,26 @@ public class BuyerChallengeController {
             Long userId = jwtUtil.extractUserId(token);
             String role = jwtUtil.extractRole(token);
             
-            // Verify user has buyer role
+            // Log the request for debugging
+            System.out.println("Vote request - User ID: " + userId + ", Role: " + role + ", Submission ID: " + submissionId);
+            
+            // Verify user has buyer role (only buyers can vote)
             if (!"buyer".equals(role)) {
-                return ResponseEntity.status(403).build();
+                System.out.println("Access denied - User role: " + role + " is not authorized to vote");
+                return ResponseEntity.status(403).body(Map.of(
+                    "success", false,
+                    "message", "Only buyers can vote on submissions"
+                ));
             }
 
+            // Verify the submission exists before voting
+            List<ChallengeSubmissionDTO> submissions = challengeService.getSubmissionsByChallenge(
+                submissionId.intValue(), userId, role);
+            
             boolean voteResult = challengeService.toggleVote(submissionId, userId);
             String message = voteResult ? "Vote added successfully" : "Vote removed successfully";
+            
+            System.out.println("Vote result: " + message + " for submission " + submissionId + " by user " + userId);
             
             return ResponseEntity.ok().body(Map.of(
                 "success", true,
@@ -119,10 +132,38 @@ public class BuyerChallengeController {
             ));
         } catch (Exception e) {
             System.err.println("Error in voteForSubmission: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.status(500).body(Map.of(
                 "success", false,
                 "message", "Error processing vote: " + e.getMessage()
             ));
+        }
+    }
+
+    @GetMapping("/{challengeId}")
+    public ResponseEntity<ChallengeDTO> getChallengeById(
+            @PathVariable Long challengeId,
+            @RequestHeader("Authorization") String authHeader) {
+        try {
+            // Validate JWT token
+            String token = authHeader.startsWith("Bearer ") ? authHeader.substring(7) : authHeader;
+            Long userId = jwtUtil.extractUserId(token);
+            String role = jwtUtil.extractRole(token);
+            
+            // Verify user has buyer role
+            if (!"buyer".equals(role)) {
+                return ResponseEntity.status(403).build();
+            }
+
+            ChallengeDTO challenge = challengeService.getChallengeByIdWithCounts(challengeId);
+            if (challenge != null) {
+                return ResponseEntity.ok(challenge);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            System.err.println("Error in getChallengeById: " + e.getMessage());
+            return ResponseEntity.status(500).build();
         }
     }
 

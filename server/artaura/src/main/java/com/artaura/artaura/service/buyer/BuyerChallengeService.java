@@ -29,14 +29,22 @@ public class BuyerChallengeService {
         List<Map<String, Object>> rawList = challengeDAO.findActiveChallenges();
         List<ChallengeDTO> dtoList = new ArrayList<>();
         for (Map<String, Object> row : rawList) {
+            Long challengeId = row.get("id") != null ? ((Number)row.get("id")).longValue() : null;
+            
+            // Get participant and submission counts from challenge_participants table
+            int participantCount = challengeId != null ? challengeDAO.getParticipantCount(challengeId) : 0;
+            int submissionCount = challengeId != null ? challengeDAO.getSubmissionCount(challengeId) : 0;
+            
             ChallengeDTO dto = new ChallengeDTO(
-                row.get("id") != null ? ((Number)row.get("id")).longValue() : null,
+                challengeId,
                 (String) row.get("title"),
                 (String) row.get("description"),
                 (String) row.get("category"),
                 toIsoString(row.get("publish_date_time")),
                 toIsoString(row.get("deadline_date_time")),
-                (String) row.get("status")
+                (String) row.get("status"),
+                participantCount,
+                submissionCount
             );
             dtoList.add(dto);
         }
@@ -61,6 +69,30 @@ public class BuyerChallengeService {
     public List<ChallengeDTO> getChallengesByStatus(String status) {
         // TODO: Implement logic to fetch challenges by status
         return new ArrayList<>(); // Replace with actual DB call
+    }
+
+    public ChallengeDTO getChallengeByIdWithCounts(Long challengeId) {
+        Optional<Map<String, Object>> challengeOpt = challengeDAO.findById(challengeId);
+        if (challengeOpt.isPresent()) {
+            Map<String, Object> row = challengeOpt.get();
+            
+            // Get participant and submission counts from challenge_participants table
+            int participantCount = challengeDAO.getParticipantCount(challengeId);
+            int submissionCount = challengeDAO.getSubmissionCount(challengeId);
+            
+            return new ChallengeDTO(
+                challengeId,
+                (String) row.get("title"),
+                (String) row.get("description"),
+                (String) row.get("category"),
+                toIsoString(row.get("publish_date_time")),
+                toIsoString(row.get("deadline_date_time")),
+                (String) row.get("status"),
+                participantCount,
+                submissionCount
+            );
+        }
+        return null;
     }
 
     public List<ChallengeSubmissionDTO> getSubmissionsByChallenge(Integer challengeId, Long userId, String userType) {

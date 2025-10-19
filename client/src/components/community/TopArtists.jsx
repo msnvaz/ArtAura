@@ -139,7 +139,12 @@ const TopArtists = () => {
                   e.target.src = "/uploads/profiles/default-avatar.svg";
                 }}
               />
-              <div className="absolute -top-1 -right-1 w-5 h-5 bg-[#D87C5A] rounded-full flex items-center justify-center text-white text-xs font-bold">
+              {artist.status === "Active" && (
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                  <span className="text-white text-xs">✓</span>
+                </div>
+              )}
+              <div className="absolute -top-1 -left-1 w-5 h-5 bg-[#D87C5A] rounded-full flex items-center justify-center text-white text-xs font-bold">
                 {index + 1}
               </div>
             </div>

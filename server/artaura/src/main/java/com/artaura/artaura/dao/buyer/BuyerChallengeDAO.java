@@ -41,6 +41,20 @@ public interface BuyerChallengeDAO {
     List<Map<String, Object>> findByStatus(String status);
 
     /**
+     * Get participant count for a challenge (count of distinct artist_ids)
+     * @param challengeId Challenge ID
+     * @return Number of unique participants
+     */
+    int getParticipantCount(Long challengeId);
+
+    /**
+     * Get submission count for a challenge (total submissions)
+     * @param challengeId Challenge ID
+     * @return Total number of submissions
+     */
+    int getSubmissionCount(Long challengeId);
+
+    /**
      * Get all submissions for a specific challenge
      * @param challengeId Challenge ID
      * @param userId User ID for vote status

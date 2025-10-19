@@ -40,20 +40,68 @@ const ChallengeSubmissionsPage = () => {
   }, [challengeId, sortBy]);
 
   const fetchChallengeDetails = async () => {
-    // TODO: Add API endpoint to fetch challenge details
-    // For now, set a basic challenge structure
-    setChallenge({
-      id: challengeId,
-      title: "Challenge Details",
-      description: "Loading challenge details...",
-      category: "Digital Art",
-      prize: "TBD",
-      participants: 0,
-      submissions: 0,
-      status: "active",
-      timeLeft: "Loading...",
-      image: "/heritage.jpeg",
-    });
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("No authentication token found");
+        return;
+      }
+
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/api/buyer/challenges/${challengeId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const challengeData = response.data;
+
+      // Calculate time left
+      const getTimeLeft = (deadline) => {
+        if (!deadline) return "N/A";
+        const now = new Date();
+        const end = new Date(deadline);
+        const diff = end - now;
+        if (diff <= 0) return "Expired";
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        if (days > 0) return `${days} days`;
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        if (hours > 0) return `${hours} hours`;
+        const minutes = Math.floor(diff / (1000 * 60));
+        return `${minutes} minutes`;
+      };
+
+      setChallenge({
+        id: challengeData.id,
+        title: challengeData.title || "Challenge Details",
+        description:
+          challengeData.description || "Loading challenge details...",
+        category: challengeData.category || "Digital Art",
+        prize: "TBD", // Prize not in current schema
+        participants: challengeData.participantCount || 0, // Real participant count from DB
+        submissions: challengeData.submissionCount || 0, // Real submission count from DB
+        status: challengeData.status || "active",
+        timeLeft: getTimeLeft(challengeData.deadlineDateTime),
+        image: "/heritage.jpeg", // Default image since not in DB
+      });
+    } catch (error) {
+      console.error("Error fetching challenge details:", error);
+      // Fallback to default challenge structure
+      setChallenge({
+        id: challengeId,
+        title: "Challenge Details",
+        description: "Could not load challenge details",
+        category: "Digital Art",
+        prize: "TBD",
+        participants: 0,
+        submissions: 0,
+        status: "active",
+        timeLeft: "N/A",
+        image: "/heritage.jpeg",
+      });
+    }
   };
 
   const fetchSubmissions = async () => {
@@ -81,26 +129,44 @@ const ChallengeSubmissionsPage = () => {
         }
       );
 
-      // Transform API response to match frontend format
+      // Transform API response to use new challenge_participants table structure
       const transformedSubmissions = submissionsResponse.data.map(
         (submission) => ({
-          id: submission.submissionId,
-          title: submission.title,
+          // Map new challenge_participants fields
+          id: submission.id,
+          artworkTitle: submission.artworkTitle,
+          artworkDescription: submission.artworkDescription,
+          artworkImagePath: submission.artworkImagePath,
+          submissionDate: submission.submissionDate,
+          status: submission.status,
+          rating: submission.rating,
+          judgeComments: submission.judgeComments,
+          createdAt: submission.createdAt,
+          updatedAt: submission.updatedAt,
+          challengeId: submission.challengeId,
+          artistId: submission.artistId,
+
+          // Artist information
           artist: {
-            name: submission.artistName,
+            name: submission.artistName || "Unknown Artist",
             avatar:
               submission.artistAvatar ||
               "https://randomuser.me/api/portraits/women/44.jpg",
             followers: submission.artistFollowers || 0,
           },
-          image: submission.imageUrl,
-          description: submission.description,
+
+          // Voting information
           votes: submission.votesCount || 0,
-          submittedAt: submission.submittedAt,
-          tags: submission.tags || [],
-          software: submission.softwareUsed || "Unknown",
-          timeSpent: submission.timeSpent || "N/A",
           userHasVoted: submission.userHasVoted || false,
+
+          // Legacy compatibility fields
+          title: submission.artworkTitle,
+          description: submission.artworkDescription,
+          image: submission.artworkImagePath,
+          submittedAt: submission.submissionDate,
+          tags: [], // Not available in challenge_participants table
+          software: "N/A", // Not available in challenge_participants table
+          timeSpent: "N/A", // Not available in challenge_participants table
         })
       );
 
@@ -135,11 +201,14 @@ const ChallengeSubmissionsPage = () => {
       const token = localStorage.getItem("token");
       if (!token) {
         console.error("No authentication token found");
+        alert("Please log in to vote");
         return;
       }
 
       // Add to voting progress set
       setVotingInProgress((prev) => new Set(prev).add(submissionId));
+
+      console.log(`Attempting to vote for submission ${submissionId}`);
 
       // Make API call to vote endpoint
       const response = await axios.post(
@@ -147,13 +216,18 @@ const ChallengeSubmissionsPage = () => {
           import.meta.env.VITE_API_URL
         }/api/buyer/challenges/submissions/${submissionId}/vote`,
         {},
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          timeout: 10000, // 10 second timeout
+        }
       );
+
+      console.log("Vote response:", response.data);
 
       if (response.data.success) {
         const { voted } = response.data;
 
-        // Update only the specific submission with server response
+        // Update the submission state immediately for better UX
         setSubmissions((prev) =>
           prev.map((sub) =>
             sub.id === submissionId
@@ -166,23 +240,49 @@ const ChallengeSubmissionsPage = () => {
           )
         );
 
+        // Also update selected submission if it's open in modal
+        if (selectedSubmission && selectedSubmission.id === submissionId) {
+          setSelectedSubmission((prev) => ({
+            ...prev,
+            userHasVoted: voted,
+            votes: voted ? prev.votes + 1 : Math.max(prev.votes - 1, 0),
+          }));
+        }
+
         console.log(
           voted ? "Vote added successfully" : "Vote removed successfully"
         );
+
+        // Optional: Show success message to user
+        // You can add a toast notification here if you have one
+      } else {
+        console.error("Vote operation failed:", response.data.message);
+        alert("Failed to process vote. Please try again.");
       }
     } catch (error) {
       console.error("Error voting:", error);
 
       if (error.response?.status === 401) {
         console.error("Authentication failed - redirecting to login");
+        alert("Your session has expired. Please log in again.");
         navigate("/login");
       } else if (error.response?.status === 403) {
         console.error("Access forbidden - insufficient permissions");
+        alert(
+          "You don't have permission to vote. Please ensure you're logged in as a buyer."
+        );
+      } else if (error.response?.status === 500) {
+        console.error("Server error:", error.response?.data?.message);
+        alert("Server error occurred. Please try again later.");
+      } else if (error.code === "ECONNABORTED") {
+        console.error("Request timeout");
+        alert("Request timed out. Please check your connection and try again.");
       } else {
         console.error(
           "Vote operation failed:",
           error.response?.data?.message || error.message
         );
+        alert("Failed to process vote. Please try again.");
       }
     } finally {
       // Remove from voting progress set
@@ -214,10 +314,31 @@ const ChallengeSubmissionsPage = () => {
         onClick={() => setSelectedSubmission(submission)}
       >
         <img
-          src={submission.image}
-          alt={submission.title}
+          src={submission.artworkImagePath || submission.image}
+          alt={submission.artworkTitle || submission.title}
           className="w-full h-64 object-cover hover:scale-105 transition-transform duration-300"
         />
+        {/* Display rating badge if available */}
+        {submission.rating && (
+          <div className="absolute top-4 left-4 bg-yellow-500 text-white px-3 py-1 rounded-full text-sm font-bold flex items-center gap-1">
+            <Star className="w-4 h-4 fill-current" />
+            {submission.rating.toFixed(1)}
+          </div>
+        )}
+        {/* Display status badge */}
+        <div
+          className={`absolute top-4 right-4 px-3 py-1 rounded-full text-sm font-bold ${
+            submission.status === "approved"
+              ? "bg-green-500 text-white"
+              : submission.status === "rejected"
+              ? "bg-red-500 text-white"
+              : submission.status === "pending"
+              ? "bg-yellow-500 text-white"
+              : "bg-blue-500 text-white"
+          }`}
+        >
+          {submission.status}
+        </div>
       </div>
 
       <div className="p-4">
@@ -236,16 +357,31 @@ const ChallengeSubmissionsPage = () => {
             </p>
           </div>
           <span className="text-xs text-[#7f5539]/60">
-            {formatTimeAgo(submission.submittedAt)}
+            {formatTimeAgo(submission.submissionDate || submission.submittedAt)}
           </span>
         </div>
 
         <h3 className="font-bold text-[#7f5539] text-lg mb-2">
-          {submission.title}
+          {submission.artworkTitle || submission.title}
         </h3>
         <p className="text-[#7f5539]/80 text-sm mb-3 line-clamp-2">
-          {submission.description}
+          {submission.artworkDescription || submission.description}
         </p>
+
+        {/* Display judge comments if available */}
+        {submission.judgeComments && (
+          <div className="bg-blue-50 rounded-lg p-2 mb-3">
+            <div className="flex items-center gap-1 mb-1">
+              <User className="w-3 h-3 text-blue-600" />
+              <span className="text-xs font-medium text-blue-800">
+                Judge Feedback
+              </span>
+            </div>
+            <p className="text-xs text-blue-700 line-clamp-2">
+              {submission.judgeComments}
+            </p>
+          </div>
+        )}
 
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -264,14 +400,33 @@ const ChallengeSubmissionsPage = () => {
               />
               <span className="text-sm">{submission.votes}</span>
             </button>
-            <div className="flex items-center gap-1 text-[#7f5539]/60">
-              <Clock className="w-4 h-4" />
-              <span className="text-sm">{submission.timeSpent}</span>
+            {submission.rating && (
+              <div className="flex items-center gap-1 text-yellow-600">
+                <Award className="w-4 h-4" />
+                <span className="text-sm">{submission.rating.toFixed(1)}</span>
+              </div>
+            )}
+          </div>
+          <div className="text-right">
+            <span
+              className={`text-xs px-2 py-1 rounded-full ${
+                submission.status === "approved"
+                  ? "bg-green-100 text-green-800"
+                  : submission.status === "rejected"
+                  ? "bg-red-100 text-red-800"
+                  : submission.status === "pending"
+                  ? "bg-yellow-100 text-yellow-800"
+                  : "bg-blue-100 text-blue-800"
+              }`}
+            >
+              {submission.status}
+            </span>
+            <div className="text-xs text-[#7f5539]/60 mt-1">
+              {new Date(
+                submission.submissionDate || submission.submittedAt
+              ).toLocaleDateString()}
             </div>
           </div>
-          <span className="text-xs bg-[#FFD95A] text-[#7f5539] px-2 py-1 rounded-full">
-            {submission.software}
-          </span>
         </div>
       </div>
     </div>
@@ -279,13 +434,12 @@ const ChallengeSubmissionsPage = () => {
 
   const SubmissionModal = ({ submission, onClose }) => {
     // Get the current submission data from the main submissions array
-    // This ensures the modal shows updated vote status and counts
     const currentSubmission =
       submissions.find((s) => s.id === submission.id) || submission;
 
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[75vh] overflow-y-auto">
+      <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
           <div className="relative">
             <button
               onClick={onClose}
@@ -293,44 +447,62 @@ const ChallengeSubmissionsPage = () => {
             >
               ✕
             </button>
-            {/* More compact image container */}
-            <div className="w-full h-[40vh] overflow-hidden rounded-t-2xl bg-gray-100 flex items-center justify-center">
+
+            {/* Reduced image container height for better fit */}
+            <div className="w-full h-[50vh] overflow-hidden rounded-t-2xl bg-gray-100 flex items-center justify-center">
               <ImageZoomLens
-                src={currentSubmission.image}
-                alt={currentSubmission.title}
+                src={
+                  currentSubmission.artworkImagePath || currentSubmission.image
+                }
+                alt={currentSubmission.artworkTitle || currentSubmission.title}
                 zoom={2.5}
-                lensSize={120}
+                lensSize={200}
                 className="w-full h-full object-contain"
                 onError={(e) => {
                   console.error(
                     "Failed to load submission image:",
-                    currentSubmission.image
+                    currentSubmission.artworkImagePath ||
+                      currentSubmission.image
                   );
                 }}
               />
             </div>
           </div>
 
-          <div className="p-3">
-            <div className="flex items-center gap-4 mb-4">
+          {/* Compact content section */}
+          <div className="p-4">
+            {/* Header with artist info and voting - compact */}
+            <div className="flex items-center gap-3 mb-3">
               <img
                 src={currentSubmission.artist.avatar}
                 alt={currentSubmission.artist.name}
-                className="w-12 h-12 rounded-full object-cover"
+                className="w-10 h-10 rounded-full object-cover"
               />
               <div className="flex-1">
-                <h3 className="font-bold text-[#7f5539] text-xl">
-                  {currentSubmission.title}
+                <h3 className="font-bold text-[#7f5539] text-lg mb-1">
+                  {currentSubmission.artworkTitle || currentSubmission.title}
                 </h3>
-                <p className="text-[#7f5539]/70">
-                  by {currentSubmission.artist.name}
+                <p className="text-[#7f5539]/70 text-sm">
+                  by {currentSubmission.artist.name} •{" "}
+                  {currentSubmission.artist.followers} followers
                 </p>
               </div>
               <div className="flex items-center gap-2">
+                {/* Rating display */}
+                {currentSubmission.rating && (
+                  <div className="text-center p-2 bg-yellow-50 rounded-lg">
+                    <Star className="w-4 h-4 text-yellow-500 mx-auto mb-1 fill-current" />
+                    <p className="text-sm font-bold text-yellow-700">
+                      {currentSubmission.rating.toFixed(1)}
+                    </p>
+                  </div>
+                )}
+
+                {/* Vote button */}
                 <button
                   onClick={() => handleVote(currentSubmission.id)}
                   disabled={votingInProgress.has(currentSubmission.id)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
                     currentSubmission.userHasVoted
                       ? "bg-[#FFD95A] text-[#7f5539] border-2 border-[#7f5539]"
                       : "border border-[#FFD95A] text-[#7f5539] hover:bg-[#FFD95A]"
@@ -345,50 +517,108 @@ const ChallengeSubmissionsPage = () => {
                       currentSubmission.userHasVoted ? "fill-current" : ""
                     }`}
                   />
-                  {votingInProgress.has(currentSubmission.id)
-                    ? "Voting..."
-                    : `Vote (${currentSubmission.votes})`}
+                  <span className="text-sm">
+                    {votingInProgress.has(currentSubmission.id)
+                      ? "Voting..."
+                      : `${currentSubmission.votes}`}
+                  </span>
                 </button>
               </div>
             </div>
 
-            <p className="text-[#7f5539] mb-4">
-              {currentSubmission.description}
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-              <div className="text-center p-3 bg-[#FFF5E1] rounded-lg">
-                <Star className="w-5 h-5 text-[#D87C5A] mx-auto mb-1" />
-                <p className="text-sm font-medium text-[#7f5539]">
+            {/* Status and submission info - compact grid */}
+            <div className="grid grid-cols-4 gap-2 mb-3">
+              <div className="text-center p-2 bg-[#FFF5E1] rounded-lg">
+                <Trophy className="w-4 h-4 text-[#D87C5A] mx-auto mb-1" />
+                <p className="text-sm font-bold text-[#7f5539]">
                   {currentSubmission.votes}
                 </p>
                 <p className="text-xs text-[#7f5539]/60">Votes</p>
               </div>
-              <div className="text-center p-3 bg-[#FFF5E1] rounded-lg">
-                <Clock className="w-5 h-5 text-[#D87C5A] mx-auto mb-1" />
-                <p className="text-sm font-medium text-[#7f5539]">
-                  {currentSubmission.timeSpent}
+
+              <div className="text-center p-2 bg-[#FFF5E1] rounded-lg">
+                <Calendar className="w-4 h-4 text-[#D87C5A] mx-auto mb-1" />
+                <p className="text-xs font-medium text-[#7f5539]">
+                  {new Date(
+                    currentSubmission.submissionDate ||
+                      currentSubmission.submittedAt
+                  ).toLocaleDateString()}
                 </p>
-                <p className="text-xs text-[#7f5539]/60">Time Spent</p>
+                <p className="text-xs text-[#7f5539]/60">Date</p>
               </div>
-              <div className="text-center p-3 bg-[#FFF5E1] rounded-lg">
-                <Calendar className="w-5 h-5 text-[#D87C5A] mx-auto mb-1" />
-                <p className="text-sm font-medium text-[#7f5539]">
-                  {formatTimeAgo(currentSubmission.submittedAt)}
+
+              <div className="text-center p-2 bg-[#FFF5E1] rounded-lg">
+                <Flag
+                  className={`w-4 h-4 mx-auto mb-1 ${
+                    currentSubmission.status === "approved"
+                      ? "text-green-600"
+                      : currentSubmission.status === "rejected"
+                      ? "text-red-600"
+                      : currentSubmission.status === "pending"
+                      ? "text-yellow-600"
+                      : "text-blue-600"
+                  }`}
+                />
+                <p
+                  className={`text-xs font-bold capitalize ${
+                    currentSubmission.status === "approved"
+                      ? "text-green-700"
+                      : currentSubmission.status === "rejected"
+                      ? "text-red-700"
+                      : currentSubmission.status === "pending"
+                      ? "text-yellow-700"
+                      : "text-blue-700"
+                  }`}
+                >
+                  {currentSubmission.status}
                 </p>
-                <p className="text-xs text-[#7f5539]/60">Submitted</p>
               </div>
+
+              {currentSubmission.rating && (
+                <div className="text-center p-2 bg-[#FFF5E1] rounded-lg">
+                  <Award className="w-4 h-4 text-yellow-500 mx-auto mb-1" />
+                  <p className="text-xs font-bold text-yellow-700">
+                    {currentSubmission.rating.toFixed(1)}/5
+                  </p>
+                </div>
+              )}
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              {currentSubmission.tags.map((tag, index) => (
-                <span
-                  key={index}
-                  className="bg-[#FFD95A] text-[#7f5539] px-3 py-1 rounded-full text-sm"
-                >
-                  #{tag}
-                </span>
-              ))}
+            {/* Artwork description - compact */}
+            <div className="mb-3">
+              <h4 className="font-bold text-[#7f5539] text-md mb-2">
+                Description
+              </h4>
+              <p className="text-[#7f5539] text-sm leading-relaxed">
+                {currentSubmission.artworkDescription ||
+                  currentSubmission.description}
+              </p>
+            </div>
+
+            {/* Judge comments if available - compact */}
+            {currentSubmission.judgeComments && (
+              <div className="bg-blue-50 rounded-lg p-3 mb-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <User className="w-4 h-4 text-blue-600" />
+                  <h4 className="font-bold text-blue-800 text-sm">
+                    Judge Feedback
+                  </h4>
+                </div>
+                <p className="text-blue-700 text-sm leading-relaxed">
+                  {currentSubmission.judgeComments}
+                </p>
+              </div>
+            )}
+
+            {/* Timestamps - compact */}
+            <div className="border-t border-[#FFD95A] pt-2 text-xs text-[#7f5539]/70">
+              <span>
+                <span className="font-medium">Submitted:</span>{" "}
+                {new Date(
+                  currentSubmission.submissionDate ||
+                    currentSubmission.submittedAt
+                ).toLocaleString()}
+              </span>
             </div>
           </div>
         </div>
@@ -397,6 +627,19 @@ const ChallengeSubmissionsPage = () => {
   };
 
   if (loading) {
+    return (
+      <div className="min-h-screen bg-[#FFF5E1]">
+        <Navbar />
+        <CartSidebar />
+        <div className="pt-20 flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#D87C5A]"></div>
+        </div>
+      </div>
+    );
+  }
+
+  // Add null check for challenge to prevent errors
+  if (!challenge) {
     return (
       <div className="min-h-screen bg-[#FFF5E1]">
         <Navbar />
@@ -428,33 +671,33 @@ const ChallengeSubmissionsPage = () => {
             <div className="bg-white rounded-xl shadow-md border border-[#FFD95A] p-6 mb-6">
               <div className="flex flex-col md:flex-row gap-6">
                 <img
-                  src={challenge.image}
-                  alt={challenge.title}
+                  src={challenge?.image || "/heritage.jpeg"}
+                  alt={challenge?.title || "Challenge"}
                   className="w-full md:w-48 h-32 object-cover rounded-lg"
                 />
                 <div className="flex-1">
                   <h1 className="text-3xl font-bold text-[#7f5539] mb-2">
-                    {challenge.title}
+                    {challenge?.title || "Loading..."}
                   </h1>
                   <p className="text-[#7f5539]/80 mb-4">
-                    {challenge.description}
+                    {challenge?.description || "Loading challenge details..."}
                   </p>
                   <div className="flex flex-wrap gap-4 text-sm">
                     <div className="flex items-center gap-1 text-[#7f5539]/70">
                       <Trophy className="w-4 h-4" />
-                      {challenge.prize}
+                      {challenge?.prize || "TBD"}
                     </div>
                     <div className="flex items-center gap-1 text-[#7f5539]/70">
                       <Users className="w-4 h-4" />
-                      {challenge.participants} participants
+                      {challenge?.participants || 0} participants
                     </div>
                     <div className="flex items-center gap-1 text-[#7f5539]/70">
                       <Award className="w-4 h-4" />
-                      {challenge.submissions} submissions
+                      {challenge?.submissions || 0} submissions
                     </div>
                     <div className="flex items-center gap-1 text-[#7f5539]/70">
                       <Clock className="w-4 h-4" />
-                      {challenge.timeLeft} left
+                      {challenge?.timeLeft || "N/A"} left
                     </div>
                   </div>
                 </div>
