@@ -196,6 +196,14 @@ public class ArtworkController {
         try {
             artWorkDAO.deleteArtWorkById(artworkId);
             return ResponseEntity.ok("Artwork deleted successfully");
+        } catch (RuntimeException e) {
+            // Handle business logic errors
+            String errorMessage = e.getMessage();
+            if (errorMessage.contains("Artwork not found")) {
+                return ResponseEntity.status(404).body(errorMessage); // 404 Not Found
+            } else {
+                return ResponseEntity.status(500).body("Error deleting artwork: " + errorMessage);
+            }
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body("Error deleting artwork: " + e.getMessage());
