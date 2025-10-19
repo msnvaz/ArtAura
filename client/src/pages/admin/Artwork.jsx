@@ -28,6 +28,9 @@ const ArtworkManagement = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024);
   
+  // Placeholder image URL
+  const placeholderImage = 'https://via.placeholder.com/400x300/FFE4D6/5D3A00?text=Artwork+Image';
+  
   // State for API data
   const [artworks, setArtworks] = useState([]);
   const [statistics, setStatistics] = useState({});
@@ -277,9 +280,13 @@ const ArtworkManagement = () => {
             {/* Artwork Image */}
             <div>
               <img 
-                src={artwork.imageUrl} 
+                src={artwork.imageUrl || placeholderImage} 
                 alt={artwork.title}
                 className="w-full h-64 lg:h-80 object-cover rounded-lg shadow-sm"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = placeholderImage;
+                }}
               />
               <div className="mt-4 flex items-center justify-between">
                 <span className={`px-3 py-1 text-sm font-medium rounded-full ${
@@ -290,9 +297,6 @@ const ArtworkManagement = () => {
                 }`}>
                   {artwork.status}
                 </span>
-                <div className="text-sm" style={{color: '#D87C5A'}}>
-                  {artwork.viewsCount || artwork.views || 0} views • {artwork.likesCount || artwork.likes || 0} likes
-                </div>
               </div>
             </div>
             
@@ -330,52 +334,11 @@ const ArtworkManagement = () => {
                   </div>
                 </div>
                 
-                <div>
-                  <span className="font-medium" style={{color: '#5D3A00'}}>Performance Metrics:</span>
-                  <div className="mt-2 grid grid-cols-2 gap-4">
-                    <div className="bg-gray-50 p-3 rounded-lg">
-                      <div className="text-sm text-gray-600">Total Views</div>
-                      <div className="text-lg font-bold" style={{color: '#5D3A00'}}>{(artwork.viewsCount || artwork.views || 0).toLocaleString()}</div>
-                    </div>
-                    <div className="bg-gray-50 p-3 rounded-lg">
-                      <div className="text-sm text-gray-600">Engagement</div>
-                      <div className="text-lg font-bold" style={{color: '#5D3A00'}}>
-                        {Math.round(((artwork.likesCount || artwork.likes || 0) / (artwork.viewsCount || artwork.views || 1)) * 100)}%
-                      </div>
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
           
           <div className="mt-8 flex gap-3 flex-wrap">
-            <button
-              onClick={() => {
-                handleBlockArtwork(artwork.artworkId || artwork.id);
-              }}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
-                artwork.status === 'Sold'
-                  ? 'bg-green-100 text-green-800 hover:bg-green-200' 
-                  : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
-              }`}
-            >
-              {artwork.status === 'Sold' ? <UserCheck size={16} /> : <Ban size={16} />}
-              {artwork.status === 'Sold' ? 'Mark as Available' : 'Mark as Sold'}
-            </button>
-            <button
-              onClick={() => {
-                handleToggleFeatured(artwork.artworkId || artwork.id);
-              }}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
-                artwork.isFeatured
-                  ? 'bg-red-100 text-red-800 hover:bg-red-200'
-                  : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-              }`}
-            >
-              <Heart size={16} fill={artwork.isFeatured ? 'currentColor' : 'none'} />
-              {artwork.isFeatured ? 'Remove from Featured' : 'Add to Featured'}
-            </button>
             <button
               onClick={() => window.open(artwork.imageUrl, '_blank')}
               className="px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
@@ -594,10 +557,9 @@ const ArtworkManagement = () => {
                     backgroundSize: '16px'
                   }}
                 >
-                  <option value="all" style={{backgroundColor: '#FFF5E1', color: '#5D3A00'}}>🎨 All Status</option>
-                  <option value="Available" style={{backgroundColor: '#f0f9ff', color: '#155724'}}>✅ Available</option>
-                  <option value="Sold" style={{backgroundColor: '#eff6ff', color: '#1e40af'}}>💰 Sold</option>
-                  <option value="Reserved" style={{backgroundColor: '#fffbeb', color: '#92400e'}}>⏳ Reserved</option>
+                  <option value="all" style={{backgroundColor: '#FFF5E1', color: '#5D3A00'}}>All Status</option>
+                  <option value="Available" style={{backgroundColor: '#f0f9ff', color: '#155724'}}>Available</option>
+                  <option value="Sold" style={{backgroundColor: '#eff6ff', color: '#1e40af'}}>Sold</option>
                 </select>
                 {/* Custom dropdown indicator overlay */}
                 <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
@@ -690,9 +652,13 @@ const ArtworkManagement = () => {
                         >
                           <div className="relative">
                             <img 
-                              src={artwork.imageUrl} 
+                              src={artwork.imageUrl || placeholderImage} 
                               alt={artwork.title}
                               className="w-full h-48 object-cover"
+                              onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = placeholderImage;
+                              }}
                             />
                             <div className="absolute top-3 right-3">
                               <span className={`px-2 py-1 text-xs font-medium rounded-full ${
@@ -716,55 +682,14 @@ const ArtworkManagement = () => {
                             <div className="mb-3">
                               <h3 className="font-bold text-lg mb-1" style={{color: '#5D3A00'}}>{artwork.title}</h3>
                               <p className="text-sm" style={{color: '#D87C5A'}}>by {artwork.artistName || artwork.artist}</p>
-                              <p className="text-xs mt-1" style={{color: '#5D3A00'}}>{artwork.category}</p>
                             </div>
                             <div className="flex justify-between items-center mb-3">
                               <span className="font-bold text-lg" style={{color: '#5D3A00'}}>{formatPrice(artwork.price, 'LKR')}</span>
-                              <div className="flex items-center gap-3 text-sm" style={{color: '#D87C5A'}}>
-                                <span>{artwork.viewsCount || artwork.views || 0} views</span>
-                                <span>{artwork.likesCount || artwork.likes || 0} likes</span>
-                              </div>
                             </div>
                             <div className="flex items-center justify-between">
                               <span className="text-xs" style={{color: '#5D3A00'}}>
                                 Uploaded: {artwork.createdAt ? new Date(artwork.createdAt).toLocaleDateString() : artwork.uploadDate}
                               </span>
-                              <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                                <button
-                                  onClick={() => handleBlockArtwork(artwork.artworkId || artwork.id)}
-                                  className={`p-2 rounded-lg transition-all ${
-                                    artwork.status === 'Sold'
-                                      ? 'bg-green-100 text-green-800 hover:bg-green-200' 
-                                      : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
-                                  }`}
-                                  onMouseOver={(e) => {
-                                    e.target.style.transform = 'scale(1.05)';
-                                  }}
-                                  onMouseOut={(e) => {
-                                    e.target.style.transform = 'scale(1)';
-                                  }}
-                                  title={artwork.status === 'Sold' ? 'Mark as Available' : 'Mark as Sold'}
-                                >
-                                  {artwork.status === 'Sold' ? <UserCheck size={16} /> : <Ban size={16} />}
-                                </button>
-                                <button
-                                  onClick={() => handleToggleFeatured(artwork.artworkId || artwork.id)}
-                                  className={`p-2 rounded-lg transition-all ${
-                                    artwork.isFeatured
-                                      ? 'bg-red-100 text-red-800 hover:bg-red-200'
-                                      : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                                  }`}
-                                  onMouseOver={(e) => {
-                                    e.target.style.transform = 'scale(1.05)';
-                                  }}
-                                  onMouseOut={(e) => {
-                                    e.target.style.transform = 'scale(1)';
-                                  }}
-                                  title={artwork.isFeatured ? 'Remove from Featured' : 'Add to Featured'}
-                                >
-                                  <Heart size={16} fill={artwork.isFeatured ? 'currentColor' : 'none'} />
-                                </button>
-                              </div>
                             </div>
                           </div>
                         </div>

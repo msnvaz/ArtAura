@@ -7,6 +7,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
+import java.util.List;
 
 @Repository
 public class ShopDAOImpl implements ShopDAO {
@@ -61,6 +62,14 @@ public class ShopDAOImpl implements ShopDAO {
             throw new RuntimeException("Shop not found with ID: " + shopId);
         }
         System.out.println("🗑️ ShopDAOImpl: Deleted shop with ID: " + shopId);
+    }
+
+    @Override
+    public List<ShopDTO> findAll() {
+        String sql = "SELECT shop_id, shop_name, owner_name, email, contact_no, business_type, "
+                + "business_license, tax_id, description, status, agreed_terms, created_at "
+                + "FROM shops WHERE status = 'active' ORDER BY shop_name";
+        return jdbc.query(sql, (rs, rowNum) -> mapShop(rs));
     }
 
     private ShopDTO mapShop(ResultSet rs) throws java.sql.SQLException {

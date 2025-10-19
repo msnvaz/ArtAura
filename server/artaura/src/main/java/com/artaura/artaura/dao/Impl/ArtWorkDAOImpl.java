@@ -43,12 +43,32 @@ public class ArtWorkDAOImpl implements ArtWorkDAO {
     @Override
     public void deleteArtWorkById(Long artworkId) {
         try {
-            String sql = "DELETE FROM artworks WHERE artwork_id = ?";
-            int rowsAffected = jdbcTemplate.update(sql, artworkId);
+            // Check if artwork exists before attempting deletion
+            String checkArtworkSQL = "SELECT COUNT(*) FROM artworks WHERE artwork_id = ?";
+            Integer artworkCount = jdbcTemplate.queryForObject(checkArtworkSQL, Integer.class, artworkId);
 
-            if (rowsAffected == 0) {
+            if (artworkCount == null || artworkCount == 0) {
                 throw new RuntimeException("Artwork not found with id: " + artworkId);
             }
+
+            // First, delete any order items that reference this artwork
+            String deleteOrderItemsSQL = "DELETE FROM AW_order_items WHERE artwork_id = ?";
+            int orderItemsDeleted = jdbcTemplate.update(deleteOrderItemsSQL, artworkId);
+
+            if (orderItemsDeleted > 0) {
+                System.out.println("Deleted " + orderItemsDeleted + " order item(s) referencing artwork " + artworkId);
+            }
+
+            // Now delete the artwork itself
+            String deleteArtworkSQL = "DELETE FROM artworks WHERE artwork_id = ?";
+            int rowsAffected = jdbcTemplate.update(deleteArtworkSQL, artworkId);
+
+            if (rowsAffected == 0) {
+                throw new RuntimeException("Failed to delete artwork with id: " + artworkId);
+            }
+
+            System.out.println("Successfully deleted artwork " + artworkId + " and " + orderItemsDeleted + " related order items");
+
         } catch (Exception e) {
             System.err.println("Error deleting artwork with id " + artworkId + ": " + e.getMessage());
             throw e;
