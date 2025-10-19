@@ -66,7 +66,8 @@ import {
   ChevronRight,
   Truck,
   CheckCircle,
-  Package
+  Package,
+  Home
 } from 'lucide-react';
 
 import { useImageWithFallback } from '../../util/imageUtils';
@@ -1845,6 +1846,14 @@ const ArtistPortfolio = () => {
             </div>
           </div>
           <div className="absolute top-6 right-6 flex items-center space-x-3">
+            <button
+              onClick={() => navigate('/community')}
+              className="bg-[#7f5539] text-white px-4 py-2 rounded-lg hover:bg-[#6e4c34] transition-colors flex items-center"
+              title="Go to Community Feed"
+            >
+              <Home className="h-4 w-4 mr-2" />
+              Home
+            </button>
             <NotificationBell />
             <button
               onClick={() => setIsChangingCover(true)}
