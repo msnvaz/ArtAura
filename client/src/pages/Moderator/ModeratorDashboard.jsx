@@ -43,6 +43,12 @@ const ModeratorDashboard = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [contestantSearchTerm, setContestantSearchTerm] = useState('');
 
+  // Winner Selection state variables
+  const [selectedWinnerChallenge, setSelectedWinnerChallenge] = useState('');
+  const [winnerSubmissions, setWinnerSubmissions] = useState([]);
+  const [loadingSubmissions, setLoadingSubmissions] = useState(false);
+  const [submissionsError, setSubmissionsError] = useState(null);
+
   const handleLogoutClick = () => {
     setShowLogoutConfirm(true);
   };
@@ -78,13 +84,123 @@ const ModeratorDashboard = () => {
     fetchChallenges();
   }, []);
 
+  // Calculate score based on formula: MAX(0, (Total Likes × 10) - (Total Dislikes × 5))
+  const calculateScore = (likes, dislikes) => {
+    const score = (likes * 10) - (dislikes * 5);
+    return Math.max(0, score); // Minimum score is 0 (no negative scores)
+  };
+
+  // Fetch submissions for winner selection when challenge is selected
+  useEffect(() => {
+    const fetchSubmissions = async () => {
+      if (!selectedWinnerChallenge) {
+        setWinnerSubmissions([]);
+        return;
+      }
+      
+      setLoadingSubmissions(true);
+      setSubmissionsError(null);
+      
+      try {
+        // Fetch submissions from backend with likes and dislikes
+        const response = await axios.get(
+          `${import.meta.env.VITE_API_URL}/api/challenges/${selectedWinnerChallenge}/submissions/reactions`
+        );
+        
+        // Calculate scores for each submission
+        const submissionsWithScores = response.data.map(submission => ({
+          ...submission,
+          totalLikes: submission.likesCount || 0,
+          totalDislikes: submission.dislikesCount || 0,
+          calculatedScore: calculateScore(submission.likesCount || 0, submission.dislikesCount || 0)
+        }));
+        
+        // Sort by calculated score in descending order
+        const sortedSubmissions = submissionsWithScores.sort((a, b) => 
+          b.calculatedScore - a.calculatedScore
+        );
+        
+        // Assign positions to top 3
+        const submissionsWithPositions = sortedSubmissions.map((sub, index) => ({
+          ...sub,
+          position: index < 3 ? index + 1 : null
+        }));
+        
+        setWinnerSubmissions(submissionsWithPositions);
+      } catch (err) {
+        console.error('Error fetching submissions:', err);
+        setSubmissionsError('Failed to load submissions. Using mock data for demonstration.');
+        
+        // Fallback to mock data for demonstration
+        const mockSubmissions = [
+          {
+            submissionId: 1,
+            title: 'Artwork 1',
+            artistName: 'Nadeesha Perera',
+            imageUrl: 'https://images.pexels.com/photos/1292241/pexels-photo-1292241.jpeg?auto=compress&cs=tinysrgb&w=400',
+            totalLikes: 45,
+            totalDislikes: 3,
+            calculatedScore: calculateScore(45, 3),
+            position: 1
+          },
+          {
+            submissionId: 2,
+            title: 'Artwork 2',
+            artistName: 'Kasun Fernando',
+            imageUrl: 'https://images.pexels.com/photos/1183992/pexels-photo-1183992.jpeg?auto=compress&cs=tinysrgb&w=400',
+            totalLikes: 38,
+            totalDislikes: 5,
+            calculatedScore: calculateScore(38, 5),
+            position: 2
+          },
+          {
+            submissionId: 3,
+            title: 'Artwork 3',
+            artistName: 'Tharushi Silva',
+            imageUrl: 'https://images.pexels.com/photos/1194420/pexels-photo-1194420.jpeg?auto=compress&cs=tinysrgb&w=400',
+            totalLikes: 32,
+            totalDislikes: 4,
+            calculatedScore: calculateScore(32, 4),
+            position: 3
+          },
+          {
+            submissionId: 4,
+            title: 'Artwork 4',
+            artistName: 'Amila Jayawardena',
+            imageUrl: 'https://images.pexels.com/photos/1108572/pexels-photo-1108572.jpeg?auto=compress&cs=tinysrgb&w=400',
+            totalLikes: 28,
+            totalDislikes: 6,
+            calculatedScore: calculateScore(28, 6),
+            position: null
+          },
+          {
+            submissionId: 5,
+            title: 'Artwork 5',
+            artistName: 'Sanduni Wijesekara',
+            imageUrl: 'https://images.pexels.com/photos/1212407/pexels-photo-1212407.jpeg?auto=compress&cs=tinysrgb&w=400',
+            totalLikes: 25,
+            totalDislikes: 8,
+            calculatedScore: calculateScore(25, 8),
+            position: null
+          }
+        ].sort((a, b) => b.calculatedScore - a.calculatedScore);
+        
+        setWinnerSubmissions(mockSubmissions);
+      } finally {
+        setLoadingSubmissions(false);
+      }
+    };
+    
+    fetchSubmissions();
+  }, [selectedWinnerChallenge]);
+
   // Dummy contestant data for scoring criteria
   const getContestantData = (challengeId) => {
     const baseContestants = [
       {
         id: 1,
         name: 'Nadeesha Perera',
-        artworkTitle: 'Digital Dreams',
+        artworkTitle: 'Artwork 1',
         submissionDate: '2025-07-15',
         likes: 234,
         comments: 45,
@@ -95,7 +211,7 @@ const ModeratorDashboard = () => {
       {
         id: 2,
         name: 'Kasun Fernando',
-        artworkTitle: 'Abstract Fusion',
+        artworkTitle: 'Artwork 2',
         submissionDate: '2025-07-16',
         likes: 189,
         comments: 32,
@@ -106,7 +222,7 @@ const ModeratorDashboard = () => {
       {
         id: 3,
         name: 'Tharushi Silva',
-        artworkTitle: 'Vibrant Expressions',
+        artworkTitle: 'Artwork 3',
         submissionDate: '2025-07-17',
         likes: 156,
         comments: 28,
@@ -890,11 +1006,8 @@ const ModeratorDashboard = () => {
             )}
           </div>
         );
-      case 'winner':
-        // Filter completed challenges from the database
-        // Only show challenges that are EXPLICITLY marked as 'completed' in database status
-        
-        // Generate dummy winners for demonstration
+      case 'winner': {
+        // Generate dummy winners for demonstration (legacy function for completed challenges)
         const generateDummyWinners = () => {
           const artistNames = [
             'Kasun Perera', 'Nadeeka Silva', 'Tharindu Fernando', 'Amaya Jayawardena',
@@ -902,9 +1015,9 @@ const ModeratorDashboard = () => {
             'Chamod Wickramasinghe', 'Nimali Dissanayake', 'Isuru Kumara', 'Sanduni Mendis'
           ];
           const artworkTitles = [
-            'Digital Dreams', 'Abstract Harmony', 'Vibrant Expressions', 'Modern Fusion',
-            'Creative Vision', 'Artistic Journey', 'Color Symphony', 'Contemporary Art',
-            'Visual Poetry', 'Expressive Canvas', 'Bold Strokes', 'Artistic Essence'
+            'Artwork 1', 'Artwork 2', 'Artwork 3', 'Artwork 4',
+            'Artwork 5', 'Artwork 6', 'Artwork 7', 'Artwork 8',
+            'Artwork 9', 'Artwork 10', 'Artwork 11', 'Artwork 12'
           ];
           
           // Generate 3 random winners
@@ -1052,8 +1165,8 @@ const ModeratorDashboard = () => {
                   Select Completed Challenge (Sorted by Completion Date)
                 </label>
                 <select
-                  value={selectedChallenge}
-                  onChange={(e) => setSelectedChallenge(e.target.value)}
+                  value={selectedWinnerChallenge}
+                  onChange={(e) => setSelectedWinnerChallenge(e.target.value)}
                   className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent text-lg font-semibold"
                   style={{borderColor: '#D87C5A', backgroundColor: 'white', color: '#362625'}}
                 >
@@ -1067,10 +1180,10 @@ const ModeratorDashboard = () => {
               </div>
 
               {/* Display Winners for Selected Challenge */}
-              {selectedChallenge && previousChallenges.find(c => String(c.id) === String(selectedChallenge)) && (
+              {selectedWinnerChallenge && previousChallenges.find(c => String(c.id) === String(selectedWinnerChallenge)) && (
                 <div className="space-y-4">
                   {(() => {
-                    const challenge = previousChallenges.find(c => String(c.id) === String(selectedChallenge));
+                    const challenge = previousChallenges.find(c => String(c.id) === String(selectedWinnerChallenge));
                     return (
                       <>
                         {/* Challenge Info */}
@@ -1126,98 +1239,163 @@ const ModeratorDashboard = () => {
                           )}
                         </div>
 
-                        {/* Scoring Criteria Display */}
-                        <div className="p-4 rounded-lg bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-300">
-                          <div className="flex items-center gap-2 mb-3">
-                            <Settings size={18} style={{color: '#D87C5A'}} />
-                            <span className="text-sm font-bold uppercase tracking-wider" style={{color: '#5D3A00'}}>Scoring Criteria Used:</span>
-                          </div>
-                          <div className="grid grid-cols-3 gap-3">
-                            <div className="bg-white rounded-lg p-3 border border-amber-200 text-center">
-                              <div className="text-2xl font-black" style={{color: '#D87C5A'}}>{challenge.scoringCriteria.likesWeight}%</div>
-                              <div className="text-xs font-bold uppercase tracking-wider" style={{color: '#5D3A00'}}>Likes & Engagement</div>
-                            </div>
-                            <div className="bg-white rounded-lg p-3 border border-green-200 text-center">
-                              <div className="text-2xl font-black" style={{color: '#D87C5A'}}>{challenge.scoringCriteria.commentsWeight}%</div>
-                              <div className="text-xs font-bold uppercase tracking-wider" style={{color: '#5D3A00'}}>Comments & Interaction</div>
-                            </div>
-                            <div className="bg-white rounded-lg p-3 border border-purple-200 text-center">
-                              <div className="text-2xl font-black" style={{color: '#D87C5A'}}>{challenge.scoringCriteria.shareWeight}%</div>
-                              <div className="text-xs font-bold uppercase tracking-wider" style={{color: '#5D3A00'}}>Share Weight</div>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Winners Display */}
+                        {/* All Submissions with Calculated Scores */}
                         <div className="bg-white rounded-lg p-6 border-2" style={{borderColor: '#D87C5A'}}>
-                          <h3 className="text-xl font-extrabold tracking-tight mb-4" style={{color: '#5D3A00'}}>
-                            🏆 Challenge Winners
-                          </h3>
-                          {challenge.winners && challenge.winners.length > 0 ? (
-                            <div className="space-y-3">
-                              {challenge.winners.map((winner) => {
-                                const getPositionIcon = (position) => {
-                                  switch (position) {
-                                    case 1:
-                                      return <Trophy className="h-5 w-5 text-yellow-500" />;
-                                    case 2:
-                                      return <Award className="h-5 w-5 text-gray-500" />;
-                                    case 3:
-                                      return <Star className="h-5 w-5 text-orange-700" />;
-                                    default:
-                                      return null;
-                                  }
-                                };
-                                
-                                return (
-                                  <div 
-                                    key={winner.position}
-                                    className="flex items-center justify-between p-4 rounded-lg border"
-                                    style={{
-                                      backgroundColor: winner.position === 1 ? '#FFF9E6' : 
-                                                     winner.position === 2 ? '#F5F5F5' : 
-                                                     '#FFF5E1',
-                                      borderColor: winner.position === 1 ? '#FFD700' : 
-                                                 winner.position === 2 ? '#C0C0C0' : 
-                                                 '#CD7F32'
-                                    }}
-                                  >
-                                    <div className="flex items-center gap-4">
-                                      <div 
-                                        className="flex items-center justify-center rounded-full w-12 h-12"
-                                        style={{
-                                          backgroundColor: winner.position === 1 ? '#FFD700' : 
-                                                         winner.position === 2 ? '#C0C0C0' : 
-                                                         '#CD7F32'
-                                        }}
-                                      >
-                                        {getPositionIcon(winner.position)}
-                                      </div>
-                                      <div>
-                                        <div className="font-bold text-lg" style={{color: '#362625'}}>
-                                          {winner.position === 1 ? '🥇' : winner.position === 2 ? '🥈' : '🥉'} {winner.name}
-                                        </div>
-                                        <div className="text-sm font-medium" style={{color: '#7f5539'}}>
-                                          {winner.title}
-                                        </div>
-                                      </div>
-                                    </div>
-                                    <div className="text-right">
-                                      <div className="text-xs font-bold uppercase tracking-wider" style={{color: '#D87C5A'}}>
-                                        {winner.position === 1 ? '1st Place' : 
-                                         winner.position === 2 ? '2nd Place' : 
-                                         '3rd Place'}
-                                      </div>
-                                    </div>
-                                  </div>
-                                );
-                              })}
+                          <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-xl font-extrabold tracking-tight" style={{color: '#5D3A00'}}>
+                              All Submissions - Calculated Scores
+                            </h3>
+                            <div className="text-sm px-3 py-1 rounded-lg" style={{backgroundColor: '#FFF5E1', color: '#7f5539'}}>
+                              Formula: MAX(0, (Likes × 10) - (Dislikes × 5))
                             </div>
-                          ) : (
+                          </div>
+                          <p className="text-sm text-gray-600 mb-4">
+                            All submissions ranked by calculated score. Top 3 are highlighted as winners.
+                          </p>
+
+                          {loadingSubmissions ? (
+                            <div className="text-center py-12">
+                              <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{borderColor: '#D87C5A'}}></div>
+                              <p className="text-sm font-medium" style={{color: '#7f5539'}}>Loading submissions...</p>
+                            </div>
+                          ) : submissionsError ? (
                             <div className="text-center py-8">
+                              <p className="text-sm text-orange-600 mb-2">{submissionsError}</p>
+                              <p className="text-xs text-gray-500">Showing demo data below</p>
+                            </div>
+                          ) : null}
+
+                          {winnerSubmissions.length > 0 ? (
+                            <>
+                              <div className="space-y-4 mb-6">
+                                {winnerSubmissions.filter(submission => submission.position && submission.position <= 3).map((submission, index) => {
+                                  const getPositionBadge = (position) => {
+                                    if (position === 1) return { icon: '🥇', label: '1st Place', bgColor: '#FFF9E6', borderColor: '#FFD700' };
+                                    if (position === 2) return { icon: '🥈', label: '2nd Place', bgColor: '#F5F5F5', borderColor: '#C0C0C0' };
+                                    if (position === 3) return { icon: '🥉', label: '3rd Place', bgColor: '#FFF5E1', borderColor: '#CD7F32' };
+                                    return null;
+                                  };
+
+                                  const positionBadge = getPositionBadge(submission.position);
+
+                                  return (
+                                    <div 
+                                      key={submission.submissionId || index}
+                                      className="p-6 rounded-xl border-2 transition-all hover:shadow-xl"
+                                      style={{
+                                        backgroundColor: positionBadge ? positionBadge.bgColor : 'white',
+                                        borderColor: positionBadge ? positionBadge.borderColor : '#E5E7EB'
+                                      }}
+                                    >
+                                      <div className="flex flex-col md:flex-row items-start gap-6">
+                                        {/* Rank Badge */}
+                                        <div className="flex-shrink-0">
+                                          <div className="w-16 h-16 rounded-full flex items-center justify-center font-bold text-2xl shadow-lg"
+                                            style={{
+                                              backgroundColor: positionBadge.borderColor,
+                                              color: 'white'
+                                            }}
+                                          >
+                                            {positionBadge.icon}
+                                          </div>
+                                        </div>
+
+                                        {/* Submission Image */}
+                                        {submission.imageUrl && (
+                                          <img 
+                                            src={submission.imageUrl} 
+                                            alt={submission.title}
+                                            className="w-32 h-32 object-cover rounded-lg shadow-md"
+                                          />
+                                        )}
+
+                                        {/* Submission Details */}
+                                        <div className="flex-1">
+                                          <div className="flex items-start justify-between mb-3">
+                                            <div>
+                                              <h4 className="font-extrabold text-2xl mb-1" style={{color: '#362625'}}>
+                                                {submission.title}
+                                              </h4>
+                                              <p className="text-base font-semibold" style={{color: '#7f5539'}}>
+                                                by {submission.artistName}
+                                              </p>
+                                            </div>
+                                            <span className="px-4 py-2 rounded-full text-sm font-bold shadow-md" style={{
+                                              backgroundColor: positionBadge.borderColor,
+                                              color: 'white'
+                                            }}>
+                                              {positionBadge.label}
+                                            </span>
+                                          </div>
+
+                                          {/* Score Summary */}
+                                          <div className="grid grid-cols-4 gap-3">
+                                            <div className="bg-white rounded-lg p-3 border text-center" style={{borderColor: '#34D399'}}>
+                                              <span className="text-xs font-semibold text-gray-600 block mb-1">Likes</span>
+                                              <div className="text-xl font-bold text-green-600">{submission.totalLikes}</div>
+                                              <div className="text-xs text-gray-500">× 10 = {submission.totalLikes * 10}</div>
+                                            </div>
+
+                                            <div className="bg-white rounded-lg p-3 border text-center" style={{borderColor: '#EF4444'}}>
+                                              <span className="text-xs font-semibold text-gray-600 block mb-1">Dislikes</span>
+                                              <div className="text-xl font-bold text-red-600">{submission.totalDislikes}</div>
+                                              <div className="text-xs text-gray-500">× 5 = {submission.totalDislikes * 5}</div>
+                                            </div>
+
+                                            <div className="bg-white rounded-lg p-3 border text-center" style={{borderColor: '#3B82F6'}}>
+                                              <span className="text-xs font-semibold text-gray-600 block mb-1">Calculation</span>
+                                              <div className="text-base font-medium text-blue-600">
+                                                {submission.totalLikes * 10} - {submission.totalDislikes * 5}
+                                              </div>
+                                              <div className="text-xs text-gray-500">Raw Score</div>
+                                            </div>
+
+                                            <div className="rounded-lg p-3 border-2 text-center" style={{
+                                              backgroundColor: positionBadge.borderColor,
+                                              borderColor: positionBadge.borderColor
+                                            }}>
+                                              <span className="text-xs font-semibold text-white block mb-1">Final Score</span>
+                                              <div className="text-3xl font-black text-white">{submission.calculatedScore}</div>
+                                              <div className="text-xs text-white opacity-90">Points</div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+
+                              {/* Single Upload Button for All Winners */}
+                              <div className="flex justify-center mt-6">
+                                <button
+                                  onClick={() => {
+                                    const topWinners = winnerSubmissions.filter(submission => submission.position && submission.position <= 3);
+                                    const winnerNames = topWinners.map(w => `${w.position}. ${w.artistName} - "${w.title}"`).join('\n');
+                                    const confirmUpload = window.confirm(`Upload all top 3 winners to the main feed?\n\n${winnerNames}\n\nThis action will publish all winners' artwork to the main feed.`);
+                                    if (confirmUpload) {
+                                      console.log('Uploading all winners to main feed:', topWinners);
+                                      alert(`Successfully uploaded ${topWinners.length} winners to the main feed!`);
+                                      // TODO: Implement API call to upload all winners to main feed
+                                      // Example: await axios.post('/api/main-feed/winners', { winners: topWinners, challengeId: selectedWinnerChallenge });
+                                    }
+                                  }}
+                                  className="px-8 py-4 rounded-xl font-bold text-white text-lg shadow-xl hover:shadow-2xl transition-all transform hover:scale-105 flex items-center gap-3"
+                                  style={{backgroundColor: '#D87C5A'}}
+                                >
+                                  <Send size={24} />
+                                  Upload All Winners to Main Feed
+                                </button>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="text-center py-12">
                               <Trophy className="h-16 w-16 mx-auto mb-3" style={{color: '#D87C5A', opacity: 0.5}} />
                               <p className="text-sm font-medium" style={{color: '#7f5539'}}>
-                                Winners will be calculated based on submissions and scoring criteria
+                                No submissions found for this challenge yet.
+                              </p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                Submissions will appear here once artists submit their artwork.
                               </p>
                             </div>
                           )}
@@ -1230,6 +1408,7 @@ const ModeratorDashboard = () => {
             </div>
           </div>
         );
+      }
       case 'verification':
         return <VerificationList />;
       default:

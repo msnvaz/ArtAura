@@ -3,6 +3,7 @@ import {
   Bell,
   Calendar,
   Check,
+  CheckCircle,
   ChevronLeft,
   ChevronRight,
   Clock,
@@ -15,7 +16,8 @@ import {
   Search,
   Shield,
   User,
-  X
+  X,
+  XCircle
 } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -162,6 +164,15 @@ const filteredPosts = exhibitionPosts.filter(post => {
   const matchesFilter = filterStatus === 'all' || post.status === filterStatus;
   return matchesTab && matchesSearch && matchesFilter;
 });
+
+const getExhibitionStats = () => {
+  return {
+    total: exhibitionPosts.length,
+    pending: exhibitionPosts.filter(p => p.status === 'pending').length,
+    approved: exhibitionPosts.filter(p => p.status === 'approved').length,
+    rejected: exhibitionPosts.filter(p => p.status === 'rejected').length
+  };
+};
 
 const handleApprove = (postId) => {
   setExhibitionPosts(posts => 
@@ -332,6 +343,51 @@ return (
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
+        {/* Stats Cards */}
+        {(() => {
+          const stats = getExhibitionStats();
+          return (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg p-4 border-2 border-amber-300 shadow-md hover:shadow-lg transition-all duration-300">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-bold text-amber-700 uppercase tracking-widest">Total Exhibitions</p>
+                    <p className="text-3xl font-black text-amber-900 mt-1">{stats.total}</p>
+                  </div>
+                  <Trophy className="h-8 w-8 text-amber-500" />
+                </div>
+              </div>
+              <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-bold text-yellow-700 uppercase tracking-widest">Pending Review</p>
+                    <p className="text-3xl font-black text-yellow-900 mt-1">{stats.pending}</p>
+                  </div>
+                  <Clock className="h-8 w-8 text-yellow-500" />
+                </div>
+              </div>
+              <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-bold text-green-700 uppercase tracking-widest">Approved</p>
+                    <p className="text-3xl font-black text-green-900 mt-1">{stats.approved}</p>
+                  </div>
+                  <CheckCircle className="h-8 w-8 text-green-500" />
+                </div>
+              </div>
+              <div className="bg-red-50 rounded-lg p-4 border border-red-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-bold text-red-700 uppercase tracking-widest">Rejected</p>
+                    <p className="text-3xl font-black text-red-900 mt-1">{stats.rejected}</p>
+                  </div>
+                  <XCircle className="h-8 w-8 text-red-500" />
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
         {/* Search and Filter */}
         <div className="rounded-lg shadow-sm border h-full relative overflow-hidden mb-6" style={{backgroundColor: '#FFF5E1'}}>
           <div className="p-6">
