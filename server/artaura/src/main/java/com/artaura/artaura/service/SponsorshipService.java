@@ -1,0 +1,21 @@
+package com.artaura.artaura.service;
+
+import com.artaura.artaura.dto.sponsorship.ChallengeForSponsorshipDTO;
+import com.artaura.artaura.dto.sponsorship.SponsorshipOfferDTO;
+
+import java.util.List;
+
+public interface SponsorshipService {
+
+    List<ChallengeForSponsorshipDTO> getActiveChallengesRequestingSponsorship();
+
+    Long createSponsorshipOffer(Long shopId, Long challengeId, Integer discountPercentage);
+
+    List<SponsorshipOfferDTO> getSponsorshipOffersByShop(Long shopId);
+
+    List<SponsorshipOfferDTO> getSponsorshipOffersByChallenge(Long challengeId);
+
+    SponsorshipOfferDTO getSponsorshipOfferById(Long offerId);
+
+    void deleteSponsorshipOffer(Long offerId);
+}

@@ -48,7 +48,8 @@ public class SecurityConfig {
                         "/ws/**", // <-- Make sure this is present and permitted
                         "/api/posts/*/comments", // Allow GET access to comments without authentication
                         "/api/posts/*/like-status", // Allow GET access to like status without authentication
-                        "/api/challenges/active", // Allow public access to view active challenges
+                        "/api/challenges/active",
+                  "/api/sponsorships/**",// Allow public access to view active challenges
                         "/api/shop/all", // Allow public access to discover shops
                         "/api/products", // Allow public access to discover products
                         "/api/buyer/artists/*/profile", // Allow public access to artist profiles
@@ -58,10 +59,13 @@ public class SecurityConfig {
                         "/api/achievements/artist/*" // Allow public access to artist achievements
                 ).permitAll() // ✅ Public endpoints
 
-                .requestMatchers("/api/posts/create").authenticated()
-                .requestMatchers("/api/posts/{role}/{userId}").authenticated()// ✅ allow this
-                .requestMatchers("/api/artist/artwork-orders/**").authenticated() // Artist artwork orders endpoints
-                .anyRequest().authenticated() // 🔒 Everything else secured
+                        
+
+                        .requestMatchers("/api/posts/create").authenticated()
+                        .requestMatchers("/api/posts/{role}/{userId}").authenticated()// ✅ allow this
+                        .requestMatchers("/api/artist/artwork-orders/**").authenticated() // Artist artwork orders
+                                                                                          // endpoints
+                        .anyRequest().authenticated() // 🔒 Everything else secured
 
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class); // 🔐 JWT Filter
