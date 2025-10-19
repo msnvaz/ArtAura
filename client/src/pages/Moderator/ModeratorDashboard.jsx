@@ -1,3 +1,4 @@
+import axios from 'axios';
 import {
   Award,
   BarChart3,
@@ -16,7 +17,6 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from 'react';
 import { useNavigate } from "react-router-dom";
-import axios from 'axios';
 import { useAuth } from "../../context/AuthContext";
 import ChallengeList from './ChallengeList';
 import VerificationList from './VerificationList';
