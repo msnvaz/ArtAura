@@ -87,9 +87,9 @@ const PublicArtistPortfolio = () => {
     }
 
     fetchArtistData();
-    
+
     // Check follow status if user is logged in
-    if (token && role === 'buyer') {
+    if (token && role === "buyer") {
       checkFollowStatus();
     }
   }, [artistId, token, role]);
@@ -97,12 +97,15 @@ const PublicArtistPortfolio = () => {
   // Function to check if current user is following this artist
   const checkFollowStatus = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/buyer/artists/${artistId}/follow-status`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      
+      const response = await axios.get(
+        `${API_URL}/api/buyer/artists/${artistId}/follow-status`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
       if (response.data.success) {
         setIsFollowing(response.data.isFollowing);
       }
@@ -291,12 +294,12 @@ const PublicArtistPortfolio = () => {
 
   const handleToggleFollow = async () => {
     if (!token) {
-      alert('Please login to follow artists');
+      alert("Please login to follow artists");
       return;
     }
 
-    if (role !== 'buyer') {
-      alert('Only buyers can follow artists');
+    if (role !== "buyer") {
+      alert("Only buyers can follow artists");
       return;
     }
 
@@ -308,8 +311,8 @@ const PublicArtistPortfolio = () => {
           {},
           {
             headers: {
-              Authorization: `Bearer ${token}`
-            }
+              Authorization: `Bearer ${token}`,
+            },
           }
         );
 
@@ -317,17 +320,17 @@ const PublicArtistPortfolio = () => {
           setIsFollowing(true);
           // Update follower count in artist profile
           if (artistProfile) {
-            setArtistProfile(prev => ({
+            setArtistProfile((prev) => ({
               ...prev,
               stats: {
                 ...prev.stats,
-                followers: (prev.stats?.followers || 0) + 1
-              }
+                followers: (prev.stats?.followers || 0) + 1,
+              },
             }));
           }
-          alert(response.data.message || 'Successfully followed artist!');
+          alert(response.data.message || "Successfully followed artist!");
         } else {
-          alert(response.data.message || 'Already following this artist');
+          alert(response.data.message || "Already following this artist");
         }
       } else {
         // Unfollow the artist
@@ -335,8 +338,8 @@ const PublicArtistPortfolio = () => {
           `${API_URL}/api/buyer/artists/${artistId}/unfollow`,
           {
             headers: {
-              Authorization: `Bearer ${token}`
-            }
+              Authorization: `Bearer ${token}`,
+            },
           }
         );
 
@@ -344,25 +347,25 @@ const PublicArtistPortfolio = () => {
           setIsFollowing(false);
           // Update follower count in artist profile
           if (artistProfile) {
-            setArtistProfile(prev => ({
+            setArtistProfile((prev) => ({
               ...prev,
               stats: {
                 ...prev.stats,
-                followers: Math.max(0, (prev.stats?.followers || 0) - 1)
-              }
+                followers: Math.max(0, (prev.stats?.followers || 0) - 1),
+              },
             }));
           }
-          alert(response.data.message || 'Successfully unfollowed artist!');
+          alert(response.data.message || "Successfully unfollowed artist!");
         } else {
-          alert(response.data.message || 'Not following this artist');
+          alert(response.data.message || "Not following this artist");
         }
       }
     } catch (error) {
-      console.error('Error toggling follow status:', error);
+      console.error("Error toggling follow status:", error);
       if (error.response?.data?.message) {
         alert(error.response.data.message);
       } else {
-        alert('Failed to update follow status. Please try again.');
+        alert("Failed to update follow status. Please try again.");
       }
     }
   };
