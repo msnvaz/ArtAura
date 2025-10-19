@@ -8,12 +8,10 @@ import {
   Send,
   Settings,
   Shield,
-  ShoppingCart,
   Sparkles,
-  Star,
   Target,
   Trophy,
-  Users,
+  Users
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
