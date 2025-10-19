@@ -1,20 +1,19 @@
+import axios from 'axios';
 import {
-    AlertCircle,
-    Calendar,
-    Check,
-    CheckCircle,
-    Eye,
-    FileText,
-    Filter,
-    MapPin,
-    Search,
-    Shield,
-    User,
-    X,
-    XCircle
+  AlertCircle,
+  Calendar,
+  Check,
+  CheckCircle,
+  Eye,
+  Filter,
+  MapPin,
+  Search,
+  Shield,
+  User,
+  X,
+  XCircle
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 
 const VerificationList = () => {
@@ -30,182 +29,16 @@ const VerificationList = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedExhibition, setSelectedExhibition] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  
+  // State for status update feedback
+  const [updating, setUpdating] = useState(false);
+  const [updateSuccess, setUpdateSuccess] = useState(false);
+  const [updateMessage, setUpdateMessage] = useState('');
 
-  // Mock data for exhibitions (would be fetched from API)
-  const mockExhibitions = [
-    {
-      id: 1,
-      title: 'Traditional Sri Lankan Art Exhibition',
-      description: 'Celebrating the rich heritage of traditional Sri Lankan art forms including paintings, sculptures, and handicrafts.',
-      organizer: 'Kumari Perera',
-      organizerEmail: 'kumari.perera@heritage.lk',
-      venue: 'National Museum Auditorium',
-      address: 'Sir Marcus Fernando Mawatha, Colombo 07',
-      startDate: '2024-09-01',
-      endDate: '2024-09-30',
-      submissionDate: '2024-07-28',
-      status: 'pending',
-      category: 'Traditional Art',
-      expectedVisitors: 800,
-      artworksCount: 120,
-      entryFee: 'LKR 500',
-      contactPhone: '+94 76 456 7890',
-      website: 'www.srilankanheritage.lk',
-      verificationNotes: 'Under review. Awaiting final venue confirmation.',
-      documents: [
-        { name: 'Venue Permission', status: 'pending' },
-        { name: 'Safety Certificate', status: 'verified' },
-        { name: 'Insurance Policy', status: 'verified' },
-        { name: 'Artist Agreements', status: 'pending' }
-      ]
-    },
-    {
-      id: 2,
-      title: 'Young Artists Collective 2024',
-      description: 'A platform for emerging young artists to showcase their innovative works and connect with art enthusiasts.',
-      organizer: 'Nimesh Fernando',
-      organizerEmail: 'nimesh@youngartists.lk',
-      venue: 'Barefoot Gallery',
-      address: '704 Galle Road, Colombo 03',
-      startDate: '2024-08-25',
-      endDate: '2024-09-05',
-      submissionDate: '2024-07-30',
-      status: 'pending',
-      category: 'Mixed Media',
-      expectedVisitors: 400,
-      artworksCount: 60,
-      entryFee: 'Free',
-      contactPhone: '+94 75 234 5678',
-      website: 'www.youngartistscollective.lk',
-      verificationNotes: 'New submission. Initial review in progress.',
-      documents: [
-        { name: 'Venue Permission', status: 'verified' },
-        { name: 'Safety Certificate', status: 'verified' },
-        { name: 'Insurance Policy', status: 'pending' },
-        { name: 'Artist Agreements', status: 'verified' }
-      ]
-    },
-    {
-      id: 3,
-      title: 'Contemporary Sculpture Exhibition',
-      description: 'An innovative showcase of contemporary sculpture featuring works by established and emerging artists from across Sri Lanka.',
-      organizer: 'Arjuna Dissanayake',
-      organizerEmail: 'arjuna.dissanayake@artspace.lk',
-      venue: 'Gallery Cafe Colombo',
-      address: '2 Alfred House Road, Colombo 03',
-      startDate: '2024-07-15',
-      endDate: '2024-08-15',
-      submissionDate: '2024-06-10',
-      status: 'approved',
-      category: 'Contemporary Art',
-      expectedVisitors: 600,
-      artworksCount: 35,
-      entryFee: 'LKR 300',
-      contactPhone: '+94 77 345 6789',
-      website: 'www.contemporarysculpture.lk',
-      verificationNotes: 'All documentation verified. Excellent venue facilities and safety measures in place.',
-      verifiedBy: 'Senior Moderator',
-      verificationDate: '2024-06-18',
-      documents: [
-        { name: 'Venue Permission', status: 'verified' },
-        { name: 'Safety Certificate', status: 'verified' },
-        { name: 'Insurance Policy', status: 'verified' },
-        { name: 'Artist Agreements', status: 'verified' }
-      ]
-    },
-    {
-      id: 4,
-      title: 'Street Art & Graffiti Festival',
-      description: 'Urban art festival celebrating street art, graffiti, and contemporary urban culture with live painting sessions.',
-      organizer: 'Malik Rahman',
-      organizerEmail: 'malik.rahman@streetart.org',
-      venue: 'Urban Park Community Center',
-      address: '45 Baseline Road, Colombo 09',
-      startDate: '2024-08-01',
-      endDate: '2024-08-03',
-      submissionDate: '2024-07-05',
-      status: 'rejected',
-      category: 'Street Art',
-      expectedVisitors: 1000,
-      artworksCount: 50,
-      entryFee: 'Free',
-      contactPhone: '+94 71 567 8901',
-      website: 'www.streetartfest.lk',
-      verificationNotes: 'Venue lacks adequate security arrangements for large crowds. Insurance coverage insufficient for outdoor activities.',
-      verifiedBy: 'Safety Moderator',
-      verificationDate: '2024-07-12',
-      rejectionReason: 'Inadequate security arrangements and insufficient insurance coverage for outdoor activities',
-      documents: [
-        { name: 'Venue Permission', status: 'verified' },
-        { name: 'Safety Certificate', status: 'missing' },
-        { name: 'Insurance Policy', status: 'pending' },
-        { name: 'Artist Agreements', status: 'verified' }
-      ]
-    },
-    {
-      id: 5,
-      title: 'Photography Exhibition: Ceylon Through Lens',
-      description: 'A stunning collection of photographs capturing the beauty and diversity of Sri Lankan landscapes, culture, and people.',
-      organizer: 'Sandamali Wickramasinghe',
-      organizerEmail: 'sandamali@ceylonlens.photography',
-      venue: 'Lionel Wendt Art Centre',
-      address: '18 Guildford Crescent, Colombo 07',
-      startDate: '2024-09-10',
-      endDate: '2024-10-10',
-      submissionDate: '2024-07-25',
-      status: 'approved',
-      category: 'Photography',
-      expectedVisitors: 750,
-      artworksCount: 80,
-      entryFee: 'LKR 200',
-      contactPhone: '+94 76 789 0123',
-      website: 'www.ceylonthroughlens.lk',
-      verificationNotes: 'Outstanding venue choice with professional lighting and display systems. All requirements met.',
-      verifiedBy: 'Art Curator Moderator',
-      verificationDate: '2024-08-01',
-      documents: [
-        { name: 'Venue Permission', status: 'verified' },
-        { name: 'Safety Certificate', status: 'verified' },
-        { name: 'Insurance Policy', status: 'verified' },
-        { name: 'Artist Agreements', status: 'verified' }
-      ]
-    },
-    {
-      id: 6,
-      title: 'Experimental Digital Art Showcase',
-      description: 'Cutting-edge digital art installations featuring VR experiences, interactive displays, and digital multimedia artworks.',
-      organizer: 'Tech Arts Collective',
-      organizerEmail: 'info@techartscollective.com',
-      venue: 'Innovation Hub Colombo',
-      address: '100 Independence Avenue, Colombo 07',
-      startDate: '2024-09-20',
-      endDate: '2024-09-22',
-      submissionDate: '2024-07-18',
-      status: 'rejected',
-      category: 'Digital Art',
-      expectedVisitors: 500,
-      artworksCount: 25,
-      entryFee: 'LKR 800',
-      contactPhone: '+94 75 234 5679',
-      website: 'www.experimentaldigitalart.lk',
-      verificationNotes: 'Venue electrical systems not certified for high-power digital installations. Fire safety protocols inadequate.',
-      verifiedBy: 'Technical Safety Moderator',
-      verificationDate: '2024-07-26',
-      rejectionReason: 'Venue electrical systems not certified for high-power installations and inadequate fire safety protocols',
-      documents: [
-        { name: 'Venue Permission', status: 'verified' },
-        { name: 'Safety Certificate', status: 'missing' },
-        { name: 'Insurance Policy', status: 'verified' },
-        { name: 'Artist Agreements', status: 'verified' }
-      ]
-    }
-  ];
-
+  // Fetch exhibitions from API
   useEffect(() => {
-    // In a real application, this would fetch from API
-    // fetchExhibitions();
-    setExhibitions(mockExhibitions);
-    setLoading(false);
+    fetchExhibitions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchExhibitions = async () => {
@@ -213,33 +46,163 @@ const VerificationList = () => {
       setLoading(true);
       setError(null);
       
-      // API call would be something like:
-      // const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/exhibitions`, {
-      //   headers: { Authorization: `Bearer ${token}` }
-      // });
-      // setExhibitions(response.data);
+      const apiUrl = `${import.meta.env.VITE_API_URL}/api/exhibitions`;
+      console.log('🔍 Fetching exhibitions from:', apiUrl);
+      console.log('🔑 Using token:', token ? 'Yes' : 'No');
       
-      // For now, using mock data
-      setExhibitions(mockExhibitions);
+      const response = await axios.get(apiUrl, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+      
+      console.log('✅ Fetched exhibitions successfully:', response.data);
+      console.log('📊 Total exhibitions:', response.data.length);
+      
+      // Map the database fields to component fields
+      const mappedExhibitions = response.data.map((exhibition, index) => {
+        try {
+          return {
+            id: exhibition.exhibitionId || exhibition.id,
+            title: exhibition.title,
+            description: exhibition.description,
+            organizer: exhibition.organizer || 'Not specified',
+            organizerEmail: exhibition.contact_email || exhibition.contactEmail || 'Not provided',
+            venue: exhibition.location || 'Not specified',
+            address: exhibition.location || 'Not specified',
+            startDate: exhibition.start_date || exhibition.startDate || 'TBD',
+            endDate: exhibition.end_date || exhibition.endDate || 'TBD',
+            startTime: exhibition.start_time || exhibition.startTime || '',
+            endTime: exhibition.end_time || exhibition.endTime || '',
+            submissionDate: exhibition.created_at || exhibition.createdAt || new Date().toISOString(),
+            createdBy: exhibition.created_by || exhibition.createdBy || null,
+            status: mapStatus(exhibition.status),
+            category: exhibition.category || 'General',
+            maxParticipants: exhibition.artworksCount || exhibition.max_participants || exhibition.maxParticipants || 0,
+            expectedVisitors: exhibition.artworksCount || exhibition.max_participants || exhibition.maxParticipants || 0,
+            artworksCount: exhibition.artworksCount || exhibition.max_participants || exhibition.maxParticipants || 0,
+            entryFee: exhibition.entry_fee || exhibition.entryFee,
+            contactPhone: exhibition.contact_phone || exhibition.contactPhone || 'Not provided',
+            requirements: exhibition.requirements || null,
+            likes: exhibition.likes || 0,
+            verificationNotes: getVerificationNotes(exhibition.status),
+            verifiedBy: exhibition.status === 'verified' ? 'Moderator' : null,
+            verificationDate: exhibition.status === 'verified' && exhibition.created_at 
+              ? (new Date(exhibition.created_at).toString() !== 'Invalid Date' 
+                ? new Date(exhibition.created_at).toISOString().split('T')[0] 
+                : null) 
+              : null,
+            rejectionReason: exhibition.status === 'rejected' ? exhibition.requirements : null,
+            documents: [
+              { name: 'Venue Permission', status: exhibition.status === 'verified' ? 'verified' : 'pending' },
+              { name: 'Artist Agreements', status: exhibition.status === 'verified' ? 'verified' : 'pending' }
+            ]
+          };
+        } catch (mapError) {
+          console.warn(`⚠️ Error mapping exhibition at index ${index}:`, mapError);
+          console.warn('Exhibition data:', exhibition);
+          // Return a basic version if mapping fails
+          return {
+            id: exhibition.exhibitionId || exhibition.id || index,
+            title: exhibition.title || 'Unknown Exhibition',
+            description: exhibition.description || '',
+            organizer: exhibition.organizer || 'Not specified',
+            organizerEmail: exhibition.contact_email || 'N/A',
+            venue: exhibition.location || 'N/A',
+            address: exhibition.location || 'N/A',
+            startDate: exhibition.start_date || 'TBD',
+            endDate: exhibition.end_date || 'TBD',
+            startTime: exhibition.start_time || null,
+            endTime: exhibition.end_time || null,
+            submissionDate: exhibition.created_at || null,
+            status: mapStatus(exhibition.status || 'pending'),
+            category: exhibition.category || 'General',
+            expectedVisitors: exhibition.artworksCount || exhibition.max_participants || 0,
+            artworksCount: exhibition.artworksCount || exhibition.max_participants || 0,
+            maxParticipants: exhibition.artworksCount || exhibition.max_participants || 0,
+            entryFee: exhibition.entry_fee || 'Free',
+            contactPhone: exhibition.contact_phone || 'Not provided',
+            requirements: exhibition.requirements || null,
+            likes: exhibition.likes || 0,
+            verificationNotes: 'Pending review.',
+            verifiedBy: null,
+            verificationDate: null,
+            rejectionReason: null,
+            documents: [
+              { name: 'Venue Permission', status: 'pending' },
+              { name: 'Artist Agreements', status: 'pending' }
+            ]
+          };
+        }
+      });
+      
+      setExhibitions(mappedExhibitions);
+      console.log('✨ Mapped exhibitions:', mappedExhibitions);
     } catch (err) {
-      console.error('Error fetching exhibitions:', err);
-      setError('Failed to load exhibitions. Please try again.');
+      console.error('❌ Error fetching exhibitions:', err);
+      console.error('❌ Error response:', err.response?.data);
+      console.error('❌ Error status:', err.response?.status);
+      console.error('❌ Error message:', err.message);
+      
+      if (err.response?.status === 401) {
+        setError('Authentication failed. Please log in again.');
+      } else if (err.response?.status === 404) {
+        setError('Exhibition endpoint not found. Please check backend configuration.');
+      } else if (err.code === 'ERR_NETWORK') {
+        setError('Cannot connect to server. Please ensure the backend is running on http://localhost:8081');
+      } else {
+        setError(`Failed to load exhibitions: ${err.response?.data || err.message}`);
+      }
     } finally {
       setLoading(false);
     }
   };
 
+  // Map database status to component status
+  const mapStatus = (dbStatus) => {
+    const statusMap = {
+      'pending': 'pending',
+      'verified': 'approved',
+      'rejected': 'rejected',
+      'approved': 'approved'
+    };
+    return statusMap[dbStatus.toLowerCase()] || 'pending';
+  };
+
+  // Get verification notes based on status
+  const getVerificationNotes = (status) => {
+    const notes = {
+      'pending': 'Under review. Awaiting final verification.',
+      'verified': 'All documentation verified. Exhibition approved.',
+      'rejected': 'Exhibition has been rejected. Check rejection reason for details.',
+      'approved': 'Exhibition has been approved and verified.'
+    };
+    return notes[status.toLowerCase()] || 'Pending review.';
+  };
+
   const handleStatusChange = async (exhibitionId, newStatus, reason = '') => {
     try {
-      // API call would be:
-      // await axios.put(`${import.meta.env.VITE_API_URL}/api/exhibitions/${exhibitionId}/status`, {
-      //   status: newStatus,
-      //   reason: reason
-      // }, {
-      //   headers: { Authorization: `Bearer ${token}` }
-      // });
+      setUpdating(true);
+      setError(null);
+      
+      // Map component status back to database status
+      const dbStatus = newStatus === 'approved' ? 'verified' : newStatus;
+      
+      console.log(`🔄 Updating exhibition ${exhibitionId} status to ${dbStatus}`);
+      
+      // API call to update exhibition status
+      const response = await axios.put(
+        `${import.meta.env.VITE_API_URL}/api/exhibitions/${exhibitionId}/status`,
+        {
+          status: dbStatus,
+          reason: reason
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
 
-      // Update local state
+      console.log('✅ Status updated successfully:', response.data);
+
+      // Update local state to reflect the change immediately
       setExhibitions(prev => prev.map(exhibition => 
         exhibition.id === exhibitionId 
           ? { 
@@ -247,17 +210,46 @@ const VerificationList = () => {
               status: newStatus,
               verificationDate: new Date().toISOString().split('T')[0],
               verifiedBy: 'Current Moderator',
+              verificationNotes: newStatus === 'approved' 
+                ? 'All documentation verified. Exhibition approved.' 
+                : newStatus === 'rejected'
+                ? 'Exhibition has been rejected. Check rejection reason for details.'
+                : exhibition.verificationNotes,
               ...(newStatus === 'rejected' && reason && { rejectionReason: reason })
             }
           : exhibition
       ));
 
-      console.log(`Exhibition ${exhibitionId} status changed to ${newStatus}`);
-      if (reason) console.log(`Reason: ${reason}`);
+      // Show success message
+      setUpdateSuccess(true);
+      setUpdateMessage(
+        newStatus === 'approved' 
+          ? '✅ Exhibition approved successfully!' 
+          : '❌ Exhibition rejected successfully!'
+      );
+
+      // Hide success message after 3 seconds
+      setTimeout(() => {
+        setUpdateSuccess(false);
+        setUpdateMessage('');
+      }, 3000);
+
+      console.log(`✅ Exhibition ${exhibitionId} status changed to ${newStatus}`);
+      if (reason) console.log(`📝 Reason: ${reason}`);
       
     } catch (err) {
-      console.error('Error updating exhibition status:', err);
-      setError('Failed to update exhibition status. Please try again.');
+      console.error('❌ Error updating exhibition status:', err);
+      console.error('❌ Error response:', err.response?.data);
+      
+      if (err.response?.status === 401) {
+        setError('Authentication failed. Please log in again.');
+      } else if (err.response?.status === 404) {
+        setError('Exhibition not found.');
+      } else {
+        setError(`Failed to update exhibition status: ${err.response?.data || err.message}`);
+      }
+    } finally {
+      setUpdating(false);
     }
   };
 
@@ -284,19 +276,6 @@ const VerificationList = () => {
         return <AlertCircle className="h-5 w-5 text-yellow-600" />;
       default:
         return <Shield className="h-5 w-5 text-gray-600" />;
-    }
-  };
-
-  const getDocumentStatusColor = (status) => {
-    switch (status) {
-      case 'verified':
-        return 'text-green-600';
-      case 'pending':
-        return 'text-yellow-600';
-      case 'missing':
-        return 'text-red-600';
-      default:
-        return 'text-gray-600';
     }
   };
 
@@ -339,6 +318,17 @@ const VerificationList = () => {
     <div className="p-6">
       <h2 className="text-2xl font-bold mb-4" style={{color: '#5D3A00'}}>Verification Management</h2>
       
+      {/* Success Message */}
+      {updateSuccess && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6 animate-fade-in">
+          <div className="flex items-center gap-2">
+            <CheckCircle className="h-5 w-5 text-green-600" />
+            <p className="text-green-800 font-medium">{updateMessage}</p>
+          </div>
+        </div>
+      )}
+      
+      {/* Error Message */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
           <div className="flex items-center gap-2">
@@ -424,49 +414,114 @@ const VerificationList = () => {
       {/* Exhibitions Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredExhibitions.map(exhibition => (
-          <div key={exhibition.id} className={`bg-white rounded-lg shadow-md p-6 border-l-4 ${getStatusColor(exhibition.status)}`}>
-            <div className="flex items-center gap-2 mb-2">
-              {getStatusIcon(exhibition.status)}
-              <span className="text-sm font-medium capitalize">{exhibition.status}</span>
-            </div>
-            
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">{exhibition.title}</h3>
-            <p className="text-gray-600 text-sm mb-4 line-clamp-3">{exhibition.description}</p>
-            
-            <div className="space-y-2 mb-4">
-              <div className="flex items-center gap-2 text-sm text-gray-500">
-                <Calendar size={16} />
-                <span>{exhibition.startDate} - {exhibition.endDate}</span>
+          <div key={exhibition.id} className={`bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 border-l-4 ${getStatusColor(exhibition.status)}`}>
+            {/* Header with Status Badge */}
+            <div className="p-4 border-b border-gray-100" style={{backgroundColor: '#FFF5E1'}}>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  {getStatusIcon(exhibition.status)}
+                  <span className={`px-3 py-1 text-xs font-bold rounded-full ${getStatusColor(exhibition.status)}`}>
+                    {exhibition.status.toUpperCase()}
+                  </span>
+                </div>
+                <span className="text-xs text-gray-500">ID: {exhibition.id}</span>
               </div>
-              <div className="flex items-center gap-2 text-sm text-gray-500">
-                <User size={16} />
-                <span>{exhibition.organizer}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-gray-500">
-                <MapPin size={16} />
-                <span>{exhibition.venue}</span>
-              </div>
+              <h3 className="text-lg font-bold text-gray-900 line-clamp-2">{exhibition.title}</h3>
             </div>
 
-            <div className="flex items-center justify-between">
-              <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(exhibition.status)}`}>
-                {exhibition.status}
-              </span>
+            {/* Body Content */}
+            <div className="p-4 space-y-3">
+              {/* Description */}
+              <p className="text-gray-600 text-sm line-clamp-3 leading-relaxed">{exhibition.description}</p>
+              
+              {/* Category Badge */}
+              {exhibition.category && (
+                <div className="inline-block px-3 py-1 rounded-full text-xs font-semibold" style={{backgroundColor: '#FFD95A', color: '#5D3A00'}}>
+                  {exhibition.category}
+                </div>
+              )}
+
+              {/* Key Information */}
+              <div className="space-y-2 pt-2">
+                <div className="flex items-start gap-2 text-sm">
+                  <Calendar size={16} className="text-[#D87C5A] mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-900">
+                      {exhibition.startDate} to {exhibition.endDate}
+                    </div>
+                    {(exhibition.startTime || exhibition.endTime) && (
+                      <div className="text-gray-500 text-xs mt-0.5">
+                        {exhibition.startTime && `🕐 ${exhibition.startTime}`}
+                        {exhibition.startTime && exhibition.endTime && ' - '}
+                        {exhibition.endTime && exhibition.endTime}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 text-sm text-gray-700">
+                  <User size={16} className="text-[#D87C5A] flex-shrink-0" />
+                  <span className="font-medium">{exhibition.organizer}</span>
+                </div>
+
+                <div className="flex items-start gap-2 text-sm text-gray-600">
+                  <MapPin size={16} className="text-[#D87C5A] mt-0.5 flex-shrink-0" />
+                  <span className="line-clamp-2">{exhibition.venue || exhibition.address}</span>
+                </div>
+              </div>
+
+              {/* Additional Info Grid */}
+              <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-100">
+                <div className="text-center p-2 bg-gray-50 rounded">
+                  <div className="text-xs text-gray-500 font-medium">Entry Fee</div>
+                  <div className="text-sm font-bold text-gray-900">
+                    {exhibition.entryFee ? `${exhibition.entryFee}` : 'Free'}
+                  </div>
+                </div>
+                <div className="text-center p-2 bg-gray-50 rounded">
+                  <div className="text-xs text-gray-500 font-medium">Max Participants</div>
+                  <div className="text-sm font-bold text-gray-900">
+                    {exhibition.maxParticipants || exhibition.expectedVisitors || 0}
+                  </div>
+                </div>
+              </div>
+
+              {/* Contact Info Preview */}
+              {(exhibition.contactPhone || exhibition.organizerEmail) && (
+                <div className="text-xs text-gray-500 space-y-1 pt-2">
+                  {exhibition.contactPhone && (
+                    <div className="flex items-center gap-1">
+                      📞 {exhibition.contactPhone}
+                    </div>
+                  )}
+                  {exhibition.organizerEmail && (
+                    <div className="flex items-center gap-1 truncate">
+                      ✉️ {exhibition.organizerEmail}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 border-t border-gray-100 bg-gray-50">
               <button
                 onClick={() => {
                   setSelectedExhibition(exhibition);
                   setShowDetailsModal(true);
                 }}
-                className="text-[#D87C5A] hover:text-[#5D3A00] font-medium text-sm flex items-center gap-1"
+                className="w-full py-2 px-4 bg-gradient-to-r from-[#D87C5A] to-[#c4664a] text-white font-medium rounded-lg hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2"
               >
-                <Eye size={16} />
-                View Details
+                <Eye size={18} />
+                View Full Details
               </button>
             </div>
 
+            {/* Rejection Notice */}
             {exhibition.status === 'rejected' && exhibition.rejectionReason && (
-              <div className="mt-2 text-xs text-red-700 bg-red-50 p-2 rounded">
-                <strong>Reason:</strong> {exhibition.rejectionReason}
+              <div className="mx-4 mb-4 p-3 text-xs bg-red-50 border border-red-200 rounded-lg">
+                <strong className="text-red-800">❌ Rejection Reason:</strong>
+                <p className="text-red-700 mt-1">{exhibition.rejectionReason}</p>
               </div>
             )}
           </div>
@@ -488,131 +543,238 @@ const VerificationList = () => {
       {/* Exhibition Details Modal */}
       {showDetailsModal && selectedExhibition && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-900">{selectedExhibition.title}</h3>
-                  <p className="text-gray-600 mt-1">Organized by {selectedExhibition.organizer}</p>
+          <div className="bg-white rounded-xl max-w-6xl w-full h-[95vh] flex flex-col shadow-2xl">
+            {/* Compact Header - Fixed at top */}
+            <div className="flex-shrink-0 px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-[#FFE8D6] to-white">
+              <div className="flex justify-between items-center">
+                <div className="flex-1 flex items-center gap-4">
+                  <div className="flex-1">
+                    <h3 className="text-xl font-bold text-gray-900">{selectedExhibition.title}</h3>
+                    <p className="text-sm text-gray-600 mt-1">
+                      by {selectedExhibition.organizer} • ID: #{selectedExhibition.id}
+                    </p>
+                  </div>
+                  <span className={`px-4 py-2 rounded-full text-xs font-bold uppercase flex items-center gap-2 ${
+                    selectedExhibition.status === 'approved' ? 'bg-green-100 text-green-800' :
+                    selectedExhibition.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                    'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {getStatusIcon(selectedExhibition.status)}
+                    {selectedExhibition.status}
+                  </span>
                 </div>
                 <button
                   onClick={() => setShowDetailsModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="ml-4 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-2 transition-colors"
+                  title="Close"
                 >
-                  <X size={24} />
+                  <X size={20} />
                 </button>
               </div>
             </div>
 
-            <div className="p-6 space-y-6">
-              {/* Basic Information */}
-              <div>
-                <h4 className="font-semibold text-gray-900 mb-3">Exhibition Details</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Category</label>
-                    <p className="text-gray-900">{selectedExhibition.category}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Expected Visitors</label>
-                    <p className="text-gray-900">{selectedExhibition.expectedVisitors}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Number of Artworks</label>
-                    <p className="text-gray-900">{selectedExhibition.artworksCount}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Entry Fee</label>
-                    <p className="text-gray-900">{selectedExhibition.entryFee}</p>
-                  </div>
+            {/* Scrollable Content Area with better spacing */}
+            <div className="flex-1 overflow-y-auto">
+              <div className="p-6 space-y-4">
+                {/* Description - Compact */}
+                <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-4 rounded-lg border border-amber-200">
+                  <h4 className="font-semibold text-gray-900 mb-2 text-sm flex items-center gap-2">
+                    📄 Description
+                  </h4>
+                  <p className="text-sm text-gray-700 leading-relaxed line-clamp-3">{selectedExhibition.description}</p>
                 </div>
-              </div>
 
-              {/* Contact Information */}
-              <div>
-                <h4 className="font-semibold text-gray-900 mb-3">Contact Information</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Email</label>
-                    <p className="text-gray-900">{selectedExhibition.organizerEmail}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Phone</label>
-                    <p className="text-gray-900">{selectedExhibition.contactPhone}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Website</label>
-                    <p className="text-blue-600">{selectedExhibition.website}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Venue Address</label>
-                    <p className="text-gray-900">{selectedExhibition.address}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Documents Status */}
-              <div>
-                <h4 className="font-semibold text-gray-900 mb-3">Document Verification</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {selectedExhibition.documents.map((doc, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex items-center gap-2">
-                        <FileText size={16} className="text-gray-400" />
-                        <span className="text-gray-900">{doc.name}</span>
+                {/* Two Column Layout for Compact View */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {/* Left Column */}
+                  <div className="space-y-4">
+                    {/* Schedule - Compact */}
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <h4 className="font-semibold text-gray-900 mb-3 text-sm flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-blue-600" />
+                        Schedule
+                      </h4>
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs text-gray-600 font-medium">Start:</span>
+                          <span className="text-sm font-bold text-blue-900">
+                            {selectedExhibition.startDate} {selectedExhibition.startTime && `• ${selectedExhibition.startTime}`}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs text-gray-600 font-medium">End:</span>
+                          <span className="text-sm font-bold text-red-900">
+                            {selectedExhibition.endDate} {selectedExhibition.endTime && `• ${selectedExhibition.endTime}`}
+                          </span>
+                        </div>
                       </div>
-                      <span className={`text-sm font-medium ${getDocumentStatusColor(doc.status)}`}>
-                        {doc.status}
+                    </div>
+
+                    {/* Location - Compact */}
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <h4 className="font-semibold text-gray-900 mb-2 text-sm flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-green-600" />
+                        Location
+                      </h4>
+                      <p className="text-sm text-gray-700">{selectedExhibition.venue || selectedExhibition.address}</p>
+                    </div>
+
+                    {/* Category - Compact */}
+                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                      <h4 className="font-semibold text-gray-900 mb-2 text-sm">Category</h4>
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-gradient-to-r from-blue-500 to-purple-500 text-white">
+                        🎨 {selectedExhibition.category}
                       </span>
                     </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Verification Status and Actions */}
-              <div>
-                <h4 className="font-semibold text-gray-900 mb-3">Verification Status</h4>
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    {getStatusIcon(selectedExhibition.status)}
-                    <span className="font-medium capitalize">{selectedExhibition.status}</span>
                   </div>
-                  <p className="text-gray-600 text-sm mb-2">{selectedExhibition.verificationNotes}</p>
-                  {selectedExhibition.verifiedBy && (
-                    <p className="text-gray-500 text-xs">
-                      Verified by {selectedExhibition.verifiedBy} on {selectedExhibition.verificationDate}
-                    </p>
-                  )}
+
+                  {/* Right Column */}
+                  <div className="space-y-4">
+                    {/* Stats - Compact Grid */}
+                    <div className="bg-white border-2 border-gray-200 rounded-lg p-4">
+                      <h4 className="font-semibold text-gray-900 mb-3 text-sm">Key Stats</h4>
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
+                          <div className="text-2xl mb-1">👥</div>
+                          <p className="text-xs text-gray-600 mb-1">Participants</p>
+                          <p className="text-lg font-bold text-green-900">{selectedExhibition.maxParticipants || 0}</p>
+                        </div>
+                        <div className="text-center p-3 bg-purple-50 rounded-lg border border-purple-200">
+                          <div className="text-2xl mb-1">💰</div>
+                          <p className="text-xs text-gray-600 mb-1">Entry Fee</p>
+                          <p className="text-sm font-bold text-purple-900">
+                            {selectedExhibition.entryFee ? `${selectedExhibition.entryFee}` : 'Free'}
+                          </p>
+                        </div>
+                        <div className="text-center p-3 bg-pink-50 rounded-lg border border-pink-200">
+                          <div className="text-2xl mb-1">❤️</div>
+                          <p className="text-xs text-gray-600 mb-1">Likes</p>
+                          <p className="text-lg font-bold text-pink-900">{selectedExhibition.likes || 0}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Contact - Compact */}
+                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                      <h4 className="font-semibold text-gray-900 mb-3 text-sm flex items-center gap-2">
+                        <User className="h-4 w-4 text-orange-600" />
+                        Contact Information
+                      </h4>
+                      <div className="space-y-2">
+                        <div>
+                          <p className="text-xs text-gray-600 font-medium mb-1">✉️ Email</p>
+                          <p className="text-sm text-gray-900 font-medium break-all">{selectedExhibition.organizerEmail}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-600 font-medium mb-1">📞 Phone</p>
+                          <p className="text-sm text-gray-900 font-medium">{selectedExhibition.contactPhone}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Submission Info - Compact */}
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <h4 className="font-semibold text-gray-900 mb-2 text-sm">Submission</h4>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-gray-600">Submitted:</span>
+                        <span className="font-bold text-gray-900">
+                          {selectedExhibition.submissionDate && new Date(selectedExhibition.submissionDate).toLocaleDateString()}
+                        </span>
+                      </div>
+                      {selectedExhibition.createdBy && (
+                        <div className="flex justify-between items-center text-sm mt-1">
+                          <span className="text-gray-600">User ID:</span>
+                          <span className="font-bold text-gray-900">#{selectedExhibition.createdBy}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
-                {selectedExhibition.status === 'pending' && (
-                  <div className="flex gap-3 mt-4">
-                    <button
-                      onClick={() => {
-                        handleStatusChange(selectedExhibition.id, 'approved');
-                        setShowDetailsModal(false);
-                      }}
-                      className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                    >
-                      <Check size={16} />
-                      Approve
-                    </button>
-                    <button
-                      onClick={() => {
-                        const reason = prompt('Please provide a reason for rejection:');
-                        if (reason) {
-                          handleStatusChange(selectedExhibition.id, 'rejected', reason);
-                          setShowDetailsModal(false);
-                        }
-                      }}
-                      className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                    >
-                      <X size={16} />
-                      Reject
-                    </button>
+                {/* Requirements - Expandable if exists */}
+                {selectedExhibition.requirements && (
+                  <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-4">
+                    <h4 className="font-semibold text-gray-900 mb-2 text-sm flex items-center gap-2">
+                      <Shield className="h-4 w-4 text-yellow-600" />
+                      Requirements
+                    </h4>
+                    <p className="text-sm text-gray-700 line-clamp-2">{selectedExhibition.requirements}</p>
                   </div>
                 )}
               </div>
+            </div>
+
+            {/* Fixed Footer with Actions */}
+            <div className="flex-shrink-0 px-6 py-4 border-t border-gray-200 bg-gray-50">
+              {selectedExhibition.status === 'pending' ? (
+                <div className="flex gap-3 justify-end">
+                  <button
+                    onClick={async () => {
+                      if (updating) return;
+                      await handleStatusChange(selectedExhibition.id, 'approved');
+                      setShowDetailsModal(false);
+                    }}
+                    disabled={updating}
+                    className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                  >
+                    {updating ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <Check size={18} />
+                        Approve Exhibition
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (updating) return;
+                      const reason = prompt('Please provide a reason for rejection:');
+                      if (reason && reason.trim()) {
+                        handleStatusChange(selectedExhibition.id, 'rejected', reason);
+                        setShowDetailsModal(false);
+                      } else if (reason !== null) {
+                        alert('Rejection reason is required.');
+                      }
+                    }}
+                    disabled={updating}
+                    className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                  >
+                    {updating ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <X size={18} />
+                        Reject Exhibition
+                      </>
+                    )}
+                  </button>
+                </div>
+              ) : (
+                <div className="flex justify-between items-center">
+                  <div className={`text-sm font-medium ${
+                    selectedExhibition.status === 'approved' ? 'text-green-700' : 'text-red-700'
+                  }`}>
+                    {selectedExhibition.verifiedBy && selectedExhibition.verificationDate && (
+                      <span>
+                        Verified by {selectedExhibition.verifiedBy} on {selectedExhibition.verificationDate}
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => setShowDetailsModal(false)}
+                    className="px-6 py-2.5 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all duration-200 font-medium"
+                  >
+                    Close
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

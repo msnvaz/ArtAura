@@ -1,18 +1,28 @@
 package com.artaura.artaura.controller;
 
-import com.artaura.artaura.dto.CreateExhibitionDTO;
-import com.artaura.artaura.dto.ExhibitionDTO;
-import com.artaura.artaura.service.ExhibitionService;
-import com.artaura.artaura.util.JwtUtil;
+import java.util.List;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-import java.util.Map;
+import com.artaura.artaura.dto.CreateExhibitionDTO;
+import com.artaura.artaura.dto.ExhibitionDTO;
+import com.artaura.artaura.service.ExhibitionService;
+import com.artaura.artaura.util.JwtUtil;
 
 @RestController
 @RequestMapping("/api/exhibitions")
@@ -26,6 +36,76 @@ public class ExhibitionController {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    /**
+     * Get all exhibitions (for moderator verification)
+     */
+    @GetMapping
+    public ResponseEntity<?> getAllExhibitions() {
+        logger.info("GET /api/exhibitions - Fetching all exhibitions");
+
+        try {
+            List<ExhibitionDTO> exhibitions = exhibitionService.getAllExhibitions();
+            logger.info("Found {} exhibitions", exhibitions.size());
+            return ResponseEntity.ok(exhibitions);
+        } catch (Exception e) {
+            logger.error("Error fetching all exhibitions: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to fetch exhibitions: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Update exhibition status (for moderator verification)
+     */
+    @PutMapping("/{exhibitionId}/status")
+    public ResponseEntity<?> updateExhibitionStatus(
+            @PathVariable Integer exhibitionId,
+            @RequestBody Map<String, String> statusUpdate,
+            @RequestHeader(value = "Authorization", required = false) String authorizationHeader) {
+
+        logger.info("PUT /api/exhibitions/{}/status - Updating exhibition status", exhibitionId);
+
+        try {
+            // Extract and validate JWT token
+            if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+                logger.warn("Missing or invalid Authorization header");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Missing or invalid Authorization header");
+            }
+
+            String token = authorizationHeader.substring(7);
+            try {
+                jwtUtil.validateToken(token);
+            } catch (Exception e) {
+                logger.warn("Invalid JWT token: {}", e.getMessage());
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
+            }
+
+            String newStatus = statusUpdate.get("status");
+            String reason = statusUpdate.get("reason");
+
+            if (newStatus == null || newStatus.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Status is required");
+            }
+
+            // Update the status
+            boolean updated = exhibitionService.updateExhibitionStatus(exhibitionId, newStatus, reason);
+
+            if (updated) {
+                logger.info("Successfully updated exhibition status for ID: {}", exhibitionId);
+                return ResponseEntity.ok("Exhibition status updated successfully");
+            } else {
+                logger.warn("Exhibition not found for status update with ID: {}", exhibitionId);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Exhibition not found");
+            }
+
+        } catch (IllegalArgumentException e) {
+            logger.error("Invalid input for updating status: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid input: " + e.getMessage());
+        } catch (Exception e) {
+            logger.error("Error updating exhibition status {}: {}", exhibitionId, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to update status: " + e.getMessage());
+        }
+    }
 
     /**
      * Create a new exhibition
@@ -55,7 +135,7 @@ public class ExhibitionController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
             }
 
-            Integer artistId = artistIdLong.intValue();
+            Integer artistId = artistIdLong != null ? artistIdLong.intValue() : null;
             if (artistId == null) {
                 logger.warn("Could not extract artist ID from token");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
