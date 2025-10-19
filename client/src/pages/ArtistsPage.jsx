@@ -160,22 +160,9 @@ const ArtistsPage = () => {
     // Add follow logic here
   };
 
-  const handleViewProfile = async (artist) => {
-    try {
-      const token = localStorage.getItem("token");
-      const response = await axios.get(
-        `${API_URL}/api/artist/profile/${artist.id}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      setProfileArtist(response.data); // Pass the latest profile to the modal
-      setShowProfileModal(true);
-    } catch (error) {
-      // Optionally show error toast
-      setProfileArtist(artist); // fallback to existing data
-      setShowProfileModal(true);
-    }
+  const handleViewProfile = (artist) => {
+    // Navigate to the public artist portfolio
+    navigate(`/artist/${artist.id || artist.artistId}`);
   };
 
   const handleCloseProfileModal = () => {
@@ -402,21 +389,19 @@ const ArtistsPage = () => {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setViewMode("grid")}
-                  className={`p-2 rounded-lg ${
-                    viewMode === "grid"
+                  className={`p-2 rounded-lg ${viewMode === "grid"
                       ? "bg-[#D87C5A] text-white"
                       : "bg-[#FFD95A] text-[#7f5539]"
-                  }`}
+                    }`}
                 >
                   <Grid className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => setViewMode("list")}
-                  className={`p-2 rounded-lg ${
-                    viewMode === "list"
+                  className={`p-2 rounded-lg ${viewMode === "list"
                       ? "bg-[#D87C5A] text-white"
                       : "bg-[#FFD95A] text-[#7f5539]"
-                  }`}
+                    }`}
                 >
                   <List className="w-4 h-4" />
                 </button>
@@ -501,11 +486,10 @@ const ArtistsPage = () => {
             </div>
           ) : (
             <div
-              className={`grid gap-6 ${
-                viewMode === "grid"
+              className={`grid gap-6 ${viewMode === "grid"
                   ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
                   : "grid-cols-1 max-w-4xl mx-auto"
-              }`}
+                }`}
             >
               {filteredArtists.map((artist, index) => (
                 <ArtistCard

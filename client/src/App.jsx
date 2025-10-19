@@ -24,6 +24,7 @@ import Signup from "./components/auth/signup2";
 import ArtworkDetail from "./pages/Artist/ArtWorkDetail";
 
 import ArtistPortfolio from "./pages/Artist/ArtistPortfolio";
+import PublicArtistPortfolio from "./pages/Artist/PublicArtistPortfolio";
 import UploadArtWork from "./pages/Artist/UploadArtWork";
 import CommunityPage from "./pages/CommunityPage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -77,6 +78,7 @@ function AppWrapper() {
         <Route path="/competitions" element={<PageTransition><Competitions /></PageTransition>} />
         <Route path="/shop-products" element={<PageTransition><ShopProductsPage /></PageTransition>} />
         <Route path="/artists" element={<PageTransition><ArtistsPage /></PageTransition>} />
+        <Route path="/artist/:artistId" element={<PageTransition><PublicArtistPortfolio /></PageTransition>} />
         <Route path="/public-challenges" element={<PageTransition><ChallengesPage /></PageTransition>} />
         <Route path="/challenge-submission/:challengeId" element={<PageTransition><ChallengeSubmissionPage /></PageTransition>} />
         <Route path="/my-posts" element={<PageTransition><MyPosts /></PageTransition>} />
