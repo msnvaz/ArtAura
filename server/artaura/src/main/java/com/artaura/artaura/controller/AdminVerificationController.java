@@ -12,7 +12,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin/verification")
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174"})
 public class AdminVerificationController {
 
     @Autowired
@@ -23,16 +23,22 @@ public class AdminVerificationController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String userType,
             @RequestParam(required = false) String search) {
-        
+
         try {
             List<VerificationRequestDTO> requests;
-            
+
             if (status != null || userType != null || search != null) {
                 Map<String, Object> filters = new HashMap<>();
-                if (status != null) filters.put("status", status);
-                if (userType != null) filters.put("userType", userType);
-                if (search != null) filters.put("search", search);
-                
+                if (status != null) {
+                    filters.put("status", status);
+                }
+                if (userType != null) {
+                    filters.put("userType", userType);
+                }
+                if (search != null) {
+                    filters.put("search", search);
+                }
+
                 requests = adminVerificationService.getFilteredVerificationRequests(filters);
             } else {
                 requests = adminVerificationService.getAllVerificationRequests();
@@ -42,14 +48,14 @@ public class AdminVerificationController {
             response.put("success", true);
             response.put("requests", requests);
             response.put("total", requests.size());
-            
+
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
             errorResponse.put("message", "Failed to fetch verification requests");
             errorResponse.put("error", e.getMessage());
-            
+
             return ResponseEntity.status(500).body(errorResponse);
         }
     }
@@ -58,12 +64,12 @@ public class AdminVerificationController {
     public ResponseEntity<Map<String, Object>> updateVerificationStatus(
             @PathVariable String requestId,
             @RequestBody Map<String, String> statusUpdate) {
-        
+
         try {
             String userType = statusUpdate.get("userType");
             String status = statusUpdate.get("status");
             String rejectionReason = statusUpdate.get("rejectionReason");
-            
+
             // Map frontend status to database status
             String dbStatus;
             switch (status.toLowerCase()) {
@@ -81,7 +87,7 @@ public class AdminVerificationController {
                 default:
                     dbStatus = status;
             }
-            
+
             boolean success;
             if (rejectionReason != null && !rejectionReason.isEmpty()) {
                 success = adminVerificationService.updateVerificationStatus(requestId, userType, dbStatus, rejectionReason);
@@ -92,14 +98,14 @@ public class AdminVerificationController {
             Map<String, Object> response = new HashMap<>();
             response.put("success", success);
             response.put("message", success ? "Status updated successfully" : "Failed to update status");
-            
+
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
             errorResponse.put("message", "Failed to update verification status");
             errorResponse.put("error", e.getMessage());
-            
+
             return ResponseEntity.status(500).body(errorResponse);
         }
     }
@@ -112,14 +118,14 @@ public class AdminVerificationController {
             stats.put("pending", adminVerificationService.getPendingVerificationRequestsCount());
             stats.put("verified", adminVerificationService.getVerifiedRequestsCount());
             stats.put("rejected", adminVerificationService.getRejectedRequestsCount());
-            
+
             return ResponseEntity.ok(stats);
         } catch (Exception e) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
             errorResponse.put("message", "Failed to fetch verification stats");
             errorResponse.put("error", e.getMessage());
-            
+
             return ResponseEntity.status(500).body(errorResponse);
         }
     }

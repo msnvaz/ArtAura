@@ -8,7 +8,6 @@ import {
   UserCheck,
   UserX,
   ShieldAlert,
-  MoreVertical,
   X,
   Plus,
   ChevronDown,
@@ -645,21 +644,6 @@ const UsersManagement = () => {
                               title={user.status === 'Suspended' ? 'Unblock User' : 'Block User'}
                             >
                               {user.status === 'Suspended' ? <UserX size={14} /> : <UserCheck size={14} />}
-                            </button>
-                            <button
-                              className="p-2 rounded-lg transition-colors"
-                              style={{backgroundColor: '#FFE4D6', color: '#5D3A00'}}
-                              onMouseOver={(e) => {
-                                e.target.style.backgroundColor = '#FFD95A';
-                                e.target.style.transform = 'scale(1.05)';
-                              }}
-                              onMouseOut={(e) => {
-                                e.target.style.backgroundColor = '#FFE4D6';
-                                e.target.style.transform = 'scale(1)';
-                              }}
-                              title="More Options"
-                            >
-                              <MoreVertical size={13} />
                             </button>
                           </div>
                         </td>

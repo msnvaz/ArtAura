@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: mysql-artaura.alwaysdata.net
--- Generation Time: Oct 18, 2025 at 05:56 AM
+-- Generation Time: Oct 19, 2025 at 02:19 PM
 -- Server version: 10.11.14-MariaDB
 -- PHP Version: 7.4.33
 
@@ -55,14 +55,15 @@ INSERT INTO `AW_orders` (`id`, `buyer_id`, `first_name`, `last_name`, `email`, `
 (12, 1, 'pawani2002', 'Kumari2002', 'pawanibuyer@gmail.com', '2025-09-02 19:35:00', 800.00, NULL, 'pinnalandawatta, bathamburaya, rambukkana, 71100, Sri Lanka', '0741748684', 'escrow', 'pending', 'stripe', 'pi_3S2upRQcGakY3xP20b2AUOlo'),
 (13, 1, 'pawani2002', 'Kumari', 'pawanibuyer@gmail.com', '2025-09-05 23:31:34', 4500.00, NULL, 'pinnalandawatta, bathamburaya, rambukkana, 71100, Sri Lanka', '0741748684', 'escrow', 'pending', 'stripe', 'pi_3S43x0QcGakY3xP22q4iOqtp'),
 (14, 1, 'pawani2002', 'Kumari', 'pawanibuyer@gmail.com', '2025-09-05 23:34:50', 3000.00, NULL, 'pinnalandawatta, bathamburaya, rambukkana, 71100, Sri Lanka', '0741748684', 'escrow', 'pending', 'stripe', 'pi_3S440BQcGakY3xP21O0JvPdN'),
-(16, 1, 'pawani2002', 'Kumari', 'pawanibuyer@gmail.com', '2025-10-16 21:13:14', 3600.00, NULL, 'pinnalandawatta, bathamburaya, rambukkana, 71100, Sri Lanka', '0741748684', 'escrow', 'pending', 'stripe', 'pi_3SItKcQcGakY3xP254wiGrta'),
+(16, 1, 'pawani2002', 'Kumari', 'pawanibuyer@gmail.com', '2025-10-16 21:13:14', 3600.00, 777, 'pinnalandawatta, bathamburaya, rambukkana, 71100, Sri Lanka', '0741748684', 'paid', 'pending', 'stripe', 'pi_3SItKcQcGakY3xP254wiGrta'),
 (17, 1, 'pawani2002', 'Kumari', 'pawanibuyer@gmail.com', '2025-10-16 21:18:32', 6500.00, NULL, 'pinnalandawatta, bathamburaya, rambukkana, 71100, Sri Lanka', '0741748684', 'escrow', 'pending', 'stripe', 'pi_3SItPlQcGakY3xP20LclEoHl'),
 (18, 1, 'pawani2002', 'Kumari', 'pawanibuyer@gmail.com', '2025-10-16 21:26:57', 3600.00, 1500, 'pinnalandawatta, bathamburaya, rambukkana, 71100, Sri Lanka', '0741748684', 'escrow', 'pending', 'stripe', 'pi_3SItXuQcGakY3xP2512lkgA8'),
 (20, 1, 'pawani2002', 'Kumari', 'pawanibuyer@gmail.com', '2025-10-17 20:55:38', 20000.00, NULL, 'pinnalandawatta, bathamburaya, rambukkana, 71100, Sri Lanka', '0741748684', 'escrow', 'pending', 'stripe', 'pi_3SJFX9QcGakY3xP25VLHdBaS'),
 (23, 1, 'Pawani', 'Kumari', 'pawani@gmail.com', '2025-10-17 23:56:30', 7000.00, NULL, 'Ethumalpitiya, Polonnaruwa., qq, 51000, Sri Lanka', '0772089738', 'escrow', 'pending', 'stripe', 'pi_3SJIMCQcGakY3xP22ah1orF9'),
 (24, 1, 'pawani2002', 'Kumari', 'pawanibuyer@gmail.com', '2025-10-18 01:09:48', NULL, NULL, 'pinnalandawatta, bathamburaya, rambukkana, 71100, Sri Lanka', '0741748684', 'escrow', 'pending', 'stripe', 'pi_3SJJV6QcGakY3xP22yBV1M7V'),
 (25, 1, 'Pawani', 'Kumari', 'pawani@gmail.com', '2025-10-18 02:05:32', 4500.00, NULL, 'Ethumalpitiya, Polonnaruwa., qq, 51000, Sri Lanka', '0772089738', 'escrow', 'pending', 'stripe', 'pi_3SJKN3QcGakY3xP203DTX40H'),
-(26, 1, 'Pawani', 'Kumari', 'pawani@gmail.com', '2025-10-18 02:34:50', 4000.00, NULL, 'Ethumalpitiya, Polonnaruwa., qq, 51000, Sri Lanka', '0772089738', 'escrow', 'pending', 'stripe', 'pi_3SJKpPQcGakY3xP23qZQrgvU');
+(26, 1, 'Pawani', 'Kumari', 'pawani@gmail.com', '2025-10-18 02:34:50', 4000.00, 456, 'Ethumalpitiya, Polonnaruwa., qq, 51000, Sri Lanka', '0772089738', 'escrow', 'delivered', 'stripe', 'pi_3SJKpPQcGakY3xP23qZQrgvU'),
+(27, 10, 'pawani', 'saman', 'saman@gmail.com', '2025-10-19 16:09:40', NULL, NULL, 'staple street, pinnawala, kegalle, 1225, Sri Lanka', '035225554', NULL, 'N/A', 'stripe', 'pi_3SJu1VQcGakY3xP21ijEvXd6');
 
 --
 -- Indexes for dumped tables
@@ -83,7 +84,7 @@ ALTER TABLE `AW_orders`
 -- AUTO_INCREMENT for table `AW_orders`
 --
 ALTER TABLE `AW_orders`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- Constraints for dumped tables

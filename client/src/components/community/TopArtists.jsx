@@ -46,6 +46,17 @@ const TopArtists = () => {
   const navigate = useNavigate();
   const [topArtists, setTopArtists] = useState([]);
 
+  // Helper function to get correct avatar path
+  const getAvatarPath = (avatarUrl) => {
+    if (!avatarUrl) return "/uploads/profiles/default-avatar.svg";
+    // If it's already a full URL or starts with /, return as is
+    if (avatarUrl.startsWith("http") || avatarUrl.startsWith("/")) {
+      return avatarUrl;
+    }
+    // Otherwise, assume it's a relative path and prepend /
+    return `/${avatarUrl}`;
+  };
+
   useEffect(() => {
     const fetchTopArtists = async () => {
       try {
@@ -121,11 +132,19 @@ const TopArtists = () => {
           >
             <div className="relative">
               <img
-                src={artist.avatar || "/src/assets/user.png"} // Use local fallback image
+                src={getAvatarPath(artist.avatarUrl)} // Use avatarUrl field and helper function
                 alt={artist.name}
                 className="w-10 h-10 rounded-full object-cover border-2 border-[#FFD95A]"
+                onError={(e) => {
+                  e.target.src = "/uploads/profiles/default-avatar.svg";
+                }}
               />
-              <div className="absolute -top-1 -right-1 w-5 h-5 bg-[#D87C5A] rounded-full flex items-center justify-center text-white text-xs font-bold">
+              {artist.status === "Active" && (
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                  <span className="text-white text-xs">✓</span>
+                </div>
+              )}
+              <div className="absolute -top-1 -left-1 w-5 h-5 bg-[#D87C5A] rounded-full flex items-center justify-center text-white text-xs font-bold">
                 {index + 1}
               </div>
             </div>

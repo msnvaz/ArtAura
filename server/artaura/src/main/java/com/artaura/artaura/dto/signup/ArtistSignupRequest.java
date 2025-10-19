@@ -2,6 +2,7 @@ package com.artaura.artaura.dto.signup;
 
 import lombok.Data;
 import jakarta.validation.constraints.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @Data
 public class ArtistSignupRequest {

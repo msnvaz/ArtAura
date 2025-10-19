@@ -3,7 +3,6 @@ package com.artaura.artaura.dto.shop;
 import lombok.Data;
 
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
 
 @Data
 public class ShopDTO {
@@ -65,8 +64,87 @@ public class ShopDTO {
         this.createdAt = timestamp;
     }
 
-    public void setCreatedAt(LocalDateTime localDateTime) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'setCreatedAt'");
+    public Timestamp getCreatedAt() {
+        return createdAt;
+    }
+
+    public String getShopName() {
+        return shopName;
+    }
+
+    public void setShopName(String shopName) {
+        this.shopName = shopName;
+    }
+
+    public String getOwnerName() {
+        return ownerName;
+    }
+
+    public void setOwnerName(String ownerName) {
+        this.ownerName = ownerName;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getContactNo() {
+        return contactNo;
+    }
+
+    public void setContactNo(String contactNo) {
+        this.contactNo = contactNo;
+    }
+
+    public String getBusinessType() {
+        return businessType;
+    }
+
+    public void setBusinessType(String businessType) {
+        this.businessType = businessType;
+    }
+
+    public String getBusinessLicense() {
+        return businessLicense;
+    }
+
+    public void setBusinessLicense(String businessLicense) {
+        this.businessLicense = businessLicense;
+    }
+
+    public String getTaxId() {
+        return taxId;
+    }
+
+    public void setTaxId(String taxId) {
+        this.taxId = taxId;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public Boolean getAgreedTerms() {
+        return agreedTerms;
+    }
+
+    public void setAgreedTerms(Boolean agreedTerms) {
+        this.agreedTerms = agreedTerms;
     }
 }

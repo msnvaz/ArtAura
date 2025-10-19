@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 import {
   Trophy,
   Calendar,
@@ -31,6 +32,7 @@ import {
   Lightbulb,
 } from "lucide-react";
 import Navbar from "../components/common/Navbar";
+import challengeParticipationApi from "../api/challengeParticipationApi";
 
 const ArtistChallengesPage = () => {
   const [activeTab, setActiveTab] = useState("available");
@@ -41,116 +43,80 @@ const ArtistChallengesPage = () => {
   const [showSubmissionModal, setShowSubmissionModal] = useState(false);
   const [showIterationModal, setShowIterationModal] = useState(false);
 
-  // Mock data for available challenges
-  const mockAvailableChallenges = [
-    {
-      id: 1,
-      title: "Digital Art Showcase 2025",
-      description:
-        "Create stunning digital artwork using any medium and showcase your creativity",
-      category: "Digital Art",
-      startDate: "2025-07-01",
-      endDate: "2025-07-31",
-      prize: "$1,500",
-      participants: 234,
-      submissions: 156,
-      difficulty: "Intermediate",
-      status: "active",
-      timeLeft: "13 days",
-      rules: [
-        "Original artwork only",
-        "Maximum 3 submissions",
-        "Digital format required",
-      ],
-      image:
-        "https://images.pexels.com/photos/1545743/pexels-photo-1545743.jpeg?auto=compress&cs=tinysrgb&w=600",
-      organizer: "ArtAura Team",
-      tags: ["digital", "creative", "showcase"],
-      joined: false,
-      maxSubmissions: 3,
-    },
-    {
-      id: 2,
-      title: "Abstract Expression Challenge",
-      description:
-        "Express your emotions through abstract art forms and bold color combinations",
-      category: "Abstract Art",
-      startDate: "2025-07-15",
-      endDate: "2025-08-15",
-      prize: "$1,000",
-      participants: 189,
-      submissions: 98,
-      difficulty: "Advanced",
-      status: "active",
-      timeLeft: "28 days",
-      rules: [
-        "Abstract style only",
-        "Any medium accepted",
-        "Artist statement required",
-      ],
-      image:
-        "https://images.pexels.com/photos/1269968/pexels-photo-1269968.jpeg?auto=compress&cs=tinysrgb&w=600",
-      organizer: "Modern Art Society",
-      tags: ["abstract", "expression", "emotion"],
-      joined: true,
-      maxSubmissions: 2,
-    },
-  ];
+  const loadData = async () => {
+    try {
+      setLoading(true);
 
-  // Mock data for artist's submissions
-  const mockMySubmissions = [
-    {
-      id: 1,
-      challengeId: 2,
-      challengeTitle: "Abstract Expression Challenge",
-      title: "Emotional Waves",
-      description:
-        "A representation of turbulent emotions through flowing abstract forms",
-      image:
-        "https://images.pexels.com/photos/1269968/pexels-photo-1269968.jpeg?auto=compress&cs=tinysrgb&w=600",
-      submittedAt: "2025-07-16T10:30:00Z",
-      status: "submitted",
-      feedback:
-        "Great use of color and composition. Consider adding more contrast in the central area.",
-      likes: 23,
-      views: 145,
-      rank: 5,
-      totalSubmissions: 98,
-      canIterate: true,
-      iterationCount: 0,
-      maxIterations: 2,
-    },
-    {
-      id: 2,
-      challengeId: 2,
-      challengeTitle: "Abstract Expression Challenge",
-      title: "Emotional Waves - Iteration 1",
-      description:
-        "Refined version with enhanced contrast and deeper emotional expression",
-      image:
-        "https://images.pexels.com/photos/1269968/pexels-photo-1269968.jpeg?auto=compress&cs=tinysrgb&w=600",
-      submittedAt: "2025-07-17T14:20:00Z",
-      status: "submitted",
-      feedback:
-        "Excellent improvement! The contrast really brings out the emotional depth.",
-      likes: 45,
-      views: 289,
-      rank: 3,
-      totalSubmissions: 98,
-      canIterate: true,
-      iterationCount: 1,
-      maxIterations: 2,
-      isIteration: true,
-      originalSubmissionId: 1,
-    },
-  ];
+      // Load active challenges with participant and submission counts
+      const token = localStorage.getItem("token");
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/api/buyer/challenges/active`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      // Map the response to include participant and submission counts from backend
+      const mappedChallenges = (response.data || []).map((challenge) => ({
+        id: challenge.id,
+        title: challenge.title,
+        description: challenge.description,
+        category: challenge.category,
+        startDate: challenge.publishDateTime,
+        endDate: challenge.deadlineDateTime,
+        participants: challenge.participantCount || 0, // Real participant count from DB
+        submissions: challenge.submissionCount || 0, // Real submission count from DB
+        difficulty: "Intermediate", // Default since not in DB
+        status: challenge.status || "active",
+        timeLeft: getTimeLeft(challenge.deadlineDateTime),
+        rules: ["Original artwork only", "Follow challenge guidelines"],
+        image:
+          "https://images.pexels.com/photos/1545743/pexels-photo-1545743.jpeg?auto=compress&cs=tinysrgb&w=600",
+        organizer: "ArtAura Team",
+        tags: ["creative", "challenge"],
+        joined: false, // TODO: Check if user has joined
+        maxSubmissions: 3,
+      }));
+
+      setChallenges(mappedChallenges);
+
+      // Load artist's submissions
+      const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
+      if (userInfo.artistId) {
+        const artistSubmissions =
+          await challengeParticipationApi.getArtistParticipations(
+            userInfo.artistId
+          );
+        setMySubmissions(artistSubmissions);
+      }
+    } catch (error) {
+      console.error("Error loading challenge data:", error);
+      // Fall back to mock data if API fails
+      setChallenges(mockAvailableChallenges);
+      setMySubmissions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getTimeLeft = (deadline) => {
+    if (!deadline) return "N/A";
+    const now = new Date();
+    const end = new Date(deadline);
+    const diff = end - now;
+    if (diff <= 0) return "Expired";
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    if (days > 0) return `${days} days`;
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    if (hours > 0) return `${hours} hours`;
+    const minutes = Math.floor(diff / (1000 * 60));
+    return `${minutes} minutes`;
+  };
 
   useEffect(() => {
-    setTimeout(() => {
-      setChallenges(mockAvailableChallenges);
-      setMySubmissions(mockMySubmissions);
-      setLoading(false);
-    }, 1000);
+    loadData();
   }, []);
 
   const getDifficultyColor = (difficulty) => {

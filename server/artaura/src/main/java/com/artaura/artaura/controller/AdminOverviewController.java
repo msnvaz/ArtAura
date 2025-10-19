@@ -9,7 +9,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin/overview")
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174"})
 public class AdminOverviewController {
 
     @Autowired
@@ -17,6 +17,7 @@ public class AdminOverviewController {
 
     /**
      * Get comprehensive overview statistics for admin dashboard
+     *
      * @return ResponseEntity with overview statistics
      */
     @GetMapping("/statistics")
@@ -31,6 +32,7 @@ public class AdminOverviewController {
 
     /**
      * Get user statistics breakdown
+     *
      * @return ResponseEntity with user statistics
      */
     @GetMapping("/users")
@@ -45,6 +47,7 @@ public class AdminOverviewController {
 
     /**
      * Get financial statistics including platform fees
+     *
      * @return ResponseEntity with financial statistics
      */
     @GetMapping("/financial")
@@ -59,6 +62,7 @@ public class AdminOverviewController {
 
     /**
      * Get moderation statistics
+     *
      * @return ResponseEntity with moderation statistics
      */
     @GetMapping("/moderation")

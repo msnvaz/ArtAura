@@ -632,35 +632,6 @@ const Financial = () => {
 
             {/* Action Buttons */}
             <div className="flex flex-wrap gap-3 pt-4 border-t" style={{borderColor: '#FFE4D6'}}>
-              {transaction.status === 'escrow' && (
-                <button
-                  onClick={() => handleReleaseEscrow(transaction.id)}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                  disabled={loading}
-                >
-                  {loading ? <RefreshCw className="animate-spin" size={16} /> : 'Release Escrow'}
-                </button>
-              )}
-              
-              {(transaction.status === 'escrow' || transaction.status === 'dispute') && (
-                <button
-                  onClick={() => {
-                    setSelectedTransaction(transaction);
-                    setShowRefundModal(true);
-                  }}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                >
-                  Process Refund
-                </button>
-              )}
-              
-              <button
-                onClick={() => handleContactParty(transaction, 'buyer')}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Contact Buyer
-              </button>
-              
               <button
                 onClick={() => handleContactParty(transaction, 'seller')}
                 className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
@@ -1307,50 +1278,6 @@ const Financial = () => {
                           >
                             <Eye size={16} />
                           </button>
-                          
-                          {payment.status === 'escrow' && (
-                            <button
-                              onClick={() => handleReleaseEscrow(payment.id)}
-                              className="p-1 rounded text-green-600 hover:bg-green-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                              title={!token ? "Authentication required" : "Release Escrow"}
-                              disabled={loading || !token}
-                            >
-                              {loading ? <RefreshCw className="animate-spin" size={16} /> : <CheckCircle size={16} />}
-                            </button>
-                          )}
-                          
-                          {(payment.status === 'escrow' || payment.status === 'dispute') && (
-                            <button
-                              onClick={() => {
-                                if (!token) {
-                                  setErrorMessage('Authentication required for refund operations');
-                                  return;
-                                }
-                                setSelectedTransaction(payment);
-                                setShowRefundModal(true);
-                              }}
-                              className="p-1 rounded text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                              title={!token ? "Authentication required" : "Process Refund"}
-                              disabled={!token}
-                            >
-                              <XCircle size={16} />
-                            </button>
-                          )}
-                          
-                          <button
-                            onClick={() => {
-                              if (!token) {
-                                setErrorMessage('Authentication required for contact operations');
-                                return;
-                              }
-                              handleContactParty(payment, 'buyer');
-                            }}
-                            className="p-1 rounded text-purple-600 hover:bg-purple-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            title={!token ? "Authentication required" : "Contact Buyer"}
-                            disabled={!token}
-                          >
-                            <MessageCircle size={16} />
-                          </button>
                         </div>
                       </td>
                     </tr>
@@ -1425,12 +1352,6 @@ const Financial = () => {
                                     <span className="text-xs text-gray-600">Buyer:</span>
                                     <div className="flex justify-between items-center mt-1">
                                       <span className="font-medium">{payment.buyerName}</span>
-                                      <button
-                                        onClick={() => handleContactParty(payment, 'buyer')}
-                                        className="text-blue-600 hover:text-blue-800"
-                                      >
-                                        <MessageCircle size={14} />
-                                      </button>
                                     </div>
                                     {payment.buyerEmail && (
                                       <span className="text-xs text-gray-500">{payment.buyerEmail}</span>
@@ -1482,35 +1403,6 @@ const Financial = () => {
 
                             {/* Action Buttons */}
                             <div className="flex flex-wrap gap-3 pt-4 border-t" style={{borderColor: '#FFE4D6'}}>
-                              {payment.status === 'escrow' && (
-                                <button
-                                  onClick={() => handleReleaseEscrow(payment.id)}
-                                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
-                                  disabled={loading}
-                                >
-                                  {loading ? <RefreshCw className="animate-spin inline" size={14} /> : 'Release Escrow'}
-                                </button>
-                              )}
-                              
-                              {(payment.status === 'escrow' || payment.status === 'dispute') && (
-                                <button
-                                  onClick={() => {
-                                    setSelectedTransaction(payment);
-                                    setShowRefundModal(true);
-                                  }}
-                                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
-                                >
-                                  Process Refund
-                                </button>
-                              )}
-                              
-                              <button
-                                onClick={() => handleContactParty(payment, 'buyer')}
-                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
-                              >
-                                Contact Buyer
-                              </button>
-                              
                               <button
                                 onClick={() => handleContactParty(payment, 'artist')}
                                 className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm"

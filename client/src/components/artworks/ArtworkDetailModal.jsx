@@ -1,6 +1,7 @@
 import React from 'react';
 import ImageZoomLens from './ImageZoomLense';
 import { formatLKR } from '../../util/currency';
+import { getArtworkUrl } from '../../util/imageUrlResolver';
 import {
     Eye,
     Star,
@@ -82,7 +83,7 @@ const ArtworkDetailModal = ({
 
                             <div className="relative">
                                 <ImageZoomLens
-                                    src={artwork.imageUrl?.startsWith('http') ? artwork.imageUrl : `${API_URL}${encodeURI(artwork.imageUrl || artwork.image || '')}`}
+                                    src={getArtworkUrl(artwork.imageUrl || artwork.image)}
                                     zoom={5}
                                     lensSize={180}
                                     className="w-full rounded-lg shadow-lg"

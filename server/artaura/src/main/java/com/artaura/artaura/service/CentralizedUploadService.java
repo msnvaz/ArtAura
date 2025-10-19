@@ -14,8 +14,8 @@ import java.nio.file.StandardCopyOption;
 public class CentralizedUploadService {
 
     /**
-     * Save uploaded file to client/public/uploads directory
-     * This ensures all images are accessible via the web server
+     * Save uploaded file to client/public/uploads directory This ensures all
+     * images are accessible via the web server
      */
     public String saveImageToPublicUploads(MultipartFile file, String subDirectory, String prefix) throws IOException {
         if (file == null || file.isEmpty()) {
@@ -31,11 +31,24 @@ public class CentralizedUploadService {
             throw new IllegalArgumentException("File size too large. Maximum size is 5MB.");
         }
 
-        // Get the project root directory (parent of artaura folder)
+        // Get the project root directory (parent of server folder or artaura folder)
         String currentDir = System.getProperty("user.dir");
-        String projectRoot = currentDir.endsWith("artaura")
-                ? currentDir.substring(0, currentDir.lastIndexOf("artaura"))
-                : currentDir + File.separator;
+        String projectRoot;
+
+        if (currentDir.endsWith("artaura")) {
+            // If running from artaura folder, go up two levels to get project root
+            projectRoot = currentDir.substring(0, currentDir.lastIndexOf("artaura"));
+        } else if (currentDir.contains("server")) {
+            // If running from server folder or any subfolder, go up to project root
+            int serverIndex = currentDir.indexOf("server");
+            projectRoot = currentDir.substring(0, serverIndex);
+        } else {
+            // Fallback: assume we're already in project root
+            projectRoot = currentDir + File.separator;
+        }
+
+        System.out.println("Current working directory: " + currentDir);
+        System.out.println("Calculated project root: " + projectRoot);
 
         // Build the upload path: projectRoot/client/public/uploads/subDirectory/
         String uploadDirPath = projectRoot + "client" + File.separator + "public" + File.separator + "uploads" + File.separator;

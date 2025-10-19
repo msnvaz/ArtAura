@@ -20,12 +20,46 @@ const ArtistProfileModal = ({ isOpen, artist, onClose }) => {
   );
   const API_URL = import.meta.env.VITE_API_URL;
 
+  // Debug: log artist object to inspect id
+  React.useEffect(() => {
+    if (artist) {
+      console.log("ArtistProfileModal artist:", artist);
+    }
+  }, [artist]);
+
   // Handle follow button click
   const handleFollow = async (artistId) => {
-    if (!token) return;
+    console.log("Attempting to follow artist with ID:", artistId);
+    console.log("Full artist object:", artist);
+
+    if (!token) {
+      alert("You must be logged in to follow an artist.");
+      return;
+    }
+
+    // Try to get artist ID from different possible fields
+    const actualArtistId =
+      artistId || artist.id || artist.artistId || artist.user_id;
+
+    console.log("Resolved artist ID:", actualArtistId);
+
+    if (
+      !actualArtistId ||
+      actualArtistId === "undefined" ||
+      actualArtistId === null
+    ) {
+      console.error(
+        "No valid artist ID found. Available fields:",
+        Object.keys(artist)
+      );
+      alert("Invalid artist ID. Cannot follow.");
+      return;
+    }
+
     try {
+      console.log("Making follow request with artist ID:", actualArtistId);
       await axios.post(
-        `${API_URL}/api/buyer/artists/${artistId}/follow`,
+        `${API_URL}/api/buyer/artists/${actualArtistId}/follow`,
         {},
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -33,8 +67,14 @@ const ArtistProfileModal = ({ isOpen, artist, onClose }) => {
       );
       setIsFollowing(true);
       setFollowersCount((prev) => prev + 1);
+      alert("Successfully followed artist!");
     } catch (err) {
-      // Optionally show error toast
+      console.error("Follow error:", err.response?.data || err.message);
+      alert(
+        `Failed to follow artist: ${
+          err.response?.data?.message || "Please try again later."
+        }`
+      );
     }
   };
 
@@ -58,9 +98,30 @@ const ArtistProfileModal = ({ isOpen, artist, onClose }) => {
         {/* Header with cover image */}
         <div className="relative">
           <img
-            src={artist.cover_image_url || artist.coverImageUrl || "/art1.jpeg"}
+            src={artist.coverImageUrl ? artist.coverImageUrl : "/heritage.jpeg"}
             alt="Cover"
             className="w-full h-48 object-cover rounded-t-xl"
+            onError={(e) => {
+              // Robust fallback system for cover images
+              const currentSrc = e.target.src;
+
+              if (currentSrc.includes("/uploads/")) {
+                // If uploads path fails, try public folder images
+                e.target.src = "/heritage.jpeg";
+              } else if (currentSrc.includes("heritage.jpeg")) {
+                e.target.src = "/sigiriya.jpeg";
+              } else if (currentSrc.includes("sigiriya.jpeg")) {
+                e.target.src = "/art1.jpeg";
+              } else if (currentSrc.includes("art1.jpeg")) {
+                e.target.src = "/art2.jpeg";
+              } else {
+                // Final fallback - use a solid color background
+                e.target.style.display = "none";
+                e.target.parentNode.style.background =
+                  "linear-gradient(135deg, #FFD95A 0%, #D87C5A 100%)";
+                e.target.parentNode.style.height = "192px";
+              }
+            }}
           />
           <button
             className="absolute top-3 right-3 text-white bg-black bg-opacity-50 rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-70 transition text-lg font-bold"
@@ -71,9 +132,12 @@ const ArtistProfileModal = ({ isOpen, artist, onClose }) => {
           {/* Avatar positioned over cover */}
           <div className="absolute -bottom-12 left-6">
             <img
-              src={artist.avatar_url || artist.avatar || "/user.png"}
-              alt={`${artist.first_name} ${artist.last_name}`}
+              src={artist.avatarUrl || "/uploads/profiles/default-avatar.svg"}
+              alt={artist.name}
               className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
+              onError={(e) => {
+                e.target.src = "/uploads/profiles/default-avatar.svg";
+              }}
             />
           </div>
         </div>
@@ -86,7 +150,7 @@ const ArtistProfileModal = ({ isOpen, artist, onClose }) => {
               className="text-2xl font-bold mb-1"
               style={{ color: "#5D3A00" }}
             >
-              {artist.first_name} {artist.last_name}
+              {artist.name}
             </h2>
             <p
               className="text-lg mb-3 flex items-center gap-2"

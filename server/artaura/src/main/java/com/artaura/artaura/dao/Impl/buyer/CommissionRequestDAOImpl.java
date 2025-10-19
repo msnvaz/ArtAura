@@ -22,7 +22,7 @@ public class CommissionRequestDAOImpl implements ComissionRequestDAO {
 
     @Override
     public Long saveCommissionRequest(CommissionRequestDTO dto) {
-        String sql = "INSERT INTO commission_requests (artist_id, buyer_id, name, email, phone, title, artwork_type, style, dimensions, budget, deadline, additional_notes, urgency, status, submitted_at, payment_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO commission_requests (artist_id, buyer_id, name, email, phone, title, artwork_type, style, dimensions, budget, deadline, additional_notes, urgency, status, submitted_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
         try {
@@ -37,13 +37,27 @@ public class CommissionRequestDAOImpl implements ComissionRequestDAO {
                 ps.setString(7, dto.getArtworkType() != null ? dto.getArtworkType() : "");
                 ps.setString(8, dto.getStyle() != null ? dto.getStyle() : "");
                 ps.setString(9, dto.getDimensions() != null ? dto.getDimensions() : "");
-                ps.setString(10, dto.getBudget() != null ? dto.getBudget() : "");
+                
+                // Convert budget string to BigDecimal for proper decimal column handling
+                try {
+                    if (dto.getBudget() != null && !dto.getBudget().trim().isEmpty()) {
+                        // Remove commas and other non-numeric characters except decimal point
+                        String cleanBudget = dto.getBudget().replaceAll("[,\\s]", "");
+                        ps.setBigDecimal(10, new java.math.BigDecimal(cleanBudget));
+                    } else {
+                        ps.setBigDecimal(10, java.math.BigDecimal.ZERO);
+                    }
+                } catch (NumberFormatException e) {
+                    // Log the error for debugging
+                    System.err.println("Invalid budget format: " + dto.getBudget() + ", setting to 0");
+                    ps.setBigDecimal(10, java.math.BigDecimal.ZERO);
+                }
+                
                 ps.setString(11, dto.getDeadline() != null ? dto.getDeadline() : "");
                 ps.setString(12, dto.getAdditionalNotes() != null ? dto.getAdditionalNotes() : "");
-                ps.setString(13, dto.getUrgency() != null ? dto.getUrgency() : "");
+                ps.setString(13, dto.getUrgency() != null ? dto.getUrgency() : "normal");
                 ps.setString(14, dto.getStatus() != null ? dto.getStatus() : "PENDING");
-                ps.setString(15, LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-                ps.setString(16, "PENDING"); // Set default payment_status
+                ps.setString(15, LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))); // submitted_at
                 return ps;
             }, keyHolder);
 
@@ -69,7 +83,12 @@ public class CommissionRequestDAOImpl implements ComissionRequestDAO {
 
     @Override
     public List<CommissionResponseDTO> getCommissionRequestsByClientId(Long clientId) {
-        String sql = "SELECT * FROM commission_requests WHERE buyer_id = ?";
+        String sql = "SELECT cr.*, " +
+                     "CASE WHEN p.commission_request_id IS NOT NULL THEN true ELSE false END as has_payment " +
+                     "FROM commission_requests cr " +
+                     "LEFT JOIN payment p ON cr.id = p.commission_request_id " +
+                     "WHERE cr.buyer_id = ?";
+        
         List<CommissionResponseDTO> requests = jdbcTemplate.query(sql, (rs, rowNum) -> {
             CommissionResponseDTO dto = new CommissionResponseDTO();
             dto.setId(rs.getLong("id"));
@@ -88,7 +107,10 @@ public class CommissionRequestDAOImpl implements ComissionRequestDAO {
             dto.setUrgency(rs.getString("urgency"));
             dto.setStatus(rs.getString("status"));
             dto.setSubmittedAt(rs.getString("submitted_at"));
-            dto.setDeliveryStatus(rs.getString("delivery_status")); // Fetch delivery_status from commission_requests table
+            dto.setDeliveryStatus(rs.getString("delivery_status"));
+            
+            // Set the payment status based on whether a payment record exists
+            dto.setHasPayment(rs.getBoolean("has_payment"));
 
             // Fetch reference images for this commission request
             String imgSql = "SELECT image_url FROM commission_reference_images WHERE commission_request_id = ?";

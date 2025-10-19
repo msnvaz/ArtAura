@@ -21,6 +21,9 @@ public class DeliveryStatusService {
     @Autowired
     private DeliveryRequestDAO deliveryRequestDAO;
 
+    @Autowired
+    private NotificationService notificationService;
+
     /**
      * Update delivery status for both artwork orders and commission requests
      */
@@ -93,12 +96,35 @@ public class DeliveryStatusService {
      * Update delivery status to "outForDelivery"
      */
     public boolean markAsOutForDelivery(String orderType, Long orderId) {
+        boolean success = false;
         if ("artwork".equalsIgnoreCase(orderType)) {
-            return deliveryStatusDAO.updateArtworkOrderDeliveryStatus(orderId, "outForDelivery", null);
+            success = deliveryStatusDAO.updateArtworkOrderDeliveryStatus(orderId, "outForDelivery", null);
         } else if ("commission".equalsIgnoreCase(orderType)) {
-            return deliveryStatusDAO.updateCommissionRequestDeliveryStatus(orderId, "outForDelivery", null);
+            success = deliveryStatusDAO.updateCommissionRequestDeliveryStatus(orderId, "outForDelivery", null);
         }
-        return false;
+        
+        // Send notification if successful
+        if (success) {
+            try {
+                String requestType = orderType.equals("artwork") ? "artwork_order" : "commission_request";
+                Optional<DeliveryRequestDTO> requestOptional = deliveryRequestDAO.getDeliveryRequestById(orderId, requestType);
+                
+                if (requestOptional.isPresent()) {
+                    DeliveryRequestDTO request = requestOptional.get();
+                    notificationService.notifyBuyerOutForDelivery(
+                        request.getBuyerId(),
+                        request.getArtworkTitle(),
+                        requestType,
+                        orderId
+                    );
+                    System.out.println("✅ Sent out for delivery notification to buyer");
+                }
+            } catch (Exception e) {
+                System.err.println("❌ Error sending out for delivery notification: " + e.getMessage());
+            }
+        }
+        
+        return success;
     }
 
     /**
@@ -117,12 +143,45 @@ public class DeliveryStatusService {
             System.out.println("⚠️ No payment found for Order Type: " + orderType + ", Order ID: " + orderId);
         }
         
+        boolean success = false;
         if ("artwork".equalsIgnoreCase(orderType)) {
-            return deliveryStatusDAO.updateArtworkOrderDeliveryStatus(orderId, "delivered", null);
+            success = deliveryStatusDAO.updateArtworkOrderDeliveryStatus(orderId, "delivered", null);
         } else if ("commission".equalsIgnoreCase(orderType)) {
-            return deliveryStatusDAO.updateCommissionRequestDeliveryStatus(orderId, "delivered", null);
+            success = deliveryStatusDAO.updateCommissionRequestDeliveryStatus(orderId, "delivered", null);
         }
-        return false;
+        
+        // Send notifications if successful
+        if (success) {
+            try {
+                String requestType = orderType.equals("artwork") ? "artwork_order" : "commission_request";
+                Optional<DeliveryRequestDTO> requestOptional = deliveryRequestDAO.getDeliveryRequestById(orderId, requestType);
+                
+                if (requestOptional.isPresent()) {
+                    DeliveryRequestDTO request = requestOptional.get();
+                    
+                    // Notify buyer
+                    notificationService.notifyBuyerDelivered(
+                        request.getBuyerId(),
+                        request.getArtworkTitle(),
+                        requestType,
+                        orderId
+                    );
+                    System.out.println("✅ Sent delivered notification to buyer");
+                    
+                    // Notify artist
+                    notificationService.notifyArtistDelivered(
+                        request.getArtistId(),
+                        request.getArtworkTitle(),
+                        request.getBuyerName()
+                    );
+                    System.out.println("✅ Sent delivered notification to artist");
+                }
+            } catch (Exception e) {
+                System.err.println("❌ Error sending delivered notifications: " + e.getMessage());
+            }
+        }
+        
+        return success;
     }
 
     /**
@@ -297,6 +356,40 @@ public class DeliveryStatusService {
         
         // Add specific acceptance details
         if ((Boolean) result.get("success")) {
+            // Send notifications to buyer and artist
+            try {
+                // Get request details for notification
+                String requestType = orderType.equals("artwork") ? "artwork_order" : "commission_request";
+                Optional<DeliveryRequestDTO> requestOptional = deliveryRequestDAO.getDeliveryRequestById(orderId, requestType);
+                
+                if (requestOptional.isPresent()) {
+                    DeliveryRequestDTO request = requestOptional.get();
+                    
+                    // Notify buyer
+                    notificationService.notifyBuyerDeliveryAccepted(
+                        request.getBuyerId(),
+                        request.getArtworkTitle(),
+                        shippingFee != null ? shippingFee.toString() : "TBD",
+                        requestType,
+                        orderId
+                    );
+                    System.out.println("✅ Sent delivery accepted notification to buyer");
+                    
+                    // Notify artist
+                    notificationService.notifyArtistDeliveryAccepted(
+                        request.getArtistId(),
+                        request.getArtworkTitle(),
+                        request.getBuyerName()
+                    );
+                    System.out.println("✅ Sent delivery accepted notification to artist");
+                } else {
+                    System.out.println("⚠️ Could not send notifications - request details not found");
+                }
+            } catch (Exception e) {
+                System.err.println("❌ Error sending notifications: " + e.getMessage());
+                // Continue despite notification failure
+            }
+            
             Map<String, Object> enhancedResult = new java.util.HashMap<>(result);
             enhancedResult.put("acceptanceDetails", Map.of(
                 "deliveryPartnerId", deliveryPartnerId,
