@@ -29,14 +29,22 @@ public class BuyerChallengeService {
         List<Map<String, Object>> rawList = challengeDAO.findActiveChallenges();
         List<ChallengeDTO> dtoList = new ArrayList<>();
         for (Map<String, Object> row : rawList) {
+            Long challengeId = row.get("id") != null ? ((Number)row.get("id")).longValue() : null;
+            
+            // Get participant and submission counts from challenge_participants table
+            int participantCount = challengeId != null ? challengeDAO.getParticipantCount(challengeId) : 0;
+            int submissionCount = challengeId != null ? challengeDAO.getSubmissionCount(challengeId) : 0;
+            
             ChallengeDTO dto = new ChallengeDTO(
-                row.get("id") != null ? ((Number)row.get("id")).longValue() : null,
+                challengeId,
                 (String) row.get("title"),
                 (String) row.get("description"),
                 (String) row.get("category"),
                 toIsoString(row.get("publish_date_time")),
                 toIsoString(row.get("deadline_date_time")),
-                (String) row.get("status")
+                (String) row.get("status"),
+                participantCount,
+                submissionCount
             );
             dtoList.add(dto);
         }
@@ -63,6 +71,30 @@ public class BuyerChallengeService {
         return new ArrayList<>(); // Replace with actual DB call
     }
 
+    public ChallengeDTO getChallengeByIdWithCounts(Long challengeId) {
+        Optional<Map<String, Object>> challengeOpt = challengeDAO.findById(challengeId);
+        if (challengeOpt.isPresent()) {
+            Map<String, Object> row = challengeOpt.get();
+            
+            // Get participant and submission counts from challenge_participants table
+            int participantCount = challengeDAO.getParticipantCount(challengeId);
+            int submissionCount = challengeDAO.getSubmissionCount(challengeId);
+            
+            return new ChallengeDTO(
+                challengeId,
+                (String) row.get("title"),
+                (String) row.get("description"),
+                (String) row.get("category"),
+                toIsoString(row.get("publish_date_time")),
+                toIsoString(row.get("deadline_date_time")),
+                (String) row.get("status"),
+                participantCount,
+                submissionCount
+            );
+        }
+        return null;
+    }
+
     public List<ChallengeSubmissionDTO> getSubmissionsByChallenge(Integer challengeId, Long userId, String userType) {
         return challengeDAO.getSubmissionsByChallenge(challengeId, userId, userType);
     }
@@ -72,31 +104,38 @@ public class BuyerChallengeService {
     }
 
     /**
-     * Toggle vote for a submission (vote if not voted, unvote if already voted)
+     * Handle like/dislike for a submission
      * @param submissionId Submission ID
      * @param userId User ID
-     * @return true if vote was added, false if vote was removed
+     * @param action "like" or "dislike"
+     * @return Map containing success status, counts, and user reaction
      */
+    public Map<String, Object> handleLikeDislike(Long submissionId, Long userId, String action) {
+        return challengeDAO.handleLikeDislike(submissionId, userId, action);
+    }
+
+    /**
+     * Get like/dislike counts and user's reaction for a submission
+     * @param submissionId Submission ID
+     * @param userId User ID
+     * @return Map containing likes, dislikes, and userReaction
+     */
+    public Map<String, Object> getSubmissionLikes(Long submissionId, Long userId) {
+        return challengeDAO.getSubmissionLikes(submissionId, userId);
+    }
+
+    // Remove or comment out the old voting methods
+    /*
     public boolean toggleVote(Long submissionId, Long userId) {
         return challengeDAO.toggleVote(submissionId, userId);
     }
 
-    /**
-     * Check if user has voted for a submission
-     * @param submissionId Submission ID
-     * @param userId User ID
-     * @return true if user has voted, false otherwise
-     */
     public boolean hasUserVoted(Long submissionId, Long userId) {
         return challengeDAO.hasUserVoted(submissionId, userId);
     }
 
-    /**
-     * Get total vote count for a submission
-     * @param submissionId Submission ID
-     * @return Total vote count
-     */
     public int getSubmissionVoteCount(Long submissionId) {
         return challengeDAO.getSubmissionVoteCount(submissionId);
     }
+    */
 }

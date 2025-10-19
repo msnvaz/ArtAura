@@ -94,9 +94,10 @@ public class BuyerChallengeController {
         }
     }
 
-    @PostMapping("/submissions/{submissionId}/vote")
-    public ResponseEntity<?> voteForSubmission(
+    @PostMapping("/submissions/{submissionId}/like-dislike")
+    public ResponseEntity<?> likeDislikeSubmission(
             @PathVariable Long submissionId,
+            @RequestBody Map<String, String> request,
             @RequestHeader("Authorization") String authHeader) {
         try {
             // Validate JWT token
@@ -104,30 +105,43 @@ public class BuyerChallengeController {
             Long userId = jwtUtil.extractUserId(token);
             String role = jwtUtil.extractRole(token);
             
-            // Verify user has buyer role
+            // Log the request for debugging
+            System.out.println("Like/Dislike request - User ID: " + userId + ", Role: " + role + ", Submission ID: " + submissionId);
+            
+            // Verify user has buyer role (only buyers can react to submissions)
             if (!"buyer".equals(role)) {
-                return ResponseEntity.status(403).build();
+                System.out.println("Access denied - User role: " + role + " is not authorized to react");
+                return ResponseEntity.status(403).body(Map.of(
+                    "success", false,
+                    "message", "Only buyers can react to submissions"
+                ));
             }
 
-            boolean voteResult = challengeService.toggleVote(submissionId, userId);
-            String message = voteResult ? "Vote added successfully" : "Vote removed successfully";
+            String action = request.get("action");
+            if (!"like".equals(action) && !"dislike".equals(action)) {
+                return ResponseEntity.status(400).body(Map.of(
+                    "success", false,
+                    "message", "Invalid action. Must be 'like' or 'dislike'"
+                ));
+            }
+
+            Map<String, Object> result = challengeService.handleLikeDislike(submissionId, userId, action);
             
-            return ResponseEntity.ok().body(Map.of(
-                "success", true,
-                "message", message,
-                "voted", voteResult
-            ));
+            System.out.println("Like/Dislike result: " + result.get("message") + " for submission " + submissionId + " by user " + userId);
+            
+            return ResponseEntity.ok(result);
         } catch (Exception e) {
-            System.err.println("Error in voteForSubmission: " + e.getMessage());
+            System.err.println("Error in likeDislikeSubmission: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.status(500).body(Map.of(
                 "success", false,
-                "message", "Error processing vote: " + e.getMessage()
+                "message", "Error processing reaction: " + e.getMessage()
             ));
         }
     }
 
-    @GetMapping("/submissions/{submissionId}/vote-status")
-    public ResponseEntity<?> getVoteStatus(
+    @GetMapping("/submissions/{submissionId}/likes")
+    public ResponseEntity<?> getSubmissionLikes(
             @PathVariable Long submissionId,
             @RequestHeader("Authorization") String authHeader) {
         try {
@@ -141,15 +155,42 @@ public class BuyerChallengeController {
                 return ResponseEntity.status(403).build();
             }
 
-            boolean hasVoted = challengeService.hasUserVoted(submissionId, userId);
-            int totalVotes = challengeService.getSubmissionVoteCount(submissionId);
+            Map<String, Object> likesData = challengeService.getSubmissionLikes(submissionId, userId);
             
-            return ResponseEntity.ok().body(Map.of(
-                "hasVoted", hasVoted,
-                "totalVotes", totalVotes
-            ));
+            return ResponseEntity.ok(likesData);
         } catch (Exception e) {
-            System.err.println("Error in getVoteStatus: " + e.getMessage());
+            System.err.println("Error in getSubmissionLikes: " + e.getMessage());
+            return ResponseEntity.status(500).body(Map.of(
+                "likes", 0,
+                "dislikes", 0,
+                "userReaction", null
+            ));
+        }
+    }
+
+    @GetMapping("/{challengeId}")
+    public ResponseEntity<ChallengeDTO> getChallengeById(
+            @PathVariable Long challengeId,
+            @RequestHeader("Authorization") String authHeader) {
+        try {
+            // Validate JWT token
+            String token = authHeader.startsWith("Bearer ") ? authHeader.substring(7) : authHeader;
+            Long userId = jwtUtil.extractUserId(token);
+            String role = jwtUtil.extractRole(token);
+            
+            // Verify user has buyer role
+            if (!"buyer".equals(role)) {
+                return ResponseEntity.status(403).build();
+            }
+
+            ChallengeDTO challenge = challengeService.getChallengeByIdWithCounts(challengeId);
+            if (challenge != null) {
+                return ResponseEntity.ok(challenge);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            System.err.println("Error in getChallengeById: " + e.getMessage());
             return ResponseEntity.status(500).build();
         }
     }

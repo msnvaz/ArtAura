@@ -240,8 +240,8 @@ const ArtistsPage = () => {
                   e.target.src = "/uploads/profiles/default-avatar.svg";
                 }}
               />
-              {artist.verified && (
-                <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-[#D87C5A] rounded-full flex items-center justify-center">
+              {artist.status === "Active" && (
+                <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
                   <span className="text-white text-xs">✓</span>
                 </div>
               )}
