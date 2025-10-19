@@ -35,7 +35,7 @@ public class ChallengeParticipationDAOImpl implements ChallengeParticipationDAO 
         challenge.setDescription(rs.getString("description"));
         challenge.setMaxParticipants(rs.getInt("max_participants"));
         challenge.setRewards(rs.getString("rewards"));
-        challenge.setRequestSponsorship(rs.getBoolean("request_sponsorship"));
+        // challenge.setRequestSponsorship(rs.getBoolean("request_sponsorship")); // Column not available
         return challenge;
     };
 
@@ -62,7 +62,7 @@ public class ChallengeParticipationDAOImpl implements ChallengeParticipationDAO 
     public List<ChallengeDTO> getActiveChallenges() {
         String sql = """
             SELECT id, title, category, publish_date_time, deadline_date_time, 
-                   description, max_participants, rewards, request_sponsorship
+                   description, max_participants, rewards
             FROM challenges 
             WHERE status = 'active' AND deadline_date_time > NOW()
             ORDER BY deadline_date_time ASC
@@ -126,7 +126,7 @@ public class ChallengeParticipationDAOImpl implements ChallengeParticipationDAO 
     public ChallengeDTO getChallengeById(Long challengeId) {
         String sql = """
             SELECT id, title, category, publish_date_time, deadline_date_time, 
-                   description, max_participants, rewards, request_sponsorship
+                   description, max_participants, rewards
             FROM challenges 
             WHERE id = ? AND status = 'active'
         """;
