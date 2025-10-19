@@ -18,11 +18,13 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
+import ProductBuyButton from './ProductBuyButton';
+import { Toaster } from 'react-hot-toast';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 const ShopDiscoveryTab = () => {
-    const { token } = useAuth(); // Get authentication token
+    const { token, userId } = useAuth(); // Get authentication token and userId
     const [shops, setShops] = useState([]);
     const [products, setProducts] = useState([]);
     const [selectedShop, setSelectedShop] = useState(null);
@@ -254,7 +256,7 @@ const ShopDiscoveryTab = () => {
     const safeFilteredProducts = Array.isArray(filteredProducts) ? filteredProducts : [];
 
     // Debug: Log current data counts in development
-    if (process.env.NODE_ENV === 'development') {
+    if (import.meta.env.DEV) {
         console.log('ShopDiscoveryTab data:', {
             shops: safeShops.length,
             products: safeProducts.length,
@@ -346,6 +348,9 @@ const ShopDiscoveryTab = () => {
     // Main shop discovery view
     return (
         <div className="space-y-6">
+            {/* Toast notifications */}
+            <Toaster position="top-right" />
+            
             {/* Header */}
             <div className="bg-white rounded-lg shadow-sm p-6">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between">
@@ -491,25 +496,41 @@ const ShopDiscoveryTab = () => {
                                 >
                                     {product.image && (
                                         <img
-                                            src={product.image}
+                                            src={product.image.startsWith('http') ? product.image : `/uploads/products/${product.image}`}
                                             alt={product.name}
-                                            className={`object-cover rounded-lg ${viewMode === 'list'
+                                            className={`object-contain rounded-lg bg-white ${viewMode === 'list'
                                                 ? 'w-16 h-16 flex-shrink-0'
-                                                : 'w-full h-40 mb-3'
+                                                : 'w-full h-40 mb-3 p-2'
                                                 }`}
                                         />
                                     )}
 
-                                    <div className={`${viewMode === 'list' ? 'flex-1' : ''}`}>
-                                        <h5 className="font-semibold text-[#7f5539] mb-2">{product.name}</h5>
-                                        <p className="text-[#7f5539]/70 text-sm mb-3 line-clamp-2">{product.description}</p>
+                                    <div className={`${viewMode === 'list' ? 'flex-1' : ''} space-y-3`}>
+                                        <div>
+                                            <h5 className="font-semibold text-[#7f5539] mb-2">{product.name}</h5>
+                                            <p className="text-[#7f5539]/70 text-sm mb-2 line-clamp-2">{product.description}</p>
 
-                                        <div className={`${viewMode === 'list' ? 'flex items-center justify-between' : 'flex items-center justify-between'}`}>
-                                            <span className="text-[#7f5539] font-medium">LKR {product.price}</span>
-                                            <span className="text-xs bg-[#7f5539]/10 text-[#7f5539] px-2 py-1 rounded-full">
-                                                {product.category}
-                                            </span>
+                                            <div className="flex items-center justify-between mb-3">
+                                                <span className="text-[#7f5539] font-medium">LKR {product.price}</span>
+                                                <span className="text-xs bg-[#7f5539]/10 text-[#7f5539] px-2 py-1 rounded-full">
+                                                    {product.category}
+                                                </span>
+                                            </div>
+
+                                            <div className="text-xs text-[#7f5539]/60 mb-2">
+                                                Stock: {product.stock || 0} available
+                                            </div>
                                         </div>
+
+                                        {/* Buy Button Component */}
+                                        <ProductBuyButton 
+                                            product={product} 
+                                            artistId={userId || null}
+                                            onOrderCreated={() => {
+                                                // Refresh products after order
+                                                fetchShopsAndProducts();
+                                            }}
+                                        />
                                     </div>
                                 </div>
                             ))}
