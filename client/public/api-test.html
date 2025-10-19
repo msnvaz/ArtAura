@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>API Test</title>
+</head>
+
+<body>
+    <h1>Shop Discovery API Test</h1>
+    <button onclick="testAPI()">Test API</button>
+    <div id="results"></div>
+
+    <script>
+        async function testAPI() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<p>Testing...</p>';
+
+            try {
+                console.log('Testing products API...');
+                const response = await fetch('http://localhost:8081/api/products');
+
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                console.log('Response data:', data);
+
+                resultsDiv.innerHTML = `
+                    <h2>Results:</h2>
+                    <p><strong>Status:</strong> ${response.status}</p>
+                    <p><strong>Data Type:</strong> ${Array.isArray(data) ? 'Array' : typeof data}</p>
+                    <p><strong>Count:</strong> ${data?.length || 'N/A'}</p>
+                    <p><strong>First Item:</strong></p>
+                    <pre>${JSON.stringify(data?.[0], null, 2)}</pre>
+                    <p><strong>All Data:</strong></p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+
+            } catch (error) {
+                console.error('API test failed:', error);
+                resultsDiv.innerHTML = `
+                    <h2>Error:</h2>
+                    <p style="color: red;">${error.message}</p>
+                    <p>Check console for details.</p>
+                `;
+            }
+        }
+    </script>
+</body>
+
+</html>

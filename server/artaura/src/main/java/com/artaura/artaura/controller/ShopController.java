@@ -6,13 +6,29 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/shop")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174"})
 public class ShopController {
 
     @Autowired
     private ShopService shopService;
+
+    // Get all shops for discovery
+    @GetMapping("/all")
+    public ResponseEntity<List<ShopDTO>> getAllShops() {
+        System.out.println("📋 ShopController: Fetching all shops for discovery");
+        try {
+            List<ShopDTO> shops = shopService.getAllShops();
+            System.out.println("✅ Found " + shops.size() + " shops");
+            return ResponseEntity.ok(shops);
+        } catch (Exception e) {
+            System.out.println("❌ Error fetching shops: " + e.getMessage());
+            return ResponseEntity.status(500).body(null);
+        }
+    }
 
     // Fetch shop profile by userId (which is actually the shop_id from
     // authentication)

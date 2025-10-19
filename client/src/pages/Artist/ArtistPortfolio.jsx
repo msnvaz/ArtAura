@@ -14,6 +14,7 @@ import ExhibitionsSection from '../../components/artist/ExhibitionsSection';
 import AchievementsSection from '../../components/artist/AchievementsSection';
 import ChallengeParticipation from '../../components/artist/ChallengeParticipation';
 import EditArtworkModal from '../../components/artworks/EditArtworkModal';
+import ShopDiscoveryTab from '../../components/artist/ShopDiscoveryTab';
 import DeleteConfirmationModal from '../../components/artworks/DeleteConfirmationModal';
 import SmartImage from '../../components/common/SmartImage';
 import ImageWithFallback from '../../components/ImageWithFallback';
@@ -57,6 +58,7 @@ import {
   Globe,
   ArrowLeft,
   FileText,
+  Store,
   Shield,
   AlertTriangle,
   ChevronLeft,
@@ -1969,6 +1971,7 @@ const ArtistPortfolio = () => {
                 { id: 'challenges', label: 'Challenges', count: challengesCount, icon: Trophy },
                 { id: 'orders', label: 'Commission Requests', count: requestsCount },
                 { id: 'artwork-orders', label: 'Orders', count: artworkOrdersCount },
+                { id: 'shops', label: 'Shops', icon: Store },
                 { id: 'exhibitions', label: 'Exhibitions', count: exhibitionsCount },
                 { id: 'achievements', label: 'Achievements', count: achievementsCount },
                 { id: 'analytics', label: 'Analytics' }
@@ -3325,6 +3328,11 @@ const ArtistPortfolio = () => {
               </div>
             </div>
           </div>
+        )}
+
+        {/* Shops Tab */}
+        {activeTab === 'shops' && (
+          <ShopDiscoveryTab />
         )}
       </div>
 
