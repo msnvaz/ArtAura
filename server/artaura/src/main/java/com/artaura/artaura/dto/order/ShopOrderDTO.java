@@ -24,6 +24,11 @@ public class ShopOrderDTO {
     // Product tracking for stock management
     private Long productId; // Main product in the order
     private Integer quantity; // Quantity ordered (default 1)
+    private String productName; // Product name
+    private String productImage; // Product image URL
+    private String artistName; // Artist username
+    private Double total; // Total amount as Double
+    private java.time.LocalDateTime dateTime; // Date as LocalDateTime
 
     public ShopOrderDTO() {
     }
