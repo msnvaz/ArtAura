@@ -24,7 +24,7 @@ const ReviewModal = ({
   const renderStars = (rating = 0, interactive = false, onStarClick = null) => {
     return Array.from({ length: 5 }, (_, i) => (
       <Star
-        key={i}
+        key={`review-star-${i}`}
         className={`w-5 h-5 cursor-pointer transition-colors ${
           i < rating
             ? "text-yellow-400 fill-current"
