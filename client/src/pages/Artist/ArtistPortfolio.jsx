@@ -20,6 +20,7 @@ import SmartImage from '../../components/common/SmartImage';
 import ImageWithFallback from '../../components/ImageWithFallback';
 import ImageDebugger from '../../components/ImageDebugger';
 import PostInteractions from '../../components/social/PostInteractions';
+import NotificationBell from '../../components/notifications/NotificationBell';
 import { getImageUrl, getAvatarUrl, getCoverUrl, getArtworkUrl } from '../../util/imageUrlResolver';
 import { logProfileUpdate, clearImageCache, forceReloadProfileImages } from '../../util/debugImageUpload';
 import { useAuth } from "../../context/AuthContext";
@@ -1835,13 +1836,16 @@ const ArtistPortfolio = () => {
               </div>
             </div>
           </div>
-          <button
-            onClick={() => setIsChangingCover(true)}
-            className="absolute top-6 right-6 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-colors"
-          >
-            <Camera className="h-4 w-4 inline mr-2" />
-            Change Cover
-          </button>
+          <div className="absolute top-6 right-6 flex items-center space-x-3">
+            <NotificationBell />
+            <button
+              onClick={() => setIsChangingCover(true)}
+              className="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-colors"
+            >
+              <Camera className="h-4 w-4 inline mr-2" />
+              Change Cover
+            </button>
+          </div>
         </div>
 
         {/* Profile Section */}
