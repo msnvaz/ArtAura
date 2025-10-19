@@ -124,13 +124,38 @@ const CommissionPaymentConfirmation = () => {
                   </div>
 
                   <div className="border-t border-[#FFE4D6] pt-4">
-                    <div className="flex justify-between items-center">
+                    <div className="flex justify-between items-center mb-3">
                       <span className="text-lg font-semibold text-[#7f5539]">
                         Total Paid:
                       </span>
                       <span className="text-2xl font-bold text-[#D87C5A]">
                         LKR {order?.budget?.toLocaleString()}
                       </span>
+                    </div>
+
+                    {/* Delivery Charge Notice */}
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                      <div className="flex items-start gap-2">
+                        <div className="flex-shrink-0 w-4 h-4 bg-amber-100 rounded-full flex items-center justify-center mt-0.5">
+                          <span className="text-amber-600 text-xs font-bold">
+                            !
+                          </span>
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-xs font-semibold text-amber-800 mb-1">
+                            Additional Delivery Charges
+                          </h4>
+                          <p className="text-xs text-amber-700 leading-relaxed">
+                            A delivery charge of{" "}
+                            <span className="font-semibold">
+                              LKR 500 - 1,500
+                            </span>{" "}
+                            will apply upon delivery, collected directly by the
+                            delivery partner and varies based on size and
+                            weight.
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>

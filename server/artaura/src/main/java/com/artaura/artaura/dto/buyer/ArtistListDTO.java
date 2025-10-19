@@ -15,11 +15,12 @@ public class ArtistListDTO {
     private String contactNo;
     private String email;
     private String coverImageUrl;
+    private String status;
 
     public ArtistListDTO() {
     }
 
-    public ArtistListDTO(Long id, String name, String specialization, String bio, Double rate, Integer totalFollowers, Integer totalSales, String avatarUrl, String location, String badge, String contactNo, String email, String coverImageUrl) {
+    public ArtistListDTO(Long id, String name, String specialization, String bio, Double rate, Integer totalFollowers, Integer totalSales, String avatarUrl, String location, String badge, String contactNo, String email, String coverImageUrl, String status) {
         this.id = id;
         this.name = name;
         this.specialization = specialization;
@@ -33,6 +34,7 @@ public class ArtistListDTO {
         this.contactNo = contactNo;
         this.email = email;
         this.coverImageUrl = coverImageUrl;
+        this.status = status;
     }
 
     // Getters and setters
@@ -138,5 +140,13 @@ public class ArtistListDTO {
 
     public void setCoverImageUrl(String coverImageUrl) {
         this.coverImageUrl = coverImageUrl;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }
