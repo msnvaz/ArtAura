@@ -20,8 +20,9 @@ import java.util.UUID;
 @CrossOrigin(origins = { "http://localhost:5173", "http://localhost:5174" })
 public class ImageUploadController {
 
-    // Directory to save uploaded images
-    private static final String UPLOAD_DIR = "uploads/products/";
+    // Directory to save uploaded images - now points to
+    // client/public/uploads/products
+    private static final String UPLOAD_DIR = "../../client/public/uploads/products/";
 
     @PostMapping("/image")
     public ResponseEntity<Map<String, String>> uploadImage(@RequestParam("file") MultipartFile file) {
