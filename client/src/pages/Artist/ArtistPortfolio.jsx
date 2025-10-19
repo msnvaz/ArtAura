@@ -1000,7 +1000,39 @@ const ArtistPortfolio = () => {
 
     } catch (error) {
       console.error('Error deleting artwork:', error);
-      showError('Failed to delete artwork. Please try again.');
+
+      // Handle different error types with specific messages
+      if (error.response) {
+        const status = error.response.status;
+        // Try multiple ways to get the error message
+        let errorMessage = error.response.data;
+
+        // If data is an object, try to get the message property
+        if (typeof errorMessage === 'object' && errorMessage !== null) {
+          errorMessage = errorMessage.message || errorMessage.error || JSON.stringify(errorMessage);
+        }
+
+        // If still no message, fall back to status text or generic message
+        if (!errorMessage || errorMessage === '') {
+          errorMessage = error.response.statusText || error.message;
+        }
+
+        console.log('Status:', status, 'Error Message:', errorMessage);
+
+        if (status === 404) {
+          // Artwork not found
+          showError('Artwork not found. It may have already been deleted.');
+        } else {
+          // Other server errors
+          showError(`Failed to delete artwork: ${errorMessage}`);
+        }
+      } else {
+        // Network or other errors
+        showError('Failed to delete artwork. Please check your connection and try again.');
+      }
+
+      setIsDeletingArtwork(false);
+      setSelectedArtwork(null);
     }
   };
 
