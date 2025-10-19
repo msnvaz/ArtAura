@@ -20,9 +20,9 @@ public class ShopOrderDTO {
     private BigDecimal totalAmount;
     private String status; // pending, approved, cancelled
     private Timestamp date;
-    
+
     // Product tracking for stock management
-    private Long productId;  // Main product in the order
+    private Long productId; // Main product in the order
     private Integer quantity; // Quantity ordered (default 1)
 
     public ShopOrderDTO() {
