@@ -28,7 +28,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem("role", role);
     localStorage.setItem("userId", userId);
     setAuth({ token, role, userId });
-    
+
     console.log("✅ User logged in:", { role, userId });
     // Note: For shops, userId IS the shop_id from the database
   };
@@ -37,8 +37,14 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
     localStorage.removeItem("userId");
+    // Clear shop-related data to prevent showing previous user's data
+    localStorage.removeItem("shopId");
+    localStorage.removeItem("shopData"); // Clear any cached shop data
+    localStorage.removeItem("ownerName");
+    localStorage.removeItem("shopName");
+
     setAuth({ token: null, role: null, userId: null });
-    console.log("✅ User has been logged out.");
+    console.log("✅ User has been logged out and all data cleared.");
   };
 
   return (
