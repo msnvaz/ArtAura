@@ -23,44 +23,51 @@ public class ChallengeDAOImpl implements ChallengeDAO {
 
     @Override
     public void insertChallenge(ChallengeDTO challenge, String moderatorId) {
-        // Determine request_sponsorship and status
-        boolean requestSponsorship = challenge.isRequestSponsorship();
-        int requestSponsorshipValue = requestSponsorship ? 1 : 0;
-        String status = requestSponsorship ? "draft" : "active";
+        try {
+            // Determine status based on sponsorship request:
+            // - Request Sponsorship = true → status = "draft" (waiting for shop to sponsor)
+            // - Request Sponsorship = false → status = "active" (published immediately to artist feed)
+            boolean requestSponsorship = challenge.isRequestSponsorship();
+            String status = requestSponsorship ? "draft" : "active";
 
-        // Get scoring criteria, use defaults if not provided
-        int likesWeight = 34;
-        int commentsWeight = 33;
-        int shareWeight = 33;
-        
-        if (challenge.getScoringCriteria() != null) {
-            likesWeight = challenge.getScoringCriteria().getLikesWeight();
-            commentsWeight = challenge.getScoringCriteria().getCommentsWeight();
-            shareWeight = challenge.getScoringCriteria().getShareWeight();
+            // Format datetime strings - replace 'T' with space for MySQL
+            String publishDateTime = challenge.getPublishDateTime();
+            String deadlineDateTime = challenge.getDeadlineDateTime();
             
-            // Validate that the total equals 100
-            if (!challenge.getScoringCriteria().isValid()) {
-                throw new IllegalArgumentException("Scoring criteria weights must total 100%. Current total: " + 
-                    challenge.getScoringCriteria().getTotalWeight());
+            if (publishDateTime != null && publishDateTime.contains("T")) {
+                publishDateTime = publishDateTime.replace("T", " ");
             }
-        }
+            if (deadlineDateTime != null && deadlineDateTime.contains("T")) {
+                deadlineDateTime = deadlineDateTime.replace("T", " ");
+            }
+            
+            System.out.println("Inserting challenge with datetime values:");
+            System.out.println("Publish: " + publishDateTime);
+            System.out.println("Deadline: " + deadlineDateTime);
+            System.out.println("Request Sponsorship: " + requestSponsorship);
+            System.out.println("Status: " + status + (requestSponsorship ? " (draft - waiting for shop sponsorship)" : " (active - published immediately)"));
 
-        String sql = "INSERT INTO challenges (title, category, publish_date_time, deadline_date_time, description, max_participants, rewards, request_sponsorship, status, moderator_id, likes_weight, comments_weight, share_weight) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        jdbcTemplate.update(sql,
-            challenge.getTitle(),
-            challenge.getCategory(),
-            challenge.getPublishDateTime(),
-            challenge.getDeadlineDateTime(),
-            challenge.getDescription(),
-            challenge.getMaxParticipants(),
-            challenge.getRewards(),
-            requestSponsorshipValue,
-            status,
-            moderatorId,
-            likesWeight,
-            commentsWeight,
-            shareWeight
-        );
+            // Fixed marks scoring - weight columns don't exist in database
+            // Each Like = +10 marks, Each Dislike = -5 marks, Minimum score = 0
+            String sql = "INSERT INTO challenges (title, category, publish_date_time, deadline_date_time, description, max_participants, rewards, status, moderator_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            jdbcTemplate.update(sql,
+                challenge.getTitle(),
+                challenge.getCategory(),
+                publishDateTime,
+                deadlineDateTime,
+                challenge.getDescription(),
+                challenge.getMaxParticipants(),
+                challenge.getRewards(),
+                status,
+                moderatorId
+            );
+            
+            System.out.println("Challenge created successfully with status: " + status);
+        } catch (Exception e) {
+            System.err.println("Error inserting challenge: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
     }
     @Override
     public List<ChallengeListDTO> getAllChallenges() {
@@ -70,7 +77,8 @@ public class ChallengeDAOImpl implements ChallengeDAO {
 
     @Override
     public void updateChallenge(ChallengeDTO challenge, String moderatorId) {
-        String sql = "UPDATE challenges SET title=?, category=?, deadline_date_time=?, description=?, max_participants=?, rewards=?, request_sponsorship=?, likes_weight=?, comments_weight=?, share_weight=? WHERE id=? AND moderator_id=?";
+        // Fixed marks scoring - weight columns don't exist in database
+        String sql = "UPDATE challenges SET title=?, category=?, deadline_date_time=?, description=?, max_participants=?, rewards=? WHERE id=? AND moderator_id=?";
         
         // Clean and validate the deadline datetime
         String formattedDeadline = challenge.getDeadlineDateTime();
@@ -113,23 +121,6 @@ public class ChallengeDAOImpl implements ChallengeDAO {
             throw new IllegalArgumentException("Deadline datetime cannot be null or empty");
         }
         
-        // Get scoring criteria, use defaults if not provided
-        int likesWeight = 34;
-        int commentsWeight = 33;
-        int shareWeight = 33;
-        
-        if (challenge.getScoringCriteria() != null) {
-            likesWeight = challenge.getScoringCriteria().getLikesWeight();
-            commentsWeight = challenge.getScoringCriteria().getCommentsWeight();
-            shareWeight = challenge.getScoringCriteria().getShareWeight();
-            
-            // Validate that the total equals 100
-            if (!challenge.getScoringCriteria().isValid()) {
-                throw new IllegalArgumentException("Scoring criteria weights must total 100%. Current total: " + 
-                    challenge.getScoringCriteria().getTotalWeight());
-            }
-        }
-        
         jdbcTemplate.update(sql,
             challenge.getTitle(),
             challenge.getCategory(),
@@ -137,10 +128,6 @@ public class ChallengeDAOImpl implements ChallengeDAO {
             challenge.getDescription(),
             challenge.getMaxParticipants(),
             challenge.getRewards(),
-            challenge.isRequestSponsorship() ? 1 : 0,
-            likesWeight,
-            commentsWeight,
-            shareWeight,
             challenge.getId(),
             moderatorId
         );
@@ -152,5 +139,18 @@ public class ChallengeDAOImpl implements ChallengeDAO {
                      "WHERE status != 'completed' " +
                      "AND deadline_date_time < NOW()";
         return jdbcTemplate.update(sql);
+    }
+
+    @Override
+    public void publishChallenge(int challengeId) {
+        // Change status from 'draft' to 'active' to make it visible in artist feed
+        String sql = "UPDATE challenges SET status = 'active' WHERE id = ? AND status = 'draft'";
+        int rowsAffected = jdbcTemplate.update(sql, challengeId);
+        
+        if (rowsAffected == 0) {
+            throw new IllegalStateException("Challenge not found or already published (challenge_id: " + challengeId + ")");
+        }
+        
+        System.out.println("Challenge " + challengeId + " published successfully! Status changed from 'draft' to 'active'");
     }
 }
