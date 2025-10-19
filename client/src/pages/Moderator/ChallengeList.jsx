@@ -1,5 +1,5 @@
   import axios from 'axios';
-import { Calendar, CheckCircle, Clock, Edit, Eye, Filter, Search, Trash2, Trophy, Users, AlertCircle, FileText, Heart, MessageCircle, Send } from 'lucide-react';
+import { AlertCircle, Calendar, CheckCircle, Clock, Edit, Eye, FileText, Filter, Heart, MessageCircle, Search, Send, Trash2, Trophy, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -8,7 +8,8 @@ const ChallengeList = () => {
   
   // State Management
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
+  // Default to showing only completed challenges per request
+  const [filterStatus, setFilterStatus] = useState('completed');
   const [challenges, setChallenges] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -33,6 +34,17 @@ const ChallengeList = () => {
         token ? { headers: { Authorization: `Bearer ${token}` } } : {}
       );
       setChallenges(response.data);
+      // Debug info to confirm how many challenges and completed ones were fetched
+      try {
+        const list = response.data || [];
+        const completedCount = list.filter(c => {
+          const s = String(c?.status || '').toLowerCase();
+          return ['completed', 'complete', 'finished', 'done'].includes(s) || (c?.deadlineDateTime && new Date(c.deadlineDateTime) < new Date());
+        }).length;
+        console.debug('Fetched challenges:', list.length, 'Completed (detected):', completedCount);
+      } catch (err) {
+        console.debug('Challenge fetch debug error', err);
+      }
     } catch (error) {
       setError('Failed to load challenges.');
       console.error('Error fetching challenges:', error);
@@ -89,23 +101,23 @@ const ChallengeList = () => {
 
   // Helper function to determine actual status based on deadline
   const getActualStatus = (challenge) => {
-    // If challenge is already marked as completed, keep it completed
-    if (challenge.status === 'completed') {
-      return 'completed';
-    }
+    // Normalize status field to be defensive against different casing/values
+    const rawStatus = String(challenge?.status || '').toLowerCase();
+    const completedValues = ['completed', 'complete', 'finished', 'done'];
+    if (completedValues.includes(rawStatus)) return 'completed';
 
-    // Check if deadline has passed
-    if (challenge.deadlineDateTime) {
-      const deadline = new Date(challenge.deadlineDateTime);
+    // If deadline has passed, treat as completed as well
+    const deadlineValue = challenge?.deadlineDateTime || challenge?.deadline || challenge?.completedDate;
+    if (deadlineValue) {
+      const deadline = new Date(deadlineValue);
       const now = new Date();
-      
-      if (now > deadline) {
+      if (!isNaN(deadline.getTime()) && now > deadline) {
         return 'completed';
       }
     }
 
-    // Return the original status if deadline hasn't passed
-    return challenge.status;
+    // Fallback: return normalized original status or 'draft' if empty
+    return rawStatus || 'draft';
   };
 
   // Event Handlers
@@ -424,14 +436,14 @@ const ChallengeList = () => {
               />
             </div>
           </div>
-          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
             <Filter size={20} className="text-gray-500" />
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
               className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-semibold text-gray-700"
             >
-              <option value="all">All Status</option>
+              <option value="all">Show All Statuses</option>
               <option value="draft">Draft</option>
               <option value="active">Active</option>
               <option value="review">Review</option>
