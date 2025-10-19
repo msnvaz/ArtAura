@@ -15,4 +15,5 @@ public class ChallengeListDTO {
     private boolean requestSponsorship;
     private String status;
     private int moderatorId;
+    private ScoringCriteriaDTO scoringCriteria;
 }

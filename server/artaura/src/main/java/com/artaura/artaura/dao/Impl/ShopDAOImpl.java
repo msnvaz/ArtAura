@@ -7,6 +7,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
+import java.util.List;
 
 @Repository
 public class ShopDAOImpl implements ShopDAO {
@@ -28,9 +29,14 @@ public class ShopDAOImpl implements ShopDAO {
 
     @Override
     public ShopDTO findByUserId(Long userId) {
-        // shop_id is the PK, so we use it for fetching
+        // In this system, userId for shops IS the shop_id (from authentication)
         String sql = "SELECT * FROM shops WHERE shop_id = ?";
-        return jdbc.queryForObject(sql, (rs, rowNum) -> mapShop(rs), userId);
+        try {
+            return jdbc.queryForObject(sql, (rs, rowNum) -> mapShop(rs), userId);
+        } catch (org.springframework.dao.EmptyResultDataAccessException e) {
+            // Return null if no shop is found for the user
+            return null;
+        }
     }
 
     @Override
@@ -46,6 +52,24 @@ public class ShopDAOImpl implements ShopDAO {
                 shop.getTaxId(),
                 shop.getDescription(),
                 shopId);
+    }
+
+    @Override
+    public void deleteShop(Long shopId) {
+        String sql = "DELETE FROM shops WHERE shop_id = ?";
+        int rowsAffected = jdbc.update(sql, shopId);
+        if (rowsAffected == 0) {
+            throw new RuntimeException("Shop not found with ID: " + shopId);
+        }
+        System.out.println("🗑️ ShopDAOImpl: Deleted shop with ID: " + shopId);
+    }
+
+    @Override
+    public List<ShopDTO> findAll() {
+        String sql = "SELECT shop_id, shop_name, owner_name, email, contact_no, business_type, "
+                + "business_license, tax_id, description, status, agreed_terms, created_at "
+                + "FROM shops WHERE status = 'active' ORDER BY shop_name";
+        return jdbc.query(sql, (rs, rowNum) -> mapShop(rs));
     }
 
     private ShopDTO mapShop(ResultSet rs) throws java.sql.SQLException {

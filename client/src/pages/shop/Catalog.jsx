@@ -14,7 +14,6 @@ import {
   Package,
   AlertTriangle,
   CheckCircle,
-  Star,
   X,
   Upload,
   Camera
@@ -40,6 +39,7 @@ const CatalogManagement = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const categories = ['all', 'Paints', 'Canvas', 'Brushes', 'Equipment', 'Drawing'];
 
@@ -93,63 +93,75 @@ const CatalogManagement = () => {
     setShowImageModal(true);
   };
 
-  const handleImageUpload = (event) => {
+  const handleImageUpload = async (event) => {
     const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
-          // Create canvas to compress image
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
+    if (!file) return;
 
-          // Set dimensions for database storage
-          const maxWidth = 200;
-          const maxHeight = 200;
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      showToast("❌ Please select a valid image file", "error", 3000);
+      return;
+    }
 
-          let { width, height } = img;
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      showToast("❌ Image size must be less than 5MB", "error", 3000);
+      return;
+    }
 
-          // Calculate new dimensions
-          if (width > height) {
-            if (width > maxWidth) {
-              height = (height * maxWidth) / width;
-              width = maxWidth;
-            }
-          } else {
-            if (height > maxHeight) {
-              width = (width * maxHeight) / height;
-              height = maxHeight;
-            }
-          }
+    try {
+      setUploadingImage(true);
+      showToast("⏳ Uploading image...", "info", 2000);
 
-          canvas.width = width;
-          canvas.height = height;
+      const formData = new FormData();
+      formData.append('file', file);
 
-          // Draw and compress for database storage
-          ctx.drawImage(img, 0, 0, width, height);
-          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.3); // 30% quality
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_URL}/api/upload/image`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
 
-          if (imageModalType === 'add') {
-            setNewProduct({ ...newProduct, image: compressedDataUrl });
-          } else if (imageModalType === 'edit') {
-            setProductToEdit({ ...productToEdit, image: compressedDataUrl });
-          }
-          setShowImageModal(false);
-        };
-        img.src = e.target.result;
-      };
-      reader.readAsDataURL(file);
+      if (!response.ok) {
+        const error = await response.json();
+        showToast(`❌ ${error.error || "Failed to upload image"}`, "error", 3000);
+        return;
+      }
+
+      const data = await response.json();
+      const imageUrl = `${API_URL}${data.imageUrl}`;
+
+      if (imageModalType === 'add') {
+        setNewProduct({ ...newProduct, image: imageUrl });
+      } else if (imageModalType === 'edit') {
+        setProductToEdit({ ...productToEdit, image: imageUrl });
+      }
+
+      setShowImageModal(false);
+      showToast("✅ Image uploaded successfully!", "success", 2000);
+
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      showToast("❌ Failed to upload image. Please try again.", "error", 3000);
+    } finally {
+      setUploadingImage(false);
     }
   };
 
   const handleImageUrl = (url) => {
+    // Support both local paths and full URLs
+    const imageUrl = url.startsWith('http') ? url : url;
+    
     if (imageModalType === 'add') {
-      setNewProduct({ ...newProduct, image: url });
+      setNewProduct({ ...newProduct, image: imageUrl });
     } else if (imageModalType === 'edit') {
-      setProductToEdit({ ...productToEdit, image: url });
+      setProductToEdit({ ...productToEdit, image: imageUrl });
     }
     setShowImageModal(false);
+    showToast("✅ Image URL added successfully!", "success", 2000);
   };
 
   // Fetch products from backend
@@ -157,8 +169,13 @@ const CatalogManagement = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
+      const shopId = localStorage.getItem("shopId");
 
-      const response = await fetch(`${API_URL}/api/products`, {
+      if (!shopId) {
+        throw new Error("Shop ID not found. Please log in again.");
+      }
+
+      const response = await fetch(`${API_URL}/api/products?shopId=${shopId}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -196,14 +213,21 @@ const CatalogManagement = () => {
     e.preventDefault();
 
     const token = localStorage.getItem("token");
+    const shopId = localStorage.getItem("shopId");
 
     if (!token) {
       showToast("❌ You must be logged in to add a product.", "error", 3000);
       return;
     }
 
+    if (!shopId) {
+      showToast("❌ Shop ID not found. Please log in again.", "error", 3000);
+      return;
+    }
+
     try {
       const productData = {
+        shopId: parseInt(shopId),
         name: newProduct.name,
         sku: newProduct.sku,
         category: newProduct.category,
@@ -255,14 +279,21 @@ const CatalogManagement = () => {
     e.preventDefault();
 
     const token = localStorage.getItem("token");
+    const shopId = localStorage.getItem("shopId");
 
     if (!token) {
       showToast("❌ You must be logged in to edit a product.", "error", 3000);
       return;
     }
 
+    if (!shopId) {
+      showToast("❌ Shop ID not found. Please log in again.", "error", 3000);
+      return;
+    }
+
     try {
       const productData = {
+        shopId: parseInt(shopId),
         name: productToEdit.name,
         sku: productToEdit.sku,
         category: productToEdit.category,
@@ -470,11 +501,11 @@ const CatalogManagement = () => {
                 className="bg-white rounded-xl shadow-lg border border-[#FFE4D6] overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105 group animate-fade-in"
                 style={{ animationDelay: `${index * 0.1}s`, animationFillMode: 'both' }}
               >
-                <div className="relative h-36 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
+                <div className="relative h-64 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
                   <img
                     src={product.image}
                     alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-500"
                   />
                   <div className="absolute top-2 left-2">
                     {getStatusBadge(product.status)}
@@ -486,17 +517,6 @@ const CatalogManagement = () => {
                   <h3 className="font-bold text-[#5D3A00] text-base mb-1 line-clamp-2 group-hover:text-[#D87C5A] transition-colors duration-300">
                     {product.name}
                   </h3>
-                  <div className="flex items-center space-x-1 mb-1">
-                    <div className="flex items-center">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`w-3 h-3 ${i < Math.floor(product.rating) ? 'text-[#FFD95A] fill-current' : 'text-gray-300'}`}
-                        />
-                      ))}
-                    </div>
-                    <span className="text-xs text-[#5D3A00]/70 font-medium">({product.rating})</span>
-                  </div>
                   <div className="text-xs text-[#5D3A00]/70 space-y-0.5">
                     <p className="font-mono bg-[#FFF5E1] px-1.5 py-0.5 rounded inline-block">SKU: {product.sku}</p>
                     <p>Category: <span className="font-semibold">{product.category}</span></p>
@@ -607,13 +627,6 @@ const CatalogManagement = () => {
                       <div>
                         <p className="text-[#5D3A00]/70 font-semibold">Stock</p>
                         <p className="text-[#5D3A00]">{selectedProduct.stock} units</p>
-                      </div>
-                      <div>
-                        <p className="text-[#5D3A00]/70 font-semibold">Rating</p>
-                        <div className="flex items-center gap-1">
-                          <Star className="w-4 h-4 text-[#FFD95A] fill-current" />
-                          <span className="text-[#5D3A00]">{selectedProduct.rating}</span>
-                        </div>
                       </div>
                       <div>
                         <p className="text-[#5D3A00]/70 font-semibold">Sales</p>
@@ -853,29 +866,14 @@ const CatalogManagement = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-[#5D3A00] mb-2">Rating</label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      max="5"
-                      value={productToEdit.rating}
-                      onChange={(e) => setProductToEdit({ ...productToEdit, rating: e.target.value })}
-                      className="w-full border border-[#FFE4D6] px-3 py-2 rounded-lg focus:border-[#D87C5A] focus:ring-0 outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-[#5D3A00] mb-2">Sales</label>
-                    <input
-                      type="number"
-                      value={productToEdit.sales}
-                      onChange={(e) => setProductToEdit({ ...productToEdit, sales: e.target.value })}
-                      className="w-full border border-[#FFE4D6] px-3 py-2 rounded-lg focus:border-[#D87C5A] focus:ring-0 outline-none"
-                    />
-                  </div>
+                <div>
+                  <label className="block text-sm font-semibold text-[#5D3A00] mb-2">Sales</label>
+                  <input
+                    type="number"
+                    value={productToEdit.sales}
+                    onChange={(e) => setProductToEdit({ ...productToEdit, sales: e.target.value })}
+                    className="w-full border border-[#FFE4D6] px-3 py-2 rounded-lg focus:border-[#D87C5A] focus:ring-0 outline-none"
+                  />
                 </div>
 
                 <div className="flex gap-3 pt-4">
@@ -922,11 +920,16 @@ const CatalogManagement = () => {
                       accept="image/*"
                       onChange={handleImageUpload}
                       className="hidden"
+                      disabled={uploadingImage}
                     />
-                    <div className="border-2 border-dashed border-[#FFE4D6] rounded-lg p-8 text-center hover:border-[#D87C5A] transition-colors cursor-pointer">
-                      <Upload className="w-12 h-12 text-[#D87C5A] mx-auto mb-4" />
-                      <p className="text-[#5D3A00] font-medium">Click to upload an image</p>
-                      <p className="text-sm text-[#5D3A00]/70 mt-1">PNG, JPG, GIF supported</p>
+                    <div className={`border-2 border-dashed border-[#FFE4D6] rounded-lg p-8 text-center transition-colors cursor-pointer ${
+                      uploadingImage ? 'opacity-50 cursor-not-allowed' : 'hover:border-[#D87C5A]'
+                    }`}>
+                      <Upload className={`w-12 h-12 text-[#D87C5A] mx-auto mb-4 ${uploadingImage ? 'animate-pulse' : ''}`} />
+                      <p className="text-[#5D3A00] font-medium">
+                        {uploadingImage ? 'Uploading...' : 'Click to upload an image'}
+                      </p>
+                      <p className="text-sm text-[#5D3A00]/70 mt-1">PNG, JPG, GIF supported (Max 5MB)</p>
                     </div>
                   </label>
                 </div>

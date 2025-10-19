@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { X, ShoppingCart, BadgeCheck } from "lucide-react";
+import ImageZoomLens from "../artworks/ImageZoomLense";
 
 const ArtworkDetailsModal = ({ isOpen, onClose, artwork, onAddToCart }) => {
   const [qty, setQty] = useState(1);
@@ -21,7 +22,7 @@ const ArtworkDetailsModal = ({ isOpen, onClose, artwork, onAddToCart }) => {
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
 
       {/* Panel */}
-      <div className="relative z-[101] bg-white w-[95vw] max-w-4xl rounded-2xl shadow-2xl overflow-hidden border border-[#FFD95A]">
+      <div className="relative z-[101] bg-white w-[95vw] max-w-5xl rounded-2xl shadow-2xl overflow-hidden border border-[#FFD95A]">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-[#FFD95A] bg-[#FFF8E8]">
           <div className="min-w-0">
@@ -60,13 +61,23 @@ const ArtworkDetailsModal = ({ isOpen, onClose, artwork, onAddToCart }) => {
 
         {/* Body */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-0 md:gap-6 p-5">
-          {/* Image */}
+          {/* Image with Zoom */}
           <div className="bg-white md:rounded-xl overflow-hidden border border-[#FFD95A]/60">
-            <img
-              src={artwork.imageUrl}
-              alt={artwork.title}
-              className="w-full h-72 md:h-[420px] object-cover"
-            />
+            <div className="w-full h-72 md:h-[420px]">
+              <ImageZoomLens
+                src={artwork.imageUrl}
+                alt={artwork.title}
+                zoom={4.8}
+                lensSize={250}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  console.error(
+                    "Failed to load artwork image:",
+                    artwork.imageUrl
+                  );
+                }}
+              />
+            </div>
           </div>
 
           {/* Details */}

@@ -8,9 +8,7 @@ import {
   UserCheck,
   UserX,
   ShieldAlert,
-  MoreVertical,
   X,
-  Plus,
   ChevronDown,
   ChevronUp
 } from 'lucide-react';
@@ -189,6 +187,23 @@ const UsersManagement = () => {
   // User Details Row Component
   const UserDetailsRow = ({ user }) => {
     if (!user) return null;
+    // Helper: pick contact number per user type
+    const getContactNumber = (u) => {
+      if (!u) return null;
+      const type = (u.userType || '').toLowerCase();
+      if (type === 'artist') {
+        return u.contactNo || u.contact_no || null;
+      }
+      if (type === 'shop') {
+        return u.contact_no || u.contactNo || null;
+      }
+      if (type === 'buyer') {
+        return u.contactNo || u.contact_no || null;
+      }
+      // moderator or others: ignore
+      return null;
+    };
+    const contactNumber = getContactNumber(user);
     
     return (
       <tr>
@@ -222,6 +237,12 @@ const UsersManagement = () => {
                       <span className="font-medium">Email:</span> 
                       <span>{user.email}</span>
                     </div>
+                    {user.userType?.toLowerCase() !== 'moderator' && (
+                      <div className="flex justify-between">
+                        <span className="font-medium">Contact No:</span>
+                        <span>{contactNumber || '-'}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between">
                       <span className="font-medium">Type:</span> 
                       <span className="px-2 py-1 text-xs font-medium rounded-full" style={{
@@ -285,24 +306,6 @@ const UsersManagement = () => {
                 >
                   <ChevronUp size={16} />
                   Collapse
-                </button>
-                <button
-                  className="px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
-                  style={{backgroundColor: '#FFE4D6', color: '#5D3A00'}}
-                  onMouseOver={(e) => e.target.style.backgroundColor = '#FFD95A'}
-                  onMouseOut={(e) => e.target.style.backgroundColor = '#FFE4D6'}
-                >
-                  <Eye size={16} />
-                  View Profile
-                </button>
-                <button
-                  className="px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
-                  style={{backgroundColor: '#D87C5A', color: 'white'}}
-                  onMouseOver={(e) => e.target.style.backgroundColor = '#B85A3A'}
-                  onMouseOut={(e) => e.target.style.backgroundColor = '#D87C5A'}
-                >
-                  <Plus size={16} />
-                  Send Message
                 </button>
               </div>
             </div>
@@ -645,21 +648,6 @@ const UsersManagement = () => {
                               title={user.status === 'Suspended' ? 'Unblock User' : 'Block User'}
                             >
                               {user.status === 'Suspended' ? <UserX size={14} /> : <UserCheck size={14} />}
-                            </button>
-                            <button
-                              className="p-2 rounded-lg transition-colors"
-                              style={{backgroundColor: '#FFE4D6', color: '#5D3A00'}}
-                              onMouseOver={(e) => {
-                                e.target.style.backgroundColor = '#FFD95A';
-                                e.target.style.transform = 'scale(1.05)';
-                              }}
-                              onMouseOut={(e) => {
-                                e.target.style.backgroundColor = '#FFE4D6';
-                                e.target.style.transform = 'scale(1)';
-                              }}
-                              title="More Options"
-                            >
-                              <MoreVertical size={13} />
                             </button>
                           </div>
                         </td>

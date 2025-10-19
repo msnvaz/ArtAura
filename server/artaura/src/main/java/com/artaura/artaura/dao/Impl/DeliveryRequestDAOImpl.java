@@ -36,6 +36,12 @@ public class DeliveryRequestDAOImpl implements DeliveryRequestDAO {
         dto.setTotalAmount(rs.getBigDecimal("total_amount"));
         dto.setArtistId(rs.getLong("artist_id"));
         dto.setArtistName(rs.getString("artist_name"));
+        // Handle artwork dimensions/size from artworks table
+        try {
+            dto.setArtworkDimensions(rs.getString("artwork_size"));
+        } catch (Exception e) {
+            dto.setArtworkDimensions(null);
+        }
         // Handle shipping fee
         try {
             dto.setShippingFee(rs.getBigDecimal("shipping_fee"));
@@ -151,10 +157,12 @@ public class DeliveryRequestDAOImpl implements DeliveryRequestDAO {
                     ao.total_amount,
                     aoi.title AS artwork_title,
                     aoi.artist_id,
-                    CONCAT(a.first_name, ' ', a.last_name) AS artist_name
+                    CONCAT(a.first_name, ' ', a.last_name) AS artist_name,
+                    aw.size AS artwork_size
                 FROM AW_orders ao
                 LEFT JOIN AW_order_items aoi ON ao.id = aoi.order_id
                 LEFT JOIN artists a ON aoi.artist_id = a.artist_id
+                LEFT JOIN artworks aw ON aoi.artwork_id = aw.artwork_id
                 WHERE ao.delivery_status = 'pending'
                 ORDER BY ao.order_date DESC
             """;
@@ -243,10 +251,12 @@ public class DeliveryRequestDAOImpl implements DeliveryRequestDAO {
                         ao.total_amount,
                         aoi.title AS artwork_title,
                         aoi.artist_id,
-                        CONCAT(a.first_name, ' ', a.last_name) AS artist_name
+                        CONCAT(a.first_name, ' ', a.last_name) AS artist_name,
+                        aw.size AS artwork_size
                     FROM AW_orders ao
                     LEFT JOIN AW_order_items aoi ON ao.id = aoi.order_id
                     LEFT JOIN artists a ON aoi.artist_id = a.artist_id
+                    LEFT JOIN artworks aw ON aoi.artwork_id = aw.artwork_id
                     WHERE ao.id = ?
                 """;
                 
@@ -401,10 +411,12 @@ public class DeliveryRequestDAOImpl implements DeliveryRequestDAO {
                     aoi.title AS artwork_title,
                     aoi.artist_id,
                     CONCAT(a.first_name, ' ', a.last_name) AS artist_name,
+                    aw.size AS artwork_size,
                     p.amount AS payment_amount
                 FROM AW_orders ao
                 LEFT JOIN AW_order_items aoi ON ao.id = aoi.order_id
                 LEFT JOIN artists a ON aoi.artist_id = a.artist_id
+                LEFT JOIN artworks aw ON aoi.artwork_id = aw.artwork_id
                 LEFT JOIN payment p ON ao.id = p.AW_order_id
                 WHERE ao.delivery_status IN ('accepted', 'outForDelivery')
                 ORDER BY ao.order_date DESC
@@ -480,10 +492,12 @@ public class DeliveryRequestDAOImpl implements DeliveryRequestDAO {
                     ao.total_amount,
                     aoi.title AS artwork_title,
                     aoi.artist_id,
-                    CONCAT(a.first_name, ' ', a.last_name) AS artist_name
+                    CONCAT(a.first_name, ' ', a.last_name) AS artist_name,
+                    aw.size AS artwork_size
                 FROM AW_orders ao
                 LEFT JOIN AW_order_items aoi ON ao.id = aoi.order_id
                 LEFT JOIN artists a ON aoi.artist_id = a.artist_id
+                LEFT JOIN artworks aw ON aoi.artwork_id = aw.artwork_id
                 WHERE ao.delivery_status = 'delivered'
                 ORDER BY ao.order_date DESC
             """;
@@ -586,6 +600,16 @@ public class DeliveryRequestDAOImpl implements DeliveryRequestDAO {
             if (paymentId == null) {
                 System.out.println("❌ No payment record found for " + orderType + " order ID: " + orderId);
                 return false;
+            }
+            
+            // Check if platform fee already exists for this payment_id
+            String checkExistingSql = "SELECT COUNT(*) FROM platform_fees WHERE payment_id = ?";
+            Integer existingCount = jdbc.queryForObject(checkExistingSql, Integer.class, paymentId);
+            
+            if (existingCount != null && existingCount > 0) {
+                System.out.println("⚠️ Platform fee already exists for payment ID: " + paymentId + " (" + orderType + " order ID: " + orderId + ")");
+                System.out.println("ℹ️ Skipping duplicate insertion. Existing records: " + existingCount);
+                return true; // Return true as the fee already exists (idempotent operation)
             }
             
             // Insert platform fee

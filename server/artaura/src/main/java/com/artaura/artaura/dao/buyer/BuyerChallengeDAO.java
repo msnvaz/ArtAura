@@ -41,6 +41,20 @@ public interface BuyerChallengeDAO {
     List<Map<String, Object>> findByStatus(String status);
 
     /**
+     * Get participant count for a challenge (count of distinct artist_ids)
+     * @param challengeId Challenge ID
+     * @return Number of unique participants
+     */
+    int getParticipantCount(Long challengeId);
+
+    /**
+     * Get submission count for a challenge (total submissions)
+     * @param challengeId Challenge ID
+     * @return Total number of submissions
+     */
+    int getSubmissionCount(Long challengeId);
+
+    /**
      * Get all submissions for a specific challenge
      * @param challengeId Challenge ID
      * @param userId User ID for vote status
@@ -60,25 +74,26 @@ public interface BuyerChallengeDAO {
     List<ChallengeSubmissionDTO> getSubmissionsByChallengeWithSort(Integer challengeId, Long userId, String userType, String sortBy);
 
     /**
-     * Toggle vote for a submission (add vote if not voted, remove if already voted)
+     * Handle like/dislike for a submission
      * @param submissionId Submission ID
      * @param userId User ID
-     * @return true if vote was added, false if vote was removed
+     * @param action "like" or "dislike"
+     * @return Map containing success status, counts, and user reaction
      */
+    Map<String, Object> handleLikeDislike(Long submissionId, Long userId, String action);
+
+    /**
+     * Get like/dislike counts and user's reaction for a submission
+     * @param submissionId Submission ID
+     * @param userId User ID
+     * @return Map containing likes, dislikes, and userReaction
+     */
+    Map<String, Object> getSubmissionLikes(Long submissionId, Long userId);
+
+    // Remove or comment out the old voting methods
+    /*
     boolean toggleVote(Long submissionId, Long userId);
-
-    /**
-     * Check if user has voted for a submission
-     * @param submissionId Submission ID
-     * @param userId User ID
-     * @return true if user has voted, false otherwise
-     */
     boolean hasUserVoted(Long submissionId, Long userId);
-
-    /**
-     * Get total vote count for a submission
-     * @param submissionId Submission ID
-     * @return Total vote count
-     */
     int getSubmissionVoteCount(Long submissionId);
+    */
 }

@@ -1,6 +1,5 @@
 package com.artaura.artaura.controller.buyer;
 
-
 import com.artaura.artaura.dto.exhibition.UserProfileDTO;
 import com.artaura.artaura.dto.exhibition.ChangePasswordRequest;
 import com.artaura.artaura.service.buyer.UserService;
@@ -17,6 +16,7 @@ import org.springframework.http.HttpStatus;
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
+
     @Autowired
     private UserService userService;
 
@@ -37,16 +37,45 @@ public class UserController {
         ObjectMapper objectMapper = new ObjectMapper();
         UserProfileDTO updatedProfile = objectMapper.readValue(profileJson, UserProfileDTO.class);
         String imagePath = null;
+        
         if (imageFile != null && !imageFile.isEmpty()) {
-            // Use absolute path for uploads directory
-            String uploadDir = System.getProperty("user.dir") + File.separator + "uploads" + File.separator;
+            // Manual file handling - save to ArtAura/client/public/uploads/buyer directory
+            String currentDir = System.getProperty("user.dir");
+            System.out.println("Current working directory: " + currentDir);
+            
+            // Explicitly construct path to ArtAura/client (NOT server/client)
+            // Find the ArtAura root directory
+            String artAuraRoot;
+            if (currentDir.contains("ArtAura")) {
+                artAuraRoot = currentDir.substring(0, currentDir.indexOf("ArtAura") + "ArtAura".length()) + File.separator;
+            } else {
+                // Fallback - assume we're in a subdirectory of ArtAura
+                artAuraRoot = "C:" + File.separator + "Users" + File.separator + "aaa" + File.separator + "Desktop" + File.separator + "ArtAura" + File.separator;
+            }
+            
+            System.out.println("ArtAura root: " + artAuraRoot);
+
+            // Build path to main client folder (not server/client)
+            String uploadDir = artAuraRoot + "client" + File.separator + "public" + File.separator + "uploads" + File.separator + "buyer" + File.separator;
+            System.out.println("Target upload directory: " + uploadDir);
+            
             String fileName = "profile_" + userId + "_" + System.currentTimeMillis() + ".jpg";
             File dest = new File(uploadDir + fileName);
-            dest.getParentFile().mkdirs(); // Ensure directory exists
+            
+            // Create directory if it doesn't exist
+            if (!dest.getParentFile().exists()) {
+                boolean created = dest.getParentFile().mkdirs();
+                System.out.println("Created directory: " + created + " at " + dest.getParentFile().getAbsolutePath());
+            }
+            
             imageFile.transferTo(dest);
-            imagePath = "/uploads/" + fileName;
+            imagePath = "/uploads/buyer/" + fileName;
             updatedProfile.setImage(imagePath);
+            
+            System.out.println("File saved to: " + dest.getAbsolutePath());
+            System.out.println("Relative path: " + imagePath);
         }
+        
         UserProfileDTO profile = userService.updateUserProfile(userId, updatedProfile);
         if (profile == null) {
             return ResponseEntity.notFound().build();

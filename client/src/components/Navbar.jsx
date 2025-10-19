@@ -1,8 +1,6 @@
 import React from "react";
 import {
-  Home,
   ShoppingCart,
-  Bell,
   LogOut,
   Package,
   Handshake,
@@ -20,7 +18,6 @@ import { useState, useRef, useEffect } from "react";
 
 // Remove mockUser - we'll fetch real data
 const mainLinks = [
-  { name: "Dashboard", path: "/shop/dashboard", icon: Home },
   { name: "Orders", path: "/shop/orders", icon: ShoppingCart },
   { name: "Catalog", path: "/shop/catalog", icon: Package },
   { name: "Analytics", path: "/shop/analytics", icon: BarChart3 },
@@ -28,79 +25,142 @@ const mainLinks = [
 ];
 
 function Navbar() {
-  const { token, logout } = useAuth();
+  const { token, logout, userId } = useAuth();
   const isSignedIn = !!token;
   const navigate = useNavigate();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const profileDropdownRef = useRef(null);
-  
+
+  // Add API_URL from environment variables
+  const API_URL = import.meta.env.VITE_API_URL;
+
   // Add state for shop data
   const [shopData, setShopData] = useState({
-    ownerName: 'Loading...',
-    shopName: '',
-    avatar: '/src/assets/user.png'
+    ownerName: "Loading...",
+    shopName: "",
+    avatar: "/src/assets/user.png",
+    status: "",
   });
   const [loading, setLoading] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState(null); // Track current user
 
   // Fetch shop data when component mounts
   useEffect(() => {
     const fetchShopData = async () => {
-      if (!isSignedIn) {
+      if (!isSignedIn || !userId) {
+        // Clear shop data when user logs out or no user
+        setShopData({
+          ownerName: "Loading...",
+          shopName: "",
+          avatar: "/src/assets/user.png",
+          status: "",
+        });
         setLoading(false);
+        setCurrentUserId(null);
         return;
       }
 
+      // Check if user has changed
+      if (currentUserId !== null && currentUserId !== userId) {
+        console.log(
+          "User changed from",
+          currentUserId,
+          "to",
+          userId,
+          "- clearing old data"
+        );
+        setShopData({
+          ownerName: "Loading...",
+          shopName: "",
+          avatar: "/src/assets/user.png",
+          status: "",
+        });
+      }
+
+      setCurrentUserId(userId);
+
       try {
-        const token = localStorage.getItem("token");
+        setLoading(true);
+        const currentToken = localStorage.getItem("token");
         let shopId = localStorage.getItem("shopId");
-        let userId = localStorage.getItem("userId");
-        // If shopId is missing or 'null', use userId
-        if (!shopId || shopId === "null") {
+
+        // Clear previous data first to avoid showing stale data
+        setShopData({
+          ownerName: "Loading...",
+          shopName: "",
+          avatar: "/src/assets/user.png",
+          status: "",
+        });
+
+        // If shopId is missing or different from current userId, use userId
+        if (!shopId || shopId === "null" || shopId !== userId) {
           shopId = userId;
           localStorage.setItem("shopId", shopId);
+          console.log("Updated shopId in localStorage to:", shopId);
         }
+
         // If still no valid shopId, abort fetch
         if (!shopId || shopId === "null") {
           console.error("No valid shopId found in localStorage.");
           setLoading(false);
           return;
         }
-        
-        console.log("Fetching shop data for ID:", shopId);
 
-        const response = await fetch(`http://localhost:8081/api/shop/${shopId}`, {
+        console.log(
+          "Fetching shop data for ID:",
+          shopId,
+          "Current UserId:",
+          userId
+        );
+
+        const response = await fetch(`${API_URL}/api/shop/${shopId}`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${currentToken}`,
           },
         });
 
         if (response.ok) {
           const data = await response.json();
           console.log("Shop data fetched for navbar:", data);
-          
+
           setShopData({
-            ownerName: data.ownerName || 'Shop Owner',
-            shopName: data.shopName || 'Unknown Shop',
-            avatar: '/src/assets/user.png' // You can add avatar field to database later
+            ownerName: data.ownerName || "Shop Owner",
+            shopName: data.shopName || "Unknown Shop",
+            avatar: "/src/assets/user.png", // You can add avatar field to database later
+            status: data.status || "Active",
           });
         } else {
-          console.error("Failed to fetch shop data:", response.status);
+          console.error(
+            "Failed to fetch shop data:",
+            response.status,
+            response.statusText
+          );
           setShopData({
-            ownerName: 'Shop Owner',
-            shopName: 'Unknown Shop',
-            avatar: '/src/assets/user.png'
+            ownerName: "Shop Owner",
+            shopName: "Unknown Shop",
+            avatar: "/src/assets/user.png",
+            status: "Active",
           });
         }
       } catch (error) {
         console.error("Error fetching shop data:", error);
+
+        // Provide more specific error information
+        if (error.name === "TypeError" && error.message.includes("fetch")) {
+          console.error(
+            "Network error: Cannot connect to the server. Check if the backend is running."
+          );
+        }
+
         setShopData({
-          ownerName: 'Shop Owner',
-          shopName: 'Unknown Shop',
-          avatar: '/src/assets/user.png'
+          ownerName: "Shop Owner",
+          shopName: "Unknown Shop",
+          avatar: "/src/assets/user.png",
+          status: "Active",
         });
       } finally {
         setLoading(false);
@@ -108,7 +168,7 @@ function Navbar() {
     };
 
     fetchShopData();
-  }, [isSignedIn]);
+  }, [isSignedIn, token, userId, API_URL]); // Added userId to dependencies
 
   const handleLogoutClick = (e) => {
     e.preventDefault();
@@ -117,6 +177,15 @@ function Navbar() {
   };
 
   const confirmLogout = () => {
+    // Clear shop data immediately on logout
+    setShopData({
+      ownerName: "Loading...",
+      shopName: "",
+      avatar: "/src/assets/user.png",
+      status: "",
+    });
+    setCurrentUserId(null);
+
     logout();
     setShowLogoutConfirm(false);
     navigate("/");
@@ -181,7 +250,6 @@ function Navbar() {
                 <NavLink
                   key={name}
                   to={path}
-                  end={name === "Dashboard"}
                   className={({ isActive }) =>
                     `group relative flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
                       isActive
@@ -193,45 +261,65 @@ function Navbar() {
                   {icon && React.createElement(icon, { className: "h-4 w-4" })}
                   <span className="text-sm">{name}</span>
                   {/* Beautiful hover underline */}
-                  <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-gradient-to-r from-[#FFD95A] to-[#D87C5A] transition-all duration-300 ${
-                    name === 'Dashboard' ? 'w-0 group-hover:w-3/4' :
-                    name === 'Orders' ? 'w-0 group-hover:w-2/3' :
-                    name === 'Catalog' ? 'w-0 group-hover:w-3/4' :
-                    name === 'Analytics' ? 'w-0 group-hover:w-4/5' :
-                    'w-0 group-hover:w-5/6'
-                  }`}></span>
+                  <span
+                    className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-gradient-to-r from-[#FFD95A] to-[#D87C5A] transition-all duration-300 ${
+                      name === "Orders"
+                        ? "w-0 group-hover:w-2/3"
+                        : name === "Catalog"
+                        ? "w-0 group-hover:w-3/4"
+                        : name === "Analytics"
+                        ? "w-0 group-hover:w-4/5"
+                        : "w-0 group-hover:w-5/6"
+                    }`}
+                  ></span>
                 </NavLink>
               ))}
             </div>
 
-            {/* RIGHT CORNER START - Notifications & Profile */}
+            {/* RIGHT CORNER START - Profile */}
             <div className="flex items-center space-x-4">
-              {/* Enhanced Notifications */}
-              {isSignedIn && (
-                <button className="relative p-2 text-[#FFD95A] hover:text-white hover:bg-[#FFE9A0]/20 rounded-lg transition-all duration-200">
-                  <Bell className="h-5 w-5" />
-                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
-                    <span className="text-xs text-white font-bold">3</span>
-                  </span>
-                </button>
-              )}
-
               {/* Profile Dropdown - Desktop */}
               {isSignedIn ? (
-                <div className="relative hidden md:block" ref={profileDropdownRef}>
+                <div
+                  className="relative hidden md:block"
+                  ref={profileDropdownRef}
+                >
                   <button
                     onClick={toggleProfileDropdown}
                     className="flex items-center space-x-2 p-2 rounded-lg text-[#FFD95A] hover:bg-[#FFE9A0]/20 transition-all duration-200"
                   >
-                    <Avatar className="h-8 w-8 ring-2 ring-[#FFD95A] bg-[#362625]">
-                      {shopData.avatar ? (
-                        <AvatarImage src={shopData.avatar} alt={shopData.ownerName} />
-                      ) : (
-                        <AvatarFallback className="text-[#FFD95A] font-bold text-sm">
-                          {loading ? "..." : shopData.ownerName[0]?.toUpperCase() || "U"}
-                        </AvatarFallback>
+                    <div className="relative">
+                      <Avatar className="h-8 w-8 ring-2 ring-[#FFD95A] bg-[#362625]">
+                        {shopData.avatar ? (
+                          <AvatarImage
+                            src={shopData.avatar}
+                            alt={shopData.ownerName}
+                          />
+                        ) : (
+                          <AvatarFallback className="text-[#FFD95A] font-bold text-sm">
+                            {loading
+                              ? "..."
+                              : shopData.ownerName[0]?.toUpperCase() || "U"}
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+                      {/* Active Status Badge */}
+                      {shopData.status === "Active" && (
+                        <div className="absolute -top-0.5 -right-0.5 bg-[#66bb6a] text-white p-0.5 rounded-full shadow-lg border border-[#362625]">
+                          <svg
+                            className="w-2.5 h-2.5"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        </div>
                       )}
-                    </Avatar>
+                    </div>
                     <ChevronDown
                       className={`h-4 w-4 transition-transform duration-200 ${
                         showProfileDropdown ? "rotate-180" : ""
@@ -259,7 +347,6 @@ function Navbar() {
                         <User className="h-4 w-4" />
                         View Profile
                       </NavLink>
-
 
                       <div className="border-t border-gray-100 mt-2 pt-2">
                         <button
@@ -303,7 +390,6 @@ function Navbar() {
               </button>
             </div>
             {/* RIGHT CORNER END */}
-
           </div>
         </div>
 
@@ -312,11 +398,10 @@ function Navbar() {
           <div className="md:hidden bg-[#362625] border-t border-[#FFD95A]/30">
             <div className="px-2 py-3 space-y-1">
               {/* Mobile Navigation Links */}
-              {mainLinks.map(({ name, path}) => (
+              {mainLinks.map(({ name, path, icon: Icon }) => (
                 <NavLink
                   key={name}
                   to={path}
-                  end={name === "Dashboard"}
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={({ isActive }) =>
                     `group relative flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all duration-300 ${
@@ -329,13 +414,17 @@ function Navbar() {
                   <Icon className="h-5 w-5" />
                   <span>{name}</span>
                   {/* Mobile hover underline */}
-                  <span className={`absolute bottom-1 left-4 h-0.5 bg-gradient-to-r from-[#D87C5A] to-[#FFD95A] transition-all duration-300 ${
-                    name === 'Dashboard' ? 'w-0 group-hover:w-16' :
-                    name === 'Orders' ? 'w-0 group-hover:w-12' :
-                    name === 'Catalog' ? 'w-0 group-hover:w-14' :
-                    name === 'Analytics' ? 'w-0 group-hover:w-16' :
-                    'w-0 group-hover:w-20'
-                  }`}></span>
+                  <span
+                    className={`absolute bottom-1 left-4 h-0.5 bg-gradient-to-r from-[#D87C5A] to-[#FFD95A] transition-all duration-300 ${
+                      name === "Orders"
+                        ? "w-0 group-hover:w-12"
+                        : name === "Catalog"
+                        ? "w-0 group-hover:w-14"
+                        : name === "Analytics"
+                        ? "w-0 group-hover:w-16"
+                        : "w-0 group-hover:w-20"
+                    }`}
+                  ></span>
                 </NavLink>
               ))}
 
@@ -344,15 +433,38 @@ function Navbar() {
                 <div className="border-t border-[#FFD95A]/30 pt-3 mt-3 space-y-1">
                   <div className="px-4 py-2">
                     <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10 ring-2 ring-[#FFD95A] bg-[#362625]">
-                        {shopData.avatar ? (
-                          <AvatarImage src={shopData.avatar} alt={shopData.ownerName} />
-                        ) : (
-                          <AvatarFallback className="text-[#FFD95A] font-bold">
-                            {loading ? "..." : shopData.ownerName[0]?.toUpperCase() || "U"}
-                          </AvatarFallback>
+                      <div className="relative">
+                        <Avatar className="h-10 w-10 ring-2 ring-[#FFD95A] bg-[#362625]">
+                          {shopData.avatar ? (
+                            <AvatarImage
+                              src={shopData.avatar}
+                              alt={shopData.ownerName}
+                            />
+                          ) : (
+                            <AvatarFallback className="text-[#FFD95A] font-bold">
+                              {loading
+                                ? "..."
+                                : shopData.ownerName[0]?.toUpperCase() || "U"}
+                            </AvatarFallback>
+                          )}
+                        </Avatar>
+                        {/* Active Status Badge - Mobile */}
+                        {shopData.status === "Active" && (
+                          <div className="absolute -top-0.5 -right-0.5 bg-[#66bb6a] text-white p-1 rounded-full shadow-lg border border-[#362625]">
+                            <svg
+                              className="w-2.5 h-2.5"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </div>
                         )}
-                      </Avatar>
+                      </div>
                       <div>
                         <p className="text-sm font-medium text-[#FFD95A]">
                           {loading ? "Loading..." : shopData.ownerName}

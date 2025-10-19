@@ -1,188 +1,288 @@
-import React, { useState, useEffect } from 'react';
-import { Bell, X, CheckCircle, XCircle, Clock, Calendar } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import React, { useState, useEffect, useRef } from 'react';
+import { Bell, X, Check, CheckCheck } from 'lucide-react';
 import axios from 'axios';
+import { useAuth } from '../../context/AuthContext';
+import { formatDistanceToNow } from 'date-fns';
 
 const NotificationBell = () => {
+    const { token, role, userId } = useAuth();
     const [notifications, setNotifications] = useState([]);
-    const [showNotifications, setShowNotifications] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
-    const { token, userId, role } = useAuth();
+    const [isOpen, setIsOpen] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const dropdownRef = useRef(null);
 
-    const API_URL = import.meta.env.VITE_API_URL;
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081';
 
-    // Fetch notifications when component mounts
+    // Only show notification bell for artists or buyers
+    if (!token || (role !== 'artist' && role !== 'buyer' && role !== 'BUYER')) {
+        return null;
+    }
+
+    // Close dropdown when clicking outside
     useEffect(() => {
-        if (token && userId && role === 'BUYER') {
-            fetchNotifications();
-        }
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setIsOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    // Fetch notifications and unread count
+    useEffect(() => {
+        fetchNotifications();
+        fetchUnreadCount();
+
+        // Set up polling for real-time updates (every 30 seconds)
+        const interval = setInterval(() => {
+            fetchUnreadCount();
+        }, 30000);
+
+        return () => clearInterval(interval);
     }, [token, userId, role]);
 
     const fetchNotifications = async () => {
         try {
-            const response = await axios.get(`${API_URL}/api/notifications/buyer/${userId}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
+            setLoading(true);
+            let response;
 
-            if (response.data && response.data.success) {
-                setNotifications(response.data.data);
-                setUnreadCount(response.data.data.filter(n => !n.isRead).length);
+            if (role === 'artist') {
+                response = await axios.get(`${API_URL}/api/notifications/artist`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
+            } else if (role === 'buyer' || role === 'BUYER') {
+                response = await axios.get(`${API_URL}/api/notifications/buyer/${userId}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
+            }
+
+            if (response?.data?.success) {
+                const notifs = response.data.notifications || response.data.data || [];
+                setNotifications(notifs);
+                setUnreadCount(response.data.unreadCount || notifs.filter(n => !n.isRead).length);
             }
         } catch (error) {
             console.error('Error fetching notifications:', error);
+            // Fail silently for better UX
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchUnreadCount = async () => {
+        try {
+            let response;
+
+            if (role === 'artist') {
+                response = await axios.get(`${API_URL}/api/notifications/artist/count`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
+            } else if (role === 'buyer' || role === 'BUYER') {
+                // For buyers, we'll count from the notifications list
+                const notifResponse = await axios.get(`${API_URL}/api/notifications/buyer/${userId}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
+
+                if (notifResponse?.data?.success) {
+                    const notifs = notifResponse.data.data || [];
+                    setUnreadCount(notifs.filter(n => !n.isRead).length);
+                }
+                return;
+            }
+
+            if (response?.data?.success) {
+                setUnreadCount(response.data.unreadCount || 0);
+            }
+        } catch (error) {
+            console.error('Error fetching unread count:', error);
+            // Fail silently
         }
     };
 
     const markAsRead = async (notificationId) => {
         try {
-            await axios.post(`${API_URL}/api/notifications/${notificationId}/mark-read`, {}, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
+            let response;
 
-            setNotifications(prev =>
-                prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n)
-            );
-            setUnreadCount(prev => Math.max(0, prev - 1));
+            if (role === 'artist') {
+                response = await axios.put(
+                    `${API_URL}/api/notifications/artist/${notificationId}/read`,
+                    {},
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    }
+                );
+            } else if (role === 'buyer' || role === 'BUYER') {
+                response = await axios.post(
+                    `${API_URL}/api/notifications/${notificationId}/mark-read`,
+                    {},
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    }
+                );
+            }
+
+            if (response?.data?.success) {
+                // Update local state
+                setNotifications(prev =>
+                    prev.map(notif => {
+                        const id = notif.notificationId || notif.id;
+                        return id === notificationId
+                            ? { ...notif, isRead: true }
+                            : notif;
+                    })
+                );
+                setUnreadCount(prev => Math.max(0, prev - 1));
+            }
         } catch (error) {
             console.error('Error marking notification as read:', error);
         }
     };
 
-    const deleteNotification = async (notificationId) => {
+    const markAllAsRead = async () => {
         try {
-            await axios.delete(`${API_URL}/api/notifications/${notificationId}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+            if (role === 'artist') {
+                const response = await axios.put(
+                    `${API_URL}/api/notifications/artist/mark-all-read`,
+                    {},
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    }
+                );
+
+                if (response.data.success) {
+                    // Update local state
+                    setNotifications(prev =>
+                        prev.map(notif => ({ ...notif, isRead: true }))
+                    );
+                    setUnreadCount(0);
                 }
-            });
-
-            setNotifications(prev => prev.filter(n => n.id !== notificationId));
-            setUnreadCount(prev => {
-                const notification = notifications.find(n => n.id === notificationId);
-                return notification && !notification.isRead ? Math.max(0, prev - 1) : prev;
-            });
+            }
+            // TODO: Implement mark all as read for buyers if needed
         } catch (error) {
-            console.error('Error deleting notification:', error);
+            console.error('Error marking all notifications as read:', error);
         }
     };
 
-    const getNotificationIcon = (type) => {
-        switch (type) {
-            case 'commission_accepted':
-                return <CheckCircle className="w-5 h-5 text-green-500" />;
-            case 'commission_rejected':
-                return <XCircle className="w-5 h-5 text-red-500" />;
-            default:
-                return <Bell className="w-5 h-5 text-blue-500" />;
+    const toggleDropdown = () => {
+        setIsOpen(!isOpen);
+        if (!isOpen) {
+            fetchNotifications(); // Refresh when opening
         }
     };
 
-    const formatNotificationTime = (timestamp) => {
-        const date = new Date(timestamp);
-        const now = new Date();
-        const diffTime = now - date;
-        const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
-        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-        if (diffHours < 1) {
-            return 'Just now';
-        } else if (diffHours < 24) {
-            return `${diffHours}h ago`;
-        } else if (diffDays < 7) {
-            return `${diffDays}d ago`;
-        } else {
-            return date.toLocaleDateString();
+    const formatNotificationTime = (dateString) => {
+        try {
+            const date = new Date(dateString);
+            return formatDistanceToNow(date, { addSuffix: true });
+        } catch (error) {
+            return 'Unknown time';
         }
     };
 
-    // Don't show for artists or if not logged in
-    if (role !== 'BUYER' || !token) {
-        return null;
-    }
+    const getNotificationId = (notification) => {
+        return notification.notificationId || notification.id;
+    };
+
+    const getNotificationBody = (notification) => {
+        return notification.notificationBody || notification.message || notification.content;
+    };
+
+    const getNotificationTime = (notification) => {
+        return notification.createdAt || notification.timestamp || notification.created_at;
+    };
 
     return (
-        <div className="relative">
+        <div className="relative" ref={dropdownRef}>
             {/* Notification Bell Button */}
             <button
-                onClick={() => setShowNotifications(!showNotifications)}
-                className="relative p-2 text-[#7f5539] hover:bg-[#FFE4D6] rounded-lg transition-colors"
+                onClick={toggleDropdown}
+                className="relative p-2 text-white hover:bg-white/20 backdrop-blur-sm rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-white/20"
+                aria-label="Notifications"
             >
-                <Bell className="w-6 h-6" />
+                <Bell className="h-6 w-6" />
                 {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                        {unreadCount > 9 ? '9+' : unreadCount}
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                        {unreadCount > 99 ? '99+' : unreadCount}
                     </span>
                 )}
             </button>
 
-            {/* Notifications Dropdown */}
-            {showNotifications && (
-                <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-xl border border-[#FFE4D6] z-50 max-h-96 overflow-hidden">
+            {/* Notification Dropdown */}
+            {isOpen && (
+                <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-96 overflow-hidden">
                     {/* Header */}
-                    <div className="p-4 border-b border-[#FFE4D6] bg-[#FFF5E1]">
+                    <div className="p-4 border-b border-gray-200 flex justify-between items-center">
                         <h3 className="font-semibold text-[#7f5539]">Notifications</h3>
-                        {unreadCount > 0 && (
-                            <p className="text-sm text-[#7f5539]/70">{unreadCount} unread</p>
-                        )}
+                        <div className="flex space-x-2">
+                            {unreadCount > 0 && role === 'artist' && (
+                                <button
+                                    onClick={markAllAsRead}
+                                    className="text-sm text-[#7f5539] hover:text-[#6e4c34] flex items-center space-x-1"
+                                    title="Mark all as read"
+                                >
+                                    <CheckCheck className="h-4 w-4" />
+                                    <span>Mark all read</span>
+                                </button>
+                            )}
+                            <button
+                                onClick={() => setIsOpen(false)}
+                                className="text-gray-400 hover:text-gray-600"
+                            >
+                                <X className="h-4 w-4" />
+                            </button>
+                        </div>
                     </div>
 
                     {/* Notifications List */}
                     <div className="max-h-80 overflow-y-auto">
-                        {notifications.length === 0 ? (
-                            <div className="p-8 text-center text-[#7f5539]/60">
-                                <Bell className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                                <p>No notifications yet</p>
+                        {loading ? (
+                            <div className="p-4 text-center text-gray-500">
+                                Loading notifications...
+                            </div>
+                        ) : notifications.length === 0 ? (
+                            <div className="p-4 text-center text-gray-500">
+                                No notifications yet
                             </div>
                         ) : (
                             notifications.map((notification) => (
                                 <div
-                                    key={notification.id}
-                                    className={`p-4 border-b border-[#FFE4D6] hover:bg-[#FFF5E1] transition-colors ${!notification.isRead ? 'bg-blue-50' : ''
+                                    key={getNotificationId(notification)}
+                                    className={`p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors ${!notification.isRead ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
                                         }`}
+                                    onClick={() => !notification.isRead && markAsRead(getNotificationId(notification))}
                                 >
-                                    <div className="flex items-start space-x-3">
-                                        {getNotificationIcon(notification.type)}
-                                        <div className="flex-1 min-w-0">
-                                            <h4 className="font-medium text-[#7f5539] text-sm">
-                                                {notification.title}
-                                            </h4>
-                                            <p className="text-sm text-[#7f5539]/70 mt-1">
-                                                {notification.message}
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex-1">
+                                            <p className={`text-sm ${!notification.isRead ? 'font-medium text-gray-900' : 'text-gray-700'}`}>
+                                                {getNotificationBody(notification)}
                                             </p>
-                                            {notification.artistDeadline && (
-                                                <div className="flex items-center mt-2 text-xs text-[#7f5539]/60">
-                                                    <Calendar className="w-3 h-3 mr-1" />
-                                                    Deadline: {new Date(notification.artistDeadline).toLocaleDateString()}
-                                                </div>
+                                            <p className="text-xs text-gray-500 mt-1">
+                                                {formatNotificationTime(getNotificationTime(notification))}
+                                            </p>
+                                        </div>
+                                        <div className="ml-2 flex items-center">
+                                            {!notification.isRead ? (
+                                                <div className="w-2 h-2 bg-blue-500 rounded-full" title="Unread"></div>
+                                            ) : (
+                                                <Check className="h-4 w-4 text-green-500" title="Read" />
                                             )}
-                                            <div className="flex items-center justify-between mt-2">
-                                                <span className="text-xs text-[#7f5539]/50">
-                                                    {formatNotificationTime(notification.createdAt)}
-                                                </span>
-                                                <div className="flex space-x-2">
-                                                    {!notification.isRead && (
-                                                        <button
-                                                            onClick={() => markAsRead(notification.id)}
-                                                            className="text-xs text-blue-600 hover:text-blue-800"
-                                                        >
-                                                            Mark as read
-                                                        </button>
-                                                    )}
-                                                    <button
-                                                        onClick={() => deleteNotification(notification.id)}
-                                                        className="text-xs text-red-600 hover:text-red-800"
-                                                    >
-                                                        Delete
-                                                    </button>
-                                                </div>
-                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -192,24 +292,19 @@ const NotificationBell = () => {
 
                     {/* Footer */}
                     {notifications.length > 0 && (
-                        <div className="p-3 border-t border-[#FFE4D6] bg-[#FFF5E1] text-center">
+                        <div className="p-3 bg-gray-50 text-center">
                             <button
-                                onClick={() => setShowNotifications(false)}
-                                className="text-sm text-[#7f5539] hover:text-[#5a3d28]"
+                                onClick={() => {
+                                    setIsOpen(false);
+                                    // You could navigate to a full notifications page here
+                                }}
+                                className="text-sm text-[#7f5539] hover:text-[#6e4c34] font-medium"
                             >
-                                Close
+                                View all notifications
                             </button>
                         </div>
                     )}
                 </div>
-            )}
-
-            {/* Backdrop to close dropdown */}
-            {showNotifications && (
-                <div
-                    className="fixed inset-0 z-40"
-                    onClick={() => setShowNotifications(false)}
-                />
             )}
         </div>
     );

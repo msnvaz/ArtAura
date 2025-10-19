@@ -10,16 +10,21 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/products")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174"})
 public class ProductController {
 
     @Autowired
     private ProductService productService;
 
     @GetMapping
-    public ResponseEntity<List<AddProductDTO>> getAllProducts() {
+    public ResponseEntity<List<AddProductDTO>> getAllProducts(@RequestParam(required = false) Long shopId) {
         try {
-            List<AddProductDTO> products = productService.getAllProducts();
+            List<AddProductDTO> products;
+            if (shopId != null) {
+                products = productService.getProductsByShopId(shopId);
+            } else {
+                products = productService.getAllProducts();
+            }
             return ResponseEntity.ok(products);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);

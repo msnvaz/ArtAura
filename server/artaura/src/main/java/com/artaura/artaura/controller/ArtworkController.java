@@ -4,6 +4,7 @@ import com.artaura.artaura.dao.ArtWorkDAO;
 import com.artaura.artaura.dto.artwork.ArtWorkCreateDTO;
 import com.artaura.artaura.dto.artwork.ArtWorkResponseDTO;
 import com.artaura.artaura.dto.artwork.ArtWorkUpdateDTO;
+import com.artaura.artaura.service.ArtWorkService;
 import com.artaura.artaura.util.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,9 @@ public class ArtworkController {
 
     @Autowired
     private ArtWorkDAO artWorkDAO;
+
+    @Autowired
+    private ArtWorkService artWorkService;
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -69,29 +73,8 @@ public class ArtworkController {
             dto.setCreatedAt(java.time.LocalDateTime.now());
             dto.setUpdatedAt(java.time.LocalDateTime.now());
 
-            // 📂 Save image to /uploads/ if provided
-            if (image != null && !image.isEmpty()) {
-                String fileName = System.currentTimeMillis() + "_" + image.getOriginalFilename();
-
-                // Use same logic as WebConfig to find correct upload directory
-                String currentDir = System.getProperty("user.dir");
-                String serverDir = currentDir.endsWith("artaura")
-                        ? currentDir.substring(0, currentDir.lastIndexOf("artaura"))
-                        : currentDir + "/";
-                Path uploadDir = Paths.get(serverDir + "uploads");
-
-                Files.createDirectories(uploadDir); // Create folder if not exist
-                Path filePath = uploadDir.resolve(fileName);
-                Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-                // Store relative path for frontend access
-                dto.setImageUrl("/uploads/" + fileName);
-            } else {
-                dto.setImageUrl("");
-            }
-
-            // Save artwork
-            artWorkDAO.saveArtWork(artistId, dto);
+            // Use ArtWorkService to handle image upload properly
+            artWorkService.createArtWork(artistId, dto, image);
 
             // Get the created artwork to return it
             List<ArtWorkResponseDTO> artworks = artWorkDAO.getArtWorksByArtist(artistId);
@@ -191,22 +174,12 @@ public class ArtworkController {
 
             // Handle image upload if provided
             if (image != null && !image.isEmpty()) {
-                String uploadDir = "uploads/";
-                Path uploadPath = Paths.get(uploadDir);
-                if (!Files.exists(uploadPath)) {
-                    Files.createDirectories(uploadPath);
-                }
-
-                // Generate unique filename
-                String filename = System.currentTimeMillis() + "_" + image.getOriginalFilename();
-                Path filePath = uploadPath.resolve(filename);
-                Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-                dto.setImageUrl("/" + uploadDir + filename);
+                // Use ArtWorkService to handle image upload properly
+                artWorkService.updateArtWork(dto, image);
+            } else {
+                // Update artwork without image
+                artWorkDAO.updateArtWork(dto);
             }
-
-            // Update artwork
-            artWorkDAO.updateArtWork(dto);
 
             // Return updated artwork data
             ArtWorkResponseDTO updatedArtwork = artWorkDAO.getArtWorkById(artworkId);
@@ -223,6 +196,14 @@ public class ArtworkController {
         try {
             artWorkDAO.deleteArtWorkById(artworkId);
             return ResponseEntity.ok("Artwork deleted successfully");
+        } catch (RuntimeException e) {
+            // Handle business logic errors
+            String errorMessage = e.getMessage();
+            if (errorMessage.contains("Artwork not found")) {
+                return ResponseEntity.status(404).body(errorMessage); // 404 Not Found
+            } else {
+                return ResponseEntity.status(500).body("Error deleting artwork: " + errorMessage);
+            }
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body("Error deleting artwork: " + e.getMessage());

@@ -21,8 +21,7 @@ import {
   CreditCard,
   Hash
 } from 'lucide-react';
-import { useCurrency } from '../../context/CurrencyContext';
-import CurrencySelector from '../../components/common/CurrencySelector';
+// Removed currency selector; not needed in verification admin page
 import adminVerificationApi from '../../services/adminVerificationApi';
 
 const UserVerification = () => {
@@ -30,7 +29,7 @@ const UserVerification = () => {
   const [activeTab, setActiveTab] = useState('pending');
   const [selectedUserType, setSelectedUserType] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const { formatPrice } = useCurrency();
+  // Currency utilities not required here
 
   // API state
   const [verificationRequests, setVerificationRequests] = useState([]);
@@ -564,7 +563,7 @@ const UserVerification = () => {
             <Shield size={24} />
             User Verification ({getFilteredRequests().length} requests)
           </h2>
-          <CurrencySelector className="flex-shrink-0" />
+          {/* CurrencySelector removed */}
         </div>
 
         {/* Tabs */}

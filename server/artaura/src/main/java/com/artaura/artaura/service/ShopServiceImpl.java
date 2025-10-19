@@ -5,6 +5,8 @@ import com.artaura.artaura.dto.shop.ShopDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class ShopServiceImpl implements ShopService {
 
@@ -24,5 +26,15 @@ public class ShopServiceImpl implements ShopService {
     @Override
     public void updateShop(Long shopId, ShopDTO shop) {
         shopDAO.updateShop(shopId, shop);
+    }
+
+    @Override
+    public void deleteShop(Long shopId) {
+        shopDAO.deleteShop(shopId);
+    }
+
+    @Override
+    public List<ShopDTO> getAllShops() {
+        return shopDAO.findAll();
     }
 }

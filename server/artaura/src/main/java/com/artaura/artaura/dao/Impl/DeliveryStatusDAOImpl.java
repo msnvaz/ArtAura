@@ -105,11 +105,14 @@ public class DeliveryStatusDAOImpl implements DeliveryStatusDAO {
                     CONCAT(COALESCE(addr.street_address, ''), ', ', COALESCE(addr.city, ''), ', ', 
                            COALESCE(addr.state, ''), ', ', COALESCE(addr.country, '')) AS artist_address,
                     addr.city AS artist_city,
-                    aoi.title AS artwork_title
+                    aoi.title AS artwork_title,
+                    aw.size AS artwork_dimensions,
+                    aw.medium AS artwork_type
                 FROM AW_orders ao
                 LEFT JOIN AW_order_items aoi ON ao.id = aoi.order_id
                 LEFT JOIN artists a ON aoi.artist_id = a.artist_id
                 LEFT JOIN addresses addr ON a.artist_id = addr.artist_id
+                LEFT JOIN artworks aw ON aoi.artwork_id = aw.artwork_id
                 WHERE ao.delivery_status = 'pending'
                 ORDER BY ao.order_date DESC
                 """;
