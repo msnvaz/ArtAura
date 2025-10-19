@@ -1,8 +1,15 @@
 package com.artaura.artaura.dao.Impl;
 
-import com.artaura.artaura.dao.ExhibitionDAO;
-import com.artaura.artaura.dto.CreateExhibitionDTO;
-import com.artaura.artaura.dto.ExhibitionDTO;
+import java.math.BigDecimal;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,16 +20,9 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
-import java.math.BigDecimal;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import com.artaura.artaura.dao.ExhibitionDAO;
+import com.artaura.artaura.dto.CreateExhibitionDTO;
+import com.artaura.artaura.dto.ExhibitionDTO;
 
 @Repository
 public class ExhibitionDAOImpl implements ExhibitionDAO {
@@ -283,6 +283,68 @@ public class ExhibitionDAOImpl implements ExhibitionDAO {
         } catch (Exception e) {
             logger.error("Error fetching exhibition statistics for artist {}: {}", artistId, e.getMessage(), e);
             throw new RuntimeException("Failed to fetch exhibition statistics", e);
+        }
+    }
+
+    @Override
+    public List<ExhibitionDTO> getAllExhibitions() {
+        logger.info("Fetching all exhibitions");
+
+        String sql = """
+            SELECT 
+                id as exhibition_id, 
+                created_by as artist_id, 
+                title, 
+                description,
+                location, 
+                location as venue, 
+                start_date, 
+                end_date, 
+                status,
+                category as exhibition_type, 
+                max_participants as artworks_count,
+                0 as total_visitors, 
+                NULL as featured_image_url,
+                NULL as website_url, 
+                contact_email, 
+                contact_phone,
+                CAST(REPLACE(entry_fee, ',', '') AS DECIMAL(10,2)) as entry_fee, 
+                false as is_featured,
+                created_at, 
+                created_at as updated_at
+            FROM exhibitions
+            ORDER BY created_at DESC
+        """;
+
+        try {
+            return jdbcTemplate.query(sql, exhibitionRowMapper);
+        } catch (Exception e) {
+            logger.error("Error fetching all exhibitions: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to fetch exhibitions", e);
+        }
+    }
+
+    @Override
+    public boolean updateExhibitionStatus(Integer exhibitionId, String status, String reason) {
+        logger.info("Updating exhibition status for ID: {} to status: {}", exhibitionId, status);
+
+        String sql = """
+            UPDATE exhibitions 
+            SET status = ?, 
+                requirements = CASE 
+                    WHEN ? IS NOT NULL AND ? != '' THEN ? 
+                    ELSE requirements 
+                END
+            WHERE id = ?
+        """;
+
+        try {
+            int rowsAffected = jdbcTemplate.update(sql, status, reason, reason, reason, exhibitionId);
+            logger.info("Updated {} rows for exhibition ID: {}", rowsAffected, exhibitionId);
+            return rowsAffected > 0;
+        } catch (Exception e) {
+            logger.error("Error updating exhibition status for ID {}: {}", exhibitionId, e.getMessage(), e);
+            throw new RuntimeException("Failed to update exhibition status", e);
         }
     }
 }

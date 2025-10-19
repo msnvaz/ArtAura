@@ -1,9 +1,10 @@
 package com.artaura.artaura.dao;
 
-import com.artaura.artaura.dto.CreateExhibitionDTO;
-import com.artaura.artaura.dto.ExhibitionDTO;
 import java.util.List;
 import java.util.Optional;
+
+import com.artaura.artaura.dto.CreateExhibitionDTO;
+import com.artaura.artaura.dto.ExhibitionDTO;
 
 public interface ExhibitionDAO {
 
@@ -72,4 +73,21 @@ public interface ExhibitionDAO {
      * @return Map containing various statistics
      */
     java.util.Map<String, Object> getExhibitionStatistics(Integer artistId);
+
+    /**
+     * Get all exhibitions (for moderator verification)
+     *
+     * @return List of all exhibitions
+     */
+    List<ExhibitionDTO> getAllExhibitions();
+
+    /**
+     * Update exhibition status (for moderator verification)
+     *
+     * @param exhibitionId ID of the exhibition
+     * @param status New status
+     * @param reason Reason for status change (optional, can be null)
+     * @return true if updated successfully, false otherwise
+     */
+    boolean updateExhibitionStatus(Integer exhibitionId, String status, String reason);
 }

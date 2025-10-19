@@ -1,6 +1,7 @@
 package com.artaura.artaura.config;
 
-import com.artaura.artaura.security.JwtAuthFilter;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,7 +18,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.List;
+import com.artaura.artaura.security.JwtAuthFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -44,6 +45,7 @@ public class SecurityConfig {
                         "/uploads/**", // <<< THIS ALLOWS IMAGE ACCESS
                         "/api/admin/artworks/**", // <<< TEMPORARY: Allow admin artwork endpoints for development
                         "/api/buyer/exhibitions/**",
+                        "/api/exhibitions/**", // <<< ALLOW EXHIBITION ENDPOINTS FOR MODERATOR
                         "/api/users/**",
                         "/ws/**", // <-- Make sure this is present and permitted
                         "/api/posts/*/comments", // Allow GET access to comments without authentication

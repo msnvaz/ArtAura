@@ -5,21 +5,21 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
 
 import com.artaura.artaura.dto.moderator.ChallengeDTO;
 import com.artaura.artaura.dto.moderator.ChallengeListDTO;
 import com.artaura.artaura.service.moderator.ChallengeService;
 import com.artaura.artaura.util.JwtUtil;
-import org.springframework.web.bind.annotation.CrossOrigin;
 
 @RestController
 @RequestMapping("/api/challenges")
@@ -37,10 +37,27 @@ public class ChallengeController {
         @RequestBody ChallengeDTO challengeDTO,
         @RequestHeader("Authorization") String authHeader
     ) {
-        String token = authHeader.replace("Bearer ", "");
-        Long moderatorId = jwtUtil.extractUserId(token);
-        challengeService.createChallenge(challengeDTO, moderatorId != null ? moderatorId.toString() : null);
-        return ResponseEntity.ok("Challenge created successfully");
+        try {
+            // Debug logging
+            System.out.println("Received challenge creation request:");
+            System.out.println("Title: " + challengeDTO.getTitle());
+            System.out.println("Category: " + challengeDTO.getCategory());
+            System.out.println("Publish DateTime: " + challengeDTO.getPublishDateTime());
+            System.out.println("Deadline DateTime: " + challengeDTO.getDeadlineDateTime());
+            System.out.println("Max Participants: " + challengeDTO.getMaxParticipants());
+            System.out.println("Request Sponsorship: " + challengeDTO.isRequestSponsorship());
+            
+            String token = authHeader.replace("Bearer ", "");
+            Long moderatorId = jwtUtil.extractUserId(token);
+            System.out.println("Moderator ID: " + moderatorId);
+            
+            challengeService.createChallenge(challengeDTO, moderatorId != null ? moderatorId.toString() : null);
+            return ResponseEntity.ok("Challenge created successfully");
+        } catch (Exception e) {
+            System.err.println("Error creating challenge: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Error creating challenge: " + e.getMessage());
+        }
     }
 
     @GetMapping
