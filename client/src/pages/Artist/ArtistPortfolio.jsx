@@ -534,6 +534,14 @@ const ArtistPortfolio = () => {
       // Fetch artwork orders
       const ordersResponse = await artistArtworkOrderApi.getArtworkOrders();
       if (ordersResponse && ordersResponse.success) {
+        console.log('Orders response data:', ordersResponse.data);
+        // Debug each order's totalAmount
+        ordersResponse.data?.forEach((order, index) => {
+          console.log(`Order ${index + 1} (ID: ${order.orderId}):`, {
+            totalAmount: order.totalAmount,
+            totalAmountType: typeof order.totalAmount
+          });
+        });
         setArtworkOrders(ordersResponse.data || []);
       }
 
@@ -2816,7 +2824,11 @@ const ArtistPortfolio = () => {
                                 <div>
                                   <p className="text-sm text-[#7f5539]/70">Order Details</p>
                                   <p className="font-medium text-[#7f5539]">
-                                    Total: LKR {order.totalAmount?.toFixed(2)}
+                                    Total: {formatLKR(
+                                      order.orderItems && order.orderItems.length > 0
+                                        ? order.orderItems.reduce((total, item) => total + (item.price * item.quantity), 0)
+                                        : order.totalAmount
+                                    )}
                                   </p>
                                   <p className="text-sm text-[#7f5539]/60">
                                     Items: {order.totalItemsCount}
@@ -2845,7 +2857,7 @@ const ArtistPortfolio = () => {
                                           <p className="font-medium text-[#7f5539] text-sm">{item.artworkTitle}</p>
                                           <div className="flex items-center space-x-4 text-xs text-[#7f5539]/60">
                                             <span>Qty: {item.quantity}</span>
-                                            <span>LKR {item.price?.toFixed(2)}</span>
+                                            <span>{formatLKR(item.price)}</span>
                                             {item.artworkMedium && <span>{item.artworkMedium}</span>}
                                             {item.artworkSize && <span>{item.artworkSize}</span>}
                                           </div>
@@ -2876,7 +2888,8 @@ const ArtistPortfolio = () => {
                           </div>
 
                           {/* Delivery Request Button */}
-                          {(order.deliveryStatus === 'N/A' || order.deliveryStatus === null) && order.status === 'paid' && (
+                          {console.log(`Order ${order.orderId}: status=${order.status}, deliveryStatus=${order.deliveryStatus}`)}
+                          {(order.deliveryStatus === 'N/A' || order.deliveryStatus === null) && (
                             <button
                               onClick={() => handleArtworkOrderDeliveryRequest(order.orderId)}
                               className="px-4 py-2 bg-[#7f5539] text-white rounded-lg hover:bg-[#6e4c34] transition-colors text-sm font-medium flex items-center space-x-2"

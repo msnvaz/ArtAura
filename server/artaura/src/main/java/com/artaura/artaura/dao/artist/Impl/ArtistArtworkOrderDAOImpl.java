@@ -74,14 +74,18 @@ public class ArtistArtworkOrderDAOImpl implements ArtistArtworkOrderDAO {
             // First, get all orders that contain artworks by this artist
             String orderSql = """
                 SELECT DISTINCT o.id, o.buyer_id, o.first_name, o.last_name, o.email, 
-                       o.contact_number, o.order_date, o.total_amount, o.shipping_fee, 
+                       o.contact_number, o.order_date, p.amount as total_amount, o.shipping_fee, 
                        o.shipping_address, o.status, o.delivery_status, o.payment_method, 
                        o.stripe_payment_id
                 FROM AW_orders o
                 INNER JOIN AW_order_items oi ON o.id = oi.order_id
+                LEFT JOIN payment p ON o.id = p.AW_order_id
                 WHERE oi.artist_id = ?
                 ORDER BY o.order_date DESC
                 """;
+
+            System.out.println("Debug - SQL Query: " + orderSql);
+            System.out.println("Debug - Artist ID: " + artistId);
 
             List<ArtistArtworkOrderDTO> orders = jdbcTemplate.query(orderSql, orderRowMapper, artistId);
 
