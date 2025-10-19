@@ -28,7 +28,7 @@ public class SponsorshipDAOImpl implements SponsorshipDAO {
         String sql = "SELECT c.id, c.title, c.category, c.publish_date_time, c.deadline_date_time, " +
                 "c.description, c.max_participants, c.rewards, c.sponsorship, c.status " +
                 "FROM challenges c " +
-                "WHERE c.status = 'active' AND c.sponsorship = 'pending' " +
+                "WHERE (c.status = 'active' OR c.status = 'draft') AND c.sponsorship = 'pending' " +
                 "ORDER BY c.deadline_date_time DESC";
 
         return jdbcTemplate.query(sql, this::mapChallengeForSponsorship);
