@@ -11,4 +11,5 @@ public interface ChallengeDAO {
     void deleteChallenge(int challengeId);
     void updateChallenge(ChallengeDTO challenge, String moderatorId);
     int updateExpiredChallenges();
+    void publishChallenge(int challengeId);  // New method to publish draft challenges
 }

@@ -4,7 +4,6 @@ import {
   Clock,
   FileText,
   Heart,
-  MessageCircle,
   Plus,
   Send,
   Settings,
@@ -35,13 +34,6 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [requestSponsorship, setRequestSponsorship] = useState(false);
-  
-  // Scoring criteria state
-  const [criteria, setCriteria] = useState({
-    likesWeight: 34,
-    commentsWeight: 33,
-    shareWeight: 33
-  });
   
   const navigate = useNavigate();
 
@@ -89,12 +81,6 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
     if (!formData.rewards.trim())
       newErrors.rewards = "Rewards information is required";
 
-    // Validate scoring criteria
-    const totalWeight = getTotalWeight();
-    if (totalWeight !== 100) {
-      newErrors.criteria = "Scoring criteria weights must total exactly 100%";
-    }
-
     if (
       formData.publishDate &&
       formData.publishTime &&
@@ -133,13 +119,7 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
         description: formData.description.trim(),
         maxParticipants: parseInt(formData.maxParticipants),
         rewards: formData.rewards.trim(),
-        requestSponsorship: requestSponsorship,
-        // Include scoring criteria
-        scoringCriteria: {
-          likesWeight: criteria.likesWeight,
-          commentsWeight: criteria.commentsWeight,
-          shareWeight: criteria.shareWeight
-        }
+        requestSponsorship: requestSponsorship
       };
 
       // Get JWT token from localStorage (adjust key if needed)
@@ -185,30 +165,6 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
       setIsSubmitting(false);
     }
   };
-
-  // Scoring criteria helper functions
-  const handleWeightChange = (field, value) => {
-    const numValue = parseInt(value) || 0;
-    setCriteria(prev => {
-      // Calculate the sum if this field is set to numValue
-      const newCriteria = { ...prev, [field]: numValue };
-      const total =
-        newCriteria.likesWeight +
-        newCriteria.commentsWeight +
-        newCriteria.shareWeight;
-      // If total is over 100, adjust the changed field to not exceed 100
-      if (total > 100) {
-        const over = total - 100;
-        newCriteria[field] = Math.max(0, numValue - over);
-      }
-      return newCriteria;
-    });
-  };
-
-  const getTotalWeight = () => {
-    return criteria.likesWeight + criteria.commentsWeight + criteria.shareWeight;
-  };
-
 
   const getCurrentDateTime = () => {
     const now = new Date();
@@ -743,8 +699,8 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
                   </div>
                 </div>
 
-                {/* Scoring Criteria Section */}
-                <div className="space-y-6">
+                {/* Fixed Scoring System Info */}
+                <div className="space-y-4">
                   <div
                     className="flex items-center gap-2 pb-2 border-b"
                     style={{ borderColor: "#FFE4D6" }}
@@ -754,114 +710,40 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
                       className="text-lg font-semibold"
                       style={{ color: "#5D3A00" }}
                     >
-                      Scoring Criteria
+                      Scoring System
                     </h3>
                   </div>
 
-                  {/* Important Notice */}
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                    <p className="text-sm" style={{ color: "#7f5539" }}>
-                      <span className="font-semibold">Important:</span> Define how winners will be selected. The total percentage must equal 100%.
+                  {/* Scoring Info Box */}
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                    <h4 className="font-semibold text-blue-900 mb-3">📊 Fixed Marks Scoring</h4>
+                    <p className="text-sm text-blue-800 mb-4">
+                      Winners will be automatically calculated based on the following fixed scoring system:
                     </p>
-                  </div>
-
-                  {/* Scoring Criteria Grid */}
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Likes & Engagement Weight */}
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2" style={{ color: "#362625" }}>
-                        <Heart size={18} style={{ color: "#ef4444" }} />
-                        <h4 className="text-base font-semibold">Likes & Engagement Weight</h4>
-                      </div>
-                      
-                      <div className="relative">
-                        <input
-                          type="range"
-                          min="0"
-                          max="100"
-                          value={criteria.likesWeight}
-                          onChange={(e) => handleWeightChange('likesWeight', e.target.value)}
-                          className="w-full h-2 bg-yellow-200 rounded-lg appearance-none cursor-pointer slider"
-                          style={{
-                            background: `linear-gradient(to right, #7f5539 0%, #7f5539 ${criteria.likesWeight}%, #f4e8dc ${criteria.likesWeight}%, #f4e8dc 100%)`
-                          }}
-                        />
-                        <div className="flex justify-end mt-2">
-                          <span className="text-xl font-bold" style={{ color: "#362625" }}>{criteria.likesWeight}%</span>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="bg-white rounded-lg p-4 border border-blue-300">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Heart size={20} className="text-red-500" />
+                          <span className="font-semibold text-gray-800">Each Like</span>
                         </div>
+                        <p className="text-2xl font-bold text-green-600">+10 marks</p>
                       </div>
-                      
-                      <p className="text-xs" style={{ color: "#7f5539" }}>Based on the number of likes received</p>
-                    </div>
-
-                    {/* Comments & Interaction Weight */}
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2" style={{ color: "#362625" }}>
-                        <MessageCircle size={18} style={{ color: "#3b82f6" }} />
-                        <h4 className="text-base font-semibold">Comments & Interaction Weight</h4>
-                      </div>
-                      
-                      <div className="relative">
-                        <input
-                          type="range"
-                          min="0"
-                          max="100"
-                          value={criteria.commentsWeight}
-                          onChange={(e) => handleWeightChange('commentsWeight', e.target.value)}
-                          className="w-full h-2 bg-yellow-200 rounded-lg appearance-none cursor-pointer slider"
-                          style={{
-                            background: `linear-gradient(to right, #7f5539 0%, #7f5539 ${criteria.commentsWeight}%, #f4e8dc ${criteria.commentsWeight}%, #f4e8dc 100%)`
-                          }}
-                        />
-                        <div className="flex justify-end mt-2">
-                          <span className="text-xl font-bold" style={{ color: "#362625" }}>{criteria.commentsWeight}%</span>
+                      <div className="bg-white rounded-lg p-4 border border-blue-300">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Heart size={20} className="text-gray-500" style={{ transform: "rotate(180deg)" }} />
+                          <span className="font-semibold text-gray-800">Each Dislike</span>
                         </div>
+                        <p className="text-2xl font-bold text-red-600">-5 marks</p>
                       </div>
-                      
-                      <p className="text-xs" style={{ color: "#7f5539" }}>Based on the number of comments received</p>
                     </div>
-
-                    {/* Share Weight */}
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2" style={{ color: "#362625" }}>
-                        <Send size={18} style={{ color: "#10b981" }} />
-                        <h4 className="text-base font-semibold">Share Weight</h4>
-                      </div>
-                      
-                      <div className="relative">
-                        <input
-                          type="range"
-                          min="0"
-                          max="100"
-                          value={criteria.shareWeight}
-                          onChange={(e) => handleWeightChange('shareWeight', e.target.value)}
-                          className="w-full h-2 bg-yellow-200 rounded-lg appearance-none cursor-pointer slider"
-                          style={{
-                            background: `linear-gradient(to right, #7f5539 0%, #7f5539 ${criteria.shareWeight}%, #f4e8dc ${criteria.shareWeight}%, #f4e8dc 100%)`
-                          }}
-                        />
-                        <div className="flex justify-end mt-2">
-                          <span className="text-xl font-bold" style={{ color: "#362625" }}>{criteria.shareWeight}%</span>
-                        </div>
-                      </div>
-                      
-                      <p className="text-xs" style={{ color: "#7f5539" }}>Based on the number of shares and social engagement</p>
-                    </div>
-                  </div>
-
-                  {/* Total Percentage */}
-                  <div className={`rounded-lg p-4 ${getTotalWeight() === 100 ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
-                    <div className="flex items-center justify-between">
-                      <span className="text-base font-semibold" style={{ color: getTotalWeight() === 100 ? '#15803d' : '#b91c1c' }}>Total Percentage:</span>
-                      <span className={`text-2xl font-bold ${getTotalWeight() === 100 ? 'text-green-600' : 'text-red-600'}`}>
-                        {getTotalWeight()}%
-                      </span>
-                    </div>
-                    {errors.criteria && (
-                      <p className="mt-2 text-sm text-red-600">
-                        {errors.criteria}
+                    <div className="mt-4 p-3 bg-blue-100 rounded-lg">
+                      <p className="text-sm text-blue-900">
+                        <span className="font-semibold">Formula:</span> Score = MAX(0, (Total Likes × 10) - (Total Dislikes × 5))
                       </p>
-                    )}
+                      <p className="text-xs text-blue-700 mt-1">
+                        ⚠️ <span className="font-semibold">Note:</span> Minimum score is 0 (no negative scores)
+                      </p>
+                    </div>
                   </div>
                 </div>
 

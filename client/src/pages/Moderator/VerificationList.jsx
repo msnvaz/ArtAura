@@ -543,300 +543,238 @@ const VerificationList = () => {
       {/* Exhibition Details Modal */}
       {showDetailsModal && selectedExhibition && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-4xl w-full h-[90vh] flex flex-col shadow-2xl">
-            {/* Enhanced Header with Status Badge - Fixed at top */}
-            <div className="flex-shrink-0 p-6 border-b border-gray-200 bg-gradient-to-r from-[#FFE8D6] to-white">
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h3 className="text-2xl font-bold text-gray-900">{selectedExhibition.title}</h3>
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold uppercase flex items-center gap-1 ${
-                      selectedExhibition.status === 'approved' ? 'bg-green-100 text-green-800' :
-                      selectedExhibition.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                      'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {getStatusIcon(selectedExhibition.status)}
-                      {selectedExhibition.status}
-                    </span>
+          <div className="bg-white rounded-xl max-w-6xl w-full h-[95vh] flex flex-col shadow-2xl">
+            {/* Compact Header - Fixed at top */}
+            <div className="flex-shrink-0 px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-[#FFE8D6] to-white">
+              <div className="flex justify-between items-center">
+                <div className="flex-1 flex items-center gap-4">
+                  <div className="flex-1">
+                    <h3 className="text-xl font-bold text-gray-900">{selectedExhibition.title}</h3>
+                    <p className="text-sm text-gray-600 mt-1">
+                      by {selectedExhibition.organizer} • ID: #{selectedExhibition.id}
+                    </p>
                   </div>
-                  <p className="text-gray-600 text-lg flex items-center gap-2">
-                    <User size={18} className="text-[#D87C5A]" />
-                    Organized by <span className="font-semibold">{selectedExhibition.organizer}</span>
-                  </p>
-                  <p className="text-gray-500 text-sm mt-1">Exhibition ID: #{selectedExhibition.id}</p>
+                  <span className={`px-4 py-2 rounded-full text-xs font-bold uppercase flex items-center gap-2 ${
+                    selectedExhibition.status === 'approved' ? 'bg-green-100 text-green-800' :
+                    selectedExhibition.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                    'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {getStatusIcon(selectedExhibition.status)}
+                    {selectedExhibition.status}
+                  </span>
                 </div>
                 <button
                   onClick={() => setShowDetailsModal(false)}
-                  className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-2 transition-colors"
+                  className="ml-4 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-2 transition-colors"
                   title="Close"
                 >
-                  <X size={24} />
+                  <X size={20} />
                 </button>
               </div>
             </div>
 
-            {/* Scrollable Content Area */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
-              {/* Status Banner at Top */}
-              <div className={`p-4 rounded-lg border-2 ${
-                selectedExhibition.status === 'approved' ? 'bg-green-50 border-green-300' :
-                selectedExhibition.status === 'rejected' ? 'bg-red-50 border-red-300' :
-                'bg-yellow-50 border-yellow-300'
-              }`}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    {getStatusIcon(selectedExhibition.status)}
-                    <div>
-                      <p className="font-bold text-lg capitalize">{selectedExhibition.status} Exhibition</p>
-                      <p className="text-sm text-gray-600">{selectedExhibition.verificationNotes}</p>
-                    </div>
-                  </div>
-                  <div className="text-right text-sm text-gray-600">
-                    <p>Exhibition ID: <span className="font-bold">#{selectedExhibition.id}</span></p>
-                    {selectedExhibition.createdBy && (
-                      <p>Created by User: <span className="font-bold">#{selectedExhibition.createdBy}</span></p>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Full Description */}
-              <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-5 rounded-lg border border-amber-200">
-                <h4 className="font-bold text-gray-900 mb-3 text-lg flex items-center gap-2">
-                  📄 Description
-                </h4>
-                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{selectedExhibition.description}</p>
-              </div>
-
-              {/* Date & Time Information */}
-              <div className="bg-white border-2 border-blue-200 rounded-lg p-5">
-                <h4 className="font-bold text-gray-900 mb-4 text-lg flex items-center gap-2">
-                  <Calendar className="h-6 w-6 text-blue-600" />
-                  Schedule Details
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Start Date & Time */}
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-2xl">📅</span>
-                      <h5 className="font-semibold text-blue-900 uppercase text-sm">Start</h5>
-                    </div>
-                    <p className="text-2xl font-bold text-blue-900">{selectedExhibition.startDate}</p>
-                    {selectedExhibition.startTime && (
-                      <p className="text-lg text-blue-700 mt-1 flex items-center gap-1">
-                        🕐 {selectedExhibition.startTime}
-                      </p>
-                    )}
-                  </div>
-                  
-                  {/* End Date & Time */}
-                  <div className="bg-red-50 p-4 rounded-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-2xl">📅</span>
-                      <h5 className="font-semibold text-red-900 uppercase text-sm">End</h5>
-                    </div>
-                    <p className="text-2xl font-bold text-red-900">{selectedExhibition.endDate}</p>
-                    {selectedExhibition.endTime && (
-                      <p className="text-lg text-red-700 mt-1 flex items-center gap-1">
-                        🕐 {selectedExhibition.endTime}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Location Information */}
-              <div className="bg-white border-2 border-green-200 rounded-lg p-5">
-                <h4 className="font-bold text-gray-900 mb-4 text-lg flex items-center gap-2">
-                  <MapPin className="h-6 w-6 text-green-600" />
-                  Venue & Location
-                </h4>
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <p className="text-gray-700 text-lg leading-relaxed">{selectedExhibition.venue || selectedExhibition.address}</p>
-                </div>
-              </div>
-
-              {/* Category & Key Stats */}
-              <div className="bg-white border-2 border-purple-200 rounded-lg p-5">
-                <h4 className="font-bold text-gray-900 mb-4 text-lg">
-                  Exhibition Information
-                </h4>
-                
-                {/* Category Badge */}
-                <div className="mb-4">
-                  <span className="inline-flex items-center px-5 py-2 rounded-full text-base font-bold bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md">
-                    🎨 {selectedExhibition.category}
-                  </span>
-                </div>
-
-                {/* Stats Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {/* Max Participants */}
-                  <div className="bg-gradient-to-br from-green-50 to-green-100 p-5 rounded-xl border-2 border-green-300 shadow-sm">
-                    <div className="text-center">
-                      <div className="text-4xl mb-2">👥</div>
-                      <p className="text-sm text-green-700 font-bold uppercase mb-1">Max Participants</p>
-                      <p className="text-4xl font-extrabold text-green-900">{selectedExhibition.maxParticipants || selectedExhibition.expectedVisitors || 0}</p>
-                    </div>
-                  </div>
-                  
-                  {/* Entry Fee */}
-                  <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-5 rounded-xl border-2 border-purple-300 shadow-sm">
-                    <div className="text-center">
-                      <div className="text-4xl mb-2">💰</div>
-                      <p className="text-sm text-purple-700 font-bold uppercase mb-1">Entry Fee</p>
-                      <p className="text-4xl font-extrabold text-purple-900">
-                        {selectedExhibition.entryFee ? `LKR ${selectedExhibition.entryFee}` : 'Free'}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  {/* Likes */}
-                  <div className="bg-gradient-to-br from-pink-50 to-pink-100 p-5 rounded-xl border-2 border-pink-300 shadow-sm">
-                    <div className="text-center">
-                      <div className="text-4xl mb-2">❤️</div>
-                      <p className="text-sm text-pink-700 font-bold uppercase mb-1">Likes</p>
-                      <p className="text-4xl font-extrabold text-pink-900">{selectedExhibition.likes || 0}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Organizer & Contact Information */}
-              <div className="bg-white border-2 border-orange-200 rounded-lg p-5">
-                <h4 className="font-bold text-gray-900 mb-4 text-lg flex items-center gap-2">
-                  <User className="h-6 w-6 text-orange-600" />
-                  Organizer & Contact Details
-                </h4>
-                
-                {/* Organizer Name */}
-                <div className="bg-orange-50 p-4 rounded-lg mb-4">
-                  <label className="block text-sm font-bold text-orange-700 uppercase mb-2">Organizer</label>
-                  <p className="text-xl font-bold text-gray-900">{selectedExhibition.organizer}</p>
-                </div>
-
-                {/* Contact Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-300">
-                    <label className="block text-sm font-bold text-gray-600 uppercase mb-2 flex items-center gap-2">
-                      ✉️ Email Address
-                    </label>
-                    <p className="text-base text-gray-900 break-all font-medium">{selectedExhibition.organizerEmail}</p>
-                  </div>
-                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-300">
-                    <label className="block text-sm font-bold text-gray-600 uppercase mb-2 flex items-center gap-2">
-                      📞 Phone Number
-                    </label>
-                    <p className="text-base text-gray-900 font-medium">{selectedExhibition.contactPhone}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Requirements Section - if exists */}
-              {selectedExhibition.requirements && (
-                <div className="bg-yellow-50 border-l-4 border-yellow-500 p-5 rounded-lg shadow-sm">
-                  <h4 className="font-bold text-gray-900 mb-3 text-lg flex items-center gap-2">
-                    <Shield className="h-6 w-6 text-yellow-600" />
-                    Requirements & Guidelines
+            {/* Scrollable Content Area with better spacing */}
+            <div className="flex-1 overflow-y-auto">
+              <div className="p-6 space-y-4">
+                {/* Description - Compact */}
+                <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-4 rounded-lg border border-amber-200">
+                  <h4 className="font-semibold text-gray-900 mb-2 text-sm flex items-center gap-2">
+                    📄 Description
                   </h4>
-                  <div className="bg-white p-4 rounded border border-yellow-200">
-                    <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{selectedExhibition.requirements}</p>
+                  <p className="text-sm text-gray-700 leading-relaxed line-clamp-3">{selectedExhibition.description}</p>
+                </div>
+
+                {/* Two Column Layout for Compact View */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {/* Left Column */}
+                  <div className="space-y-4">
+                    {/* Schedule - Compact */}
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <h4 className="font-semibold text-gray-900 mb-3 text-sm flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-blue-600" />
+                        Schedule
+                      </h4>
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs text-gray-600 font-medium">Start:</span>
+                          <span className="text-sm font-bold text-blue-900">
+                            {selectedExhibition.startDate} {selectedExhibition.startTime && `• ${selectedExhibition.startTime}`}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs text-gray-600 font-medium">End:</span>
+                          <span className="text-sm font-bold text-red-900">
+                            {selectedExhibition.endDate} {selectedExhibition.endTime && `• ${selectedExhibition.endTime}`}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Location - Compact */}
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <h4 className="font-semibold text-gray-900 mb-2 text-sm flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-green-600" />
+                        Location
+                      </h4>
+                      <p className="text-sm text-gray-700">{selectedExhibition.venue || selectedExhibition.address}</p>
+                    </div>
+
+                    {/* Category - Compact */}
+                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                      <h4 className="font-semibold text-gray-900 mb-2 text-sm">Category</h4>
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-gradient-to-r from-blue-500 to-purple-500 text-white">
+                        🎨 {selectedExhibition.category}
+                      </span>
+                    </div>
                   </div>
+
+                  {/* Right Column */}
+                  <div className="space-y-4">
+                    {/* Stats - Compact Grid */}
+                    <div className="bg-white border-2 border-gray-200 rounded-lg p-4">
+                      <h4 className="font-semibold text-gray-900 mb-3 text-sm">Key Stats</h4>
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
+                          <div className="text-2xl mb-1">👥</div>
+                          <p className="text-xs text-gray-600 mb-1">Participants</p>
+                          <p className="text-lg font-bold text-green-900">{selectedExhibition.maxParticipants || 0}</p>
+                        </div>
+                        <div className="text-center p-3 bg-purple-50 rounded-lg border border-purple-200">
+                          <div className="text-2xl mb-1">💰</div>
+                          <p className="text-xs text-gray-600 mb-1">Entry Fee</p>
+                          <p className="text-sm font-bold text-purple-900">
+                            {selectedExhibition.entryFee ? `${selectedExhibition.entryFee}` : 'Free'}
+                          </p>
+                        </div>
+                        <div className="text-center p-3 bg-pink-50 rounded-lg border border-pink-200">
+                          <div className="text-2xl mb-1">❤️</div>
+                          <p className="text-xs text-gray-600 mb-1">Likes</p>
+                          <p className="text-lg font-bold text-pink-900">{selectedExhibition.likes || 0}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Contact - Compact */}
+                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                      <h4 className="font-semibold text-gray-900 mb-3 text-sm flex items-center gap-2">
+                        <User className="h-4 w-4 text-orange-600" />
+                        Contact Information
+                      </h4>
+                      <div className="space-y-2">
+                        <div>
+                          <p className="text-xs text-gray-600 font-medium mb-1">✉️ Email</p>
+                          <p className="text-sm text-gray-900 font-medium break-all">{selectedExhibition.organizerEmail}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-600 font-medium mb-1">📞 Phone</p>
+                          <p className="text-sm text-gray-900 font-medium">{selectedExhibition.contactPhone}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Submission Info - Compact */}
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <h4 className="font-semibold text-gray-900 mb-2 text-sm">Submission</h4>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-gray-600">Submitted:</span>
+                        <span className="font-bold text-gray-900">
+                          {selectedExhibition.submissionDate && new Date(selectedExhibition.submissionDate).toLocaleDateString()}
+                        </span>
+                      </div>
+                      {selectedExhibition.createdBy && (
+                        <div className="flex justify-between items-center text-sm mt-1">
+                          <span className="text-gray-600">User ID:</span>
+                          <span className="font-bold text-gray-900">#{selectedExhibition.createdBy}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Requirements - Expandable if exists */}
+                {selectedExhibition.requirements && (
+                  <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-4">
+                    <h4 className="font-semibold text-gray-900 mb-2 text-sm flex items-center gap-2">
+                      <Shield className="h-4 w-4 text-yellow-600" />
+                      Requirements
+                    </h4>
+                    <p className="text-sm text-gray-700 line-clamp-2">{selectedExhibition.requirements}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Fixed Footer with Actions */}
+            <div className="flex-shrink-0 px-6 py-4 border-t border-gray-200 bg-gray-50">
+              {selectedExhibition.status === 'pending' ? (
+                <div className="flex gap-3 justify-end">
+                  <button
+                    onClick={async () => {
+                      if (updating) return;
+                      await handleStatusChange(selectedExhibition.id, 'approved');
+                      setShowDetailsModal(false);
+                    }}
+                    disabled={updating}
+                    className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                  >
+                    {updating ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <Check size={18} />
+                        Approve Exhibition
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (updating) return;
+                      const reason = prompt('Please provide a reason for rejection:');
+                      if (reason && reason.trim()) {
+                        handleStatusChange(selectedExhibition.id, 'rejected', reason);
+                        setShowDetailsModal(false);
+                      } else if (reason !== null) {
+                        alert('Rejection reason is required.');
+                      }
+                    }}
+                    disabled={updating}
+                    className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                  >
+                    {updating ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <X size={18} />
+                        Reject Exhibition
+                      </>
+                    )}
+                  </button>
+                </div>
+              ) : (
+                <div className="flex justify-between items-center">
+                  <div className={`text-sm font-medium ${
+                    selectedExhibition.status === 'approved' ? 'text-green-700' : 'text-red-700'
+                  }`}>
+                    {selectedExhibition.verifiedBy && selectedExhibition.verificationDate && (
+                      <span>
+                        Verified by {selectedExhibition.verifiedBy} on {selectedExhibition.verificationDate}
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => setShowDetailsModal(false)}
+                    className="px-6 py-2.5 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all duration-200 font-medium"
+                  >
+                    Close
+                  </button>
                 </div>
               )}
-
-              {/* Submission Metadata */}
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 p-5 rounded-lg shadow-sm">
-                <h4 className="font-bold text-gray-900 mb-3 text-lg flex items-center gap-2">
-                  <Calendar className="h-6 w-6 text-blue-600" />
-                  Submission Information
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {selectedExhibition.submissionDate && (
-                    <div className="bg-white p-3 rounded border border-blue-200">
-                      <label className="block text-xs font-bold text-blue-700 uppercase mb-1">Submitted On</label>
-                      <p className="text-base font-semibold text-gray-900">
-                        {new Date(selectedExhibition.submissionDate).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </p>
-                    </div>
-                  )}
-                  <div className="bg-white p-3 rounded border border-blue-200">
-                    <label className="block text-xs font-bold text-blue-700 uppercase mb-1">Exhibition ID</label>
-                    <p className="text-base font-semibold text-gray-900">#{selectedExhibition.id}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Verification Status and Actions */}
-              <div className="bg-white border-2 border-gray-300 rounded-lg p-5">
-                <h4 className="font-bold text-gray-900 mb-4 text-lg">Moderator Actions</h4>
-                
-                {selectedExhibition.verifiedBy && (
-                  <div className="bg-gray-50 p-3 rounded border border-gray-200 mb-4">
-                    <p className="text-sm text-gray-600">
-                      Verified by <span className="font-bold">{selectedExhibition.verifiedBy}</span> on <span className="font-bold">{selectedExhibition.verificationDate}</span>
-                    </p>
-                  </div>
-                )}
-
-                {selectedExhibition.status === 'pending' && (
-                  <div className="flex gap-3 mt-4">
-                    <button
-                      onClick={async () => {
-                        if (updating) return;
-                        await handleStatusChange(selectedExhibition.id, 'approved');
-                        setShowDetailsModal(false);
-                      }}
-                      disabled={updating}
-                      className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {updating ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                          Processing...
-                        </>
-                      ) : (
-                        <>
-                          <Check size={18} />
-                          Approve Exhibition
-                        </>
-                      )}
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (updating) return;
-                        const reason = prompt('Please provide a reason for rejection:');
-                        if (reason && reason.trim()) {
-                          handleStatusChange(selectedExhibition.id, 'rejected', reason);
-                          setShowDetailsModal(false);
-                        } else if (reason !== null) {
-                          alert('Rejection reason is required.');
-                        }
-                      }}
-                      disabled={updating}
-                      className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {updating ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                          Processing...
-                        </>
-                      ) : (
-                        <>
-                          <X size={18} />
-                          Reject Exhibition
-                        </>
-                      )}
-                    </button>
-                  </div>
-                )}
-              </div>
             </div>
           </div>
         </div>

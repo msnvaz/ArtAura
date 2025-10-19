@@ -37,10 +37,27 @@ public class ChallengeController {
         @RequestBody ChallengeDTO challengeDTO,
         @RequestHeader("Authorization") String authHeader
     ) {
-        String token = authHeader.replace("Bearer ", "");
-        Long moderatorId = jwtUtil.extractUserId(token);
-        challengeService.createChallenge(challengeDTO, moderatorId != null ? moderatorId.toString() : null);
-        return ResponseEntity.ok("Challenge created successfully");
+        try {
+            // Debug logging
+            System.out.println("Received challenge creation request:");
+            System.out.println("Title: " + challengeDTO.getTitle());
+            System.out.println("Category: " + challengeDTO.getCategory());
+            System.out.println("Publish DateTime: " + challengeDTO.getPublishDateTime());
+            System.out.println("Deadline DateTime: " + challengeDTO.getDeadlineDateTime());
+            System.out.println("Max Participants: " + challengeDTO.getMaxParticipants());
+            System.out.println("Request Sponsorship: " + challengeDTO.isRequestSponsorship());
+            
+            String token = authHeader.replace("Bearer ", "");
+            Long moderatorId = jwtUtil.extractUserId(token);
+            System.out.println("Moderator ID: " + moderatorId);
+            
+            challengeService.createChallenge(challengeDTO, moderatorId != null ? moderatorId.toString() : null);
+            return ResponseEntity.ok("Challenge created successfully");
+        } catch (Exception e) {
+            System.err.println("Error creating challenge: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Error creating challenge: " + e.getMessage());
+        }
     }
 
     @GetMapping

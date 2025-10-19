@@ -6,7 +6,6 @@ import java.sql.SQLException;
 import org.springframework.jdbc.core.RowMapper;
 
 import com.artaura.artaura.dto.moderator.ChallengeListDTO;
-import com.artaura.artaura.dto.moderator.ScoringCriteriaDTO;
 
 public class ChallengeRowMapper implements RowMapper<ChallengeListDTO> {
     @Override
@@ -20,16 +19,14 @@ public class ChallengeRowMapper implements RowMapper<ChallengeListDTO> {
         challenge.setDescription(rs.getString("description"));
         challenge.setMaxParticipants(rs.getInt("max_participants"));
         challenge.setRewards(rs.getString("rewards"));
-        challenge.setRequestSponsorship(rs.getInt("request_sponsorship") == 1);
+        // Note: sponsorship_request column doesn't exist in database - defaulting to false
+        challenge.setRequestSponsorship(false);
         challenge.setStatus(rs.getString("status"));
         challenge.setModeratorId(rs.getInt("moderator_id"));
         
-        // Map scoring criteria
-        ScoringCriteriaDTO scoringCriteria = new ScoringCriteriaDTO();
-        scoringCriteria.setLikesWeight(rs.getInt("likes_weight"));
-        scoringCriteria.setCommentsWeight(rs.getInt("comments_weight"));
-        scoringCriteria.setShareWeight(rs.getInt("share_weight"));
-        challenge.setScoringCriteria(scoringCriteria);
+        // Fixed marks scoring - weight columns still in DB but will be removed
+        // Each Like = +10 marks, Each Dislike = -5 marks, Minimum score = 0
+        // Note: likes_weight, comments_weight, share_weight columns exist but are not used
         
         return challenge;
     }
