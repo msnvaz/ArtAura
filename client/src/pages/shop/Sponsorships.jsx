@@ -105,26 +105,6 @@ const ShopSponsorships = () => {
     }
   };
 
-  const handleDeleteSponsorship = async (offerId) => {
-    if (!window.confirm('Are you sure you want to delete this sponsorship?')) {
-      return;
-    }
-
-    try {
-      await axios.delete(`${API_BASE_URL}/api/sponsorships/offers/${offerId}`);
-      alert('Sponsorship deleted successfully');
-      
-      // Refresh data
-      const offersResponse = await axios.get(`${API_BASE_URL}/api/sponsorships/offers/shop/${shopData.shop_id}`);
-      setGivenSponsorships(offersResponse.data);
-      
-      const challengesResponse = await axios.get(`${API_BASE_URL}/api/sponsorships/challenges/active`);
-      setCampaigns(challengesResponse.data);
-    } catch {
-      alert('Failed to delete sponsorship');
-    }
-  };
-
   const handleOfferClick = (campaign) => {
     setSelectedCampaign(campaign);
     setShowOfferModal(true);
@@ -283,18 +263,11 @@ const ShopSponsorships = () => {
                         </div>
                       </div>
                       
-                      <div className="p-4 bg-[#FFF5E1] rounded-xl border border-[#FFE4D6] mb-4">
+                      <div className="p-4 bg-[#FFF5E1] rounded-xl border border-[#FFE4D6]">
                         <p className="text-sm text-[#5D3A00]/70">
                           Winners of this challenge can use discount code <span className="font-bold text-[#D87C5A]">{sponsorship.discountCode}</span> at your shop to get {sponsorship.discountPercentage}% off their purchase.
                         </p>
                       </div>
-                      
-                      <button
-                        onClick={() => handleDeleteSponsorship(sponsorship.id)}
-                        className="w-full py-2 px-4 rounded-xl font-semibold text-sm transition-all duration-300 border-2 border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
-                      >
-                        Delete Sponsorship
-                      </button>
                     </div>
                   ))}
                 </div>
