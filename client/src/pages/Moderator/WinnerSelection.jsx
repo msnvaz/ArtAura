@@ -393,8 +393,8 @@ const WinnerSelection = () => {
                             }}
                             className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all hover:shadow-md"
                             style={{
-                              backgroundColor: challenge.hasValidRewards ? '#4CAF50' : '#D87C5A',
-                              color: 'white',
+                              backgroundColor: challenge.hasValidRewards ? '#FFD95A' : '#D87C5A',
+                              color: challenge.hasValidRewards ? '#5D3A00' : 'white',
                               border: 'none',
                               cursor: 'pointer'
                             }}

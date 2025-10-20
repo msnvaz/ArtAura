@@ -1,231 +1,156 @@
-import React, { useState } from 'react';
-import { Eye, Download, Star, Filter, Search, Calendar, User, Award } from 'lucide-react';
+import { Calendar, Clock, MapPin, Search, Users } from "lucide-react";
+import { useMemo, useState } from "react";
 
-const ModeratorExhibition = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterChallenge, setFilterChallenge] = useState('all');
-  const [filterRating, setFilterRating] = useState('all');
+const exhibitionBlueprint = [
+  {
+    id: 1,
+    title: "Colombo Coastal Expressions",
+    venue: "Colombo Art Walkway",
+    start: "2025-11-05T10:00:00",
+    end: "2025-11-10T18:00:00",
+    curator: "Ishara Perera",
+    expectedVisitors: 320,
+  },
+  {
+    id: 2,
+    title: "Kandy Heritage Revival",
+    venue: "Temple Square Gallery",
+    start: "2025-11-18T09:30:00",
+    end: "2025-11-22T17:30:00",
+    curator: "Ruwan Madushanka",
+    expectedVisitors: 450,
+  },
+  {
+    id: 3,
+    title: "Digital Dreams Of Lanka",
+    venue: "Galle Fort Collective",
+    start: "2025-12-02T11:00:00",
+    end: "2025-12-06T19:00:00",
+    curator: "Ayani Jayawardena",
+    expectedVisitors: 510,
+  },
+];
 
-  const exhibitions = [
-    {
-      id: 1,
-      title: 'Modern E-commerce Dashboard',
-      participant: 'Sarah Johnson',
-      challenge: 'Web Design Challenge 2024',
-      submissionDate: '2024-02-10',
-      rating: 4.8,
-      views: 245,
-      description: 'A sleek and intuitive e-commerce dashboard with advanced analytics.',
-      imageUrl: 'https://images.pexels.com/photos/196644/pexels-photo-196644.jpeg?auto=compress&cs=tinysrgb&w=400',
-      tags: ['UI/UX', 'Dashboard', 'E-commerce'],
-      status: 'featured'
-    },
-    {
-      id: 2,
-      title: 'AI-Powered Task Manager',
-      participant: 'Michael Chen',
-      challenge: 'Mobile App Innovation',
-      submissionDate: '2024-02-08',
-      rating: 4.6,
-      views: 189,
-      description: 'Smart task management app with AI-driven priority suggestions.',
-      imageUrl: 'https://images.pexels.com/photos/267350/pexels-photo-267350.jpeg?auto=compress&cs=tinysrgb&w=400',
-      tags: ['Mobile', 'AI', 'Productivity'],
-      status: 'approved'
-    },
-    {
-      id: 3,
-      title: 'Digital Art Portrait',
-      participant: 'Emma Rodriguez',
-      challenge: 'AI Art Competition',
-      submissionDate: '2024-02-05',
-      rating: 4.9,
-      views: 312,
-      description: 'Stunning AI-generated portrait with unique artistic style.',
-      imageUrl: 'https://images.pexels.com/photos/1194420/pexels-photo-1194420.jpeg?auto=compress&cs=tinysrgb&w=400',
-      tags: ['AI Art', 'Portrait', 'Digital'],
-      status: 'winner'
-    },
-    {
-      id: 4,
-      title: 'Eco-Friendly App Concept',
-      participant: 'David Kim',
-      challenge: 'Sustainability Hackathon',
-      submissionDate: '2024-02-12',
-      rating: 4.4,
-      views: 156,
-      description: 'Mobile app promoting sustainable living practices.',
-      imageUrl: 'https://images.pexels.com/photos/1108572/pexels-photo-1108572.jpeg?auto=compress&cs=tinysrgb&w=400',
-      tags: ['Sustainability', 'Mobile', 'Environment'],
-      status: 'pending'
-    }
-  ];
-
-  const challenges = ['Web Design Challenge 2024', 'Mobile App Innovation', 'AI Art Competition', 'Sustainability Hackathon'];
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'winner':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'featured':
-        return 'bg-purple-100 text-purple-800';
-      case 'approved':
-        return 'bg-green-100 text-green-800';
-      case 'pending':
-        return 'bg-gray-100 text-gray-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'winner':
-        return <Award className="h-4 w-4" />;
-      case 'featured':
-        return <Star className="h-4 w-4" />;
-      default:
-        return null;
-    }
-  };
-
-  const filteredExhibitions = exhibitions.filter(exhibition => {
-    const matchesSearch = exhibition.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         exhibition.participant.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesChallenge = filterChallenge === 'all' || exhibition.challenge === filterChallenge;
-    const matchesRating = filterRating === 'all' || 
-                         (filterRating === '4+' && exhibition.rating >= 4) ||
-                         (filterRating === '3+' && exhibition.rating >= 3);
-    return matchesSearch && matchesChallenge && matchesRating;
+const formatDate = (value) =>
+  new Date(value).toLocaleString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 
+const ModeratorExhibition = () => {
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const summary = useMemo(() => {
+    const total = exhibitionBlueprint.length;
+    const visitors = exhibitionBlueprint.reduce(
+      (sum, item) => sum + item.expectedVisitors,
+      0,
+    );
+    return { total, visitors };
+  }, []);
+
+  const filtered = useMemo(() => {
+    if (!searchTerm.trim()) {
+      return exhibitionBlueprint;
+    }
+    const term = searchTerm.toLowerCase();
+    return exhibitionBlueprint.filter(
+      ({ title, venue, curator }) =>
+        title.toLowerCase().includes(term) ||
+        venue.toLowerCase().includes(term) ||
+        curator.toLowerCase().includes(term),
+    );
+  }, [searchTerm]);
+
   return (
-    <div className="space-y-6 w-full">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-amber-900">Exhibition Gallery</h1>
-          <p className="text-amber-700 mt-2">Browse and manage submitted works</p>
-        </div>
-        <div className="flex gap-2">
-          <button className="flex items-center gap-2 px-4 py-2 bg-amber-800 text-white rounded-lg hover:bg-amber-900 transition-colors">
-            <Download size={20} />
-            Export All
-          </button>
+    <div className="min-h-screen bg-custom-yellow-light pb-12">
+      <div className="relative overflow-hidden border-b border-custom-orange-light bg-custom-brown-dark px-6 py-10 text-custom-yellow-light shadow-lg">
+        <div className="mx-auto max-w-6xl">
+          <h1 className="text-3xl font-bold tracking-tight">Exhibition Planning</h1>
+          <p className="mt-2 max-w-3xl text-sm text-custom-orange-light">
+            Track upcoming exhibitions curated by the moderator team. Use the search
+            bar to locate venues or curators and review capacity outlooks before
+            approvals are finalised.
+          </p>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+      <div className="mx-auto mt-8 max-w-6xl px-4">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="rounded-lg border border-custom-orange-light bg-white p-5 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-wide text-custom-orange">
+              Scheduled Exhibitions
+            </p>
+            <div className="mt-2 flex items-center gap-2 text-3xl font-bold text-custom-brown-dark">
+              <Calendar size={24} />
+              <span>{summary.total}</span>
+            </div>
+          </div>
+          <div className="rounded-lg border border-custom-orange-light bg-white p-5 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-wide text-custom-orange">
+              Projected Visitor Count
+            </p>
+            <div className="mt-2 flex items-center gap-2 text-3xl font-bold text-custom-brown-dark">
+              <Users size={24} />
+              <span>{summary.visitors.toLocaleString()}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="text-xl font-semibold text-custom-brown-dark">
+            Upcoming Schedule
+          </h2>
+          <label className="relative flex w-full items-center sm:w-80">
+            <Search className="pointer-events-none absolute left-3 h-4 w-4 text-custom-orange" />
             <input
               type="text"
-              placeholder="Search exhibitions..."
+              className="w-full rounded-full border border-custom-orange-light bg-white py-2 pl-10 pr-4 text-sm text-custom-brown-dark placeholder:text-custom-orange focus:outline-none focus:ring-2 focus:ring-custom-orange"
+              placeholder="Search by title, venue, or curator"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+              onChange={(event) => setSearchTerm(event.target.value)}
             />
-          </div>
-          <div className="flex items-center gap-2">
-            <Filter size={20} className="text-gray-500" />
-            <select
-              value={filterChallenge}
-              onChange={(e) => setFilterChallenge(e.target.value)}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-            >
-              <option value="all">All Challenges</option>
-              {challenges.map(challenge => (
-                <option key={challenge} value={challenge}>{challenge}</option>
-              ))}
-            </select>
-          </div>
-          <div className="flex items-center gap-2">
-            <Star size={20} className="text-gray-500" />
-            <select
-              value={filterRating}
-              onChange={(e) => setFilterRating(e.target.value)}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-            >
-              <option value="all">All Ratings</option>
-              <option value="4+">4+ Stars</option>
-              <option value="3+">3+ Stars</option>
-            </select>
-          </div>
+          </label>
         </div>
-      </div>
 
-      {/* Exhibition Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredExhibitions.map((exhibition) => (
-          <div key={exhibition.id} className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden">
-            <div className="relative">
-              <img
-                src={exhibition.imageUrl}
-                alt={exhibition.title}
-                className="w-full h-48 object-cover"
-              />
-              <div className="absolute top-4 right-4">
-                <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(exhibition.status)}`}>
-                  {getStatusIcon(exhibition.status)}
-                  {exhibition.status.charAt(0).toUpperCase() + exhibition.status.slice(1)}
+        <div className="mt-4 grid gap-4 lg:grid-cols-3">
+          {filtered.map((item) => (
+            <article
+              key={item.id}
+              className="flex h-full flex-col rounded-xl border border-custom-orange-light bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-md"
+            >
+              <h3 className="text-lg font-semibold text-custom-brown-dark">
+                {item.title}
+              </h3>
+              <p className="mt-2 flex items-center gap-2 text-sm text-custom-orange">
+                <MapPin size={16} />
+                <span>{item.venue}</span>
+              </p>
+              <p className="mt-2 flex items-center gap-2 text-sm text-custom-brown-dark">
+                <Clock size={16} />
+                <span>
+                  {formatDate(item.start)} - {formatDate(item.end)}
                 </span>
+              </p>
+              <p className="mt-2 text-sm text-custom-brown-dark">
+                Curated by <span className="font-medium">{item.curator}</span>
+              </p>
+              <div className="mt-4 flex items-center gap-2 rounded-lg bg-custom-yellow-light px-3 py-2 text-sm text-custom-brown-dark">
+                <Users size={16} />
+                <span>{item.expectedVisitors.toLocaleString()} expected visitors</span>
               </div>
+            </article>
+          ))}
+          {filtered.length === 0 && (
+            <div className="rounded-xl border border-dashed border-custom-orange-light bg-white p-6 text-center text-sm text-custom-orange">
+              No exhibitions match your search. Adjust filters to see more results.
             </div>
-
-            <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">{exhibition.title}</h3>
-              <p className="text-gray-600 text-sm mb-3 line-clamp-2">{exhibition.description}</p>
-
-              <div className="space-y-2 mb-4">
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                  <User size={16} />
-                  <span>{exhibition.participant}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                  <Calendar size={16} />
-                  <span>{new Date(exhibition.submissionDate).toLocaleDateString()}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-1">
-                    <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                    <span className="font-medium">{exhibition.rating}</span>
-                  </div>
-                  <div className="flex items-center gap-1 text-gray-500">
-                    <Eye size={16} />
-                    <span>{exhibition.views} views</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-1 mb-4">
-                {exhibition.tags.map((tag) => (
-                  <span key={tag} className="px-2 py-1 bg-amber-100 text-amber-800 text-xs rounded-full">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-
-              <div className="flex justify-between items-center pt-4 border-t border-gray-200">
-                <span className="text-sm text-gray-500">{exhibition.challenge}</span>
-                <button className="flex items-center gap-1 text-amber-800 hover:text-amber-900 text-sm font-medium">
-                  <Eye size={16} />
-                  View Details
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {filteredExhibitions.length === 0 && (
-        <div className="text-center py-12">
-          <Eye className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No exhibitions found</h3>
-          <p className="text-gray-500">Try adjusting your search or filter criteria.</p>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 };
