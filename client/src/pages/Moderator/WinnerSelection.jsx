@@ -2,9 +2,11 @@ import axios from 'axios';
 import { AlertCircle, Award, Calculator, CheckCircle, Clock, Crown, Eye, Heart, Medal, Megaphone, MessageCircle, Search, Send, Shield, Trophy, Users, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
 const WinnerSelection = () => {
   const navigate = useNavigate();
+  const { token } = useAuth(); // Get authentication token
   const [selectedChallenge, setSelectedChallenge] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [challengeSearchTerm, setChallengeSearchTerm] = useState(''); // New: for filtering completed challenges
@@ -13,6 +15,11 @@ const WinnerSelection = () => {
   
   // State for fetching challenges from database
   const [challenges, setChallenges] = useState([]);
+  
+  // State for fetching winners/submissions with marks
+  const [winnerSubmissions, setWinnerSubmissions] = useState([]);
+  const [loadingSubmissions, setLoadingSubmissions] = useState(false);
+  const [submissionsError, setSubmissionsError] = useState(null);
   
   // State for publishing winners
   const [isPublishing, setIsPublishing] = useState(false);
@@ -42,6 +49,60 @@ const WinnerSelection = () => {
     };
     fetchChallenges();
   }, []);
+
+  // Fetch winners/submissions when a challenge is selected
+  // Uses Formula: MAX(0, (Likes × 10) - (Dislikes × 5))
+  useEffect(() => {
+    const fetchWinners = async () => {
+      if (!selectedChallenge || !token) {
+        setWinnerSubmissions([]);
+        return;
+      }
+      
+      setLoadingSubmissions(true);
+      setSubmissionsError(null);
+      
+      try {
+        console.log('Fetching winners for challenge:', selectedChallenge);
+        const response = await axios.get(
+          `${import.meta.env.VITE_API_URL}/api/challenges/${selectedChallenge}/winners`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
+        
+        console.log('Winners response:', response.data);
+        
+        // Map backend response to frontend format
+        const submissions = response.data.map(submission => ({
+          submissionId: submission.id,
+          title: submission.artworkTitle,
+          artistName: submission.artistName,
+          imageUrl: submission.artworkImagePath,
+          description: submission.artworkDescription,
+          totalLikes: submission.likesCount || 0,
+          totalDislikes: submission.dislikesCount || 0,
+          calculatedScore: submission.marks || 0, // Marks from backend using formula
+          position: submission.position || null, // 1, 2, 3 for winners
+          submissionDate: submission.submissionDate,
+          artistId: submission.artistId
+        }));
+        
+        setWinnerSubmissions(submissions);
+        console.log('Loaded winners with marks:', submissions);
+      } catch (err) {
+        console.error('Error fetching winners:', err);
+        setSubmissionsError('Failed to load winners. ' + (err.response?.data || err.message));
+        setWinnerSubmissions([]);
+      } finally {
+        setLoadingSubmissions(false);
+      }
+    };
+    
+    fetchWinners();
+  }, [selectedChallenge, token]);
 
   // Function to publish winners to main feed
   const handlePublishWinners = async () => {
@@ -105,94 +166,10 @@ const WinnerSelection = () => {
     }
   };
 
-  // Mock scoring criteria for the selected challenge
-  const scoringCriteria = {
-    likesWeight: 25,
-    commentsWeight: 15,
-    buyerPreferenceWeight: 30,
-    expertPanelWeight: 30
+  // Calculate marks helper function (for display purposes)
+  const calculateMarks = (likes, dislikes) => {
+    return Math.max(0, (likes * 10) - (dislikes * 5));
   };
-
-  const submissions = [
-    {
-      id: 1,
-      title: 'Modern E-commerce Dashboard',
-      participant: 'Nadeesha Perera',
-      submissionDate: '2024-02-10',
-      imageUrl: 'https://images.pexels.com/photos/196644/pexels-photo-196644.jpeg?auto=compress&cs=tinysrgb&w=400',
-      description: 'A sleek and intuitive e-commerce dashboard with advanced analytics.',
-      tags: ['UI/UX', 'Dashboard', 'E-commerce'],
-      // Raw metrics
-      likes: 156,
-      comments: 23,
-      buyerPreference: 8.5, // out of 10
-      expertScore: 9.2, // out of 10
-      // Calculated scores
-      likesScore: 85, // normalized score out of 100
-      commentsScore: 78,
-      buyerScore: 85,
-      expertScoreNormalized: 92,
-      totalScore: 86.25,
-      position: 2
-    },
-    {
-      id: 2,
-      title: 'Creative Portfolio Website',
-      participant: 'Kasun Fernando',
-      submissionDate: '2024-02-08',
-      imageUrl: 'https://images.pexels.com/photos/267350/pexels-photo-267350.jpeg?auto=compress&cs=tinysrgb&w=400',
-      description: 'Innovative portfolio design with stunning animations.',
-      tags: ['Portfolio', 'Animation', 'Responsive'],
-      likes: 203,
-      comments: 31,
-      buyerPreference: 9.1,
-      expertScore: 9.5,
-      likesScore: 100,
-      commentsScore: 100,
-      buyerScore: 91,
-      expertScoreNormalized: 95,
-      totalScore: 95.15,
-      position: 1
-    },
-    {
-      id: 3,
-      title: 'Healthcare App Interface',
-      participant: 'Tharushi Silva',
-      submissionDate: '2024-02-05',
-      imageUrl: 'https://images.pexels.com/photos/1194420/pexels-photo-1194420.jpeg?auto=compress&cs=tinysrgb&w=400',
-      description: 'Clean and accessible healthcare application interface.',
-      tags: ['Healthcare', 'Accessibility', 'Mobile'],
-      likes: 189,
-      comments: 27,
-      buyerPreference: 8.2,
-      expertScore: 8.8,
-      likesScore: 93,
-      commentsScore: 87,
-      buyerScore: 82,
-      expertScoreNormalized: 88,
-      totalScore: 87.45,
-      position: 3
-    },
-    {
-      id: 4,
-      title: 'Financial Dashboard',
-      participant: 'Amila Jayawardena',
-      submissionDate: '2024-02-12',
-      imageUrl: 'https://images.pexels.com/photos/1108572/pexels-photo-1108572.jpeg?auto=compress&cs=tinysrgb&w=400',
-      description: 'Comprehensive financial dashboard with data visualization.',
-      tags: ['Finance', 'Dashboard', 'Data Viz'],
-      likes: 167,
-      comments: 19,
-      buyerPreference: 7.8,
-      expertScore: 8.5,
-      likesScore: 82,
-      commentsScore: 61,
-      buyerScore: 78,
-      expertScoreNormalized: 85,
-      totalScore: 79.95,
-      position: null
-    }
-  ];
 
   const selectedChallengeData = challenges.find(c => c.id === selectedChallenge);
 
@@ -222,77 +199,26 @@ const WinnerSelection = () => {
     }
   };
 
-  const calculateWeightedScore = (submission) => {
-    const { likesScore, commentsScore, buyerScore, expertScoreNormalized } = submission;
-    const { likesWeight, commentsWeight, buyerPreferenceWeight, expertPanelWeight } = scoringCriteria;
-    
-    return (
-      (likesScore * likesWeight / 100) +
-      (commentsScore * commentsWeight / 100) +
-      (buyerScore * buyerPreferenceWeight / 100) +
-      (expertScoreNormalized * expertPanelWeight / 100)
-    ).toFixed(2);
-  };
-
-  const filteredSubmissions = submissions
+  // Filter and sort winner submissions
+  const filteredSubmissions = winnerSubmissions
     .filter(submission => 
-      submission.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      submission.participant.toLowerCase().includes(searchTerm.toLowerCase())
+      submission.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      submission.artistName?.toLowerCase().includes(searchTerm.toLowerCase())
     )
     .sort((a, b) => {
       switch (sortBy) {
         case 'totalScore':
-          return b.totalScore - a.totalScore;
+        case 'marks':
+          return b.calculatedScore - a.calculatedScore;
         case 'likes':
-          return b.likes - a.likes;
-        case 'expertScore':
-          return b.expertScore - a.expertScore;
+          return b.totalLikes - a.totalLikes;
         case 'date':
           return new Date(b.submissionDate) - new Date(a.submissionDate);
         default:
-          return 0;
+          return b.calculatedScore - a.calculatedScore;
       }
     });
 
-  // Use the same previousChallenges data/structure as ModeratorDashboard
-  // Filter completed challenges from the database
-  // Only show challenges that are EXPLICITLY marked as 'completed' in database status
-  
-  // Generate dummy winners for demonstration
-  const generateDummyWinners = () => {
-    const artistNames = [
-      'Kasun Perera', 'Nadeeka Silva', 'Tharindu Fernando', 'Amaya Jayawardena',
-      'Dilshan Rajapaksa', 'Sachini Bandara', 'Ravindu Wijesekara', 'Kavitha Gunaratne',
-      'Chamod Wickramasinghe', 'Nimali Dissanayake', 'Isuru Kumara', 'Sanduni Mendis'
-    ];
-    const artworkTitles = [
-      'Digital Dreams', 'Abstract Harmony', 'Vibrant Expressions', 'Modern Fusion',
-      'Creative Vision', 'Artistic Journey', 'Color Symphony', 'Contemporary Art',
-      'Visual Poetry', 'Expressive Canvas', 'Bold Strokes', 'Artistic Essence'
-    ];
-    
-    // Generate 3 random winners
-    const winners = [];
-    const usedIndices = new Set();
-    
-    for (let i = 1; i <= 3; i++) {
-      let randomIndex;
-      do {
-        randomIndex = Math.floor(Math.random() * artistNames.length);
-      } while (usedIndices.has(randomIndex));
-      
-      usedIndices.add(randomIndex);
-      
-      winners.push({
-        position: i,
-        name: artistNames[randomIndex],
-        title: artworkTitles[randomIndex]
-      });
-    }
-    
-    return winners;
-  };
-  
   // Filter only challenges that are EXPLICITLY marked as 'completed' in database
   const completedChallenges = challenges.filter(challenge => {
     // Accept several possible status spellings (case-insensitive) coming from DB
@@ -322,13 +248,7 @@ const WinnerSelection = () => {
       status: 'completed',
       moderatorId: challenge.moderatorId || (challenge.moderator && challenge.moderator.id) || null,
       participants: participants,
-      submissions: submissionsCount,
-      scoringCriteria: challenge.scoringCriteria || challenge.scoring || {
-        likesWeight: 34,
-        commentsWeight: 33,
-        shareWeight: 33
-      },
-      winners: challenge.winners || generateDummyWinners()
+      submissions: submissionsCount
     };
   }).sort((a, b) => new Date(b.completedDate) - new Date(a.completedDate));
 

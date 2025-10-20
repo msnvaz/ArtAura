@@ -64,7 +64,13 @@ public class BuyerChallangeDAOImpl implements BuyerChallengeDAO {
         sql.append("a.avatar_url as artist_avatar, ");
         sql.append("COALESCE(a.total_followers, 0) as artist_followers, ");
         sql.append("COALESCE(csv.vote_count, 0) as votes_count, ");
-        sql.append("CASE WHEN csv.user_voted IS NOT NULL THEN TRUE ELSE FALSE END as user_has_voted ");
+        sql.append("CASE WHEN csv.user_voted IS NOT NULL THEN TRUE ELSE FALSE END as user_has_voted, ");
+        // Add like/dislike counts and marks calculation
+        sql.append("COALESCE(reactions.likes_count, 0) as likes_count, ");
+        sql.append("COALESCE(reactions.dislikes_count, 0) as dislikes_count, ");
+        sql.append("reactions.user_reaction, ");
+        // Formula: MAX(0, (Likes × 10) - (Dislikes × 5))
+        sql.append("GREATEST(0, (COALESCE(reactions.likes_count, 0) * 10) - (COALESCE(reactions.dislikes_count, 0) * 5)) as marks ");
         sql.append("FROM challenge_participants cp ");
         sql.append("JOIN artists a ON cp.artist_id = a.artist_id ");
         sql.append("LEFT JOIN (");
@@ -74,6 +80,15 @@ public class BuyerChallangeDAOImpl implements BuyerChallengeDAO {
         sql.append("    FROM challenge_submission_votes ");
         sql.append("    GROUP BY submission_id");
         sql.append(") csv ON cp.id = csv.submission_id ");
+        // Join reactions table for likes/dislikes
+        sql.append("LEFT JOIN (");
+        sql.append("    SELECT submission_id, ");
+        sql.append("           SUM(CASE WHEN reaction_type = 'like' THEN 1 ELSE 0 END) as likes_count, ");
+        sql.append("           SUM(CASE WHEN reaction_type = 'dislike' THEN 1 ELSE 0 END) as dislikes_count, ");
+        sql.append("           MAX(CASE WHEN buyer_id = ? THEN reaction_type END) as user_reaction ");
+        sql.append("    FROM challenge_submission_reactions ");
+        sql.append("    GROUP BY submission_id");
+        sql.append(") reactions ON cp.id = reactions.submission_id ");
         sql.append("WHERE cp.challenge_id = ? ");
 
         // Add sorting
@@ -84,6 +99,11 @@ public class BuyerChallangeDAOImpl implements BuyerChallengeDAO {
             case "mostvoted":
                 sql.append("ORDER BY votes_count DESC, cp.submission_date DESC");
                 break;
+            case "topscores":
+            case "winners":
+                // Sort by marks (highest first), then by submission date
+                sql.append("ORDER BY marks DESC, cp.submission_date ASC");
+                break;
             case "newest":
             default:
                 sql.append("ORDER BY cp.submission_date DESC");
@@ -91,9 +111,9 @@ public class BuyerChallangeDAOImpl implements BuyerChallengeDAO {
         }
 
         if (userId != null) {
-            return jdbcTemplate.query(sql.toString(), submissionRowMapper, userId, challengeId);
+            return jdbcTemplate.query(sql.toString(), submissionRowMapper, userId, userId, challengeId);
         } else {
-            return jdbcTemplate.query(sql.toString(), submissionRowMapper, 0, challengeId);
+            return jdbcTemplate.query(sql.toString(), submissionRowMapper, 0, 0, challengeId);
         }
     }
 
@@ -125,6 +145,21 @@ public class BuyerChallangeDAOImpl implements BuyerChallengeDAO {
         // Voting information - handle nulls
         dto.setVotesCount(rs.getObject("votes_count") != null ? rs.getInt("votes_count") : 0);
         dto.setUserHasVoted(rs.getObject("user_has_voted") != null ? rs.getBoolean("user_has_voted") : false);
+
+        // Like/Dislike reaction information
+        try {
+            dto.setLikesCount(rs.getObject("likes_count") != null ? rs.getInt("likes_count") : 0);
+            dto.setDislikesCount(rs.getObject("dislikes_count") != null ? rs.getInt("dislikes_count") : 0);
+            dto.setUserReaction(rs.getString("user_reaction")); // "like", "dislike", or null
+            // Marks: MAX(0, (Likes × 10) - (Dislikes × 5))
+            dto.setMarks(rs.getObject("marks") != null ? rs.getInt("marks") : 0);
+        } catch (Exception e) {
+            // If columns don't exist in query, set defaults
+            dto.setLikesCount(0);
+            dto.setDislikesCount(0);
+            dto.setUserReaction(null);
+            dto.setMarks(0);
+        }
 
         return dto;
     };

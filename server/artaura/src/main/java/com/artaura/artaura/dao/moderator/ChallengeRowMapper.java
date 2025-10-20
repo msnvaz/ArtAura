@@ -21,6 +21,7 @@ public class ChallengeRowMapper implements RowMapper<ChallengeListDTO> {
         challenge.setRewards(rs.getString("rewards"));
         // Note: sponsorship_request column doesn't exist in database - defaulting to false
         challenge.setRequestSponsorship(false);
+        challenge.setSponsorship(rs.getString("sponsorship")); // Get sponsorship status from database
         challenge.setStatus(rs.getString("status"));
         challenge.setModeratorId(rs.getInt("moderator_id"));
         
