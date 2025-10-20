@@ -4,6 +4,7 @@ import com.artaura.artaura.dto.post.PostCreateDTO;
 import com.artaura.artaura.dto.post.PostResponseDTO;
 import com.artaura.artaura.dto.post.PostUpdateDTO;
 import com.artaura.artaura.service.PostService;
+import com.artaura.artaura.service.CentralizedUploadService;
 import com.artaura.artaura.util.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -29,6 +31,9 @@ public class PostController {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private CentralizedUploadService centralizedUploadService;
+
     @PostMapping("/create")
     public ResponseEntity<String> createPost(
             @RequestParam("caption") String caption,
@@ -42,22 +47,16 @@ public class PostController {
             Long userId = jwtUtil.extractUserId(token);
             String role = jwtUtil.extractRole(token);
 
-            // 📂 Save multiple images to client/public/uploads/
+            // 📂 Save multiple images using CentralizedUploadService
             List<String> imagePaths = new ArrayList<>();
             for (MultipartFile image : images) {
-                String fileName = System.currentTimeMillis() + "_" + image.getOriginalFilename();
-
-                // Calculate project root directory
-                String currentDir = System.getProperty("user.dir");
-                String projectRoot = currentDir.endsWith("artaura")
-                        ? currentDir.substring(0, currentDir.lastIndexOf("artaura"))
-                        : currentDir + "/";
-
-                Path uploadDir = Paths.get(projectRoot + "client/public/uploads");
-                Files.createDirectories(uploadDir); // Create folder if not exist
-                Path filePath = uploadDir.resolve(fileName);
-                Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-                imagePaths.add("/uploads/" + fileName); // Add each path to the list
+                try {
+                    String imagePath = centralizedUploadService.savePostImage(image, userId);
+                    imagePaths.add(imagePath);
+                } catch (IOException e) {
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .body("Error saving image: " + e.getMessage());
+                }
             }
 
             // 🛠️ Build DTO
@@ -104,19 +103,13 @@ public class PostController {
             if (images != null && !images.isEmpty()) {
                 List<String> imagePaths = new ArrayList<>();
                 for (MultipartFile image : images) {
-                    String fileName = System.currentTimeMillis() + "_" + image.getOriginalFilename();
-
-                    // Calculate project root directory
-                    String currentDir = System.getProperty("user.dir");
-                    String projectRoot = currentDir.endsWith("artaura")
-                            ? currentDir.substring(0, currentDir.lastIndexOf("artaura"))
-                            : currentDir + "/";
-
-                    Path uploadDir = Paths.get(projectRoot + "client/public/uploads");
-                    Files.createDirectories(uploadDir); // Create folder if not exist
-                    Path filePath = uploadDir.resolve(fileName);
-                    Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-                    imagePaths.add("/uploads/" + fileName);
+                    try {
+                        String imagePath = centralizedUploadService.savePostImage(image, 1L); // Using 1L as dummy userId for updates
+                        imagePaths.add(imagePath);
+                    } catch (IOException e) {
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .body("Error saving image: " + e.getMessage());
+                    }
                 }
                 postUpdateDTO.setImages(imagePaths);
             }

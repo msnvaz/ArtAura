@@ -20,12 +20,12 @@ public class WebConfig implements WebMvcConfigurer {
 
         @Override
         public void addResourceHandlers(ResourceHandlerRegistry registry) {
-                // Serve uploaded product images
+                // Serve uploaded product images from client/public/uploads - absolute path
                 registry.addResourceHandler("/uploads/products/**")
-                                .addResourceLocations("file:uploads/products/");
+                                .addResourceLocations("file:D:/Artaura/ArtAura/client/public/uploads/products/");
 
-                // Serve other uploads if needed
+                // Serve other uploads from client/public/uploads - absolute path
                 registry.addResourceHandler("/uploads/**")
-                                .addResourceLocations("file:uploads/");
+                                .addResourceLocations("file:D:/Artaura/ArtAura/client/public/uploads/");
         }
 }

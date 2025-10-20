@@ -27,21 +27,57 @@ public class ProductDAOImpl implements ProductDAO {
 
     @Override
     public void save(AddProductDTO p) {
-        String sql = "INSERT INTO products (shop_id, name, sku, category, price, stock, status, image, rating, sales) "
-                +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        System.out.println("💾 DAO Save Method Called");
+        System.out.println("📝 Product Details:");
+        System.out.println("   Shop ID: " + p.getShopId());
+        System.out.println("   Name: " + p.getName());
+        System.out.println("   SKU: " + p.getSku());
+        System.out.println("   Category: " + p.getCategory());
+        System.out.println("   Price: " + p.getPrice());
+        System.out.println("   Stock: " + p.getStock());
+        System.out.println("   Image: " + p.getImage());
 
-        jdbcTemplate.update(sql,
-                p.getShopId(),
-                p.getName(),
-                p.getSku(),
-                p.getCategory(),
-                p.getPrice(),
-                p.getStock(),
-                getStatus(p.getStock()),
-                (p.getImage() != null ? p.getImage() : "/assets/catalog.jpeg"),
-                (p.getRating() != null ? p.getRating() : 0.0),
-                (p.getSales() != null ? p.getSales() : 0));
+        try {
+            String sql = "INSERT INTO products (shop_id, name, sku, category, price, stock, status, image, rating, sales) "
+                    +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+            System.out.println("🔍 Executing SQL: " + sql);
+
+            int rowsAffected = jdbcTemplate.update(sql,
+                    p.getShopId(),
+                    p.getName(),
+                    p.getSku(),
+                    p.getCategory(),
+                    p.getPrice(),
+                    p.getStock(),
+                    getStatus(p.getStock()),
+                    (p.getImage() != null ? p.getImage() : "/assets/catalog.jpeg"),
+                    (p.getRating() != null ? p.getRating() : 0.0),
+                    (p.getSales() != null ? p.getSales() : 0));
+
+            System.out.println("✅ Rows affected: " + rowsAffected);
+
+            if (rowsAffected == 0) {
+                System.err.println("⚠️ WARNING: No rows were inserted!");
+                throw new RuntimeException("Failed to insert product - no rows affected");
+            }
+
+            // Verify insertion
+            String verifySql = "SELECT * FROM products WHERE sku = ? ORDER BY id DESC LIMIT 1";
+            List<AddProductDTO> inserted = jdbcTemplate.query(verifySql, new ProductRowMapper(), p.getSku());
+            if (inserted.isEmpty()) {
+                System.err.println("❌ ERROR: Product was not found after insertion!");
+                throw new RuntimeException("Product insertion verification failed");
+            } else {
+                System.out.println("✅ Product verified in database with ID: " + inserted.get(0).getId());
+            }
+
+        } catch (Exception e) {
+            System.err.println("❌ ERROR in save method: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to save product: " + e.getMessage(), e);
+        }
     }
 
     @Override
@@ -58,11 +94,33 @@ public class ProductDAOImpl implements ProductDAO {
 
     @Override
     public void deleteById(Long id) {
-        String sql = "DELETE FROM products WHERE id = ?";
-        int rowsAffected = jdbcTemplate.update(sql, id);
+        System.out.println("🗑️ ProductDAOImpl: Attempting to delete product with ID: " + id);
 
-        if (rowsAffected == 0) {
-            throw new RuntimeException("Product not found with id: " + id);
+        try {
+            // No need to check for orders anymore - the database has ON DELETE SET NULL
+            // The product_id in shop_orders will automatically become NULL when product is
+            // deleted
+
+            String sql = "DELETE FROM products WHERE id = ?";
+            int rowsAffected = jdbcTemplate.update(sql, id);
+
+            if (rowsAffected == 0) {
+                System.err.println("❌ Product not found with id: " + id);
+                throw new RuntimeException("Product not found with id: " + id);
+            }
+
+            System.out.println(
+                    "✅ Product " + id + " deleted successfully. Associated orders now have product_id = NULL.");
+
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            System.err.println("❌ Database constraint violation: " + e.getMessage());
+            throw new RuntimeException("Cannot delete product due to database constraint: " + e.getMessage());
+        } catch (RuntimeException e) {
+            // Re-throw our custom exceptions
+            throw e;
+        } catch (Exception e) {
+            System.err.println("❌ Unexpected error during deletion: " + e.getMessage());
+            throw new RuntimeException("Failed to delete product: " + e.getMessage());
         }
     }
 

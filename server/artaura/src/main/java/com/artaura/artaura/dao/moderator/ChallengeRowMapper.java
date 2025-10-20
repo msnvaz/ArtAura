@@ -6,7 +6,6 @@ import java.sql.SQLException;
 import org.springframework.jdbc.core.RowMapper;
 
 import com.artaura.artaura.dto.moderator.ChallengeListDTO;
-import com.artaura.artaura.dto.moderator.ScoringCriteriaDTO;
 
 public class ChallengeRowMapper implements RowMapper<ChallengeListDTO> {
     @Override
@@ -20,16 +19,43 @@ public class ChallengeRowMapper implements RowMapper<ChallengeListDTO> {
         challenge.setDescription(rs.getString("description"));
         challenge.setMaxParticipants(rs.getInt("max_participants"));
         challenge.setRewards(rs.getString("rewards"));
-        challenge.setRequestSponsorship(rs.getInt("request_sponsorship") == 1);
+        // Note: sponsorship_request column doesn't exist in database - defaulting to false
+        challenge.setRequestSponsorship(false);
+        challenge.setSponsorship(rs.getString("sponsorship")); // Get sponsorship status from database
         challenge.setStatus(rs.getString("status"));
         challenge.setModeratorId(rs.getInt("moderator_id"));
         
-        // Map scoring criteria
-        ScoringCriteriaDTO scoringCriteria = new ScoringCriteriaDTO();
-        scoringCriteria.setLikesWeight(rs.getInt("likes_weight"));
-        scoringCriteria.setCommentsWeight(rs.getInt("comments_weight"));
-        scoringCriteria.setShareWeight(rs.getInt("share_weight"));
-        challenge.setScoringCriteria(scoringCriteria);
+        // Get participant count if available in result set
+        try {
+            challenge.setParticipantCount(rs.getInt("participant_count"));
+        } catch (SQLException e) {
+            challenge.setParticipantCount(0);
+        }
+        
+        // Get discount code if available in result set
+        try {
+            challenge.setDiscountCode(rs.getString("discount_code"));
+        } catch (SQLException e) {
+            challenge.setDiscountCode(null);
+        }
+        
+        // Get sponsor information if available (for sponsored challenges)
+        try {
+            challenge.setSponsorShopName(rs.getString("sponsor_shop_name"));
+        } catch (SQLException e) {
+            challenge.setSponsorShopName(null);
+        }
+        
+        try {
+            int discountPercentage = rs.getInt("sponsor_discount_percentage");
+            challenge.setSponsorDiscountPercentage(rs.wasNull() ? null : discountPercentage);
+        } catch (SQLException e) {
+            challenge.setSponsorDiscountPercentage(null);
+        }
+        
+        // Fixed marks scoring - weight columns still in DB but will be removed
+        // Each Like = +10 marks, Each Dislike = -5 marks, Minimum score = 0
+        // Note: likes_weight, comments_weight, share_weight columns exist but are not used
         
         return challenge;
     }

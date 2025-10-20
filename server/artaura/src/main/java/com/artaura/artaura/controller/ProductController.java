@@ -10,7 +10,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/products")
-@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174"})
+@CrossOrigin(origins = { "http://localhost:5173", "http://localhost:5174" })
 public class ProductController {
 
     @Autowired
@@ -46,9 +46,17 @@ public class ProductController {
     @PostMapping("/add")
     public ResponseEntity<String> addProduct(@RequestBody AddProductDTO productDTO) {
         try {
+            System.out.println("🚀 Add Product Request Received");
+            System.out.println("📦 Product Data: " + productDTO);
+            System.out.println("🖼️ Image Path: " + productDTO.getImage());
+
             productService.addProduct(productDTO);
+
+            System.out.println("✅ Product added successfully");
             return ResponseEntity.ok("Product added successfully");
         } catch (Exception e) {
+            System.err.println("❌ Error adding product: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.badRequest().body("Failed to add product: " + e.getMessage());
         }
     }
@@ -69,11 +77,17 @@ public class ProductController {
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<String> deleteProduct(@PathVariable Long id) {
         try {
+            System.out.println("🗑️ DELETE request for product ID: " + id);
             productService.deleteProduct(id);
+            System.out.println("✅ Product " + id + " deleted successfully");
             return ResponseEntity.ok("Product deleted successfully");
         } catch (RuntimeException e) {
+            System.err.println("❌ Delete failed: " + e.getMessage());
+            // Return the exact error message from DAO (about orders, constraints, etc.)
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
+            System.err.println("❌ Unexpected error: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Server error occurred while deleting product");
         }

@@ -87,6 +87,26 @@ const CatalogManagement = () => {
     return 'in-stock';
   };
 
+  // Convert image path to displayable URL
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return '/src/assets/catalog.jpeg';
+    
+    // If it's already a full URL, return as is
+    if (imagePath.startsWith('http')) return imagePath;
+    
+    // If it's an absolute file path (old data), extract filename and create relative URL
+    if (imagePath.includes('D:/Artaura') || imagePath.includes('D:\\Artaura')) {
+      const filename = imagePath.split(/[/\\]/).pop();
+      return `/uploads/products/${filename}`;
+    }
+    
+    // If it's already a relative path starting with /, return as is
+    if (imagePath.startsWith('/')) return imagePath;
+    
+    // If it's just a filename, add the path
+    return `/uploads/products/${imagePath}`;
+  };
+
   // Image upload functions
   const openImageModal = (type) => {
     setImageModalType(type);
@@ -132,12 +152,24 @@ const CatalogManagement = () => {
       }
 
       const data = await response.json();
-      const imageUrl = `${API_URL}${data.imageUrl}`;
+      console.log('📸 Upload response:', data);
+      
+      // Use relative path for database storage (works on any computer)
+      const imagePath = data.imageUrl;
+      console.log('💾 Image path to save:', imagePath);
 
       if (imageModalType === 'add') {
-        setNewProduct({ ...newProduct, image: imageUrl });
+        setNewProduct(prev => {
+          const updated = { ...prev, image: imagePath };
+          console.log('📝 Updated newProduct:', updated);
+          return updated;
+        });
       } else if (imageModalType === 'edit') {
-        setProductToEdit({ ...productToEdit, image: imageUrl });
+        setProductToEdit(prev => {
+          const updated = { ...prev, image: imagePath };
+          console.log('✏️ Updated productToEdit:', updated);
+          return updated;
+        });
       }
 
       setShowImageModal(false);
@@ -156,9 +188,9 @@ const CatalogManagement = () => {
     const imageUrl = url.startsWith('http') ? url : url;
     
     if (imageModalType === 'add') {
-      setNewProduct({ ...newProduct, image: imageUrl });
+      setNewProduct(prev => ({ ...prev, image: imageUrl }));
     } else if (imageModalType === 'edit') {
-      setProductToEdit({ ...productToEdit, image: imageUrl });
+      setProductToEdit(prev => ({ ...prev, image: imageUrl }));
     }
     setShowImageModal(false);
     showToast("✅ Image URL added successfully!", "success", 2000);
@@ -211,6 +243,8 @@ const CatalogManagement = () => {
 
   const handleAddProduct = async (e) => {
     e.preventDefault();
+    console.log('🚀 handleAddProduct called');
+    console.log('📸 Current newProduct state:', newProduct);
 
     const token = localStorage.getItem("token");
     const shopId = localStorage.getItem("shopId");
@@ -223,6 +257,11 @@ const CatalogManagement = () => {
     if (!shopId) {
       showToast("❌ Shop ID not found. Please log in again.", "error", 3000);
       return;
+    }
+
+    // Validate image path
+    if (!newProduct.image || newProduct.image === '/src/assets/catalog.jpeg') {
+      console.warn('⚠️ No custom image uploaded, using default');
     }
 
     try {
@@ -239,6 +278,9 @@ const CatalogManagement = () => {
         sales: 0
       };
 
+      console.log('📦 Product data to send:', productData);
+      console.log('🖼️ Image path being sent:', productData.image);
+
       const response = await fetch(`${API_URL}/api/products/add`, {
         method: "POST",
         headers: {
@@ -248,12 +290,17 @@ const CatalogManagement = () => {
         body: JSON.stringify(productData),
       });
 
+      console.log('📡 Response status:', response.status);
+
       if (!response.ok) {
         const error = await response.json();
+        console.error('❌ Error response:', error);
         showToast(`❌ ${error.message || "Failed to add product"}`, "error", 2000);
         return;
       }
 
+      const result = await response.text();
+      console.log('✅ Success response:', result);
       showToast(`✨ Product "${newProduct.name}" created successfully!`, "create", 2500);
 
       // Reset form and close modal
@@ -351,8 +398,25 @@ const CatalogManagement = () => {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        showToast(`❌ ${error.message || "Failed to delete product"}`, "error", 2000);
+        // Handle both JSON and plain text error responses
+        const contentType = response.headers.get("content-type");
+        let errorMessage = "Failed to delete product";
+        
+        try {
+          if (contentType && contentType.includes("application/json")) {
+            const error = await response.json();
+            errorMessage = error.message || errorMessage;
+          } else {
+            // Backend returns plain text for RuntimeException
+            const errorText = await response.text();
+            errorMessage = errorText || errorMessage;
+          }
+        } catch (parseError) {
+          console.error("Error parsing error response:", parseError);
+          // If parsing fails completely, use default message
+        }
+        
+        showToast(`❌ ${errorMessage}`, "error", 3000);
         return;
       }
 
@@ -503,7 +567,7 @@ const CatalogManagement = () => {
               >
                 <div className="relative h-64 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
                   <img
-                    src={product.image}
+                    src={getImageUrl(product.image)}
                     alt={product.name}
                     className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-500"
                   />
@@ -599,7 +663,7 @@ const CatalogManagement = () => {
                 <div className="flex flex-col md:flex-row gap-6">
                   <div className="flex-shrink-0">
                     <img
-                      src={selectedProduct.image}
+                      src={getImageUrl(selectedProduct.image)}
                       alt={selectedProduct.name}
                       className="w-full md:w-48 h-48 object-cover rounded-xl border border-[#FFE4D6]"
                     />
@@ -662,7 +726,7 @@ const CatalogManagement = () => {
                     <div className="w-20 h-20 border-2 border-dashed border-[#FFE4D6] rounded-lg flex items-center justify-center overflow-hidden">
                       {newProduct.image ? (
                         <img
-                          src={newProduct.image}
+                          src={getImageUrl(newProduct.image)}
                           alt="Product preview"
                           className="w-full h-full object-cover"
                         />
@@ -787,7 +851,7 @@ const CatalogManagement = () => {
                     <div className="w-20 h-20 border-2 border-dashed border-[#FFE4D6] rounded-lg flex items-center justify-center overflow-hidden">
                       {productToEdit.image ? (
                         <img
-                          src={productToEdit.image}
+                          src={getImageUrl(productToEdit.image)}
                           alt="Product preview"
                           className="w-full h-full object-cover"
                         />
@@ -1032,7 +1096,7 @@ const CatalogManagement = () => {
           </div>
         )}
 
-        <style jsx>{`
+        <style>{`
           .line-clamp-2 {
             display: -webkit-box;
             -webkit-line-clamp: 2;

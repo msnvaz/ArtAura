@@ -1,6 +1,7 @@
 package com.artaura.artaura.config;
 
-import com.artaura.artaura.security.JwtAuthFilter;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,7 +18,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.List;
+import com.artaura.artaura.security.JwtAuthFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -44,12 +45,13 @@ public class SecurityConfig {
                         "/uploads/**", // <<< THIS ALLOWS IMAGE ACCESS
                         "/api/admin/artworks/**", // <<< TEMPORARY: Allow admin artwork endpoints for development
                         "/api/buyer/exhibitions/**",
+                        "/api/exhibitions/**", // <<< ALLOW EXHIBITION ENDPOINTS FOR MODERATOR
                         "/api/users/**",
                         "/ws/**", // <-- Make sure this is present and permitted
                         "/api/posts/*/comments", // Allow GET access to comments without authentication
                         "/api/posts/*/like-status", // Allow GET access to like status without authentication
-                        "/api/challenges/active",
-                  "/api/sponsorships/**",// Allow public access to view active challenges
+                        "/api/challenges/active", // Allow public access to view active challenges
+                        "/api/sponsorships/**", // Allow sponsorship endpoints
                         "/api/shop/all", // Allow public access to discover shops
                         "/api/products", // Allow public access to discover products
                         "/api/buyer/artists/*/profile", // Allow public access to artist profiles
@@ -63,8 +65,8 @@ public class SecurityConfig {
 
                         .requestMatchers("/api/posts/create").authenticated()
                         .requestMatchers("/api/posts/{role}/{userId}").authenticated()// ✅ allow this
-                        .requestMatchers("/api/artist/artwork-orders/**").authenticated() // Artist artwork orders
-                                                                                          // endpoints
+                        .requestMatchers("/api/artist/artwork-orders/**").authenticated() // Artist artwork orders endpoints
+                        .requestMatchers("/api/challenges/**").authenticated() // ✅ Allow authenticated users to manage challenges
                         .anyRequest().authenticated() // 🔒 Everything else secured
 
                 )

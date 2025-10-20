@@ -1,9 +1,9 @@
 package com.artaura.artaura.service;
 
+import java.util.List;
+
 import com.artaura.artaura.dto.sponsorship.ChallengeForSponsorshipDTO;
 import com.artaura.artaura.dto.sponsorship.SponsorshipOfferDTO;
-
-import java.util.List;
 
 public interface SponsorshipService {
 
@@ -18,4 +18,6 @@ public interface SponsorshipService {
     SponsorshipOfferDTO getSponsorshipOfferById(Long offerId);
 
     void deleteSponsorshipOffer(Long offerId);
+
+    void updateSponsorshipStatus(Long offerId, String status);
 }

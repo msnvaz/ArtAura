@@ -77,12 +77,16 @@ const ArtistsPage = () => {
         },
       })
       .then((response) => {
+        console.log("Raw API response:", response.data); // Debug logging
+        console.log("First artist data:", response.data[0]); // Debug first artist
+        
         // Directly use backend data, no mock merge
         setArtists(response.data);
         setFilteredArtists(response.data);
         setLoading(false);
       })
-      .catch(() => {
+      .catch((error) => {
+        console.error("Error fetching artists:", error);
         setArtists([]);
         setFilteredArtists([]);
         setLoading(false);
@@ -110,11 +114,19 @@ const ArtistsPage = () => {
     // Search filter
     if (searchTerm) {
       filtered = filtered.filter(
-        (artist) =>
-          artist.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          artist.specialty.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          artist.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          artist.bio.toLowerCase().includes(searchTerm.toLowerCase())
+        (artist) => {
+          const name = artist.first_name && artist.last_name 
+            ? `${artist.first_name} ${artist.last_name}` 
+            : (artist.name || '');
+          const specialty = artist.specialization || artist.specialty || '';
+          const location = artist.location || '';
+          const bio = artist.bio || '';
+          
+          return name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                 specialty.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                 location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                 bio.toLowerCase().includes(searchTerm.toLowerCase());
+        }
       );
     }
 
@@ -124,7 +136,7 @@ const ArtistsPage = () => {
       selectedSpecialty !== "All Specialties"
     ) {
       filtered = filtered.filter(
-        (artist) => artist.specialty === selectedSpecialty
+        (artist) => (artist.specialization || artist.specialty) === selectedSpecialty
       );
     }
 
@@ -138,17 +150,21 @@ const ArtistsPage = () => {
     // Sorting
     switch (sortBy) {
       case "rating":
-        filtered.sort((a, b) => b.rating - a.rating);
+        filtered.sort((a, b) => (b.rate || 0) - (a.rate || 0));
         break;
       case "followers":
-        filtered.sort((a, b) => b.followers - a.followers);
+        filtered.sort((a, b) => (b.totalFollowers || 0) - (a.totalFollowers || 0));
         break;
       case "artworks":
-        filtered.sort((a, b) => b.artworks - a.artworks);
+        filtered.sort((a, b) => (b.totalSales || 0) - (a.totalSales || 0));
         break;
       case "newest":
       default:
-        filtered.sort((a, b) => new Date(b.joinDate) - new Date(a.joinDate));
+        filtered.sort((a, b) => {
+          const dateA = new Date(a.createdAt || a.joinDate || 0);
+          const dateB = new Date(b.createdAt || b.joinDate || 0);
+          return dateB - dateA;
+        });
         break;
     }
 
@@ -248,15 +264,17 @@ const ArtistsPage = () => {
             </div>
             <div className="flex-1">
               <h3 className="font-bold text-[#7f5539] text-lg">
-                {artist.name}
+                {artist.first_name && artist.last_name 
+                  ? `${artist.first_name} ${artist.last_name}`
+                  : artist.name || 'Unknown Artist'}
               </h3>
               <div className="flex items-center gap-2 text-[#7f5539]/70 text-sm">
-                {getSpecialtyIcon(artist.specialization)}
-                <span>{artist.specialization}</span>
+                {getSpecialtyIcon(artist.specialization || artist.specialty || 'Digital Art')}
+                <span>{artist.specialization || artist.specialty || 'Digital Art'}</span>
               </div>
               <div className="flex items-center gap-1 text-[#7f5539]/70 text-sm mt-1">
                 <MapPin className="w-3 h-3" />
-                <span>{artist.location}</span>
+                <span>{artist.location || 'Unknown Location'}</span>
               </div>
             </div>
           </div>

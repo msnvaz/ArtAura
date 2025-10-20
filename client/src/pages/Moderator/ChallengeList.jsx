@@ -1,5 +1,5 @@
   import axios from 'axios';
-import { Calendar, CheckCircle, Clock, Edit, Eye, Filter, Search, Trash2, Trophy, Users, AlertCircle, FileText, Heart, MessageCircle, Send } from 'lucide-react';
+import { AlertCircle, Calendar, CheckCircle, Clock, Edit, Eye, FileText, Filter, Heart, Search, Trash2, Trophy, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -8,7 +8,8 @@ const ChallengeList = () => {
   
   // State Management
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
+  // Default to showing only completed challenges per request
+  const [filterStatus, setFilterStatus] = useState('completed');
   const [challenges, setChallenges] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -33,6 +34,31 @@ const ChallengeList = () => {
         token ? { headers: { Authorization: `Bearer ${token}` } } : {}
       );
       setChallenges(response.data);
+      // Debug info to confirm how many challenges and completed ones were fetched
+      try {
+        const list = response.data || [];
+        const completedCount = list.filter(c => {
+          const s = String(c?.status || '').toLowerCase();
+          return ['completed', 'complete', 'finished', 'done'].includes(s) || (c?.deadlineDateTime && new Date(c.deadlineDateTime) < new Date());
+        }).length;
+        const sponsoredCount = list.filter(c => c.sponsorship === 'active').length;
+        const pendingSponsorshipCount = list.filter(c => c.sponsorship === 'pending').length;
+        
+        console.log('=== CHALLENGES FETCHED ===');
+        console.log('Total challenges:', list.length);
+        console.log('Completed challenges:', completedCount);
+        console.log('Active sponsorships:', sponsoredCount);
+        console.log('Pending sponsorships:', pendingSponsorshipCount);
+        console.log('Sponsorship data:', list.map(c => ({
+          id: c.id,
+          title: c.title,
+          sponsorship: c.sponsorship || 'none',
+          status: c.status
+        })));
+        console.log('========================');
+      } catch (err) {
+        console.debug('Challenge fetch debug error', err);
+      }
     } catch (error) {
       setError('Failed to load challenges.');
       console.error('Error fetching challenges:', error);
@@ -83,29 +109,31 @@ const ChallengeList = () => {
       draft: challenges.filter(c => getActualStatus(c) === 'draft').length,
       active: challenges.filter(c => getActualStatus(c) === 'active').length,
       review: challenges.filter(c => getActualStatus(c) === 'review').length,
-      completed: challenges.filter(c => getActualStatus(c) === 'completed').length
+      completed: challenges.filter(c => getActualStatus(c) === 'completed').length,
+      sponsored: challenges.filter(c => c.sponsorship === 'active').length,
+      pendingSponsorship: challenges.filter(c => c.sponsorship === 'pending').length
     };
   };
 
   // Helper function to determine actual status based on deadline
   const getActualStatus = (challenge) => {
-    // If challenge is already marked as completed, keep it completed
-    if (challenge.status === 'completed') {
-      return 'completed';
-    }
+    // Normalize status field to be defensive against different casing/values
+    const rawStatus = String(challenge?.status || '').toLowerCase();
+    const completedValues = ['completed', 'complete', 'finished', 'done'];
+    if (completedValues.includes(rawStatus)) return 'completed';
 
-    // Check if deadline has passed
-    if (challenge.deadlineDateTime) {
-      const deadline = new Date(challenge.deadlineDateTime);
+    // If deadline has passed, treat as completed as well
+    const deadlineValue = challenge?.deadlineDateTime || challenge?.deadline || challenge?.completedDate;
+    if (deadlineValue) {
+      const deadline = new Date(deadlineValue);
       const now = new Date();
-      
-      if (now > deadline) {
+      if (!isNaN(deadline.getTime()) && now > deadline) {
         return 'completed';
       }
     }
 
-    // Return the original status if deadline hasn't passed
-    return challenge.status;
+    // Fallback: return normalized original status or 'draft' if empty
+    return rawStatus || 'draft';
   };
 
   // Event Handlers
@@ -409,6 +437,49 @@ const ChallengeList = () => {
         );
       })()}
 
+      {/* Sponsorship Stats Cards */}
+      {(() => {
+        const stats = getChallengeStats();
+        if (stats.sponsored > 0 || stats.pendingSponsorship > 0) {
+          return (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div className="bg-gradient-to-br from-purple-50 via-pink-50 to-purple-50 rounded-lg p-6 border-2 border-purple-300 shadow-lg hover:shadow-xl transition-all duration-300">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-bold text-purple-700 uppercase tracking-widest flex items-center gap-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                      Active Sponsorships
+                    </p>
+                    <p className="text-4xl font-black text-purple-900 mt-2">{stats.sponsored}</p>
+                    <p className="text-xs text-purple-600 mt-1 font-medium">✨ Featured Challenges</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-full p-4 animate-pulse">
+                    <Trophy className="h-10 w-10 text-white" />
+                  </div>
+                </div>
+              </div>
+              <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-lg p-6 border-2 border-yellow-300 shadow-lg hover:shadow-xl transition-all duration-300">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-bold text-yellow-700 uppercase tracking-widest flex items-center gap-2">
+                      ⏳ Pending Sponsorships
+                    </p>
+                    <p className="text-4xl font-black text-yellow-900 mt-2">{stats.pendingSponsorship}</p>
+                    <p className="text-xs text-yellow-600 mt-1 font-medium">Awaiting Approval</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-yellow-400 to-orange-400 rounded-full p-4">
+                    <Clock className="h-10 w-10 text-white" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        }
+        return null;
+      })()}
+
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-md p-6 smooth-transition">
         <div className="flex flex-col md:flex-row gap-4">
@@ -424,14 +495,14 @@ const ChallengeList = () => {
               />
             </div>
           </div>
-          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
             <Filter size={20} className="text-gray-500" />
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
               className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-semibold text-gray-700"
             >
-              <option value="all">All Status</option>
+              <option value="all">Show All Statuses</option>
               <option value="draft">Draft</option>
               <option value="active">Active</option>
               <option value="review">Review</option>
@@ -455,12 +526,63 @@ const ChallengeList = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredChallenges.map((challenge) => {
               const actualStatus = getActualStatus(challenge);
+              const isActiveSponsored = challenge.sponsorship === 'active';
+              
               return (
               <div
                 key={challenge.id}
-                className={`bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow card-animate ${getStatusBorderClass(actualStatus)} flex flex-col h-full`}
+                className={`bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow card-animate ${getStatusBorderClass(actualStatus)} flex flex-col h-full relative overflow-hidden ${
+                  isActiveSponsored ? 'ring-4 ring-purple-300 ring-opacity-50 shadow-xl shadow-purple-200' : ''
+                }`}
+                style={isActiveSponsored ? {
+                  background: 'linear-gradient(135deg, #ffffff 0%, #faf5ff 50%, #fef3f7 100%)'
+                } : {}}
               >
+                {/* Special Corner Ribbon for Active Sponsored Challenges */}
+                {isActiveSponsored && (
+                  <div className="absolute top-0 right-0 z-10">
+                    <div className="relative">
+                      <div className="absolute top-3 right-3 bg-gradient-to-br from-purple-500 via-purple-600 to-pink-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-lg shadow-lg flex items-center gap-1 animate-pulse">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                        SPONSORED
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
                 <div className="flex flex-col flex-1 p-6">
+                  {/* Sponsored Challenge Banner */}
+                  {isActiveSponsored && (
+                    <div className="mb-4 -mt-2 -mx-2 px-4 py-3 bg-gradient-to-r from-purple-500 via-purple-600 to-pink-500 rounded-t-lg">
+                      <div className="flex flex-col items-center justify-center gap-2 text-white">
+                        <div className="flex items-center gap-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 animate-pulse" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                          <span className="font-bold text-sm uppercase tracking-wider">✨ SPONSORED CHALLENGE ✨</span>
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 animate-pulse" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                        </div>
+                        {/* Display sponsor information if available */}
+                        {(challenge.sponsorShopName || challenge.sponsorDiscountPercentage) && (
+                          <div className="flex items-center gap-2 text-sm font-semibold bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm">
+                            {challenge.sponsorShopName && (
+                              <span>Sponsored by: {challenge.sponsorShopName}</span>
+                            )}
+                            {challenge.sponsorDiscountPercentage && (
+                              <span className="bg-white/30 px-2 py-0.5 rounded-full">
+                                {challenge.sponsorDiscountPercentage}% OFF
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex items-center gap-2">
                       <Trophy className="h-5 w-5 text-amber-600" />
@@ -473,15 +595,27 @@ const ChallengeList = () => {
 
                   <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
                     {challenge.title}
-                    {challenge.requestSponsorship && (
-                      <span className="ml-2 px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Sponsorship</span>
+                    {/* Sponsorship Status Badge */}
+                    {challenge.sponsorship && challenge.sponsorship !== 'none' && (
+                      <>
+                        {challenge.sponsorship === 'pending' && (
+                          <span className="ml-2 px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800 flex items-center gap-1">
+                            ⏳ Sponsorship Pending
+                          </span>
+                        )}
+                        {challenge.sponsorship === 'active' && (
+                          <span className="ml-2 px-2 py-1 text-xs font-semibold rounded-full bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 flex items-center gap-1 animate-pulse">
+                            ✨ Sponsored Challenge
+                          </span>
+                        )}
+                      </>
                     )}
                   </h3>
 
                   <p className="text-gray-600 text-sm mb-2 line-clamp-2">{challenge.description}</p>
 
-                  {/* Rewards & Prizes section - consistent with details modal */}
-                  {(challenge.rewards || challenge.prizes) && (
+                  {/* Rewards & Prizes section - hidden for sponsored challenges (sponsors provide rewards) */}
+                  {!isActiveSponsored && (challenge.rewards || challenge.prizes) && (
                     <div className="mb-2">
                       <span className="font-semibold flex items-center gap-2 text-amber-800">
                         <Trophy size={16} className="text-amber-600" /> Rewards & Prizes:
@@ -518,40 +652,31 @@ const ChallengeList = () => {
                     )}
                   </div>
 
-                  {/* Scoring Criteria Preview */}
-                  {challenge.scoringCriteria && (
-                    <div className="bg-gradient-to-br from-amber-50 via-orange-50 to-amber-50 rounded-lg p-4 mb-4 border-2 border-amber-300 shadow-sm">
-                      <div className="flex items-center gap-2 mb-3">
-                        <div className="p-1.5 bg-amber-600 rounded-full">
-                          <Trophy size={12} className="text-white" />
-                        </div>
-                        <span className="text-sm font-bold text-amber-900">Scoring Criteria</span>
+                  {/* Fixed Scoring System Info */}
+                  <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-blue-50 rounded-lg p-4 mb-4 border-2 border-blue-300 shadow-sm">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="p-1.5 bg-blue-600 rounded-full">
+                        <Trophy size={12} className="text-white" />
                       </div>
-                      <div className="grid grid-cols-3 gap-3">
-                        <div className="bg-white rounded-lg p-2 border border-amber-200 shadow-sm">
-                          <div className="flex justify-center mb-1">
-                            <Heart size={14} className="text-red-500" />
-                          </div>
-                          <div className="text-xl font-bold text-amber-900 text-center">{challenge.scoringCriteria.likesWeight}%</div>
-                          <div className="text-xs text-amber-700 text-center font-medium">Likes</div>
+                      <span className="text-sm font-bold text-blue-900">Fixed Marks Scoring</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-white rounded-lg p-2 border border-green-200 shadow-sm">
+                        <div className="flex justify-center mb-1">
+                          <Heart size={14} className="text-red-500" />
                         </div>
-                        <div className="bg-white rounded-lg p-2 border border-green-200 shadow-sm">
-                          <div className="flex justify-center mb-1">
-                            <MessageCircle size={14} className="text-green-600" />
-                          </div>
-                          <div className="text-xl font-bold text-green-900 text-center">{challenge.scoringCriteria.commentsWeight}%</div>
-                          <div className="text-xs text-green-700 text-center font-medium">Comments</div>
+                        <div className="text-xl font-bold text-green-600 text-center">+10</div>
+                        <div className="text-xs text-gray-700 text-center font-medium">Per Like</div>
+                      </div>
+                      <div className="bg-white rounded-lg p-2 border border-red-200 shadow-sm">
+                        <div className="flex justify-center mb-1">
+                          <Heart size={14} className="text-gray-500" style={{ transform: "rotate(180deg)" }} />
                         </div>
-                        <div className="bg-white rounded-lg p-2 border border-purple-200 shadow-sm">
-                          <div className="flex justify-center mb-1">
-                            <Send size={14} className="text-purple-600" />
-                          </div>
-                          <div className="text-xl font-bold text-purple-900 text-center">{challenge.scoringCriteria.shareWeight}%</div>
-                          <div className="text-xs text-purple-700 text-center font-medium">Shares</div>
-                        </div>
+                        <div className="text-xl font-bold text-red-600 text-center">-5</div>
+                        <div className="text-xs text-gray-700 text-center font-medium">Per Dislike</div>
                       </div>
                     </div>
-                  )}
+                  </div>
 
                   <div className="flex-1"></div>
                   {/* Action icons always at the bottom, now aligned left */}
@@ -656,15 +781,34 @@ const ChallengeList = () => {
                     )}
                   </div>
 
-                  {/* Draft label with dark box if status is draft */}
-                  {challengeToView.requestSponsorship && (
-                    <div className="bg-blue-50 rounded-lg p-3 mt-2">
-                      <div className="font-semibold text-blue-700 mb-1">Sponsorship Requested</div>
+                  {/* Sponsorship Status Display */}
+                  {challengeToView.sponsorship && challengeToView.sponsorship !== 'none' && (
+                    <div className={`rounded-lg p-3 mt-2 ${
+                      challengeToView.sponsorship === 'pending' 
+                        ? 'bg-yellow-50 border-2 border-yellow-200' 
+                        : 'bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200'
+                    }`}>
+                      {challengeToView.sponsorship === 'pending' && (
+                        <>
+                          <div className="font-semibold text-yellow-700 mb-1 flex items-center gap-2">
+                            ⏳ Sponsorship Pending
+                          </div>
+                          <p className="text-xs text-yellow-600">Awaiting shop sponsor approval</p>
+                        </>
+                      )}
+                      {challengeToView.sponsorship === 'active' && (
+                        <>
+                          <div className="font-semibold text-purple-700 mb-1 flex items-center gap-2 animate-pulse">
+                            ✨ Sponsored Challenge
+                          </div>
+                          <p className="text-xs text-purple-600">This challenge is sponsored and featured!</p>
+                        </>
+                      )}
                     </div>
                   )}
 
-                  {/* Rewards & Prizes section - consistent with other details */}
-                  {(challengeToView.rewards || challengeToView.prizes) && (
+                  {/* Rewards & Prizes section - hidden for sponsored challenges (sponsors provide rewards) */}
+                  {challengeToView.sponsorship !== 'active' && (challengeToView.rewards || challengeToView.prizes) && (
                     <div className="mt-2">
                       <span className="font-semibold flex items-center gap-2">
                         <Trophy size={16} className="text-amber-600" /> Rewards & Prizes:
@@ -682,59 +826,36 @@ const ChallengeList = () => {
                     </div>
                   )}
 
-                  {challengeToView.scoringCriteria && (
-                    <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-4 mt-2 border border-amber-200">
-                      <div className="font-semibold text-amber-800 mb-3 flex items-center gap-2">
-                        <Trophy size={18} className="text-amber-600" />
-                        Scoring Criteria
+                  {/* Fixed Scoring System */}
+                  <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-blue-50 rounded-lg p-6 mt-2 border-2 border-blue-300">
+                    <div className="font-semibold text-blue-800 mb-4 flex items-center gap-2">
+                      <Trophy size={18} className="text-blue-600" />
+                      Fixed Marks Scoring System
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div className="bg-white rounded-lg p-4 border-2 border-green-300">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Heart size={16} className="text-red-500" />
+                          <span className="text-sm font-medium text-gray-700">Each Like</span>
+                        </div>
+                        <div className="text-3xl font-bold text-green-600">+10</div>
+                        <div className="text-xs text-gray-500">marks added</div>
                       </div>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-amber-800">Likes & Engagement Weight:</span>
-                          <span className="text-sm font-bold text-amber-900">{challengeToView.scoringCriteria.likesWeight}%</span>
+                      <div className="bg-white rounded-lg p-4 border-2 border-red-300">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Heart size={16} className="text-gray-500" style={{ transform: "rotate(180deg)" }} />
+                          <span className="text-sm font-medium text-gray-700">Each Dislike</span>
                         </div>
-                        <div className="w-full bg-amber-200 rounded-full h-2">
-                          <div 
-                            className="bg-amber-600 h-2 rounded-full transition-all" 
-                            style={{width: `${challengeToView.scoringCriteria.likesWeight}%`}}
-                          ></div>
-                        </div>
-                        
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-amber-800">Comments & Interaction Weight:</span>
-                          <span className="text-sm font-bold text-amber-900">{challengeToView.scoringCriteria.commentsWeight}%</span>
-                        </div>
-                        <div className="w-full bg-green-200 rounded-full h-2">
-                          <div 
-                            className="bg-green-600 h-2 rounded-full transition-all" 
-                            style={{width: `${challengeToView.scoringCriteria.commentsWeight}%`}}
-                          ></div>
-                        </div>
-                        
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-amber-800">Share Weight:</span>
-                          <span className="text-sm font-bold text-amber-900">{challengeToView.scoringCriteria.shareWeight}%</span>
-                        </div>
-                        <div className="w-full bg-purple-200 rounded-full h-2">
-                          <div 
-                            className="bg-purple-600 h-2 rounded-full transition-all" 
-                            style={{width: `${challengeToView.scoringCriteria.shareWeight}%`}}
-                          ></div>
-                        </div>
-                        
-                        <div className="mt-3 pt-3 border-t border-amber-200">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-semibold text-amber-900">Total:</span>
-                            <span className="text-sm font-bold text-green-700">
-                              {challengeToView.scoringCriteria.likesWeight + 
-                               challengeToView.scoringCriteria.commentsWeight + 
-                               challengeToView.scoringCriteria.shareWeight}% ✓
-                            </span>
-                          </div>
-                        </div>
+                        <div className="text-3xl font-bold text-red-600">-5</div>
+                        <div className="text-xs text-gray-500">marks deducted</div>
                       </div>
                     </div>
-                  )}
+                    <div className="bg-blue-100 rounded-lg p-3 border border-blue-300">
+                      <p className="text-sm text-blue-900">
+                        <span className="font-bold">Scoring Formula:</span> Score = (Total Likes × 10) - (Total Dislikes × 5)
+                      </p>
+                    </div>
+                  </div>
                 </div>
                 {/* Close button at the bottom */}
                 <div className="flex gap-4 justify-center mt-8">

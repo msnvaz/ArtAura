@@ -94,65 +94,116 @@ const PublicArtistPortfolio = () => {
             setLoading(true);
             setError(null);
 
-            // Check if API is available first
+            const token = localStorage.getItem("token");
+            console.log("Fetching artist data for ID:", artistId);
+
+            // Fetch artist profile - use the correct endpoint that exists in backend
+            const profileResponse = await axios.get(`${API_URL}/api/buyer/artists/${artistId}/profile`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            
+            console.log("Artist profile response:", profileResponse.data);
+            
+            // Map the backend response to the expected format
+            const artistData = profileResponse.data;
+            
+            // Helper function to construct image URLs
+            const getImageUrl = (relativePath) => {
+                if (!relativePath) return null;
+                if (relativePath.startsWith('http')) return relativePath;
+                // Remove leading slash if present and construct full URL
+                const cleanPath = relativePath.startsWith('/') ? relativePath.substring(1) : relativePath;
+                return `${API_URL}/${cleanPath}`;
+            };
+            
+            const formattedArtistProfile = {
+                id: artistData.artistId || artistData.id,
+                name: artistData.firstName && artistData.lastName 
+                    ? `${artistData.firstName} ${artistData.lastName}`.trim()
+                    : artistData.fullName || artistData.name || 'Unknown Artist',
+                bio: artistData.bio || 'No bio available',
+                location: artistData.location || 'Unknown Location',
+                joinDate: artistData.joinDate 
+                    ? new Date(artistData.joinDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+                    : 'Recently',
+                isVerified: artistData.isVerified || artistData.status === 'Active',
+                avatar: getImageUrl(artistData.avatarUrl) || '/uploads/profiles/default-avatar.svg',
+                coverImage: getImageUrl(artistData.coverImageUrl) || '/default-cover.jpg',
+                specialties: artistData.specialization 
+                    ? [artistData.specialization] 
+                    : artistData.specialties || ['Various'],
+                priceRange: artistData.priceRange || 'Contact for pricing',
+                customWorkAvailable: artistData.customWorkAvailable !== false,
+                website: artistData.website,
+                instagram: artistData.instagram,
+                twitter: artistData.twitter,
+                email: artistData.email,
+                stats: {
+                    artworks: artistData.artworksCount || artistData.totalArtworks || 0,
+                    sales: artistData.totalSales || 0,
+                    followers: artistData.totalFollowers || 0,
+                    views: artistData.totalViews || 0
+                }
+            };
+
+            console.log("Formatted artist profile:", formattedArtistProfile);
+            console.log("Avatar URL:", formattedArtistProfile.avatar);
+            console.log("Cover URL:", formattedArtistProfile.coverImage);
+
+            setArtistProfile(formattedArtistProfile);
+
+            // Try to fetch additional data (posts, artworks, etc.) but don't fail if they don't exist
             try {
-                // Fetch artist profile
-                const profileResponse = await axios.get(`${API_URL}/api/buyer/artists/${artistId}/profile`);
-                setArtistProfile(profileResponse.data);
-
-                // Fetch artist posts
-                const postsResponse = await axios.get(`${API_URL}/api/posts/artist/${artistId}`);
-                setPortfolioPosts(postsResponse.data || []);
-
-                // Fetch artist artworks
-                const artworksResponse = await axios.get(`${API_URL}/api/artworks/artist/${artistId}`);
-                setArtworks(artworksResponse.data || []);
-
-                // Fetch artist exhibitions
-                const exhibitionsResponse = await axios.get(`${API_URL}/api/exhibitions/artist/${artistId}`);
-                setExhibitions(exhibitionsResponse.data || []);
-
-                // Fetch artist achievements
-                const achievementsResponse = await axios.get(`${API_URL}/api/achievements/artist/${artistId}`);
-                setAchievements(achievementsResponse.data || []);
-
-            } catch (apiError) {
-                // If API is not available, use mock data for testing
-                console.warn('API not available, using mock data');
-                setArtistProfile({
-                    id: artistId,
-                    name: "Sample Artist",
-                    bio: "This is a sample artist profile for testing purposes. The backend server is not currently running.",
-                    location: "Sample City",
-                    joinDate: "January 2024",
-                    isVerified: true,
-                    avatar: "/default-avatar.jpg",
-                    coverImage: "/default-cover.jpg",
-                    specialties: ["Painting", "Digital Art", "Illustration"],
-                    priceRange: "$100 - $500",
-                    customWorkAvailable: true,
-                    website: "example.com",
-                    instagram: "@sampleartist",
-                    twitter: "@sampleartist",
-                    stats: {
-                        artworks: 25,
-                        sales: 12,
-                        followers: 150,
-                        views: 1200
-                    }
+                const postsResponse = await axios.get(`${API_URL}/api/posts/artist/${artistId}`, {
+                    headers: { Authorization: `Bearer ${token}` }
                 });
+                setPortfolioPosts(postsResponse.data || []);
+            } catch (postsError) {
+                console.log("Posts not available:", postsError.message);
                 setPortfolioPosts([]);
+            }
+
+            try {
+                const artworksResponse = await axios.get(`${API_URL}/api/artworks/artist/${artistId}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                setArtworks(artworksResponse.data || []);
+            } catch (artworksError) {
+                console.log("Artworks not available:", artworksError.message);
                 setArtworks([]);
+            }
+
+            try {
+                const exhibitionsResponse = await axios.get(`${API_URL}/api/exhibitions/artist/${artistId}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                setExhibitions(exhibitionsResponse.data || []);
+            } catch (exhibitionsError) {
+                console.log("Exhibitions not available:", exhibitionsError.message);
                 setExhibitions([]);
+            }
+
+            try {
+                const achievementsResponse = await axios.get(`${API_URL}/api/achievements/artist/${artistId}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                setAchievements(achievementsResponse.data || []);
+            } catch (achievementsError) {
+                console.log("Achievements not available:", achievementsError.message);
                 setAchievements([]);
             }
 
         } catch (error) {
             console.error('Error fetching artist data:', error);
-            if (error.code === 'ERR_NETWORK' || error.message.includes('Network Error')) {
-                setError('Unable to connect to server. Please check if the backend is running.');
-            } else if (error.response?.status === 404) {
+            
+            if (error.response?.status === 404) {
                 setError('Artist not found.');
+            } else if (error.response?.status === 401) {
+                setError('Authentication required. Please login to view artist profiles.');
+            } else if (error.code === 'ERR_NETWORK' || error.message.includes('Network Error')) {
+                setError('Unable to connect to server. Please check if the backend is running.');
             } else {
                 setError('Failed to load artist data. Please try again later.');
             }
@@ -397,7 +448,7 @@ const PublicArtistPortfolio = () => {
                                     <div className="flex flex-wrap gap-2">
                                         {(artistProfile?.specialties || []).map((specialty, index) => (
                                             <span
-                                                key={index}
+                                                key={`specialty-${index}`}
                                                 className="bg-[#7f5539]/10 text-[#7f5539] px-3 py-1 rounded-full text-sm"
                                             >
                                                 {specialty}
@@ -545,16 +596,23 @@ const PublicArtistPortfolio = () => {
                                         </div>
                                         <div className="flex justify-between items-center">
                                             <span className="text-[#7f5539]/70">Total Likes</span>
-                                            <span className="font-semibold text-[#7f5539]">{portfolioPosts.reduce((sum, post) => sum + post.likes, 0)}</span>
+                                            <span className="font-semibold text-[#7f5539]">
+                                                {portfolioPosts.reduce((sum, post) => sum + (post.likes || 0), 0)}
+                                            </span>
                                         </div>
                                         <div className="flex justify-between items-center">
                                             <span className="text-[#7f5539]/70">Total Comments</span>
-                                            <span className="font-semibold text-[#7f5539]">{portfolioPosts.reduce((sum, post) => sum + post.comments, 0)}</span>
+                                            <span className="font-semibold text-[#7f5539]">
+                                                {portfolioPosts.reduce((sum, post) => sum + (post.comments || 0), 0)}
+                                            </span>
                                         </div>
                                         <div className="flex justify-between items-center">
                                             <span className="text-[#7f5539]/70">Avg. Engagement</span>
                                             <span className="font-semibold text-[#7f5539]">
-                                                {Math.round((portfolioPosts.reduce((sum, post) => sum + post.likes + post.comments, 0)) / portfolioPosts.length)}
+                                                {portfolioPosts.length > 0 
+                                                    ? Math.round((portfolioPosts.reduce((sum, post) => sum + post.likes + post.comments, 0)) / portfolioPosts.length)
+                                                    : 0
+                                                }
                                             </span>
                                         </div>
                                     </div>

@@ -20,14 +20,18 @@ import java.util.UUID;
 @CrossOrigin(origins = { "http://localhost:5173", "http://localhost:5174" })
 public class ImageUploadController {
 
-    // Directory to save uploaded images
-    private static final String UPLOAD_DIR = "uploads/products/";
+    // Directory to save uploaded images - absolute path to
+    // client/public/uploads/products
+    private static final String UPLOAD_DIR = "D:/Artaura/ArtAura/client/public/uploads/products/";
 
     @PostMapping("/image")
     public ResponseEntity<Map<String, String>> uploadImage(@RequestParam("file") MultipartFile file) {
         Map<String, String> response = new HashMap<>();
 
         try {
+            System.out.println("📤 Image upload request received");
+            System.out.println("📁 Upload directory: " + UPLOAD_DIR);
+
             // Validate file
             if (file.isEmpty()) {
                 response.put("error", "Please select a file to upload");
@@ -36,6 +40,7 @@ public class ImageUploadController {
 
             // Validate file type
             String contentType = file.getContentType();
+            System.out.println("📝 File content type: " + contentType);
             if (contentType == null || !contentType.startsWith("image/")) {
                 response.put("error", "Only image files are allowed");
                 return ResponseEntity.badRequest().body(response);
@@ -50,7 +55,9 @@ public class ImageUploadController {
             // Create upload directory if it doesn't exist
             File uploadDir = new File(UPLOAD_DIR);
             if (!uploadDir.exists()) {
-                uploadDir.mkdirs();
+                System.out.println("📂 Creating upload directory: " + UPLOAD_DIR);
+                boolean created = uploadDir.mkdirs();
+                System.out.println("✅ Directory created: " + created);
             }
 
             // Generate unique filename
@@ -60,19 +67,27 @@ public class ImageUploadController {
                 fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
             }
             String uniqueFilename = UUID.randomUUID().toString() + fileExtension;
+            System.out.println("🆔 Generated filename: " + uniqueFilename);
 
             // Save file
             Path filePath = Paths.get(UPLOAD_DIR + uniqueFilename);
+            System.out.println("💾 Saving file to: " + filePath.toAbsolutePath());
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+            System.out.println("✅ File saved successfully");
 
-            // Return the URL path
-            String imageUrl = "/uploads/products/" + uniqueFilename;
-            response.put("imageUrl", imageUrl);
+            // Return only the relative path for database storage (works on any computer)
+            String relativePath = "/uploads/products/" + uniqueFilename;
+
+            System.out.println("� Relative path for database: " + relativePath);
+
+            response.put("imageUrl", relativePath); // For both frontend display and database storage
             response.put("message", "Image uploaded successfully");
 
             return ResponseEntity.ok(response);
 
         } catch (IOException e) {
+            System.err.println("❌ Error uploading image: " + e.getMessage());
+            e.printStackTrace();
             response.put("error", "Failed to upload image: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }

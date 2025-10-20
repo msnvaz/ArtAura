@@ -18,11 +18,13 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
+import ProductBuyButton from './ProductBuyButton';
+import { Toaster } from 'react-hot-toast';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 const ShopDiscoveryTab = () => {
-    const { token } = useAuth(); // Get authentication token
+    const { token, userId } = useAuth(); // Get authentication token and userId
     const [shops, setShops] = useState([]);
     const [products, setProducts] = useState([]);
     const [selectedShop, setSelectedShop] = useState(null);
@@ -32,6 +34,26 @@ const ShopDiscoveryTab = () => {
     const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
     const [filterType, setFilterType] = useState('all'); // 'all', 'shops', 'products'
     const [selectedShopProducts, setSelectedShopProducts] = useState([]);
+
+    // Convert image path to displayable URL
+    const getImageUrl = (imagePath) => {
+        if (!imagePath) return '/src/assets/catalog.jpeg';
+        
+        // If it's already a full URL, return as is
+        if (imagePath.startsWith('http')) return imagePath;
+        
+        // If it's an absolute file path (old data), extract filename and create relative URL
+        if (imagePath.includes('D:/Artaura') || imagePath.includes('D:\\Artaura')) {
+            const filename = imagePath.split(/[/\\]/).pop();
+            return `/uploads/products/${filename}`;
+        }
+        
+        // If it's already a relative path starting with /, return as is
+        if (imagePath.startsWith('/')) return imagePath;
+        
+        // If it's just a filename, add the path
+        return `/uploads/products/${imagePath}`;
+    };
 
     // Fetch shops and products on component mount
     useEffect(() => {
@@ -186,6 +208,12 @@ const ShopDiscoveryTab = () => {
         setSelectedShopProducts([]);
     };
 
+    // Helper function to get shop name for a product
+    const getShopNameForProduct = (shopId) => {
+        const shop = shops.find(s => s.shopId === shopId);
+        return shop ? shop.shopName : 'Unknown Shop';
+    };
+
     // Add safety check for undefined data - MUST be defined before filtering
     const safeShops = Array.isArray(shops) ? shops : [];
     const safeProducts = Array.isArray(products) ? products : [];
@@ -254,7 +282,7 @@ const ShopDiscoveryTab = () => {
     const safeFilteredProducts = Array.isArray(filteredProducts) ? filteredProducts : [];
 
     // Debug: Log current data counts in development
-    if (process.env.NODE_ENV === 'development') {
+    if (import.meta.env.DEV) {
         console.log('ShopDiscoveryTab data:', {
             shops: safeShops.length,
             products: safeProducts.length,
@@ -301,6 +329,16 @@ const ShopDiscoveryTab = () => {
                                     <Package className="h-4 w-4 text-[#7f5539]/60" />
                                     <span>{selectedShopProducts.length} Products</span>
                                 </div>
+                                {(selectedShop.streetAddress || selectedShop.city) && (
+                                    <div className="flex items-center space-x-2 col-span-full">
+                                        <MapPin className="h-4 w-4 text-[#7f5539]/60" />
+                                        <span>
+                                            {[selectedShop.streetAddress, selectedShop.city, selectedShop.state, selectedShop.country, selectedShop.zipCode]
+                                                .filter(Boolean)
+                                                .join(', ')}
+                                        </span>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -346,6 +384,9 @@ const ShopDiscoveryTab = () => {
     // Main shop discovery view
     return (
         <div className="space-y-6">
+            {/* Toast notifications */}
+            <Toaster position="top-right" />
+            
             {/* Header */}
             <div className="bg-white rounded-lg shadow-sm p-6">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between">
@@ -435,32 +476,45 @@ const ShopDiscoveryTab = () => {
                             {safeFilteredShops.map((shop) => (
                                 <div
                                     key={shop.shopId}
-                                    className={`bg-[#fdf9f4]/30 rounded-lg p-4 cursor-pointer hover:shadow-md transition-all ${viewMode === 'list' ? 'flex items-center space-x-4' : ''
-                                        }`}
+                                    className={`bg-white rounded-xl p-6 cursor-pointer transition-all duration-300 border border-[#7f5539]/10
+                                        shadow-[0_2px_8px_rgba(127,85,57,0.08)] hover:shadow-[0_8px_30px_rgba(127,85,57,0.2)] 
+                                        hover:-translate-y-1 hover:border-[#7f5539]/20
+                                        ${viewMode === 'list' ? 'flex items-center space-x-6' : ''}`}
                                     onClick={() => handleShopClick(shop)}
                                 >
-                                    <div className={`p-3 bg-[#7f5539]/10 rounded-full ${viewMode === 'list' ? 'flex-shrink-0' : 'mx-auto mb-3 w-fit'}`}>
-                                        <Store className="h-6 w-6 text-[#7f5539]" />
+                                    <div className={`p-4 bg-gradient-to-br from-[#7f5539]/10 to-[#7f5539]/5 rounded-xl 
+                                        shadow-inner ${viewMode === 'list' ? 'flex-shrink-0' : 'mx-auto mb-4 w-fit'}`}>
+                                        <Store className="h-8 w-8 text-[#7f5539]" />
                                     </div>
 
                                     <div className={`${viewMode === 'list' ? 'flex-1' : 'text-center'}`}>
-                                        <h5 className="font-semibold text-[#7f5539] mb-2">{shop.shopName}</h5>
-                                        <p className="text-[#7f5539]/70 text-sm mb-2 line-clamp-2">{shop.description}</p>
+                                        <h5 className="font-bold text-[#7f5539] mb-2 text-lg">{shop.shopName}</h5>
+                                        <p className="text-[#7f5539]/70 text-sm mb-3 line-clamp-2">{shop.description}</p>
 
-                                        <div className={`${viewMode === 'list' ? 'flex items-center space-x-4' : 'space-y-1'} text-xs text-[#7f5539]/60`}>
-                                            <div className="flex items-center space-x-1">
-                                                <Store className="h-3 w-3" />
-                                                <span>{shop.businessType}</span>
+                                        <div className={`${viewMode === 'list' ? 'flex items-center flex-wrap gap-4' : 'space-y-2'} text-xs text-[#7f5539]/60`}>
+                                            <div className="flex items-center space-x-2 bg-[#7f5539]/5 px-3 py-1.5 rounded-full">
+                                                <Store className="h-3.5 w-3.5 text-[#7f5539]" />
+                                                <span className="font-medium">{shop.businessType}</span>
                                             </div>
-                                            <div className="flex items-center space-x-1">
-                                                <Phone className="h-3 w-3" />
+                                            <div className="flex items-center space-x-2 bg-[#7f5539]/5 px-3 py-1.5 rounded-full">
+                                                <Phone className="h-3.5 w-3.5 text-[#7f5539]" />
                                                 <span>{shop.contactNo}</span>
                                             </div>
+                                            {(shop.streetAddress || shop.city) && (
+                                                <div className="flex items-center space-x-2 bg-[#7f5539]/5 px-3 py-1.5 rounded-full">
+                                                    <MapPin className="h-3.5 w-3.5 text-[#7f5539]" />
+                                                    <span className="line-clamp-1">
+                                                        {[shop.streetAddress, shop.city, shop.state, shop.country, shop.zipCode]
+                                                            .filter(Boolean)
+                                                            .join(', ')}
+                                                    </span>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 
                                     {viewMode === 'list' && (
-                                        <ExternalLink className="h-4 w-4 text-[#7f5539]/60 flex-shrink-0" />
+                                        <ExternalLink className="h-5 w-5 text-[#7f5539]/60 flex-shrink-0 group-hover:text-[#7f5539]" />
                                     )}
                                 </div>
                             ))}
@@ -491,25 +545,49 @@ const ShopDiscoveryTab = () => {
                                 >
                                     {product.image && (
                                         <img
-                                            src={product.image}
+                                            src={getImageUrl(product.image)}
                                             alt={product.name}
-                                            className={`object-cover rounded-lg ${viewMode === 'list'
+                                            className={`object-contain rounded-lg bg-white ${viewMode === 'list'
                                                 ? 'w-16 h-16 flex-shrink-0'
-                                                : 'w-full h-40 mb-3'
+                                                : 'w-full h-40 mb-3 p-2'
                                                 }`}
                                         />
                                     )}
 
-                                    <div className={`${viewMode === 'list' ? 'flex-1' : ''}`}>
-                                        <h5 className="font-semibold text-[#7f5539] mb-2">{product.name}</h5>
-                                        <p className="text-[#7f5539]/70 text-sm mb-3 line-clamp-2">{product.description}</p>
+                                    <div className={`${viewMode === 'list' ? 'flex-1' : ''} space-y-3`}>
+                                        <div>
+                                            {/* Shop Name Tag */}
+                                            <div className="flex items-center space-x-2 mb-2">
+                                                <span className="inline-flex items-center space-x-1 text-xs bg-[#7f5539]/10 text-[#7f5539] px-2.5 py-1 rounded-full border border-[#7f5539]/20">
+                                                    <Store className="h-3 w-3" />
+                                                    <span className="font-medium">{getShopNameForProduct(product.shopId)}</span>
+                                                </span>
+                                            </div>
+                                            
+                                            <h5 className="font-semibold text-[#7f5539] mb-2">{product.name}</h5>
+                                            <p className="text-[#7f5539]/70 text-sm mb-2 line-clamp-2">{product.description}</p>
 
-                                        <div className={`${viewMode === 'list' ? 'flex items-center justify-between' : 'flex items-center justify-between'}`}>
-                                            <span className="text-[#7f5539] font-medium">LKR {product.price}</span>
-                                            <span className="text-xs bg-[#7f5539]/10 text-[#7f5539] px-2 py-1 rounded-full">
-                                                {product.category}
-                                            </span>
+                                            <div className="flex items-center justify-between mb-3">
+                                                <span className="text-[#7f5539] font-medium">LKR {product.price}</span>
+                                                <span className="text-xs bg-[#7f5539]/10 text-[#7f5539] px-2 py-1 rounded-full">
+                                                    {product.category}
+                                                </span>
+                                            </div>
+
+                                            <div className="text-xs text-[#7f5539]/60 mb-2">
+                                                Stock: {product.stock || 0} available
+                                            </div>
                                         </div>
+
+                                        {/* Buy Button Component */}
+                                        <ProductBuyButton 
+                                            product={product} 
+                                            artistId={userId || null}
+                                            onOrderCreated={() => {
+                                                // Refresh products after order
+                                                fetchShopsAndProducts();
+                                            }}
+                                        />
                                     </div>
                                 </div>
                             ))}

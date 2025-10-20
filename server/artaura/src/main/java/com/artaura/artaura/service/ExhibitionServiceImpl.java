@@ -1,14 +1,15 @@
 package com.artaura.artaura.service;
 
-import com.artaura.artaura.dao.ExhibitionDAO;
-import com.artaura.artaura.dto.CreateExhibitionDTO;
-import com.artaura.artaura.dto.ExhibitionDTO;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.artaura.artaura.dao.ExhibitionDAO;
+import com.artaura.artaura.dto.CreateExhibitionDTO;
+import com.artaura.artaura.dto.ExhibitionDTO;
 
 @Service
 public class ExhibitionServiceImpl implements ExhibitionService {
@@ -86,5 +87,15 @@ public class ExhibitionServiceImpl implements ExhibitionService {
         statistics.put("totalArtworks", totalArtworks);
 
         return statistics;
+    }
+
+    @Override
+    public List<ExhibitionDTO> getAllExhibitions() {
+        return exhibitionDAO.getAllExhibitions();
+    }
+
+    @Override
+    public boolean updateExhibitionStatus(Integer exhibitionId, String status, String reason) {
+        return exhibitionDAO.updateExhibitionStatus(exhibitionId, status, reason);
     }
 }
