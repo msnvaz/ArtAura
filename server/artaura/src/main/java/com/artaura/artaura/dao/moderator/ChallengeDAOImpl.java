@@ -41,15 +41,22 @@ public class ChallengeDAOImpl implements ChallengeDAO {
                 deadlineDateTime = deadlineDateTime.replace("T", " ");
             }
             
+            // Determine sponsorship status based on checkbox
+            // If requestSponsorship = true (checkbox checked) → sponsorship = 'pending'
+            // If requestSponsorship = false (checkbox unchecked) → sponsorship = 'none'
+            String sponsorship = requestSponsorship ? "pending" : "none";
+            
             System.out.println("Inserting challenge with datetime values:");
             System.out.println("Publish: " + publishDateTime);
             System.out.println("Deadline: " + deadlineDateTime);
-            System.out.println("Request Sponsorship: " + requestSponsorship);
+            System.out.println("Request Sponsorship Checkbox: " + requestSponsorship);
+            System.out.println("Sponsorship Column Value: " + sponsorship);
             System.out.println("Status: " + status + (requestSponsorship ? " (draft - waiting for shop sponsorship)" : " (active - published immediately)"));
 
             // Fixed marks scoring - weight columns don't exist in database
             // Each Like = +10 marks, Each Dislike = -5 marks, Minimum score = 0
-            String sql = "INSERT INTO challenges (title, category, publish_date_time, deadline_date_time, description, max_participants, rewards, status, moderator_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            // Note: Database schema has 'sponsorship' column, not 'request_sponsorship'
+            String sql = "INSERT INTO challenges (title, category, publish_date_time, deadline_date_time, description, max_participants, rewards, sponsorship, status, moderator_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             jdbcTemplate.update(sql,
                 challenge.getTitle(),
                 challenge.getCategory(),
@@ -58,6 +65,7 @@ public class ChallengeDAOImpl implements ChallengeDAO {
                 challenge.getDescription(),
                 challenge.getMaxParticipants(),
                 challenge.getRewards(),
+                sponsorship,
                 status,
                 moderatorId
             );
@@ -152,5 +160,42 @@ public class ChallengeDAOImpl implements ChallengeDAO {
         }
         
         System.out.println("Challenge " + challengeId + " published successfully! Status changed from 'draft' to 'active'");
+    }
+
+    @Override
+    public void updateSponsorshipStatus(int challengeId, String sponsorshipStatus) {
+        try {
+            System.out.println("Updating sponsorship status for challenge " + challengeId + " to: " + sponsorshipStatus);
+            
+            // If sponsorship is becoming 'active', automatically change draft challenges to active
+            if ("active".equalsIgnoreCase(sponsorshipStatus)) {
+                // Update both sponsorship and status (only for draft challenges)
+                String sql = "UPDATE challenges SET sponsorship = ?, status = " +
+                           "CASE WHEN status = 'draft' THEN 'active' ELSE status END " +
+                           "WHERE id = ?";
+                int rowsAffected = jdbcTemplate.update(sql, sponsorshipStatus, challengeId);
+                
+                if (rowsAffected > 0) {
+                    System.out.println("✓ Sponsorship updated to 'active' for challenge " + challengeId);
+                    System.out.println("✓ Challenge status automatically changed to 'active' (if it was 'draft')");
+                } else {
+                    System.err.println("✗ No challenge found with id: " + challengeId);
+                }
+            } else {
+                // Just update sponsorship status (don't change challenge status)
+                String sql = "UPDATE challenges SET sponsorship = ? WHERE id = ?";
+                int rowsAffected = jdbcTemplate.update(sql, sponsorshipStatus, challengeId);
+                
+                if (rowsAffected > 0) {
+                    System.out.println("✓ Sponsorship updated to '" + sponsorshipStatus + "' for challenge " + challengeId);
+                } else {
+                    System.err.println("✗ No challenge found with id: " + challengeId);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error updating sponsorship status: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
     }
 }
