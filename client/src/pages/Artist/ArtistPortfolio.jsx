@@ -1912,8 +1912,8 @@ const ArtistPortfolio = () => {
                       <div className="text-sm text-[#7f5539]/60">Artworks</div>
                     </div>
                     <div>
-                      <div className="text-2xl font-bold text-[#7f5539]">{artistProfile.stats.sales}</div>
-                      <div className="text-sm text-[#7f5539]/60">Sales</div>
+                      <div className="text-2xl font-bold text-[#7f5539]">{portfolioPosts.length}</div>
+                      <div className="text-sm text-[#7f5539]/60">Posts</div>
                     </div>
                     <div>
                       <div className="text-2xl font-bold text-[#7f5539]">{artistProfile.stats.followers}</div>
@@ -3016,14 +3016,14 @@ const ArtistPortfolio = () => {
                 <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-orange-600 text-sm font-medium">Artworks Sold</p>
-                      <p className="text-2xl font-bold text-orange-800">{artistProfile.stats.sales}</p>
+                      <p className="text-orange-600 text-sm font-medium">Total Posts</p>
+                      <p className="text-2xl font-bold text-orange-800">{portfolioPosts.length}</p>
                       <div className="flex items-center mt-1">
                         <TrendingUp className="text-green-500 mr-1" size={16} />
                         <span className="text-green-600 text-sm">+12.5%</span>
                       </div>
                     </div>
-                    <DollarSign className="text-orange-500" size={32} />
+                    <FileText className="text-orange-500" size={32} />
                   </div>
                 </div>
               </div>
@@ -3063,12 +3063,12 @@ const ArtistPortfolio = () => {
                   <div className="flex items-center justify-between p-3 bg-[#fdf9f4]/50 rounded-lg">
                     <div className="flex items-center">
                       <Target className="text-[#7f5539] mr-2" size={16} />
-                      <span className="text-sm font-medium">Conversion Rate</span>
+                      <span className="text-sm font-medium">Engagement Rate</span>
                     </div>
                     <span className="text-[#7f5539] font-semibold">
-                      {artistProfile.stats.artworks > 0
-                        ? ((artistProfile.stats.sales / artistProfile.stats.artworks) * 100).toFixed(1)
-                        : '0.0'}%
+                      {portfolioPosts.length > 0
+                        ? ((portfolioPosts.reduce((sum, post) => sum + (post.likes || 0) + (post.comments || 0), 0) / portfolioPosts.length)).toFixed(1)
+                        : '0.0'}
                     </span>
                   </div>
                   <div className="flex items-center justify-between p-3 bg-[#fdf9f4]/50 rounded-lg">
@@ -3269,43 +3269,47 @@ const ArtistPortfolio = () => {
               </div>
             </div>
 
-            {/* Revenue & Sales Analytics */}
+            {/* Content & Engagement Analytics */}
             <div className="bg-white rounded-lg shadow-sm border border-[#fdf9f4]/20 p-6">
               <h4 className="text-lg font-semibold text-[#7f5539] mb-6 flex items-center">
-                <DollarSign className="mr-2" size={20} />
-                Revenue & Sales Analytics
+                <FileText className="mr-2" size={20} />
+                Content & Engagement Analytics
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-lg p-4">
-                  <h5 className="text-emerald-700 font-medium mb-2">Total Revenue</h5>
-                  <p className="text-2xl font-bold text-emerald-800">$15,400</p>
+                  <h5 className="text-emerald-700 font-medium mb-2">Total Likes</h5>
+                  <p className="text-2xl font-bold text-emerald-800">
+                    {portfolioPosts.reduce((sum, post) => sum + (post.likes || 0), 0)}
+                  </p>
                   <p className="text-sm text-emerald-600 mt-1">+23.5% from last month</p>
                   <div className="mt-3 text-xs text-emerald-700">
-                    From {artistProfile.stats.sales} sold artworks
+                    From {portfolioPosts.length} posts
                   </div>
                 </div>
 
                 <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4">
-                  <h5 className="text-blue-700 font-medium mb-2">Average Sale Price</h5>
+                  <h5 className="text-blue-700 font-medium mb-2">Average Likes per Post</h5>
                   <p className="text-2xl font-bold text-blue-800">
-                    ${artistProfile.stats.sales > 0
-                      ? Math.round(15400 / artistProfile.stats.sales).toLocaleString()
-                      : '0'}
+                    {portfolioPosts.length > 0
+                      ? Math.round(portfolioPosts.reduce((sum, post) => sum + (post.likes || 0), 0) / portfolioPosts.length)
+                      : 0}
                   </p>
                   <p className="text-sm text-blue-600 mt-1">+12.8% from last month</p>
                   <div className="mt-3 text-xs text-blue-700">
-                    Based on recent sales
+                    Based on recent posts
                   </div>
                 </div>
 
                 <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg p-4">
-                  <h5 className="text-amber-700 font-medium mb-2">Sales Conversion</h5>
+                  <h5 className="text-amber-700 font-medium mb-2">Engagement Rate</h5>
                   <p className="text-2xl font-bold text-amber-800">
-                    {((artistProfile.stats.sales / artistProfile.stats.views) * 100).toFixed(2)}%
+                    {portfolioPosts.length > 0
+                      ? ((portfolioPosts.reduce((sum, post) => sum + (post.likes || 0) + (post.comments || 0), 0) / portfolioPosts.length)).toFixed(1)
+                      : '0.0'}
                   </p>
                   <p className="text-sm text-amber-600 mt-1">+1.2% from last month</p>
                   <div className="mt-3 text-xs text-amber-700">
-                    Views to sales ratio
+                    Avg engagement per post
                   </div>
                 </div>
               </div>
