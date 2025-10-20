@@ -68,6 +68,15 @@ const ModeratorDashboard = () => {
   const [loadingChallenges, setLoadingChallenges] = useState(true);
   const [challengesError, setChallengesError] = useState(null);
 
+  // Stats data
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [totalArtists, setTotalArtists] = useState(0);
+  const [activeChallengesCount, setActiveChallengesCount] = useState(0);
+  const [loadingStats, setLoadingStats] = useState(true);
+
+  // Previous challenge winners
+  const [previousWinners, setPreviousWinners] = useState([]);
+
   useEffect(() => {
     const fetchChallenges = async () => {
       setLoadingChallenges(true);
@@ -75,6 +84,10 @@ const ModeratorDashboard = () => {
       try {
         const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/challenges`);
         setChallenges(response.data);
+        
+        // Calculate active challenges count
+        const activeCount = response.data.filter(c => c.status === 'active').length;
+        setActiveChallengesCount(activeCount);
       } catch (err) {
         setChallengesError('Failed to load challenges.');
       } finally {
@@ -83,6 +96,86 @@ const ModeratorDashboard = () => {
     };
     fetchChallenges();
   }, []);
+
+  // Fetch stats data (users, artists, buyers)
+  useEffect(() => {
+    const fetchStats = async () => {
+      setLoadingStats(true);
+      try {
+        // Fetch total artists count
+        const artistsResponse = await axios.get(`${import.meta.env.VITE_API_URL}/api/artists/count`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const artistCount = artistsResponse.data.count || 0;
+        setTotalArtists(artistCount);
+
+        // Fetch total buyers count
+        const buyersResponse = await axios.get(`${import.meta.env.VITE_API_URL}/api/buyers/count`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const buyerCount = buyersResponse.data.count || 0;
+
+        // Calculate total users (artists + buyers)
+        const totalUserCount = artistCount + buyerCount;
+        setTotalUsers(totalUserCount);
+
+        console.log(`Total Users: ${totalUserCount} (Artists: ${artistCount} + Buyers: ${buyerCount})`);
+      } catch (err) {
+        console.error('Error fetching stats:', err);
+        // Set default values on error
+        setTotalUsers(0);
+        setTotalArtists(0);
+      } finally {
+        setLoadingStats(false);
+      }
+    };
+
+    if (token) {
+      fetchStats();
+    }
+  }, [token]);
+
+  // Fetch previous challenge winners
+  useEffect(() => {
+    const fetchPreviousWinners = async () => {
+      try {
+        // Get completed challenges with winners
+        const completedChallenges = challenges.filter(c => c.status === 'completed');
+        
+        // For each completed challenge, fetch winner and participant count
+        const winnersData = [];
+        for (const challenge of completedChallenges.slice(0, 5)) { // Get latest 5
+          try {
+            const winnersResponse = await axios.get(
+              `${import.meta.env.VITE_API_URL}/api/challenges/${challenge.id}/winners`,
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+            
+            if (winnersResponse.data && winnersResponse.data.length > 0) {
+              const winner = winnersResponse.data[0]; // Get first place winner
+              winnersData.push({
+                challengeId: challenge.id,
+                challengeName: challenge.title,
+                winnerName: winner.artistName || 'Unknown',
+                participantCount: winnersResponse.data.length,
+                completedDate: challenge.deadlineDateTime
+              });
+            }
+          } catch (err) {
+            console.error(`Error fetching winners for challenge ${challenge.id}:`, err);
+          }
+        }
+        
+        setPreviousWinners(winnersData);
+      } catch (err) {
+        console.error('Error fetching previous winners:', err);
+      }
+    };
+
+    if (challenges.length > 0 && token) {
+      fetchPreviousWinners();
+    }
+  }, [challenges, token]);
 
   // Calculate score based on formula: MAX(0, (Total Likes × 10) - (Total Dislikes × 5))
   const calculateScore = (likes, dislikes) => {
@@ -372,36 +465,37 @@ const ModeratorDashboard = () => {
 
   const stats = [
     {
-      name: "Active Challenges",
-      value: "12",
-      icon: Trophy,
-      color: "#D87C5A",
-      change: "+2.1%",
+      name: "Total Users",
+      value: loadingStats ? "..." : totalUsers.toLocaleString(),
+      icon: Users,
+      color: "#5D3A00",
+      change: "+8.3%",
       changeType: "increase",
     },
     {
-      name: "Total Participants",
-      value: "1,247",
-      icon: Users,
+      name: "Total Artists",
+      value: loadingStats ? "..." : totalArtists.toLocaleString(),
+      icon: User,
+      color: "#D87C5A",
+      change: "+15.2%",
+      changeType: "increase",
+    },
+    {
+      name: "Active Challenges",
+      value: loadingChallenges ? "..." : activeChallengesCount.toString(),
+      icon: Trophy,
       color: "#FFD95A",
       change: "+12.5%",
       changeType: "increase",
     },
     {
-      name: "Pending Reviews",
-      value: "23",
-      icon: Clock,
-      color: "#5D3A00",
-      change: "-4.3%",
-      changeType: "decrease",
-    },
-    {
-      name: "Winners Selected",
-      value: "89",
+      name: "Latest Winner",
+      value: previousWinners.length > 0 ? previousWinners[0].winnerName : "0",
+      subtitle: previousWinners.length > 0 ? `${previousWinners[0].participantCount} Participants` : "No winners yet",
       icon: Award,
-      color: "#D87C5A",
-      change: "+8.2%",
-      changeType: "increase",
+      color: "#FFB84D",
+      change: previousWinners.length > 0 ? previousWinners[0].challengeName : "Waiting for completed challenges",
+      changeType: "challenge",
     },
   ];
 
@@ -413,12 +507,6 @@ const ModeratorDashboard = () => {
       desc: "Create and manage art challenges",
     },
     {
-      id: "scoring",
-      label: "Scoring Criteria",
-      icon: Star,
-      desc: "Set up scoring criteria for challenges",
-    },
-    {
       id: "winner",
       label: "Winner Selection",
       icon: Award,
@@ -426,37 +514,9 @@ const ModeratorDashboard = () => {
     },
   ];
 
-  const recentActivity = [
-    {
-      type: "challenge",
-      message: "New challenge created: Sri Lankan Heritage Art Challenge 2025",
-      time: "2 hours ago",
-      icon: Trophy,
-    },
-    {
-      type: "winner",
-      message: "Winner selected: Kandy Perahera Digital Art Contest",
-      time: "4 hours ago",
-      icon: Award,
-    },
-    {
-      type: "scoring",
-      message: "Scoring criteria updated: Ceylon Tea Plantation Landscape Art",
-      time: "6 hours ago",
-      icon: Star,
-    },
-    {
-      type: "challenge",
-      message: "Challenge deadline approaching: Galle Fort Architecture Contest",
-      time: "8 hours ago",
-      icon: Trophy,
-    },
-  ];
-
   const menuItems = [
     { id: "dashboard", label: "Overview", icon: BarChart3 },
     { id: "challenges", label: "Challenges", icon: Trophy },
-    { id: "scoring", label: "Scoring", icon: Star },
     { id: "winner", label: "Winners", icon: Award },
     { id: "verification", label: "Verification", icon: Shield },
   ];
@@ -477,12 +537,12 @@ const ModeratorDashboard = () => {
               style={{
                 backgroundImage:
                   index === 0
-                    ? 'url("https://images.unsplash.com/photo-1541961017774-22349e4a1262?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80")' // Challenges - trophy/competition
+                    ? 'url("https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80")' // Users - people
                     : index === 1
-                    ? 'url("https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80")' // Participants - people
+                    ? 'url("https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80")' // Artists - art/creative
                     : index === 2
-                    ? 'url("https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80")' // Pending - clock/waiting
-                    : 'url("https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80")', // Winners - award/medal
+                    ? 'url("https://images.unsplash.com/photo-1541961017774-22349e4a1262?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80")' // Challenges - trophy/competition
+                    : 'url("https://images.unsplash.com/photo-1579547621113-e4bb2a19bdd6?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80")', // Winner - celebration/award
                 backgroundSize: "cover",
                 backgroundPosition: "center",
                 backgroundRepeat: "no-repeat",
@@ -492,39 +552,60 @@ const ModeratorDashboard = () => {
               <div className="flex justify-between items-start">
                 <div className="flex-1">
                   <p
-                    className="text-xs font-bold uppercase tracking-widest mb-1"
-                    style={{ color: "#5D3A00" }}
+                    className="text-sm font-semibold uppercase tracking-wide mb-2"
+                    style={{ color: "#7f5539", fontFamily: "'Inter', 'Segoe UI', sans-serif" }}
                   >
                     {stat.name}
                   </p>
                   <h2
-                    className="text-3xl font-black mb-2"
-                    style={{ color: "#5D3A00" }}
+                    className="text-4xl font-extrabold mb-3"
+                    style={{ color: "#5D3A00", fontFamily: "'Poppins', 'Inter', sans-serif", letterSpacing: '-0.02em' }}
                   >
                     {stat.value}
                   </h2>
-                  <div className="flex items-center gap-1">
-                    <span
-                      className="text-xs font-semibold px-2 py-1 rounded-full"
-                      style={{
-                        backgroundColor:
-                          stat.changeType === "increase"
-                            ? "#d4edda"
-                            : "#f8d7da",
-                        color:
-                          stat.changeType === "increase"
-                            ? "#155724"
-                            : "#721c24",
-                      }}
-                    >
-                      {stat.change}
-                    </span>
-                    <span
-                      className="text-xs font-light italic opacity-75"
-                      style={{ color: "#5D3A00" }}
-                    >
-                      vs last month
-                    </span>
+                  {stat.subtitle && (
+                    <p className="text-sm font-semibold mb-2" style={{ color: "#D87C5A", fontFamily: "'Inter', sans-serif" }}>
+                      {stat.subtitle}
+                    </p>
+                  )}
+                  <div className="flex items-center gap-2">
+                    {stat.changeType === "challenge" ? (
+                      <div className="flex items-center gap-1.5">
+                        <Trophy size={14} style={{ color: "#FFD700" }} />
+                        <span
+                          className="text-xs font-medium line-clamp-1"
+                          style={{ color: "#7f5539", fontFamily: "'Inter', sans-serif" }}
+                          title={stat.change}
+                        >
+                          {stat.change}
+                        </span>
+                      </div>
+                    ) : (
+                      <>
+                        <span
+                          className="text-sm font-bold px-3 py-1.5 rounded-full"
+                          style={{
+                            backgroundColor:
+                              stat.changeType === "increase"
+                                ? "#d4edda"
+                                : "#f8d7da",
+                            color:
+                              stat.changeType === "increase"
+                                ? "#155724"
+                                : "#721c24",
+                            fontFamily: "'Inter', sans-serif"
+                          }}
+                        >
+                          {stat.change}
+                        </span>
+                        <span
+                          className="text-xs font-medium opacity-70"
+                          style={{ color: "#7f5539", fontFamily: "'Inter', sans-serif" }}
+                        >
+                          vs last month
+                        </span>
+                      </>
+                    )}
                   </div>
                 </div>
                 <div
@@ -555,7 +636,7 @@ const ModeratorDashboard = () => {
             }}
           ></div>
           <div className="p-6 relative z-10">
-            <h2 className="text-2xl font-extrabold tracking-tight mb-4" style={{ color: "#5D3A00" }}>
+            <h2 className="text-2xl font-bold tracking-tight mb-6" style={{ color: "#5D3A00", fontFamily: "'Poppins', 'Inter', sans-serif" }}>
               Quick Actions
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -564,8 +645,6 @@ const ModeratorDashboard = () => {
                   key={action.id}
                   onClick={() => {
                     if (action.id === "challenges") navigate("/challenges");
-                    else if (action.id === "scoring")
-                      navigate("/scoring-criteria");
                     else if (action.id === "winner")
                       navigate("/winner-selection");
                   }}
@@ -576,23 +655,24 @@ const ModeratorDashboard = () => {
                   }}
                 >
                   <action.icon
-                    size={20}
-                    className="mb-2"
+                    size={22}
+                    className="mb-3"
                     style={{ color: "#5D3A00" }}
                   />
                   <h6
-                    className="font-bold mb-1"
-                    style={{ color: "#5D3A00" }}
+                    className="text-base font-bold mb-2"
+                    style={{ color: "#5D3A00", fontFamily: "'Inter', sans-serif" }}
                   >
                     {action.label}
                   </h6>
-                  <small className="font-medium" style={{ color: "#5D3A00" }}>{action.desc}</small>
+                  <small className="text-sm font-medium" style={{ color: "#7f5539", fontFamily: "'Inter', sans-serif" }}>{action.desc}</small>
                 </button>
               ))}
             </div>
           </div>
         </div>
 
+        {/* Previous Challenge Winners */}
         <div
           className="rounded-lg shadow-sm border h-full relative overflow-hidden"
           style={{ backgroundColor: "#FFF5E1" }}
@@ -601,36 +681,70 @@ const ModeratorDashboard = () => {
             className="absolute inset-0 opacity-5"
             style={{
               backgroundImage:
-                'url("https://images.unsplash.com/photo-1611224923853-80b023f02d71?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80")',
+                'url("https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80")',
               backgroundSize: "cover",
               backgroundPosition: "center",
             }}
           ></div>
           <div className="p-6 relative z-10">
-            <h2 className="text-2xl font-extrabold tracking-tight mb-4" style={{ color: "#5D3A00" }}>
-              Recent Activity
-            </h2>
-            <div className="flex flex-col gap-3">
-              {recentActivity.map((activity, index) => (
-                <div
-                  key={index}
-                  className="flex items-start gap-3 p-2 rounded-lg"
-                >
-                  <div
-                    className="p-2 rounded shadow-sm"
-                    style={{ backgroundColor: "#FFE4D6" }}
-                  >
-                    <activity.icon size={16} style={{ color: "#5D3A00" }} />
-                  </div>
-                  <div className="flex-1">
-                    <p className="mb-1 text-sm" style={{ color: "#5D3A00" }}>
-                      {activity.message}
-                    </p>
-                    <small style={{ color: "#D87C5A" }}>{activity.time}</small>
-                  </div>
-                </div>
-              ))}
+            <div className="flex items-center gap-3 mb-6">
+              <Award size={26} style={{ color: "#D87C5A" }} />
+              <h2 className="text-2xl font-bold tracking-tight" style={{ color: "#5D3A00", fontFamily: "'Poppins', 'Inter', sans-serif" }}>
+                Previous Challenge Winners
+              </h2>
             </div>
+            
+            {previousWinners.length > 0 ? (
+              <div className="flex flex-col gap-3">
+                {previousWinners.map((winner, index) => (
+                  <div
+                    key={index}
+                    className="border rounded-lg p-4 hover:shadow-md transition-shadow"
+                    style={{
+                      borderColor: "#FFE4D6",
+                      backgroundColor: "#FFFAF5",
+                    }}
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex-1">
+                        <h6 className="font-bold text-base mb-2" style={{ color: "#5D3A00", fontFamily: "'Inter', sans-serif" }}>
+                          {winner.challengeName}
+                        </h6>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Trophy size={16} style={{ color: "#FFD700" }} />
+                          <p className="text-sm font-semibold" style={{ color: "#D87C5A", fontFamily: "'Inter', sans-serif" }}>
+                            Winner: {winner.winnerName}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-3 text-sm" style={{ color: "#7f5539" }}>
+                          <div className="flex items-center gap-1.5">
+                            <Users size={14} />
+                            <span className="font-medium" style={{ fontFamily: "'Inter', sans-serif" }}>{winner.participantCount} Participants</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <Clock size={14} />
+                            <span style={{ fontFamily: "'Inter', sans-serif" }}>{new Date(winner.completedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="bg-gradient-to-br from-yellow-400 to-yellow-600 p-2 rounded-full shadow-md">
+                        <Award size={16} className="text-white" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <Award className="h-14 w-14 mx-auto mb-4 opacity-30" style={{ color: "#D87C5A" }} />
+                <p className="text-base font-semibold mb-1" style={{ color: "#7f5539", fontFamily: "'Inter', sans-serif" }}>
+                  No previous winners yet
+                </p>
+                <p className="text-sm mt-2" style={{ color: "#7f5539", fontFamily: "'Inter', sans-serif" }}>
+                  Winners will appear here after challenges are completed
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -643,370 +757,6 @@ const ModeratorDashboard = () => {
         return renderDashboard();
       case 'challenges':
         return <ChallengeList />;
-      case 'scoring':
-        // Get selected challenge data for scoring
-        const selectedScoringChallengeData = challenges.find(c => c.id === parseInt(selectedScoringChallenge));
-        const challengeSpecificCriteria = selectedScoringChallenge ? getChallengeSpecificCriteria(parseInt(selectedScoringChallenge)) : null;
-
-        // Get contestants for selected challenge only (if selected)
-        const scoringContestants = selectedScoringChallenge ? 
-          getContestantData(parseInt(selectedScoringChallenge)).map(contestant => ({
-            ...contestant,
-            challengeTitle: selectedScoringChallengeData?.title,
-            challengeId: selectedScoringChallenge
-          })) : [];
-
-        // Filter contestants based on search term
-        const filteredScoringContestants = scoringContestants.filter(contestant =>
-          contestant.name.toLowerCase().includes(contestantSearchTerm.toLowerCase()) ||
-          contestant.artworkTitle.toLowerCase().includes(contestantSearchTerm.toLowerCase())
-        );
-
-        return (
-          <div className="p-8">
-            <div className="flex items-center gap-3 mb-6">
-              <BarChart3 className="h-6 w-6 text-[#7f5539]" />
-              <div>
-                <h2 className="text-3xl font-extrabold tracking-tight text-[#362625]">Scoring & Evaluation</h2>
-                <p className="text-sm font-light italic text-[#7f5539]">Review contestant performance based on Likes, Comments & Share metrics</p>
-              </div>
-            </div>
-
-            {/* Challenge Selection */}
-            <div className="bg-white rounded-lg border border-[#d87c5a] p-6 mb-6">
-              <label className="block text-xs font-bold uppercase tracking-widest mb-3" style={{color: '#362625'}}>
-                Select Challenge for Scoring
-              </label>
-              <select
-                value={selectedScoringChallenge}
-                onChange={(e) => setSelectedScoringChallenge(e.target.value)}
-                className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent text-lg font-semibold"
-                style={{borderColor: '#d87c5a', backgroundColor: 'white', color: '#362625'}}
-              >
-                <option value="">Select a challenge...</option>
-                {challenges.map(challenge => (
-                  <option key={challenge.id} value={challenge.id}>
-                    {challenge.title} ({challenge.status}) - {challenge.participants} participants
-                  </option>
-                ))}
-              </select>
-
-              {/* Challenge Details */}
-              {selectedScoringChallengeData && (
-                <div className="mt-4 p-4 rounded-lg" style={{backgroundColor: '#f4e8dc'}}>
-                  <h4 className="font-extrabold mb-2" style={{color: '#362625'}}>{selectedScoringChallengeData.title}</h4>
-                  <p className="text-sm font-medium mb-3" style={{color: '#7f5539'}}>{selectedScoringChallengeData.description}</p>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    <div>
-                      <span className="font-bold" style={{color: '#362625'}}>Status:</span>
-                      <span className={`ml-1 px-2 py-1 rounded text-xs font-semibold ${
-                        selectedScoringChallengeData.status === 'active' ? 'bg-green-100 text-green-800' : 
-                        selectedScoringChallengeData.status === 'review' ? 'bg-blue-100 text-blue-800' :
-                        selectedScoringChallengeData.status === 'completed' ? 'bg-gray-100 text-gray-800' : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {selectedScoringChallengeData.status}
-                      </span>
-                    </div>
-                    <div><span className="font-bold" style={{color: '#362625'}}>Participants:</span> <span className="font-medium" style={{color: '#7f5539'}}>{selectedScoringChallengeData.participants}</span></div>
-                    <div><span className="font-bold" style={{color: '#362625'}}>Submissions:</span> <span className="font-medium" style={{color: '#7f5539'}}>{selectedScoringChallengeData.submissions}</span></div>
-                    <div><span className="font-bold" style={{color: '#362625'}}>Deadline:</span> <span className="font-medium" style={{color: '#7f5539'}}>{selectedScoringChallengeData.deadline}</span></div>
-                  </div>
-                  
-                  {/* Criteria Status */}
-                  <div className="mt-3 pt-3 border-t" style={{borderColor: '#d87c5a'}}>
-                    <div className={`flex items-center gap-2 text-sm ${
-                      challengeSpecificCriteria?.defined ? 'text-green-700' : 'text-orange-700'
-                    }`}>
-                      <Settings size={16} />
-                      <span className="font-medium">
-                        {challengeSpecificCriteria?.defined ? 'Scoring criteria defined for this challenge' : 'Using default scoring criteria'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Current Scoring Criteria Display - Only show if challenge is selected */}
-            {selectedScoringChallenge && challengeSpecificCriteria && (
-              <div className="bg-gradient-to-br from-[#f4e8dc] to-[#ffe4d6] border-2 border-[#d87c5a] rounded-xl p-8 mb-8 shadow-lg">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="p-3 rounded-full bg-[#d87c5a]">
-                    <Settings className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-2xl font-extrabold tracking-tight text-[#362625]">
-                      Scoring Criteria for "{selectedScoringChallengeData?.title}"
-                    </h3>
-                    <p className="text-sm font-light italic text-[#7f5539] mt-1">
-                      {challengeSpecificCriteria.defined ? 
-                        '✓ Custom scoring weights applied to this challenge' : 
-                        '⚙ Default scoring weights applied to this challenge'
-                      }
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {/* Likes & Engagement Weight */}
-                  <div className="bg-white rounded-xl p-6 text-center border-2 border-[#d87c5a] shadow-md hover:shadow-xl transition-all transform hover:scale-105">
-                    <div className="flex justify-center mb-3">
-                      <div className="p-3 rounded-full bg-blue-100">
-                        <Heart className="h-6 w-6 text-blue-600" />
-                      </div>
-                    </div>
-                    <div className="text-4xl font-black text-[#d87c5a] mb-2">{challengeSpecificCriteria.likesWeight}%</div>
-                    <div className="text-xs font-bold uppercase tracking-wider text-[#362625] mb-1">Likes & Engagement Weight</div>
-                    <div className="text-xs font-medium text-[#7f5539]">Social popularity metric</div>
-                    {/* Progress Bar */}
-                    <div className="mt-3 w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-blue-500 h-2 rounded-full transition-all" 
-                        style={{width: `${challengeSpecificCriteria.likesWeight}%`}}
-                      ></div>
-                    </div>
-                  </div>
-
-                  {/* Comments & Interaction Weight */}
-                  <div className="bg-white rounded-xl p-6 text-center border-2 border-[#d87c5a] shadow-md hover:shadow-xl transition-all transform hover:scale-105">
-                    <div className="flex justify-center mb-3">
-                      <div className="p-3 rounded-full bg-green-100">
-                        <MessageCircle className="h-6 w-6 text-green-600" />
-                      </div>
-                    </div>
-                    <div className="text-4xl font-black text-[#d87c5a] mb-2">{challengeSpecificCriteria.commentsWeight}%</div>
-                    <div className="text-xs font-bold uppercase tracking-wider text-[#362625] mb-1">Comments & Interaction Weight</div>
-                    <div className="text-xs font-medium text-[#7f5539]">Community engagement</div>
-                    {/* Progress Bar */}
-                    <div className="mt-3 w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-green-500 h-2 rounded-full transition-all" 
-                        style={{width: `${challengeSpecificCriteria.commentsWeight}%`}}
-                      ></div>
-                    </div>
-                  </div>
-
-                  {/* Share Weight */}
-                  <div className="bg-white rounded-xl p-6 text-center border-2 border-[#d87c5a] shadow-md hover:shadow-xl transition-all transform hover:scale-105">
-                    <div className="flex justify-center mb-3">
-                      <div className="p-3 rounded-full bg-purple-100">
-                        <Send className="h-6 w-6 text-purple-600" />
-                      </div>
-                    </div>
-                    <div className="text-4xl font-black text-[#d87c5a] mb-2">{challengeSpecificCriteria.shareWeight}%</div>
-                    <div className="text-xs font-bold uppercase tracking-wider text-[#362625] mb-1">Share Weight</div>
-                    <div className="text-xs font-medium text-[#7f5539]">Viral spread potential</div>
-                    {/* Progress Bar */}
-                    <div className="mt-3 w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-purple-500 h-2 rounded-full transition-all" 
-                        style={{width: `${challengeSpecificCriteria.shareWeight}%`}}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Total Verification */}
-                <div className="mt-6 p-4 bg-white rounded-lg border-2 border-green-500 flex items-center justify-center gap-3">
-                  <Trophy className="h-5 w-5 text-green-600" />
-                  <span className="text-sm font-semibold text-green-700">
-                    Total Weight: {challengeSpecificCriteria.likesWeight + challengeSpecificCriteria.commentsWeight + challengeSpecificCriteria.shareWeight}% 
-                    {(challengeSpecificCriteria.likesWeight + challengeSpecificCriteria.commentsWeight + challengeSpecificCriteria.shareWeight) === 100 ? ' ✓ Valid' : ' ⚠ Invalid'}
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {/* Search Contestants - Only show if challenge is selected */}
-            {selectedScoringChallenge && (
-              <div className="bg-white rounded-lg border border-[#d87c5a] p-6 mb-6">
-                <label className="block text-sm font-medium mb-3" style={{color: '#362625'}}>
-                  Search Contestants and Artworks
-                </label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2" size={20} style={{color: '#7f5539'}} />
-                  <input
-                    type="text"
-                    placeholder="Search by contestant name or artwork title..."
-                    value={contestantSearchTerm}
-                    onChange={(e) => setContestantSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent text-lg"
-                    style={{borderColor: '#d87c5a', backgroundColor: 'white', color: '#362625'}}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Contestants Performance List - Only show if challenge is selected */}
-            {selectedScoringChallenge && challengeSpecificCriteria && (
-              <div className="bg-white rounded-lg border border-[#d87c5a] p-6">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-lg font-medium text-gray-900">
-                    Contestant Performance for "{selectedScoringChallengeData?.title}"
-                  </h3>
-                  <div className="text-sm text-gray-500">
-                    {filteredScoringContestants.length} contestant{filteredScoringContestants.length !== 1 ? 's' : ''} found
-                  </div>
-                </div>
-                
-                <div className="grid gap-4">
-                  {filteredScoringContestants.map((contestant) => (
-                    <div key={`${contestant.challengeId}-${contestant.id}`} className="bg-white rounded-xl p-6 border-2 border-gray-200 shadow-md hover:shadow-xl transition-all">
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-lg text-gray-900">{contestant.name}</h4>
-                          <p className="text-sm text-gray-600 flex items-center gap-2 mt-1">
-                            <Trophy size={14} className="text-[#d87c5a]" />
-                            Artwork: <span className="font-medium">{contestant.artworkTitle}</span>
-                          </p>
-                          <p className="text-xs text-[#7f5539] font-medium mt-1 flex items-center gap-1">
-                            <Clock size={12} />
-                            Submitted: {contestant.submissionDate}
-                          </p>
-                        </div>
-                        <div className="text-right bg-gradient-to-br from-[#d87c5a] to-[#b85a3a] text-white rounded-xl p-4 shadow-lg">
-                          <div className="text-3xl font-bold">
-                            {Math.round((
-                              contestant.likes/250*challengeSpecificCriteria.likesWeight + 
-                              contestant.comments/50*challengeSpecificCriteria.commentsWeight + 
-                              contestant.buyerInterest*10*challengeSpecificCriteria.shareWeight/100
-                            ))}
-                          </div>
-                          <div className="text-xs opacity-90">Total Score</div>
-                        </div>
-                      </div>
-                      
-                      {/* Performance Metrics with Percentages */}
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 p-4 bg-gradient-to-r from-blue-50 via-green-50 to-purple-50 rounded-lg">
-                        {/* Likes & Engagement Metric */}
-                        <div className="bg-white rounded-lg p-3 border border-blue-200 shadow-sm">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                              <Heart size={16} className="text-blue-600" />
-                              <span className="text-xs font-semibold text-gray-700">Likes & Engagement</span>
-                            </div>
-                            <span className="text-xs font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded">
-                              {challengeSpecificCriteria.likesWeight}%
-                            </span>
-                          </div>
-                          <div className="text-2xl font-bold text-gray-900">{contestant.likes}</div>
-                          <div className="text-xs text-gray-500 mb-2">Raw Count</div>
-                          <div className="w-full bg-blue-200 rounded-full h-2">
-                            <div 
-                              className="bg-blue-600 h-2 rounded-full transition-all" 
-                              style={{width: `${Math.min(100, (contestant.likes/250)*100)}%`}}
-                            ></div>
-                          </div>
-                          <div className="text-xs text-blue-600 font-semibold mt-1">
-                            Contributes: {Math.round(contestant.likes/250*challengeSpecificCriteria.likesWeight)} pts
-                          </div>
-                        </div>
-
-                        {/* Comments & Interaction Metric */}
-                        <div className="bg-white rounded-lg p-3 border border-green-200 shadow-sm">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                              <MessageCircle size={16} className="text-green-600" />
-                              <span className="text-xs font-semibold text-gray-700">Comments & Interaction</span>
-                            </div>
-                            <span className="text-xs font-bold text-green-600 bg-green-100 px-2 py-1 rounded">
-                              {challengeSpecificCriteria.commentsWeight}%
-                            </span>
-                          </div>
-                          <div className="text-2xl font-bold text-gray-900">{contestant.comments}</div>
-                          <div className="text-xs text-gray-500 mb-2">Raw Count</div>
-                          <div className="w-full bg-green-200 rounded-full h-2">
-                            <div 
-                              className="bg-green-600 h-2 rounded-full transition-all" 
-                              style={{width: `${Math.min(100, (contestant.comments/50)*100)}%`}}
-                            ></div>
-                          </div>
-                          <div className="text-xs text-green-600 font-semibold mt-1">
-                            Contributes: {Math.round(contestant.comments/50*challengeSpecificCriteria.commentsWeight)} pts
-                          </div>
-                        </div>
-
-                        {/* Share Weight Metric */}
-                        <div className="bg-white rounded-lg p-3 border border-purple-200 shadow-sm">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                              <Send size={16} className="text-purple-600" />
-                              <span className="text-xs font-semibold text-gray-700">Share Weight</span>
-                            </div>
-                            <span className="text-xs font-bold text-purple-600 bg-purple-100 px-2 py-1 rounded">
-                              {challengeSpecificCriteria.shareWeight}%
-                            </span>
-                          </div>
-                          <div className="text-2xl font-bold text-gray-900">{contestant.buyerInterest.toFixed(1)}/10</div>
-                          <div className="text-xs text-gray-500 mb-2">Engagement Score</div>
-                          <div className="w-full bg-purple-200 rounded-full h-2">
-                            <div 
-                              className="bg-purple-600 h-2 rounded-full transition-all" 
-                              style={{width: `${(contestant.buyerInterest/10)*100}%`}}
-                            ></div>
-                          </div>
-                          <div className="text-xs text-purple-600 font-semibold mt-1">
-                            Contributes: {Math.round(contestant.buyerInterest*10*challengeSpecificCriteria.shareWeight/100)} pts
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Score Breakdown Summary */}
-                      <div className="border-t-2 border-gray-200 pt-4">
-                        <h5 className="text-xs font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                          <BarChart3 size={14} className="text-[#d87c5a]" />
-                          Score Breakdown Based on Challenge Criteria
-                        </h5>
-                        <div className="grid grid-cols-3 gap-3">
-                          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-3 text-center border border-blue-300">
-                            <div className="text-xl font-bold text-blue-700">
-                              {Math.round(contestant.likes/250*challengeSpecificCriteria.likesWeight)}
-                            </div>
-                            <div className="text-xs text-blue-600 font-medium">Likes Score</div>
-                            <div className="text-xs text-gray-600 mt-1">({challengeSpecificCriteria.likesWeight}% weight)</div>
-                          </div>
-                          <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-3 text-center border border-green-300">
-                            <div className="text-xl font-bold text-green-700">
-                              {Math.round(contestant.comments/50*challengeSpecificCriteria.commentsWeight)}
-                            </div>
-                            <div className="text-xs text-green-600 font-medium">Interaction Score</div>
-                            <div className="text-xs text-gray-600 mt-1">({challengeSpecificCriteria.commentsWeight}% weight)</div>
-                          </div>
-                          <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-3 text-center border border-purple-300">
-                            <div className="text-xl font-bold text-purple-700">
-                              {Math.round(contestant.buyerInterest*10*challengeSpecificCriteria.shareWeight/100)}
-                            </div>
-                            <div className="text-xs text-purple-600 font-medium">Share Score</div>
-                            <div className="text-xs text-gray-600 mt-1">({challengeSpecificCriteria.shareWeight}% weight)</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  
-                  {filteredScoringContestants.length === 0 && scoringContestants.length > 0 && (
-                    <div className="text-center py-12">
-                      <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">No contestants found</h3>
-                      <p className="text-gray-500">
-                        Try adjusting your search terms.
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* No Challenge Selected Message */}
-            {!selectedScoringChallenge && (
-              <div className="text-center py-12">
-                <Trophy className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No Challenge Selected</h3>
-                <p className="text-gray-500">Please select a challenge above to view its scoring criteria and contestant performance.</p>
-              </div>
-            )}
-          </div>
-        );
       case 'winner': {
         // Generate dummy winners for demonstration (legacy function for completed challenges)
         const generateDummyWinners = () => {
@@ -1506,7 +1256,7 @@ const ModeratorDashboard = () => {
                   <span className="hidden sm:inline">Create Challenge</span>
                   <span className="sm:hidden">Create</span>
                 </button>
-                <button
+                {/* <button
                   className="border px-3 py-2 rounded-lg font-medium flex items-center space-x-1 whitespace-nowrap btn-animate"
                   style={{ borderColor: "#FFE4D6", color: "#FFE4D6", backgroundColor: "rgba(255, 228, 214, 0.1)" }}
                   onClick={() => navigate("/winner-selection")}
@@ -1514,7 +1264,7 @@ const ModeratorDashboard = () => {
                   <Award size={14} />
                   <span className="hidden sm:inline">Select Winners</span>
                   <span className="sm:hidden">Winners</span>
-                </button>
+                </button> */}
                 {isSignedIn ? (
                   <button
                     className="px-3 py-2 rounded-lg font-medium flex items-center space-x-1 whitespace-nowrap btn-animate"
