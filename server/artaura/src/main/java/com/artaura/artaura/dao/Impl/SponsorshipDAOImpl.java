@@ -1,14 +1,5 @@
 package com.artaura.artaura.dao.Impl;
 
-import com.artaura.artaura.dao.SponsorshipDAO;
-import com.artaura.artaura.dto.sponsorship.ChallengeForSponsorshipDTO;
-import com.artaura.artaura.dto.sponsorship.SponsorshipOfferDTO;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
-import org.springframework.stereotype.Repository;
-
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -16,6 +7,16 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.UUID;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.stereotype.Repository;
+
+import com.artaura.artaura.dao.SponsorshipDAO;
+import com.artaura.artaura.dto.sponsorship.ChallengeForSponsorshipDTO;
+import com.artaura.artaura.dto.sponsorship.SponsorshipOfferDTO;
 
 @Repository
 public class SponsorshipDAOImpl implements SponsorshipDAO {
@@ -36,8 +37,8 @@ public class SponsorshipDAOImpl implements SponsorshipDAO {
 
     @Override
     public Long createSponsorshipOffer(SponsorshipOfferDTO offer) {
-        String sql = "INSERT INTO sponsorship_offers (challenge_id, shop_id, discount_code, discount_percentage) " +
-                "VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO sponsorship_offers (challenge_id, shop_id, discount_code, discount_percentage, status) " +
+                "VALUES (?, ?, ?, ?, 'pending')";
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
@@ -55,7 +56,7 @@ public class SponsorshipDAOImpl implements SponsorshipDAO {
             throw new RuntimeException("Failed to get generated key for sponsorship offer");
         }
 
-        // Update challenge request_sponsorship from 1 to 2 (sponsored)
+        // Update challenge sponsorship status to 'active' and status to 'active'
         updateChallengeToSponsored(offer.getChallengeId());
 
         return key.longValue();
@@ -64,7 +65,9 @@ public class SponsorshipDAOImpl implements SponsorshipDAO {
     @Override
     public List<SponsorshipOfferDTO> getSponsorshipOffersByShop(Long shopId) {
         String sql = "SELECT so.id, so.challenge_id, so.shop_id, c.title as challenge_title, " +
-                "s.shop_name, so.discount_code, so.discount_percentage, so.created_at " +
+                "s.shop_name, s.email as shop_email, s.contact_no as shop_contact_no, " +
+                "s.description as shop_description, s.owner_name as shop_owner_name, " +
+                "so.discount_code, so.discount_percentage, so.status, so.created_at " +
                 "FROM sponsorship_offers so " +
                 "JOIN challenges c ON so.challenge_id = c.id " +
                 "JOIN shops s ON so.shop_id = s.shop_id " +
@@ -77,7 +80,9 @@ public class SponsorshipDAOImpl implements SponsorshipDAO {
     @Override
     public List<SponsorshipOfferDTO> getSponsorshipOffersByChallenge(Long challengeId) {
         String sql = "SELECT so.id, so.challenge_id, so.shop_id, c.title as challenge_title, " +
-                "s.shop_name, so.discount_code, so.discount_percentage, so.created_at " +
+                "s.shop_name, s.email as shop_email, s.contact_no as shop_contact_no, " +
+                "s.description as shop_description, s.owner_name as shop_owner_name, " +
+                "so.discount_code, so.discount_percentage, so.status, so.created_at " +
                 "FROM sponsorship_offers so " +
                 "JOIN challenges c ON so.challenge_id = c.id " +
                 "JOIN shops s ON so.shop_id = s.shop_id " +
@@ -90,7 +95,9 @@ public class SponsorshipDAOImpl implements SponsorshipDAO {
     @Override
     public SponsorshipOfferDTO getSponsorshipOfferById(Long offerId) {
         String sql = "SELECT so.id, so.challenge_id, so.shop_id, c.title as challenge_title, " +
-                "s.shop_name, so.discount_code, so.discount_percentage, so.created_at " +
+                "s.shop_name, s.email as shop_email, s.contact_no as shop_contact_no, " +
+                "s.description as shop_description, s.owner_name as shop_owner_name, " +
+                "so.discount_code, so.discount_percentage, so.status, so.created_at " +
                 "FROM sponsorship_offers so " +
                 "JOIN challenges c ON so.challenge_id = c.id " +
                 "JOIN shops s ON so.shop_id = s.shop_id " +
@@ -108,9 +115,9 @@ public class SponsorshipDAOImpl implements SponsorshipDAO {
 
     @Override
     public void updateChallengeToSponsored(Long challengeId) {
-        String sql = "UPDATE challenges SET sponsorship = 'active' WHERE id = ? AND sponsorship = 'pending'";
+        String sql = "UPDATE challenges SET sponsorship = 'active', status = 'active' WHERE id = ? AND sponsorship = 'pending'";
         jdbcTemplate.update(sql, challengeId);
-        System.out.println("✅ Updated challenge " + challengeId + " to sponsored status");
+        System.out.println("✅ Updated challenge " + challengeId + " to sponsored and active status");
     }
 
     @Override
@@ -166,6 +173,18 @@ public class SponsorshipDAOImpl implements SponsorshipDAO {
         return discountCode;
     }
 
+    @Override
+    public void updateSponsorshipStatus(Long offerId, String status) {
+        String sql = "UPDATE sponsorship_offers SET status = ? WHERE id = ?";
+        int rows = jdbcTemplate.update(sql, status, offerId);
+        
+        if (rows == 0) {
+            throw new RuntimeException("Sponsorship offer not found with ID: " + offerId);
+        }
+        
+        System.out.println("✅ Updated sponsorship offer " + offerId + " status to: " + status);
+    }
+
     // Helper method to map ResultSet to ChallengeForSponsorshipDTO
     private ChallengeForSponsorshipDTO mapChallengeForSponsorship(ResultSet rs, int rowNum) throws SQLException {
         ChallengeForSponsorshipDTO dto = new ChallengeForSponsorshipDTO();
@@ -203,8 +222,13 @@ public class SponsorshipDAOImpl implements SponsorshipDAO {
         dto.setShopId(rs.getLong("shop_id"));
         dto.setChallengeTitle(rs.getString("challenge_title"));
         dto.setShopName(rs.getString("shop_name"));
+        dto.setShopEmail(rs.getString("shop_email"));
+        dto.setShopContactNo(rs.getString("shop_contact_no"));
+        dto.setShopDescription(rs.getString("shop_description"));
+        dto.setShopOwnerName(rs.getString("shop_owner_name"));
         dto.setDiscountCode(rs.getString("discount_code"));
         dto.setDiscountPercentage(rs.getInt("discount_percentage"));
+        dto.setStatus(rs.getString("status"));
 
         Timestamp createdTimestamp = rs.getTimestamp("created_at");
         if (createdTimestamp != null) {

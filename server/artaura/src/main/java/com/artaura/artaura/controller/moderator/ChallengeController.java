@@ -16,9 +16,9 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.artaura.artaura.dto.buyer.ChallengeSubmissionDTO;
 import com.artaura.artaura.dto.moderator.ChallengeDTO;
 import com.artaura.artaura.dto.moderator.ChallengeListDTO;
-import com.artaura.artaura.dto.buyer.ChallengeSubmissionDTO;
 import com.artaura.artaura.service.moderator.ChallengeService;
 import com.artaura.artaura.util.JwtUtil;
 
@@ -65,6 +65,26 @@ public class ChallengeController {
     public ResponseEntity<List<ChallengeListDTO>> getAllChallenges() {
         List<ChallengeListDTO> challenges = challengeService.getAllChallenges();
         return ResponseEntity.ok(challenges);
+    }
+
+    @GetMapping("/completed")
+    public ResponseEntity<List<ChallengeListDTO>> getCompletedChallenges(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        try {
+            // Validate JWT token if provided (optional for public access)
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                String token = authHeader.substring(7);
+                jwtUtil.extractUserId(token); // Validate token
+            }
+            
+            List<ChallengeListDTO> challenges = challengeService.getCompletedChallenges();
+            System.out.println("Returning " + challenges.size() + " completed challenges");
+            return ResponseEntity.ok(challenges);
+        } catch (Exception e) {
+            System.err.println("Error fetching completed challenges: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(null);
+        }
     }
 
     @DeleteMapping("/{id}")
@@ -138,7 +158,10 @@ public class ChallengeController {
     /**
      * Get submissions for a challenge with marks calculated and winners sorted
      * Formula: MAX(0, (Likes × 10) - (Dislikes × 5))
-     * Returns submissions sorted by marks (highest first)
+     * Returns submissions sorted by:
+     *   1. Marks (highest first)
+     *   2. Likes count (highest first) - tiebreaker when marks are equal
+     *   3. Submission date (earliest first) - final tiebreaker
      * Top 3 submissions get positions 1, 2, 3
      */
     @GetMapping("/{challengeId}/winners")

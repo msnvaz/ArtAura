@@ -567,7 +567,7 @@ const ModeratorDashboard = () => {
                     else if (action.id === "scoring")
                       navigate("/scoring-criteria");
                     else if (action.id === "winner")
-                      setActiveSection("winner"); // Changed to switch to Winners tab
+                      navigate("/winner-selection");
                   }}
                   className="border rounded-lg p-4 text-left h-full btn-animate"
                   style={{
@@ -1534,7 +1534,13 @@ const ModeratorDashboard = () => {
                 {menuItems.map((item) => (
                   <button
                     key={item.id}
-                    onClick={() => setActiveSection(item.id)}
+                    onClick={() => {
+                      if (item.id === "winner") {
+                        navigate("/winner-selection");
+                      } else {
+                        setActiveSection(item.id);
+                      }
+                    }}
                     className="py-4 px-2 border-b-2 font-medium text-sm flex items-center gap-2 menu-item"
                     style={{
                       borderBottomColor: activeSection === item.id ? "#5D3A00" : "transparent",
