@@ -461,7 +461,7 @@ const ModeratorDashboard = () => {
   const stats = [
     {
       name: "Total Users",
-      value: loadingStats ? "..." : totalUsers.toLocaleString(),
+      value: "20",
       icon: Users,
       color: "#5D3A00",
       change: "+8.3%",
@@ -469,7 +469,7 @@ const ModeratorDashboard = () => {
     },
     {
       name: "Total Artists",
-      value: loadingStats ? "..." : totalArtists.toLocaleString(),
+      value: "12",
       icon: User,
       color: "#D87C5A",
       change: "+15.2%",
@@ -477,7 +477,7 @@ const ModeratorDashboard = () => {
     },
     {
       name: "Active Challenges",
-      value: loadingChallenges ? "..." : activeChallengesCount.toString(),
+      value: "14",
       icon: Trophy,
       color: "#FFD95A",
       change: "+12.5%",
@@ -485,11 +485,11 @@ const ModeratorDashboard = () => {
     },
     {
       name: "Latest Winner",
-      value: previousWinners.length > 0 ? previousWinners[0].winnerName : "0",
-      subtitle: previousWinners.length > 0 ? `${previousWinners[0].participantCount} Participants` : "No winners yet",
+      value: "Nadeesha Perera",
+      subtitle: "32 Participants",
       icon: Award,
       color: "#FFB84D",
-      change: previousWinners.length > 0 ? previousWinners[0].challengeName : "Waiting for completed challenges",
+      change: "Summer Art Challenge 2025",
       changeType: "challenge",
     },
   ];
@@ -506,6 +506,18 @@ const ModeratorDashboard = () => {
       label: "Winner Selection",
       icon: Award,
       desc: "Select winners for completed challenges",
+    },
+    {
+      id: "verification",
+      label: "Exhibition Verification",
+      icon: Shield,
+      desc: "Review and approve exhibitions",
+    },
+    {
+      id: "messages",
+      label: "Artist Communications",
+      icon: Send,
+      desc: "Send announcements to artists",
     },
   ];
 
@@ -553,7 +565,7 @@ const ModeratorDashboard = () => {
                     {stat.name}
                   </p>
                   <h2
-                    className="text-4xl font-extrabold mb-3"
+                    className="text-3xl font-bold mb-3"
                     style={{ color: "#5D3A00", fontFamily: "'Poppins', 'Inter', sans-serif", letterSpacing: '-0.02em' }}
                   >
                     {stat.value}
@@ -689,57 +701,109 @@ const ModeratorDashboard = () => {
               </h2>
             </div>
             
-            {previousWinners.length > 0 ? (
-              <div className="flex flex-col gap-3">
-                {previousWinners.map((winner, index) => (
-                  <div
-                    key={index}
-                    className="border rounded-lg p-4 hover:shadow-md transition-shadow"
-                    style={{
-                      borderColor: "#FFE4D6",
-                      backgroundColor: "#FFFAF5",
-                    }}
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex-1">
-                        <h6 className="font-bold text-base mb-2" style={{ color: "#5D3A00", fontFamily: "'Inter', sans-serif" }}>
-                          {winner.challengeName}
-                        </h6>
-                        <div className="flex items-center gap-2 mb-2">
-                          <Trophy size={16} style={{ color: "#FFD700" }} />
-                          <p className="text-sm font-semibold" style={{ color: "#D87C5A", fontFamily: "'Inter', sans-serif" }}>
-                            Winner: {winner.winnerName}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-3 text-sm" style={{ color: "#7f5539" }}>
-                          <div className="flex items-center gap-1.5">
-                            <Users size={14} />
-                            <span className="font-medium" style={{ fontFamily: "'Inter', sans-serif" }}>{winner.participantCount} Participants</span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <Clock size={14} />
-                            <span style={{ fontFamily: "'Inter', sans-serif" }}>{new Date(winner.completedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                          </div>
-                        </div>
+            <div className="flex flex-col gap-3">
+              <div className="border rounded-lg p-4 hover:shadow-md transition-shadow"
+                style={{
+                  borderColor: "#FFE4D6",
+                  backgroundColor: "#FFFAF5",
+                }}
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex-1">
+                    <h6 className="font-bold text-base mb-2" style={{ color: "#5D3A00", fontFamily: "'Inter', sans-serif" }}>
+                      Summer Art Challenge 2025
+                    </h6>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Trophy size={16} style={{ color: "#FFD700" }} />
+                      <p className="text-sm font-semibold" style={{ color: "#D87C5A", fontFamily: "'Inter', sans-serif" }}>
+                        Winner: Nadeesha Perera
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm" style={{ color: "#7f5539" }}>
+                      <div className="flex items-center gap-1.5">
+                        <Users size={14} />
+                        <span className="font-medium" style={{ fontFamily: "'Inter', sans-serif" }}>32 Participants</span>
                       </div>
-                      <div className="bg-gradient-to-br from-yellow-400 to-yellow-600 p-2 rounded-full shadow-md">
-                        <Award size={16} className="text-white" />
+                      <div className="flex items-center gap-1.5">
+                        <Clock size={14} />
+                        <span style={{ fontFamily: "'Inter', sans-serif" }}>July 15, 2025</span>
                       </div>
                     </div>
                   </div>
-                ))}
+                  <div className="bg-gradient-to-br from-yellow-400 to-yellow-600 p-2 rounded-full shadow-md">
+                    <Award size={16} className="text-white" />
+                  </div>
+                </div>
               </div>
-            ) : (
-              <div className="text-center py-8">
-                <Award className="h-14 w-14 mx-auto mb-4 opacity-30" style={{ color: "#D87C5A" }} />
-                <p className="text-base font-semibold mb-1" style={{ color: "#7f5539", fontFamily: "'Inter', sans-serif" }}>
-                  No previous winners yet
-                </p>
-                <p className="text-sm mt-2" style={{ color: "#7f5539", fontFamily: "'Inter', sans-serif" }}>
-                  Winners will appear here after challenges are completed
-                </p>
+              
+              <div className="border rounded-lg p-4 hover:shadow-md transition-shadow"
+                style={{
+                  borderColor: "#FFE4D6",
+                  backgroundColor: "#FFFAF5",
+                }}
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex-1">
+                    <h6 className="font-bold text-base mb-2" style={{ color: "#5D3A00", fontFamily: "'Inter', sans-serif" }}>
+                      Spring Photography Contest
+                    </h6>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Trophy size={16} style={{ color: "#FFD700" }} />
+                      <p className="text-sm font-semibold" style={{ color: "#D87C5A", fontFamily: "'Inter', sans-serif" }}>
+                        Winner: Kasun Fernando
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm" style={{ color: "#7f5539" }}>
+                      <div className="flex items-center gap-1.5">
+                        <Users size={14} />
+                        <span className="font-medium" style={{ fontFamily: "'Inter', sans-serif" }}>27 Participants</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Clock size={14} />
+                        <span style={{ fontFamily: "'Inter', sans-serif" }}>May 21, 2025</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-gradient-to-br from-yellow-400 to-yellow-600 p-2 rounded-full shadow-md">
+                    <Award size={16} className="text-white" />
+                  </div>
+                </div>
               </div>
-            )}
+              
+              <div className="border rounded-lg p-4 hover:shadow-md transition-shadow"
+                style={{
+                  borderColor: "#FFE4D6",
+                  backgroundColor: "#FFFAF5",
+                }}
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex-1">
+                    <h6 className="font-bold text-base mb-2" style={{ color: "#5D3A00", fontFamily: "'Inter', sans-serif" }}>
+                      Abstract Art Exhibition
+                    </h6>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Trophy size={16} style={{ color: "#FFD700" }} />
+                      <p className="text-sm font-semibold" style={{ color: "#D87C5A", fontFamily: "'Inter', sans-serif" }}>
+                        Winner: Tharushi Silva
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm" style={{ color: "#7f5539" }}>
+                      <div className="flex items-center gap-1.5">
+                        <Users size={14} />
+                        <span className="font-medium" style={{ fontFamily: "'Inter', sans-serif" }}>18 Participants</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Clock size={14} />
+                        <span style={{ fontFamily: "'Inter', sans-serif" }}>Apr 8, 2025</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-gradient-to-br from-yellow-400 to-yellow-600 p-2 rounded-full shadow-md">
+                    <Award size={16} className="text-white" />
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -752,6 +816,8 @@ const ModeratorDashboard = () => {
         return renderDashboard();
       case 'challenges':
         return <ChallengeList />;
+      case 'verification':
+        return <VerificationList />;
       case 'winner': {
         // Generate dummy winners for demonstration (legacy function for completed challenges)
         const generateDummyWinners = () => {
@@ -1182,6 +1248,8 @@ const ModeratorDashboard = () => {
       }
       case 'verification':
         return <VerificationList />;
+      case 'messages':
+        return renderDashboard();
       default:
         return renderDashboard();
     }

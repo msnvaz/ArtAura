@@ -23,6 +23,9 @@ const ChallengeList = () => {
   const [challengeToEdit, setChallengeToEdit] = useState(null);
   const [editForm, setEditForm] = useState({ title: '', description: '', requestSponsorship: false });
   const [deleteLoading, setDeleteLoading] = useState(false);
+  // Modal position states removed
+
+  // Position calculation no longer needed with centered modals
 
   // Fetch Challenges
   const fetchChallenges = async () => {
@@ -387,7 +390,7 @@ const ChallengeList = () => {
       {(() => {
         const stats = getChallengeStats();
         return (
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg p-4 border-2 border-amber-300 shadow-md hover:shadow-lg transition-all duration-300">
               <div className="flex items-center justify-between">
                 <div>
@@ -415,15 +418,6 @@ const ChallengeList = () => {
                 <CheckCircle className="h-8 w-8 text-green-500" />
               </div>
             </div>
-            <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-semibold text-yellow-700 uppercase tracking-wider">Under Review</p>
-                  <p className="text-3xl font-extrabold text-yellow-900 mt-1">{stats.review}</p>
-                </div>
-                <AlertCircle className="h-8 w-8 text-yellow-500" />
-              </div>
-            </div>
             <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
               <div className="flex items-center justify-between">
                 <div>
@@ -447,7 +441,7 @@ const ChallengeList = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-bold text-purple-700 uppercase tracking-widest">
-                      Active Partnerships
+                      Active Sponsorships
                     </p>
                     <p className="text-4xl font-black text-purple-900 mt-2">{stats.sponsored}</p>
                     <p className="text-xs text-purple-600 mt-1 font-medium">Collaborative Challenges</p>
@@ -461,7 +455,7 @@ const ChallengeList = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-bold text-yellow-700 uppercase tracking-widest">
-                      Pending Partnerships
+                      Pending Sponsorships
                     </p>
                     <p className="text-4xl font-black text-yellow-900 mt-2">{stats.pendingSponsorship}</p>
                     <p className="text-xs text-yellow-600 mt-1 font-medium">Awaiting Approval</p>
@@ -541,7 +535,7 @@ const ChallengeList = () => {
                     <div className="mb-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg px-4 py-3 border-l-4 border-purple-500">
                       <div className="flex flex-col gap-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-semibold text-gray-700">Partnership Challenge</span>
+                          <span className="text-sm font-semibold text-gray-700">Sponsorship Challenge</span>
                           {challenge.sponsorDiscountPercentage && (
                             <span className="bg-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full">
                               {challenge.sponsorDiscountPercentage}% Discount
@@ -574,12 +568,12 @@ const ChallengeList = () => {
                       <>
                         {challenge.sponsorship === 'pending' && (
                           <span className="ml-2 px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800 flex items-center gap-1">
-                            Partnership Pending
+                            Sponsorship Pending
                           </span>
                         )}
                         {challenge.sponsorship === 'active' && (
                           <span className="ml-2 px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800 flex items-center gap-1">
-                            Partnership Active
+                            Sponsorship Active
                           </span>
                         )}
                       </>
@@ -688,8 +682,12 @@ const ChallengeList = () => {
 
           {/* Single Challenge Details Modal rendered only once outside the map */}
           {showDetailsModal && challengeToView && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
-              <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto transform transition-all duration-300 ease-out scale-100 relative mx-4">
+            <div className="fixed inset-0 z-50 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center overflow-hidden">
+              <div className="absolute inset-0" aria-hidden="true"></div>
+              <div
+                className="w-full max-w-md px-4"
+              >
+                <div className="bg-white rounded-2xl p-8 shadow-2xl w-full max-h-[80vh] overflow-y-auto transform transition-all duration-300 ease-out scale-100 relative">
                 <div className="text-center mb-6">
                   <h3 className="text-2xl font-bold text-[#362625] mb-2">Challenge Details</h3>
                 </div>
@@ -765,17 +763,17 @@ const ChallengeList = () => {
                       {challengeToView.sponsorship === 'pending' && (
                         <>
                           <div className="font-semibold text-yellow-700 mb-1 flex items-center gap-2">
-                            Partnership Pending
+                            Sponsorship Pending
                           </div>
-                          <p className="text-xs text-yellow-600">Awaiting partner approval</p>
+                          <p className="text-xs text-yellow-600">Awaiting sponsor approval</p>
                         </>
                       )}
                       {challengeToView.sponsorship === 'active' && (
                         <>
                           <div className="font-semibold text-purple-700 mb-1 flex items-center gap-2">
-                            Partnership Challenge
+                            Sponsorship Active
                           </div>
-                          <p className="text-xs text-purple-600">This challenge is run in collaboration with our partners</p>
+                          <p className="text-xs text-purple-600">This challenge is run in collaboration with our sponsors</p>
                         </>
                       )}
                     </div>
@@ -824,11 +822,6 @@ const ChallengeList = () => {
                         <div className="text-xs text-gray-500">marks deducted</div>
                       </div>
                     </div>
-                    <div className="bg-blue-100 rounded-lg p-3 border border-blue-300">
-                      <p className="text-sm text-blue-900">
-                        <span className="font-bold">Scoring Formula:</span> Score = (Total Likes × 10) - (Total Dislikes × 5)
-                      </p>
-                    </div>
                   </div>
                 </div>
                 {/* Close button at the bottom */}
@@ -841,6 +834,7 @@ const ChallengeList = () => {
                     Close
                   </button>
                 </div>
+              </div>
               </div>
             </div>
           )}
@@ -858,8 +852,12 @@ const ChallengeList = () => {
       </div>
     {/* Edit Challenge Modal */}
     {showEditModal && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
-        <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto transform transition-all duration-300 ease-out scale-100 mx-4">
+      <div className="fixed inset-0 z-50 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center overflow-hidden">
+        <div className="absolute inset-0" aria-hidden="true"></div>
+        <div
+          className="w-full max-w-md px-4"
+        >
+          <div className="bg-white rounded-2xl p-8 shadow-2xl w-full max-h-[80vh] overflow-y-auto transform transition-all duration-300 ease-out scale-100">
           <div className="text-center mb-6">
             <h3 className="text-2xl font-bold text-[#362625] mb-2">Edit Challenge</h3>
           </div>
@@ -985,13 +983,18 @@ const ChallengeList = () => {
             </div>
           </form>
         </div>
+        </div>
       </div>
     )}
 
     {/* Delete Confirmation Modal */}
     {showDeleteModal && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
-        <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full transform transition-all duration-300 ease-out scale-100 mx-4">
+      <div className="fixed inset-0 z-50 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center overflow-hidden">
+        <div className="absolute inset-0" aria-hidden="true"></div>
+        <div
+          className="w-full max-w-md px-4"
+        >
+          <div className="bg-white rounded-2xl p-8 shadow-2xl w-full transform transition-all duration-300 ease-out scale-100">
           <div className="text-center">
             <h3 className="text-2xl font-bold text-[#362625] mb-2">
               Confirm Delete
@@ -1016,6 +1019,7 @@ const ChallengeList = () => {
               </button>
             </div>
           </div>
+        </div>
         </div>
       </div>
     )}
