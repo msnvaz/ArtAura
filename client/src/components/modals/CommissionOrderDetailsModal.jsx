@@ -279,15 +279,15 @@ const CommissionOrderDetailsModal = ({ order, isOpen, onClose }) => {
                 order.imageUrls.map((img, idx) => {
                   // Handle both clean relative paths and legacy full Windows paths
                   let imageSrc = img;
-                  if (img.includes('\\')) {
+                  if (img.includes("\\")) {
                     // Legacy: full Windows path like C:\Users\aaa\Desktop\ArtAura\client\public\uploads\filename.jpg
-                    const filename = img.split('\\').pop();
+                    const filename = img.split("\\").pop();
                     imageSrc = `/uploads/${filename}`;
                   } else if (img.startsWith("/uploads/")) {
                     // New: clean relative path like /uploads/filename.jpg
                     imageSrc = img;
                   }
-                  
+
                   return (
                     <div key={idx} className="relative group">
                       <img
@@ -296,7 +296,7 @@ const CommissionOrderDetailsModal = ({ order, isOpen, onClose }) => {
                         className="w-full h-48 rounded-lg object-cover border-3 border-[#FFD95A] shadow-lg hover:scale-105 transition-transform duration-300 bg-[#FFF5E1]"
                         onError={(e) => {
                           console.error(`Failed to load image: ${imageSrc}`);
-                          e.target.style.display = 'none';
+                          e.target.style.display = "none";
                         }}
                       />
                       <span className="absolute bottom-2 right-2 bg-[#D87C5A] text-white text-sm px-3 py-1 rounded-full font-bold shadow-lg">
