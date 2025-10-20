@@ -67,7 +67,8 @@ import {
   ChevronRight,
   Truck,
   CheckCircle,
-  Package
+  Package,
+  Home
 } from 'lucide-react';
 
 import { useImageWithFallback } from '../../util/imageUtils';
@@ -1846,6 +1847,14 @@ const ArtistPortfolio = () => {
             </div>
           </div>
           <div className="absolute top-6 right-6 flex items-center space-x-3">
+            <button
+              onClick={() => navigate('/community')}
+              className="bg-[#7f5539] text-white px-4 py-2 rounded-lg hover:bg-[#6e4c34] transition-colors flex items-center"
+              title="Go to Community Feed"
+            >
+              <Home className="h-4 w-4 mr-2" />
+              Home
+            </button>
             <NotificationBell />
             <button
               onClick={() => setIsChangingCover(true)}
@@ -1911,8 +1920,8 @@ const ArtistPortfolio = () => {
                       <div className="text-sm text-[#7f5539]/60">Followers</div>
                     </div>
                     <div>
-                      <div className="text-2xl font-bold text-[#7f5539]">{artistProfile.stats.views}</div>
-                      <div className="text-sm text-[#7f5539]/60">Views</div>
+                      {/* <div className="text-2xl font-bold text-[#7f5539]">{artistProfile.stats.views}</div>
+                      <div className="text-sm text-[#7f5539]/60">Views</div> */}
                     </div>
                   </div>
                 </div>
@@ -2544,14 +2553,14 @@ const ArtistPortfolio = () => {
 
                       <div className="flex items-center justify-between text-sm text-[#7f5539]/60">
                         <div className="flex items-center space-x-3">
-                          <div className="flex items-center space-x-1">
+                          {/* <div className="flex items-center space-x-1">
                             <Heart className="h-4 w-4" />
                             <span>{artwork.likesCount || artwork.likes || 0}</span>
                           </div>
                           <div className="flex items-center space-x-1">
                             <Eye className="h-4 w-4" />
                             <span>{artwork.viewsCount || artwork.views || 0}</span>
-                          </div>
+                          </div> */}
                         </div>
                         <button
                           onClick={() => handleViewArtworkDetail(artwork)}
@@ -3146,7 +3155,7 @@ const ArtistPortfolio = () => {
                             />
                             <div>
                               <p className="font-medium text-[#7f5539] text-sm">{artwork.title}</p>
-                              <p className="text-xs text-[#7f5539]/60">{artwork.likes} likes • {artwork.views} views</p>
+                              {/* <p className="text-xs text-[#7f5539]/60">{artwork.likes} likes • {artwork.views} views</p> */}
                             </div>
                           </div>
                           <div className="text-right">
