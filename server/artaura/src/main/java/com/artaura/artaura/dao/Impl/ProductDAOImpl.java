@@ -27,11 +27,21 @@ public class ProductDAOImpl implements ProductDAO {
 
     @Override
     public void save(AddProductDTO p) {
+        System.out.println("💾 DAO Save Method Called");
+        System.out.println("📝 Product Details:");
+        System.out.println("   Shop ID: " + p.getShopId());
+        System.out.println("   Name: " + p.getName());
+        System.out.println("   SKU: " + p.getSku());
+        System.out.println("   Category: " + p.getCategory());
+        System.out.println("   Price: " + p.getPrice());
+        System.out.println("   Stock: " + p.getStock());
+        System.out.println("   Image: " + p.getImage());
+        
         String sql = "INSERT INTO products (shop_id, name, sku, category, price, stock, status, image, rating, sales) "
                 +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-        jdbcTemplate.update(sql,
+        int rowsAffected = jdbcTemplate.update(sql,
                 p.getShopId(),
                 p.getName(),
                 p.getSku(),
@@ -42,6 +52,8 @@ public class ProductDAOImpl implements ProductDAO {
                 (p.getImage() != null ? p.getImage() : "/assets/catalog.jpeg"),
                 (p.getRating() != null ? p.getRating() : 0.0),
                 (p.getSales() != null ? p.getSales() : 0));
+        
+        System.out.println("✅ Rows affected: " + rowsAffected);
     }
 
     @Override
