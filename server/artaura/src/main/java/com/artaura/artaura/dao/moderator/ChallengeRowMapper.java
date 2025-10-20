@@ -39,6 +39,20 @@ public class ChallengeRowMapper implements RowMapper<ChallengeListDTO> {
             challenge.setDiscountCode(null);
         }
         
+        // Get sponsor information if available (for sponsored challenges)
+        try {
+            challenge.setSponsorShopName(rs.getString("sponsor_shop_name"));
+        } catch (SQLException e) {
+            challenge.setSponsorShopName(null);
+        }
+        
+        try {
+            int discountPercentage = rs.getInt("sponsor_discount_percentage");
+            challenge.setSponsorDiscountPercentage(rs.wasNull() ? null : discountPercentage);
+        } catch (SQLException e) {
+            challenge.setSponsorDiscountPercentage(null);
+        }
+        
         // Fixed marks scoring - weight columns still in DB but will be removed
         // Each Like = +10 marks, Each Dislike = -5 marks, Minimum score = 0
         // Note: likes_weight, comments_weight, share_weight columns exist but are not used

@@ -1221,7 +1221,8 @@ const ModeratorDashboard = () => {
                             </div>
                           </div>
 
-                          {challenge.rewards && (
+                          {/* Rewards section - hidden for sponsored challenges (sponsors provide rewards) */}
+                          {challenge.sponsorship !== 'active' && challenge.rewards && (
                             <div className="p-3 rounded-lg mb-3" style={{backgroundColor: '#fff9e6', borderLeft: '4px solid #FFD700'}}>
                               <div className="flex items-center gap-2">
                                 <Trophy className="h-4 w-4" style={{color: '#FFD700'}} />
@@ -1242,10 +1243,22 @@ const ModeratorDashboard = () => {
                                 </div>
                               )}
                               {challenge.sponsorship === 'active' && (
-                                <div className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 animate-pulse">
-                                  <span className="font-semibold text-purple-700">
+                                <div className="flex flex-col gap-1 text-xs px-3 py-2 rounded-lg bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200">
+                                  <span className="font-semibold text-purple-700 animate-pulse">
                                     ✨ Sponsored Challenge
                                   </span>
+                                  {(challenge.sponsorShopName || challenge.sponsorDiscountPercentage) && (
+                                    <div className="flex items-center gap-2 text-sm font-semibold text-purple-600">
+                                      {challenge.sponsorShopName && (
+                                        <span>by {challenge.sponsorShopName}</span>
+                                      )}
+                                      {challenge.sponsorDiscountPercentage && (
+                                        <span className="bg-purple-200 px-2 py-0.5 rounded-full">
+                                          {challenge.sponsorDiscountPercentage}% OFF
+                                        </span>
+                                      )}
+                                    </div>
+                                  )}
                                 </div>
                               )}
                             </div>
