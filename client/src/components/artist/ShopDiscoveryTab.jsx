@@ -35,6 +35,26 @@ const ShopDiscoveryTab = () => {
     const [filterType, setFilterType] = useState('all'); // 'all', 'shops', 'products'
     const [selectedShopProducts, setSelectedShopProducts] = useState([]);
 
+    // Convert image path to displayable URL
+    const getImageUrl = (imagePath) => {
+        if (!imagePath) return '/src/assets/catalog.jpeg';
+        
+        // If it's already a full URL, return as is
+        if (imagePath.startsWith('http')) return imagePath;
+        
+        // If it's an absolute file path (old data), extract filename and create relative URL
+        if (imagePath.includes('D:/Artaura') || imagePath.includes('D:\\Artaura')) {
+            const filename = imagePath.split(/[/\\]/).pop();
+            return `/uploads/products/${filename}`;
+        }
+        
+        // If it's already a relative path starting with /, return as is
+        if (imagePath.startsWith('/')) return imagePath;
+        
+        // If it's just a filename, add the path
+        return `/uploads/products/${imagePath}`;
+    };
+
     // Fetch shops and products on component mount
     useEffect(() => {
         console.log('ShopDiscoveryTab mounted, fetching data...');
@@ -496,7 +516,7 @@ const ShopDiscoveryTab = () => {
                                 >
                                     {product.image && (
                                         <img
-                                            src={product.image.startsWith('http') ? product.image : `/uploads/products/${product.image}`}
+                                            src={getImageUrl(product.image)}
                                             alt={product.name}
                                             className={`object-contain rounded-lg bg-white ${viewMode === 'list'
                                                 ? 'w-16 h-16 flex-shrink-0'
