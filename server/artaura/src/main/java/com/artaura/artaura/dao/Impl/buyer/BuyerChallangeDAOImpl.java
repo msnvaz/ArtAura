@@ -1,12 +1,5 @@
 package com.artaura.artaura.dao.Impl.buyer;
 
-import com.artaura.artaura.dao.buyer.BuyerChallengeDAO;
-import com.artaura.artaura.dto.buyer.ChallengeSubmissionDTO;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
-import org.springframework.stereotype.Repository;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -14,6 +7,14 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Repository;
+
+import com.artaura.artaura.dao.buyer.BuyerChallengeDAO;
+import com.artaura.artaura.dto.buyer.ChallengeSubmissionDTO;
 
 @Repository
 public class BuyerChallangeDAOImpl implements BuyerChallengeDAO {
@@ -101,8 +102,10 @@ public class BuyerChallangeDAOImpl implements BuyerChallengeDAO {
                 break;
             case "topscores":
             case "winners":
-                // Sort by marks (highest first), then by submission date
-                sql.append("ORDER BY marks DESC, cp.submission_date ASC");
+                // Sort by marks (highest first)
+                // If marks are equal, sort by likes_count (highest first) as tiebreaker
+                // Then by submission date (earliest first) as final tiebreaker
+                sql.append("ORDER BY marks DESC, likes_count DESC, cp.submission_date ASC");
                 break;
             case "newest":
             default:

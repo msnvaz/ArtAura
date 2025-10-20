@@ -79,7 +79,19 @@ public class ChallengeDAOImpl implements ChallengeDAO {
     }
     @Override
     public List<ChallengeListDTO> getAllChallenges() {
+        // Return all challenges regardless of status (moderators can see drafts, active, completed)
         String sql = "SELECT * FROM challenges ORDER BY publish_date_time DESC";
+        return jdbcTemplate.query(sql, new ChallengeRowMapper());
+    }
+
+    @Override
+    public List<ChallengeListDTO> getCompletedChallenges() {
+        // Return only challenges with 'completed' status with participant count
+        String sql = "SELECT c.*, " +
+                     "COALESCE((SELECT COUNT(DISTINCT artist_id) FROM challenge_participants WHERE challenge_id = c.id), 0) as participant_count " +
+                     "FROM challenges c " +
+                     "WHERE c.status = 'completed' " +
+                     "ORDER BY c.deadline_date_time DESC";
         return jdbcTemplate.query(sql, new ChallengeRowMapper());
     }
 

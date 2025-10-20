@@ -1,15 +1,16 @@
 package com.artaura.artaura.service.impl;
 
-import com.artaura.artaura.dao.SponsorshipDAO;
-import com.artaura.artaura.dto.sponsorship.ChallengeForSponsorshipDTO;
-import com.artaura.artaura.dto.sponsorship.SponsorshipOfferDTO;
-import com.artaura.artaura.service.SponsorshipService;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import com.artaura.artaura.dao.SponsorshipDAO;
+import com.artaura.artaura.dto.sponsorship.ChallengeForSponsorshipDTO;
+import com.artaura.artaura.dto.sponsorship.SponsorshipOfferDTO;
+import com.artaura.artaura.service.SponsorshipService;
 
 @Service
 @Transactional
@@ -79,5 +80,10 @@ public class SponsorshipServiceImpl implements SponsorshipService {
     @Override
     public void deleteSponsorshipOffer(Long offerId) {
         sponsorshipDAO.deleteSponsorshipOffer(offerId);
+    }
+
+    @Override
+    public void updateSponsorshipStatus(Long offerId, String status) {
+        sponsorshipDAO.updateSponsorshipStatus(offerId, status);
     }
 }
