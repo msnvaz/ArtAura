@@ -10,7 +10,14 @@ public class SponsorshipOfferDTO {
     private String shopName;
     private String discountCode;
     private Integer discountPercentage;
+    private String status; // 'pending' or 'valid'
     private LocalDateTime createdAt;
+    
+    // Additional shop details
+    private String shopEmail;
+    private String shopContactNo;
+    private String shopDescription;
+    private String shopOwnerName;
 
     // Constructors
     public SponsorshipOfferDTO() {
@@ -86,11 +93,51 @@ public class SponsorshipOfferDTO {
         this.discountPercentage = discountPercentage;
     }
 
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getShopEmail() {
+        return shopEmail;
+    }
+
+    public void setShopEmail(String shopEmail) {
+        this.shopEmail = shopEmail;
+    }
+
+    public String getShopContactNo() {
+        return shopContactNo;
+    }
+
+    public void setShopContactNo(String shopContactNo) {
+        this.shopContactNo = shopContactNo;
+    }
+
+    public String getShopDescription() {
+        return shopDescription;
+    }
+
+    public void setShopDescription(String shopDescription) {
+        this.shopDescription = shopDescription;
+    }
+
+    public String getShopOwnerName() {
+        return shopOwnerName;
+    }
+
+    public void setShopOwnerName(String shopOwnerName) {
+        this.shopOwnerName = shopOwnerName;
     }
 }

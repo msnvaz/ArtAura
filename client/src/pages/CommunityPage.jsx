@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 import Navbar from "../components/common/Navbar";
 import Post from "../components/community/Posts";
 import ExhibitionPost from "../components/community/ExhibitionPost";
@@ -7,16 +8,17 @@ import TopArtists from "../components/community/TopArtists";
 import ExhibitionPostForm from "../components/community/ExhibitionPostForm";
 import RecentChallenges from "../components/community/RecentChallenges";
 import CartSidebar from "../components/cart/CartSidebar";
-import { Filter, Calendar, Image, Users } from "lucide-react";
+import { Filter, Calendar, Image, Users, Home, ArrowLeft } from "lucide-react";
 import { formatDistanceToNow, isValid } from "date-fns";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 const CommunityPage = () => {
   const { role, userId, token } = useAuth(); // Get user role and ID from auth context
+  const navigate = useNavigate();
   const [posts, setPosts] = useState([]);
   const [exhibitionPosts, setExhibitionPosts] = useState([]);
-  const [activeFilter, setActiveFilter] = useState("all");
+  const [activeFilter, setActiveFilter] = useState("feed");
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState({ name: "", avatar: "" });
 
@@ -136,6 +138,7 @@ const CommunityPage = () => {
 
   const getFilteredPosts = () => {
     const allPosts = getAllPosts();
+    if (activeFilter === "feed") return allPosts; // Feed shows all posts like buyer's home page
     if (activeFilter === "all") return allPosts;
     if (activeFilter === "regular") {
       return allPosts.filter((post) => post.type === "regular");
@@ -219,6 +222,98 @@ const CommunityPage = () => {
 
   const filteredPosts = getFilteredPosts();
 
+  // Simplified layout for artists
+  if (role === "artist") {
+    return (
+      <div className="min-h-screen bg-[#FFF5E1] overflow-x-hidden">
+        {/* Simple Header for Artists */}
+        <div className="bg-white shadow-sm border-b border-[#fdf9f4]/40 p-4">
+          <div className="max-w-4xl mx-auto flex items-center justify-between">
+            <button
+              onClick={() => navigate('/artist/artistportfolio')}
+              className="flex items-center space-x-2 text-[#7f5539] hover:text-[#6e4c34] transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span className="font-medium">Back to Portfolio</span>
+            </button>
+            <h1 className="text-2xl font-bold text-[#7f5539]">Community Feed</h1>
+            <div></div> {/* Spacer for center alignment */}
+          </div>
+        </div>
+
+        {/* Main Feed - Simplified for Artists */}
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          {/* Posts Feed */}
+          <div className="space-y-6">
+            {loading ? (
+              <div className="text-center text-[#7f5539]/60 py-20">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#7f5539] mx-auto mb-4"></div>
+                Loading posts...
+              </div>
+            ) : filteredPosts.length === 0 ? (
+              <div className="text-center text-[#7f5539]/60 py-20">
+                <div className="mb-4">
+                  <Filter className="w-16 h-16 mx-auto text-[#7f5539]/30" />
+                </div>
+                <h3 className="text-xl font-semibold text-[#7f5539] mb-2">
+                  No posts found
+                </h3>
+                <p>No posts to display yet.</p>
+              </div>
+            ) : (
+              filteredPosts.map((post, index) => {
+                console.log("Rendering post:", post);
+                if (post.type === "exhibition" || post.category) {
+                  return (
+                    <ExhibitionPost
+                      key={post.id || post.postId || `exh-${index}`}
+                      post_id={post.id || post.postId}
+                      title={post.title}
+                      description={post.description}
+                      location={post.location}
+                      startDate={post.startDate}
+                      endDate={post.endDate}
+                      startTime={post.startTime}
+                      endTime={post.endTime}
+                      organizer={post.organizer}
+                      category={post.category}
+                      entryFee={post.entryFee}
+                      maxParticipants={post.maxParticipants}
+                      contactEmail={post.contactEmail}
+                      contactPhone={post.contactPhone}
+                      requirements={post.requirements}
+                      created_at={post.createdAt || post.created_at}
+                      likes={post.likes || 0}
+                      comments={post.comments || 0}
+                      artist={{
+                        name: post.creatorName || "Unknown User",
+                        avatar: getAvatarPath(post.creatorAvatar, "buyer"),
+                      }}
+                    />
+                  );
+                } else {
+                  return (
+                    <Post
+                      key={post.post_id || `post-${index}`}
+                      username={post.artistName || "Unknown Artist"}
+                      avatar={getAvatarPath(post.artistAvatar)}
+                      timeAgo={safeFormatDistanceToNow(post.createdAt)}
+                      image={post.image.replace(/\[|\]|"/g, "")}
+                      likes={post.likes || 0}
+                      caption={post.caption}
+                      postId={post.postId}
+                    />
+                  );
+                }
+              })
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Regular layout for buyers and other users
   return (
     <div className="min-h-screen bg-[#FFF5E1] overflow-x-hidden">
       {/* Navbar */}
@@ -245,58 +340,44 @@ const CommunityPage = () => {
               />
             )}
 
-            {/* Info Message for Artists */}
-            {role === "artist" && (
-              <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-blue-100 rounded-full">
-                    <Calendar className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <h3 className="text-blue-800 font-semibold text-sm">
-                      Exhibition Posts
-                    </h3>
-                    <p className="text-blue-600 text-sm">
-                      Exhibition announcements are created by art buyers and
-                      galleries. You can view and engage with exhibition posts
-                      in your feed.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* Filter Buttons - New Section */}
-            <div className="flex space-x-4 mb-6">
+            <div className="flex space-x-3 mb-6">
               <button
-                onClick={() => handleFilterChange("all")}
-                className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-all flex items-center justify-center ${
-                  activeFilter === "all"
+                onClick={() => handleFilterChange("feed")}
+                className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-all flex items-center justify-center ${activeFilter === "feed"
                     ? "bg-[#7f5539] text-white shadow-md"
                     : "bg-white text-[#7f5539]"
-                }`}
+                  }`}
+              >
+                <Home className="w-5 h-5 mr-2" />
+                Feed
+              </button>
+              <button
+                onClick={() => handleFilterChange("all")}
+                className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-all flex items-center justify-center ${activeFilter === "all"
+                    ? "bg-[#7f5539] text-white shadow-md"
+                    : "bg-white text-[#7f5539]"
+                  }`}
               >
                 <Users className="w-5 h-5 mr-2" />
                 All
               </button>
               <button
                 onClick={() => handleFilterChange("regular")}
-                className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-all flex items-center justify-center ${
-                  activeFilter === "regular"
+                className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-all flex items-center justify-center ${activeFilter === "regular"
                     ? "bg-[#7f5539] text-white shadow-md"
                     : "bg-white text-[#7f5539]"
-                }`}
+                  }`}
               >
                 <Image className="w-5 h-5 mr-2" />
                 Posts
               </button>
               <button
                 onClick={() => handleFilterChange("exhibition")}
-                className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-all flex items-center justify-center ${
-                  activeFilter === "exhibition"
+                className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-all flex items-center justify-center ${activeFilter === "exhibition"
                     ? "bg-[#7f5539] text-white shadow-md"
                     : "bg-white text-[#7f5539]"
-                }`}
+                  }`}
               >
                 <Calendar className="w-5 h-5 mr-2" />
                 Exhibitions
@@ -319,7 +400,7 @@ const CommunityPage = () => {
                     No posts found
                   </h3>
                   <p>
-                    {activeFilter === "all"
+                    {activeFilter === "feed" || activeFilter === "all"
                       ? "No posts to display yet."
                       : `No ${activeFilter} posts to display yet.`}
                   </p>

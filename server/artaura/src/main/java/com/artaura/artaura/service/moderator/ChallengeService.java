@@ -6,11 +6,11 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.artaura.artaura.dao.buyer.BuyerChallengeDAO;
 import com.artaura.artaura.dao.moderator.ChallengeDAO;
+import com.artaura.artaura.dto.buyer.ChallengeSubmissionDTO;
 import com.artaura.artaura.dto.moderator.ChallengeDTO;
 import com.artaura.artaura.dto.moderator.ChallengeListDTO;
-import com.artaura.artaura.dto.buyer.ChallengeSubmissionDTO;
-import com.artaura.artaura.dao.buyer.BuyerChallengeDAO;
 
 @Service
 public class ChallengeService {
@@ -32,6 +32,10 @@ public class ChallengeService {
         return challengeDAO.getAllChallenges();
     }
 
+    public List<ChallengeListDTO> getCompletedChallenges() {
+        return challengeDAO.getCompletedChallenges();
+    }
+
     public void updateChallenge(ChallengeDTO challenge, String moderatorId) {
         challengeDAO.updateChallenge(challenge, moderatorId);
     }
@@ -39,7 +43,11 @@ public class ChallengeService {
     /**
      * Get winners for a challenge with marks calculated and positions assigned
      * Formula: MAX(0, (Likes × 10) - (Dislikes × 5))
-     * Sorted by marks (highest first), positions assigned to top 3
+     * Sorted by:
+     *   1. Marks (highest first)
+     *   2. Likes count (highest first) - tiebreaker when marks are equal
+     *   3. Submission date (earliest first) - final tiebreaker
+     * Top 3 submissions get positions 1, 2, 3
      */
     public List<ChallengeSubmissionDTO> getWinners(Integer challengeId) {
         // Get submissions sorted by marks (topscores)
