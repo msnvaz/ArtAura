@@ -36,7 +36,7 @@ public class ProductDAOImpl implements ProductDAO {
         System.out.println("   Price: " + p.getPrice());
         System.out.println("   Stock: " + p.getStock());
         System.out.println("   Image: " + p.getImage());
-        
+
         String sql = "INSERT INTO products (shop_id, name, sku, category, price, stock, status, image, rating, sales) "
                 +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -52,7 +52,7 @@ public class ProductDAOImpl implements ProductDAO {
                 (p.getImage() != null ? p.getImage() : "/assets/catalog.jpeg"),
                 (p.getRating() != null ? p.getRating() : 0.0),
                 (p.getSales() != null ? p.getSales() : 0));
-        
+
         System.out.println("✅ Rows affected: " + rowsAffected);
     }
 

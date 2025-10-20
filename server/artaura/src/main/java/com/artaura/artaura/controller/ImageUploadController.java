@@ -20,7 +20,8 @@ import java.util.UUID;
 @CrossOrigin(origins = { "http://localhost:5173", "http://localhost:5174" })
 public class ImageUploadController {
 
-    // Directory to save uploaded images - absolute path to client/public/uploads/products
+    // Directory to save uploaded images - absolute path to
+    // client/public/uploads/products
     private static final String UPLOAD_DIR = "D:/Artaura/ArtAura/client/public/uploads/products/";
 
     @PostMapping("/image")
@@ -30,7 +31,7 @@ public class ImageUploadController {
         try {
             System.out.println("📤 Image upload request received");
             System.out.println("📁 Upload directory: " + UPLOAD_DIR);
-            
+
             // Validate file
             if (file.isEmpty()) {
                 response.put("error", "Please select a file to upload");
@@ -76,9 +77,9 @@ public class ImageUploadController {
 
             // Return only the relative path for database storage (works on any computer)
             String relativePath = "/uploads/products/" + uniqueFilename;
-            
+
             System.out.println("� Relative path for database: " + relativePath);
-            
+
             response.put("imageUrl", relativePath); // For both frontend display and database storage
             response.put("message", "Image uploaded successfully");
 
