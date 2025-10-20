@@ -527,18 +527,31 @@ const UserOrders = () => {
                         {order.imageUrls && order.imageUrls.length > 0 ? (
                           order.imageUrls
                             .slice(0, 3)
-                            .map((img, idx) => (
-                              <img
-                                key={idx}
-                                src={
-                                  img.startsWith("/uploads/")
-                                    ? `${API_URL}${img}`
-                                    : img
-                                }
-                                alt="Reference"
-                                className="w-12 h-12 rounded-lg object-cover border border-[#FFD95A]"
-                              />
-                            ))
+                            .map((img, idx) => {
+                              // Handle both clean relative paths and legacy full Windows paths
+                              let imageSrc = img;
+                              if (img.includes('\\')) {
+                                // Legacy: full Windows path like C:\Users\aaa\Desktop\ArtAura\client\public\uploads\filename.jpg
+                                const filename = img.split('\\').pop();
+                                imageSrc = `/uploads/${filename}`;
+                              } else if (img.startsWith("/uploads/")) {
+                                // New: clean relative path like /uploads/filename.jpg
+                                imageSrc = img;
+                              }
+                              
+                              return (
+                                <img
+                                  key={idx}
+                                  src={imageSrc}
+                                  alt="Reference"
+                                  className="w-12 h-12 rounded-lg object-cover border border-[#FFD95A]"
+                                  onError={(e) => {
+                                    console.error(`Failed to load image: ${imageSrc}`);
+                                    e.target.style.display = 'none';
+                                  }}
+                                />
+                              );
+                            })
                         ) : (
                           <div className="w-12 h-12 rounded-lg bg-[#FFF5E1] border border-[#FFD95A] flex items-center justify-center text-[#7f5539] text-xs font-medium">
                             No Images

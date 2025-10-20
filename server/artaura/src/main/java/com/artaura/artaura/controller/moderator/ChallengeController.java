@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.artaura.artaura.dto.buyer.ChallengeSubmissionDTO;
 import com.artaura.artaura.dto.moderator.ChallengeDTO;
 import com.artaura.artaura.dto.moderator.ChallengeListDTO;
 import com.artaura.artaura.service.moderator.ChallengeService;
@@ -66,6 +67,26 @@ public class ChallengeController {
         return ResponseEntity.ok(challenges);
     }
 
+    @GetMapping("/completed")
+    public ResponseEntity<List<ChallengeListDTO>> getCompletedChallenges(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        try {
+            // Validate JWT token if provided (optional for public access)
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                String token = authHeader.substring(7);
+                jwtUtil.extractUserId(token); // Validate token
+            }
+            
+            List<ChallengeListDTO> challenges = challengeService.getCompletedChallenges();
+            System.out.println("Returning " + challenges.size() + " completed challenges");
+            return ResponseEntity.ok(challenges);
+        } catch (Exception e) {
+            System.err.println("Error fetching completed challenges: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(null);
+        }
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteChallenge(@PathVariable int id) {
         challengeService.deleteChallenge(id);
@@ -89,5 +110,82 @@ public class ChallengeController {
         challengeDTO.setId(id);
         challengeService.updateChallenge(challengeDTO, moderatorId != null ? moderatorId.toString() : null);
         return ResponseEntity.ok("Challenge updated successfully");
+    }
+
+    /**
+     * Update sponsorship status for a challenge
+     * When sponsorship becomes 'active', draft challenges are automatically published
+     */
+    @PutMapping("/{id}/sponsorship")
+    public ResponseEntity<?> updateSponsorshipStatus(
+            @PathVariable int id,
+            @RequestBody java.util.Map<String, String> request,
+            @RequestHeader("Authorization") String authHeader) {
+        try {
+            String token = authHeader.replace("Bearer ", "");
+            Long moderatorId = jwtUtil.extractUserId(token);
+            String role = jwtUtil.extractRole(token);
+            
+            // Verify user has moderator or admin role
+            if (!"moderator".equals(role) && !"admin".equals(role)) {
+                return ResponseEntity.status(403).body("Only moderators and admins can update sponsorship status");
+            }
+
+            String sponsorshipStatus = request.get("sponsorship");
+            if (sponsorshipStatus == null || sponsorshipStatus.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("Sponsorship status is required");
+            }
+
+            // Validate sponsorship status (should be: none, pending, or active)
+            if (!sponsorshipStatus.matches("(?i)(none|pending|active)")) {
+                return ResponseEntity.badRequest().body("Invalid sponsorship status. Must be: none, pending, or active");
+            }
+
+            challengeService.updateSponsorshipStatus(id, sponsorshipStatus.toLowerCase());
+            
+            if ("active".equalsIgnoreCase(sponsorshipStatus)) {
+                return ResponseEntity.ok("Sponsorship activated! Draft challenge has been automatically published.");
+            }
+            
+            return ResponseEntity.ok("Sponsorship status updated to: " + sponsorshipStatus);
+        } catch (Exception e) {
+            System.err.println("Error updating sponsorship status: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Error updating sponsorship: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Get submissions for a challenge with marks calculated and winners sorted
+     * Formula: MAX(0, (Likes × 10) - (Dislikes × 5))
+     * Returns submissions sorted by:
+     *   1. Marks (highest first)
+     *   2. Likes count (highest first) - tiebreaker when marks are equal
+     *   3. Submission date (earliest first) - final tiebreaker
+     * Top 3 submissions get positions 1, 2, 3
+     */
+    @GetMapping("/{challengeId}/winners")
+    public ResponseEntity<List<ChallengeSubmissionDTO>> getChallengeWinners(
+            @PathVariable Integer challengeId,
+            @RequestHeader("Authorization") String authHeader) {
+        try {
+            // Validate JWT token
+            String token = authHeader.startsWith("Bearer ") ? authHeader.substring(7) : authHeader;
+            Long userId = jwtUtil.extractUserId(token);
+            String role = jwtUtil.extractRole(token);
+            
+            // Verify user has moderator role
+            if (!"moderator".equals(role)) {
+                return ResponseEntity.status(403).build();
+            }
+
+            List<ChallengeSubmissionDTO> submissions = challengeService.getWinners(challengeId);
+            return ResponseEntity.ok(submissions);
+
+        } catch (Exception e) {
+            System.err.println("Error in getChallengeWinners: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(null);
+        }
     }
 }

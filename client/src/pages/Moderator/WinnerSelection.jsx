@@ -1,355 +1,217 @@
 import axios from 'axios';
-import { AlertCircle, Award, Calculator, CheckCircle, Clock, Crown, Eye, Heart, Medal, Megaphone, MessageCircle, Search, Send, Shield, Trophy, Users, XCircle } from 'lucide-react';
+import { Check, Copy, Gift, Mail, Phone, Send, Shield, Store, ThumbsDown, ThumbsUp, Trophy, Users, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const WinnerSelection = () => {
   const navigate = useNavigate();
-  const [selectedChallenge, setSelectedChallenge] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [challengeSearchTerm, setChallengeSearchTerm] = useState(''); // New: for filtering completed challenges
-  const [sortBy, setSortBy] = useState('totalScore');
-  const [showScoreBreakdown, setShowScoreBreakdown] = useState(null);
   
-  // State for fetching challenges from database
-  const [challenges, setChallenges] = useState([]);
+  // State for fetching challenges with winners from database
+  const [challengesWithWinners, setChallengesWithWinners] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [copiedCode, setCopiedCode] = useState(null); // Track which code was copied
   
-  // State for publishing winners
-  const [isPublishing, setIsPublishing] = useState(false);
-  const [publishSuccess, setPublishSuccess] = useState(false);
-  const [publishError, setPublishError] = useState(null);
+  // State for rewards modal
+  const [showRewardsModal, setShowRewardsModal] = useState(false);
+  const [selectedChallengeForRewards, setSelectedChallengeForRewards] = useState(null);
+  const [rewardsData, setRewardsData] = useState([]);
+  const [loadingRewards, setLoadingRewards] = useState(false);
 
-  // Fetch challenges from backend
+  // Fetch completed challenges and their winners on component mount
   useEffect(() => {
-    const fetchChallenges = async () => {
+    const fetchCompletedChallengesWithWinners = async () => {
+      setLoading(true);
+      setError(null);
       try {
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/challenges`);
-        setChallenges(response.data);
-        // Debug: show how many challenges were fetched
-        console.debug('Fetched challenges from API:', Array.isArray(response.data) ? response.data.length : 0);
-        console.debug('Raw challenges data:', response.data);
-        // Log each challenge's status
-        if (Array.isArray(response.data)) {
-          response.data.forEach((ch, idx) => {
-            console.debug(`Challenge ${idx + 1}: "${ch.title || ch.name}" - Status: "${ch.status}"`);
-          });
-        }
+        const token = localStorage.getItem('token');
+        
+        // Fetch completed challenges
+        const challengesResponse = await axios.get(
+          `${import.meta.env.VITE_API_URL}/api/challenges/completed`,
+          {
+            headers: token ? {
+              'Authorization': `Bearer ${token}`
+            } : {}
+          }
+        );
+        
+        console.log('✅ Fetched completed challenges:', challengesResponse.data.length);
+        
+        // Fetch winners and sponsorship status for each challenge
+        const challengesWithWinnersData = await Promise.all(
+          challengesResponse.data.map(async (challenge) => {
+            try {
+              // Fetch winners
+              const winnersResponse = await axios.get(
+                `${import.meta.env.VITE_API_URL}/api/challenges/${challenge.id}/winners`,
+                {
+                  headers: token ? {
+                    'Authorization': `Bearer ${token}`
+                  } : {}
+                }
+              );
+              
+              // Fetch sponsorship offers to check if any rewards are sent
+              let hasValidRewards = false;
+              try {
+                const sponsorshipsResponse = await axios.get(
+                  `${import.meta.env.VITE_API_URL}/api/sponsorships/offers/challenge/${challenge.id}`,
+                  {
+                    headers: token ? {
+                      'Authorization': `Bearer ${token}`
+                    } : {}
+                  }
+                );
+                // Check if any sponsorship has status 'valid'
+                hasValidRewards = sponsorshipsResponse.data?.some(reward => reward.status === 'valid') || false;
+              } catch (err) {
+                console.log(`No sponsorships for challenge ${challenge.id}`);
+              }
+              
+              return {
+                ...challenge,
+                winners: winnersResponse.data || [],
+                hasValidRewards: hasValidRewards
+              };
+            } catch (err) {
+              console.error(`Error fetching winners for challenge ${challenge.id}:`, err);
+              return {
+                ...challenge,
+                winners: [],
+                hasValidRewards: false
+              };
+            }
+          })
+        );
+        
+        setChallengesWithWinners(challengesWithWinnersData);
+        console.log('✅ Fetched challenges with winners:', challengesWithWinnersData.length);
       } catch (err) {
-        console.error('Error fetching challenges:', err);
-        console.error('Error details:', err.response?.data || err.message);
-        // Silently fail - will use fallback mock data
+        console.error('❌ Error fetching completed challenges:', err);
+        setError('Failed to load completed challenges');
+      } finally {
+        setLoading(false);
       }
     };
-    fetchChallenges();
+    
+    fetchCompletedChallengesWithWinners();
   }, []);
 
-  // Function to publish winners to main feed
-  const handlePublishWinners = async () => {
-    if (!selectedChallenge) {
-      setPublishError('Please select a challenge first');
-      return;
-    }
-
-    const challenge = pastChallenges.find(c => String(c.id) === String(selectedChallenge));
-    if (!challenge) {
-      setPublishError('Challenge not found');
-      return;
-    }
-
-    setIsPublishing(true);
-    setPublishError(null);
-    setPublishSuccess(false);
-
+  // Function to copy discount code to clipboard
+  const copyDiscountCode = async (code, challengeId) => {
     try {
-      // Prepare the data to publish
-      const publishData = {
-        challengeId: challenge.id,
-        challengeName: challenge.name,
-        challengeDescription: challenge.description,
-        completedDate: challenge.completedDate,
-        winners: challenge.winners,
-        scoringCriteria: challenge.scoringCriteria,
-        category: challenge.category,
-        rewards: challenge.rewards
-      };
-
-      console.log('Publishing winners to main feed:', publishData);
-
-      // API call to publish winners (uncomment when backend is ready)
-      // const response = await axios.post(
-      //   `${import.meta.env.VITE_API_URL}/api/challenges/${challenge.id}/publish-winners`,
-      //   publishData,
-      //   {
-      //     headers: { 
-      //       'Authorization': `Bearer ${localStorage.getItem('token')}` 
-      //     }
-      //   }
-      // );
-
-      // Simulate API call with dummy data
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      setPublishSuccess(true);
-      setIsPublishing(false);
-
-      // Show success message for 3 seconds
-      setTimeout(() => {
-        setPublishSuccess(false);
-      }, 3000);
-
-      console.log('Winners published successfully!');
+      await navigator.clipboard.writeText(code);
+      setCopiedCode(challengeId);
+      setTimeout(() => setCopiedCode(null), 2000); // Reset after 2 seconds
     } catch (err) {
-      console.error('Error publishing winners:', err);
-      setPublishError(err.response?.data?.message || 'Failed to publish winners. Please try again.');
-      setIsPublishing(false);
+      console.error('Failed to copy:', err);
+      alert('Failed to copy code');
     }
   };
 
-  // Mock scoring criteria for the selected challenge
-  const scoringCriteria = {
-    likesWeight: 25,
-    commentsWeight: 15,
-    buyerPreferenceWeight: 30,
-    expertPanelWeight: 30
-  };
-
-  const submissions = [
-    {
-      id: 1,
-      title: 'Modern E-commerce Dashboard',
-      participant: 'Nadeesha Perera',
-      submissionDate: '2024-02-10',
-      imageUrl: 'https://images.pexels.com/photos/196644/pexels-photo-196644.jpeg?auto=compress&cs=tinysrgb&w=400',
-      description: 'A sleek and intuitive e-commerce dashboard with advanced analytics.',
-      tags: ['UI/UX', 'Dashboard', 'E-commerce'],
-      // Raw metrics
-      likes: 156,
-      comments: 23,
-      buyerPreference: 8.5, // out of 10
-      expertScore: 9.2, // out of 10
-      // Calculated scores
-      likesScore: 85, // normalized score out of 100
-      commentsScore: 78,
-      buyerScore: 85,
-      expertScoreNormalized: 92,
-      totalScore: 86.25,
-      position: 2
-    },
-    {
-      id: 2,
-      title: 'Creative Portfolio Website',
-      participant: 'Kasun Fernando',
-      submissionDate: '2024-02-08',
-      imageUrl: 'https://images.pexels.com/photos/267350/pexels-photo-267350.jpeg?auto=compress&cs=tinysrgb&w=400',
-      description: 'Innovative portfolio design with stunning animations.',
-      tags: ['Portfolio', 'Animation', 'Responsive'],
-      likes: 203,
-      comments: 31,
-      buyerPreference: 9.1,
-      expertScore: 9.5,
-      likesScore: 100,
-      commentsScore: 100,
-      buyerScore: 91,
-      expertScoreNormalized: 95,
-      totalScore: 95.15,
-      position: 1
-    },
-    {
-      id: 3,
-      title: 'Healthcare App Interface',
-      participant: 'Tharushi Silva',
-      submissionDate: '2024-02-05',
-      imageUrl: 'https://images.pexels.com/photos/1194420/pexels-photo-1194420.jpeg?auto=compress&cs=tinysrgb&w=400',
-      description: 'Clean and accessible healthcare application interface.',
-      tags: ['Healthcare', 'Accessibility', 'Mobile'],
-      likes: 189,
-      comments: 27,
-      buyerPreference: 8.2,
-      expertScore: 8.8,
-      likesScore: 93,
-      commentsScore: 87,
-      buyerScore: 82,
-      expertScoreNormalized: 88,
-      totalScore: 87.45,
-      position: 3
-    },
-    {
-      id: 4,
-      title: 'Financial Dashboard',
-      participant: 'Amila Jayawardena',
-      submissionDate: '2024-02-12',
-      imageUrl: 'https://images.pexels.com/photos/1108572/pexels-photo-1108572.jpeg?auto=compress&cs=tinysrgb&w=400',
-      description: 'Comprehensive financial dashboard with data visualization.',
-      tags: ['Finance', 'Dashboard', 'Data Viz'],
-      likes: 167,
-      comments: 19,
-      buyerPreference: 7.8,
-      expertScore: 8.5,
-      likesScore: 82,
-      commentsScore: 61,
-      buyerScore: 78,
-      expertScoreNormalized: 85,
-      totalScore: 79.95,
-      position: null
-    }
-  ];
-
-  const selectedChallengeData = challenges.find(c => c.id === selectedChallenge);
-
-  const getPositionIcon = (position) => {
-    switch (position) {
-      case 1:
-        return <Crown className="h-5 w-5 text-yellow-500" />;
-      case 2:
-        return <Medal className="h-5 w-5 text-gray-400" />;
-      case 3:
-        return <Award className="h-5 w-5 text-amber-600" />;
-      default:
-        return null;
-    }
-  };
-
-  const getPositionColor = (position) => {
-    switch (position) {
-      case 1:
-        return 'bg-yellow-100 text-yellow-800 border-yellow-300';
-      case 2:
-        return 'bg-gray-100 text-gray-800 border-gray-300';
-      case 3:
-        return 'bg-amber-100 text-amber-800 border-amber-300';
-      default:
-        return 'bg-white border-gray-200';
-    }
-  };
-
-  const calculateWeightedScore = (submission) => {
-    const { likesScore, commentsScore, buyerScore, expertScoreNormalized } = submission;
-    const { likesWeight, commentsWeight, buyerPreferenceWeight, expertPanelWeight } = scoringCriteria;
+  // Function to open rewards modal and fetch sponsorship data
+  const openRewardsModal = async (challenge) => {
+    console.log('🔍 Opening rewards modal for challenge:', challenge.id, challenge.title);
+    console.log('🔍 Full challenge object:', challenge);
+    setSelectedChallengeForRewards(challenge);
+    setShowRewardsModal(true);
+    setLoadingRewards(true);
+    setRewardsData([]);
     
-    return (
-      (likesScore * likesWeight / 100) +
-      (commentsScore * commentsWeight / 100) +
-      (buyerScore * buyerPreferenceWeight / 100) +
-      (expertScoreNormalized * expertPanelWeight / 100)
-    ).toFixed(2);
-  };
-
-  const filteredSubmissions = submissions
-    .filter(submission => 
-      submission.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      submission.participant.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-    .sort((a, b) => {
-      switch (sortBy) {
-        case 'totalScore':
-          return b.totalScore - a.totalScore;
-        case 'likes':
-          return b.likes - a.likes;
-        case 'expertScore':
-          return b.expertScore - a.expertScore;
-        case 'date':
-          return new Date(b.submissionDate) - new Date(a.submissionDate);
-        default:
-          return 0;
-      }
-    });
-
-  // Use the same previousChallenges data/structure as ModeratorDashboard
-  // Filter completed challenges from the database
-  // Only show challenges that are EXPLICITLY marked as 'completed' in database status
-  
-  // Generate dummy winners for demonstration
-  const generateDummyWinners = () => {
-    const artistNames = [
-      'Kasun Perera', 'Nadeeka Silva', 'Tharindu Fernando', 'Amaya Jayawardena',
-      'Dilshan Rajapaksa', 'Sachini Bandara', 'Ravindu Wijesekara', 'Kavitha Gunaratne',
-      'Chamod Wickramasinghe', 'Nimali Dissanayake', 'Isuru Kumara', 'Sanduni Mendis'
-    ];
-    const artworkTitles = [
-      'Digital Dreams', 'Abstract Harmony', 'Vibrant Expressions', 'Modern Fusion',
-      'Creative Vision', 'Artistic Journey', 'Color Symphony', 'Contemporary Art',
-      'Visual Poetry', 'Expressive Canvas', 'Bold Strokes', 'Artistic Essence'
-    ];
-    
-    // Generate 3 random winners
-    const winners = [];
-    const usedIndices = new Set();
-    
-    for (let i = 1; i <= 3; i++) {
-      let randomIndex;
-      do {
-        randomIndex = Math.floor(Math.random() * artistNames.length);
-      } while (usedIndices.has(randomIndex));
+    try {
+      const token = localStorage.getItem('token');
+      const url = `${import.meta.env.VITE_API_URL}/api/sponsorships/offers/challenge/${challenge.id}`;
+      console.log('🔄 Fetching from URL:', url);
+      console.log('🔑 Token present:', !!token);
       
-      usedIndices.add(randomIndex);
-      
-      winners.push({
-        position: i,
-        name: artistNames[randomIndex],
-        title: artworkTitles[randomIndex]
+      const response = await axios.get(url, {
+        headers: token ? {
+          'Authorization': `Bearer ${token}`
+        } : {}
       });
+      
+      console.log('✅ Full API response:', response);
+      console.log('✅ Response status:', response.status);
+      console.log('✅ Response data:', response.data);
+      console.log('✅ Response data type:', typeof response.data);
+      console.log('✅ Is array:', Array.isArray(response.data));
+      console.log('📊 Number of rewards:', response.data?.length || 0);
+      
+      if (response.data && response.data.length > 0) {
+        console.log('📋 First reward details:', response.data[0]);
+        console.log('📋 All rewards:', JSON.stringify(response.data, null, 2));
+      }
+      
+      setRewardsData(response.data || []);
+      console.log('✅ Rewards data set in state');
+    } catch (err) {
+      console.error('❌ Error fetching rewards:', err);
+      console.error('❌ Error response:', err.response?.data);
+      console.error('❌ Error status:', err.response?.status);
+      console.error('❌ Error message:', err.message);
+      console.error('❌ Full error:', JSON.stringify(err, null, 2));
+      setRewardsData([]);
+    } finally {
+      setLoadingRewards(false);
+      console.log('✅ Loading complete');
     }
-    
-    return winners;
   };
-  
-  // Filter only challenges that are EXPLICITLY marked as 'completed' in database
-  const completedChallenges = challenges.filter(challenge => {
-    // Accept several possible status spellings (case-insensitive) coming from DB
-    const status = String(challenge.status || '').toLowerCase();
-    const isCompleted = status === 'completed' || status === 'complete' || status === 'finished' || status === 'done';
-    console.debug(`Challenge "${challenge.title || challenge.name}" status: "${challenge.status}" → isCompleted: ${isCompleted}`);
-    return isCompleted;
-  }).map(challenge => {
-    // Be defensive with field names coming from different API versions
-    const completedDate = challenge.deadlineDateTime || challenge.completedDate || challenge.deadline || challenge.deadlineDate;
-    const title = challenge.title || challenge.name || challenge.challengeName;
-    const publishDateTime = challenge.publishDateTime || challenge.publishedAt || challenge.publishDate;
-    const participants = challenge.participants || challenge.participantCount || challenge.maxParticipants || 0;
-    const submissionsCount = challenge.submissions || challenge.submissionCount || 0;
 
-    return {
-      id: challenge.id,
-      name: title || `Challenge ${challenge.id}`,
-      description: challenge.description || challenge.desc || 'No description available',
-      category: challenge.category || challenge.type || null,
-      deadline: completedDate,
-      completedDate: completedDate,
-      publishDateTime: publishDateTime,
-      maxParticipants: challenge.maxParticipants || participants,
-      rewards: challenge.rewards || challenge.prize || null,
-      requestSponsorship: challenge.requestSponsorship || false,
-      status: 'completed',
-      moderatorId: challenge.moderatorId || (challenge.moderator && challenge.moderator.id) || null,
-      participants: participants,
-      submissions: submissionsCount,
-      scoringCriteria: challenge.scoringCriteria || challenge.scoring || {
-        likesWeight: 34,
-        commentsWeight: 33,
-        shareWeight: 33
-      },
-      winners: challenge.winners || generateDummyWinners()
-    };
-  }).sort((a, b) => new Date(b.completedDate) - new Date(a.completedDate));
+  // Function to close rewards modal
+  const closeRewardsModal = () => {
+    setShowRewardsModal(false);
+    setSelectedChallengeForRewards(null);
+    setRewardsData([]);
+  };
 
-  // Debug: log how many completed challenges we have
-  console.debug('Completed challenges count:', completedChallenges.length);
-  console.debug('Completed challenges:', completedChallenges.map(c => ({id: c.id, name: c.name, status: c.status})));
-
-  // ONLY use database challenges - no mock/dummy data
-  // This ensures dropdown shows actual challenge names from the challenges table
-  const pastChallenges = completedChallenges;
-
-  // Filter challenges based on search term
-  const filteredPastChallenges = pastChallenges.filter(challenge => {
-    if (!challengeSearchTerm) return true; // Show all if no search term
-    const searchLower = challengeSearchTerm.toLowerCase();
-    return (
-      challenge.name?.toLowerCase().includes(searchLower) ||
-      challenge.description?.toLowerCase().includes(searchLower) ||
-      challenge.category?.toLowerCase().includes(searchLower)
-    );
-  });
+  // Function to send reward to winner (update status to 'valid')
+  const sendRewardToWinner = async (offerId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.put(
+        `${import.meta.env.VITE_API_URL}/api/sponsorships/offers/${offerId}/status`,
+        { status: 'valid' },
+        {
+          headers: token ? {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          } : {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      console.log('✅ Reward sent successfully:', response.data);
+      
+      // Refresh the rewards data in modal
+      if (selectedChallengeForRewards) {
+        const updatedRewards = await axios.get(
+          `${import.meta.env.VITE_API_URL}/api/sponsorships/offers/challenge/${selectedChallengeForRewards.id}`,
+          {
+            headers: token ? {
+              'Authorization': `Bearer ${token}`
+            } : {}
+          }
+        );
+        setRewardsData(updatedRewards.data || []);
+        
+        // Update the main challenges list to reflect the button change
+        setChallengesWithWinners(prevChallenges => 
+          prevChallenges.map(challenge => 
+            challenge.id === selectedChallengeForRewards.id 
+              ? { ...challenge, hasValidRewards: true }
+              : challenge
+          )
+        );
+      }
+      
+      alert('Reward sent to winner successfully!');
+    } catch (err) {
+      console.error('❌ Error sending reward:', err);
+      alert('Failed to send reward: ' + (err.response?.data?.message || err.message));
+    }
+  };
 
   return (
     <>
@@ -421,634 +283,509 @@ const WinnerSelection = () => {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
           <div className="space-y-6">
-            {/* View Winners and Criteria Details Section */}
+            {/* View Winners Section */}
             <div className="rounded-lg shadow-sm border p-6" style={{backgroundColor: '#FFF5E1'}}>
               <div className="flex items-center gap-3 mb-6">
                 <Trophy className="h-6 w-6" style={{color: '#D87C5A'}} />
                 <div>
-                  <h2 className="text-2xl font-extrabold tracking-tight" style={{color: '#5D3A00'}}>View Winners and Criteria Details</h2>
-                  <p className="text-sm font-light italic" style={{color: '#7f5539'}}>Select a completed challenge to view its winners and scoring criteria</p>
+                  <h2 className="text-2xl font-extrabold tracking-tight" style={{color: '#5D3A00'}}>Completed Challenges Winners</h2>
+                  <p className="text-sm font-light italic" style={{color: '#7f5539'}}>View winners for all completed challenges</p>
                 </div>
               </div>
 
-              {/* Challenge Selection Dropdown */}
-              <div className="mb-6">
-                <label className="block text-xs font-bold uppercase tracking-widest mb-3" style={{color: '#362625'}}>
-                  Select Completed Challenge (Sorted by Completion Date)
-                </label>
-                
-                {/* Search Input for Filtering Challenges */}
-                <div className="relative mb-4">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                  <input
-                    type="text"
-                    placeholder="Search completed challenges by name, description, or category..."
-                    value={challengeSearchTerm}
-                    onChange={(e) => setChallengeSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent font-medium text-gray-700 placeholder:font-normal placeholder:text-gray-400"
-                    style={{borderColor: '#D87C5A', backgroundColor: 'white'}}
-                  />
-                  {challengeSearchTerm && (
-                    <button
-                      onClick={() => setChallengeSearchTerm('')}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                      title="Clear search"
-                    >
-                      ✕
-                    </button>
-                  )}
+              {/* Loading State */}
+              {loading && (
+                <div className="text-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{borderColor: '#D87C5A'}}></div>
+                  <p className="text-sm font-medium" style={{color: '#7f5539'}}>Loading challenges...</p>
                 </div>
+              )}
 
-                {/* Dropdown with filtered challenges */}
-                <select
-                  value={selectedChallenge}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    // Ensure the selected value is one of the completed challenges
-                    if (val === '') {
-                      setSelectedChallenge('');
-                      return;
-                    }
-                    const exists = filteredPastChallenges.find(c => String(c.id) === String(val));
-                    if (!exists) {
-                      // Guard: do not allow selecting non-completed challenges
-                      // Provide a friendly message and keep selection empty
-                      alert('Please select a challenge that is marked as completed.');
-                      setSelectedChallenge('');
-                      return;
-                    }
-                    setSelectedChallenge(val);
-                  }}
-                  className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent text-lg font-semibold"
-                  style={{borderColor: '#D87C5A', backgroundColor: 'white', color: '#362625'}}
-                >
-                  <option value="">
-                    {filteredPastChallenges.length === 0 && challengeSearchTerm 
-                      ? `No challenges found for "${challengeSearchTerm}"` 
-                      : 'Select a challenge...'}
-                  </option>
-                  {filteredPastChallenges.map(challenge => (
-                    <option key={challenge.id} value={challenge.id}>
-                      {challenge.name} - Completed: {new Date(challenge.completedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                    </option>
-                  ))}
-                </select>
-                
-                {/* Show count of filtered results */}
-                {challengeSearchTerm && (
-                  <p className="mt-2 text-sm" style={{color: '#7f5539'}}>
-                    Showing {filteredPastChallenges.length} of {pastChallenges.length} completed challenge{pastChallenges.length !== 1 ? 's' : ''}
+              {/* Error State */}
+              {error && (
+                <div className="text-center py-12">
+                  <p className="text-sm font-medium" style={{color: '#D87C5A'}}>{error}</p>
+                </div>
+              )}
+
+              {/* No Challenges State */}
+              {!loading && !error && challengesWithWinners.length === 0 && (
+                <div className="text-center py-12">
+                  <Trophy className="h-16 w-16 mx-auto mb-4" style={{color: '#D87C5A', opacity: 0.4}} />
+                  <h3 className="text-lg font-bold mb-2" style={{color: '#362625'}}>No Completed Challenges Found</h3>
+                  <p className="text-sm font-medium" style={{color: '#7f5539'}}>
+                    There are no completed challenges in the database yet.
                   </p>
-                )}
-              </div>
+                </div>
+              )}
 
-              {/* Display Winners for Selected Challenge */}
-              {selectedChallenge && pastChallenges.find(c => String(c.id) === String(selectedChallenge)) && (
-                <div className="space-y-4">
-                  {(() => {
-                    const challenge = pastChallenges.find(c => String(c.id) === String(selectedChallenge));
-                    // Debug: log selected challenge data
-                    console.debug('Selected challenge:', challenge);
-                    console.debug('Scoring criteria:', challenge?.scoringCriteria);
-                    console.debug('Winners:', challenge?.winners);
-                    return (
-                      <>
-                        {/* Challenge Info */}
-                        <div className="p-4 rounded-lg" style={{backgroundColor: '#f4e8dc'}}>
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                              <h4 className="font-extrabold text-xl" style={{color: '#362625'}}>{challenge.name}</h4>
-                              <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800">
-                                ✓ Completed
-                              </span>
-                            </div>
-                            {challenge.category && (
-                              <span className="px-3 py-1 rounded-full text-xs font-bold" style={{backgroundColor: '#FFD95A', color: '#5D3A00'}}>
-                                {challenge.category}
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-sm font-medium mb-4" style={{color: '#7f5539'}}>{challenge.description}</p>
-                          
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm mb-3">
-                            <div>
-                              <span className="font-bold" style={{color: '#362625'}}>Completed:</span>
-                              <span className="ml-1 font-medium" style={{color: '#7f5539'}}>
-                                {new Date(challenge.completedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="font-bold" style={{color: '#362625'}}>Deadline:</span>
-                              <span className="ml-1 font-medium" style={{color: '#7f5539'}}>
-                                {new Date(challenge.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="font-bold" style={{color: '#362625'}}>Max Participants:</span>
-                              <span className="ml-1 font-medium" style={{color: '#7f5539'}}>{challenge.maxParticipants || 'Unlimited'}</span>
-                            </div>
-                          </div>
-
-                          {challenge.rewards && (
-                            <div className="p-3 rounded-lg mb-3" style={{backgroundColor: '#fff9e6', borderLeft: '4px solid #FFD700'}}>
-                              <div className="flex items-center gap-2">
-                                <Trophy className="h-4 w-4" style={{color: '#FFD700'}} />
-                                <span className="font-bold text-xs uppercase tracking-wider" style={{color: '#362625'}}>Rewards:</span>
-                              </div>
-                              <p className="text-sm font-medium mt-1" style={{color: '#7f5539'}}>{challenge.rewards}</p>
-                            </div>
-                          )}
-
-                          {challenge.requestSponsorship && (
-                            <div className="flex items-center gap-2 text-xs">
-                              <span className="px-2 py-1 rounded" style={{backgroundColor: '#e3f2fd', color: '#1976d2'}}>
-                                🤝 Sponsorship Requested
-                              </span>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Winners Display */}
-                        <div className="bg-white rounded-lg p-6 border-2" style={{borderColor: '#D87C5A'}}>
-                          <h3 className="text-xl font-extrabold tracking-tight mb-4" style={{color: '#5D3A00'}}>
-                            🏆 Challenge Winners
+              {/* Challenges List */}
+              {!loading && !error && challengesWithWinners.length > 0 && (
+                <div className="space-y-8">
+                  {challengesWithWinners.map((challenge) => (
+                    <div key={challenge.id} className="border rounded-lg p-6" style={{backgroundColor: 'white', borderColor: '#D87C5A'}}>
+                      {/* Challenge Header */}
+                      <div className="mb-4">
+                        <div className="flex justify-between items-start mb-2">
+                          <h3 className="text-xl font-bold" style={{color: '#362625'}}>
+                            {challenge.title}
                           </h3>
-                          {challenge.winners && challenge.winners.length > 0 ? (
-                            <div className="space-y-3">
-                              {challenge.winners.map((winner) => (
-                                <div 
-                                  key={winner.position}
-                                  className="flex items-center justify-between p-4 rounded-lg border"
-                                  style={{
-                                    backgroundColor: winner.position === 1 ? '#FFF9E6' : 
-                                                   winner.position === 2 ? '#F5F5F5' : 
-                                                   '#FFF5E1',
-                                    borderColor: winner.position === 1 ? '#FFD700' : 
-                                               winner.position === 2 ? '#C0C0C0' : 
-                                               '#CD7F32'
-                                  }}
-                                >
-                                  <div className="flex items-center gap-4">
-                                    <div 
-                                      className="flex items-center justify-center rounded-full w-12 h-12 font-black text-white"
-                                      style={{
-                                        backgroundColor: winner.position === 1 ? '#FFD700' : 
-                                                       winner.position === 2 ? '#C0C0C0' : 
-                                                       '#CD7F32'
-                                      }}
-                                    >
-                                      {winner.position === 1 ? <Crown size={24} /> : 
-                                       winner.position === 2 ? <Medal size={24} /> : 
-                                       <Award size={24} />}
-                                    </div>
-                                    <div>
-                                      <div className="font-bold text-lg" style={{color: '#362625'}}>
-                                        {winner.position === 1 ? '🥇' : winner.position === 2 ? '🥈' : '🥉'} {winner.name}
-                                      </div>
-                                      <div className="text-sm font-medium" style={{color: '#7f5539'}}>
-                                        {winner.title}
-                                      </div>
-                                    </div>
-                                  </div>
-                                  <div className="text-right">
-                                    <div className="text-xs font-bold uppercase tracking-wider" style={{color: '#D87C5A'}}>
-                                      {winner.position === 1 ? '1st Place' : 
-                                       winner.position === 2 ? '2nd Place' : 
-                                       '3rd Place'}
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <div className="text-center py-8">
-                              <Trophy className="h-16 w-16 mx-auto mb-3" style={{color: '#D87C5A', opacity: 0.5}} />
-                              <p className="text-sm font-medium" style={{color: '#7f5539'}}>
-                                Winners will be calculated based on submissions and scoring criteria
-                              </p>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Scoring Criteria Display */}
-                        <div className="bg-white rounded-lg p-6 border" style={{borderColor: '#D87C5A'}}>
-                          <h3 className="text-xl font-extrabold tracking-tight mb-4" style={{color: '#5D3A00'}}>
-                            📊 Scoring Criteria
-                          </h3>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="p-4 rounded-lg" style={{backgroundColor: '#FFF5E1'}}>
-                              <div className="flex items-center justify-between mb-2">
-                                <span className="text-xs font-bold uppercase tracking-widest" style={{color: '#362625'}}>
-                                  Likes Weight
-                                </span>
-                                <Heart className="h-5 w-5" style={{color: '#D87C5A'}} />
-                              </div>
-                              <div className="text-3xl font-black" style={{color: '#5D3A00'}}>
-                                {challenge.scoringCriteria?.likesWeight || 34}%
-                              </div>
-                            </div>
-                            <div className="p-4 rounded-lg" style={{backgroundColor: '#FFF5E1'}}>
-                              <div className="flex items-center justify-between mb-2">
-                                <span className="text-xs font-bold uppercase tracking-widest" style={{color: '#362625'}}>
-                                  Comments Weight
-                                </span>
-                                <MessageCircle className="h-5 w-5" style={{color: '#D87C5A'}} />
-                              </div>
-                              <div className="text-3xl font-black" style={{color: '#5D3A00'}}>
-                                {challenge.scoringCriteria?.commentsWeight || 33}%
-                              </div>
-                            </div>
-                            <div className="p-4 rounded-lg" style={{backgroundColor: '#FFF5E1'}}>
-                              <div className="flex items-center justify-between mb-2">
-                                <span className="text-xs font-bold uppercase tracking-widest" style={{color: '#362625'}}>
-                                  Share Weight
-                                </span>
-                                <Send className="h-5 w-5" style={{color: '#D87C5A'}} />
-                              </div>
-                              <div className="text-3xl font-black" style={{color: '#5D3A00'}}>
-                                {challenge.scoringCriteria?.shareWeight || 33}%
-                              </div>
-                            </div>
-                          </div>
-                          <div className="mt-4 p-3 rounded-lg" style={{backgroundColor: '#e8f5e9'}}>
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs font-bold uppercase tracking-widest" style={{color: '#2e7d32'}}>
-                                Total Weight:
-                              </span>
-                              <span className="text-lg font-black" style={{color: '#2e7d32'}}>
-                                {(challenge.scoringCriteria?.likesWeight || 34) + 
-                                 (challenge.scoringCriteria?.commentsWeight || 33) + 
-                                 (challenge.scoringCriteria?.shareWeight || 33)}%
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Publish Winners Button */}
-                        <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-6 border-2 border-dashed" style={{borderColor: '#D87C5A'}}>
-                          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                            <div className="flex items-center gap-3">
-                              <div className="p-3 rounded-full" style={{backgroundColor: '#D87C5A'}}>
-                                <Megaphone className="h-6 w-6 text-white" />
-                              </div>
-                              <div>
-                                <h4 className="text-lg font-bold" style={{color: '#5D3A00'}}>
-                                  Publish Winners to Main Feed
-                                </h4>
-                                <p className="text-sm font-medium" style={{color: '#7f5539'}}>
-                                  Share the winners and results with all ArtAura users
-                                </p>
-                              </div>
-                            </div>
+                          {/* Discount Code Button */}
+                          {challenge.discountCode && (
                             <button
-                              onClick={handlePublishWinners}
-                              disabled={isPublishing || !challenge.winners || challenge.winners.length === 0}
-                              className={`px-6 py-3 rounded-lg font-bold text-white transition-all duration-300 flex items-center gap-2 ${
-                                isPublishing || !challenge.winners || challenge.winners.length === 0
-                                  ? 'bg-gray-400 cursor-not-allowed opacity-60'
-                                  : 'bg-gradient-to-r from-[#D87C5A] to-[#c4664a] hover:from-[#c4664a] hover:to-[#D87C5A] shadow-lg hover:shadow-xl transform hover:-translate-y-0.5'
-                              }`}
+                              onClick={() => copyDiscountCode(challenge.discountCode, challenge.id)}
+                              className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all"
+                              style={{
+                                backgroundColor: copiedCode === challenge.id ? '#4CAF50' : '#D87C5A',
+                                color: 'white',
+                                border: 'none',
+                                cursor: 'pointer'
+                              }}
                             >
-                              {isPublishing ? (
+                              {copiedCode === challenge.id ? (
                                 <>
-                                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                                  Publishing...
-                                </>
-                              ) : publishSuccess ? (
-                                <>
-                                  <CheckCircle className="h-5 w-5" />
-                                  Published!
+                                  <Check size={16} />
+                                  <span>Copied!</span>
                                 </>
                               ) : (
                                 <>
-                                  <Megaphone className="h-5 w-5" />
-                                  Publish Winners
+                                  <Copy size={16} />
+                                  <span className="font-mono">{challenge.discountCode}</span>
+                                </>
+                              )}
+                            </button>
+                          )}
+                        </div>
+                        
+                        <div className="flex items-center flex-wrap gap-3 text-sm mb-3" style={{color: '#7f5539'}}>
+                          <span className="flex items-center gap-1">
+                            <Trophy size={14} />
+                            Completed: {new Date(challenge.deadlineDateTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </span>
+                          
+                          <span className="flex items-center gap-1">
+                            <Users size={14} />
+                            {challenge.participantCount || 0} Participants
+                          </span>
+                          
+                          {challenge.category && (
+                            <span className="px-2 py-1 rounded-full text-xs font-medium" style={{backgroundColor: '#FFE4D6', color: '#5D3A00'}}>
+                              {challenge.category}
+                            </span>
+                          )}
+                        </div>
+                        
+                        {challenge.description && (
+                          <p className="mt-2 text-sm" style={{color: '#7f5539'}}>
+                            {challenge.description}
+                          </p>
+                        )}
+
+                        {/* Send Reward to Winner / View Rewards Button */}
+                        <div className="mt-3">
+                          <button
+                            onClick={() => {
+                              console.log('🎯 Button clicked for challenge:', challenge);
+                              console.log('🎯 Challenge ID:', challenge.id);
+                              console.log('🎯 Challenge ID type:', typeof challenge.id);
+                              console.log('🎯 Has valid rewards:', challenge.hasValidRewards);
+                              openRewardsModal(challenge);
+                            }}
+                            className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all hover:shadow-md"
+                            style={{
+                              backgroundColor: challenge.hasValidRewards ? '#4CAF50' : '#D87C5A',
+                              color: 'white',
+                              border: 'none',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            {challenge.hasValidRewards ? (
+                              <>
+                                <Check size={18} />
+                                <span>View Rewards</span>
+                              </>
+                            ) : (
+                              <>
+                                <Gift size={18} />
+                                <span>Send Reward to Winner</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Winners */}
+                      {challenge.winners && challenge.winners.length > 0 ? (
+                        <div className="space-y-3">
+                          <h4 className="text-lg font-bold mb-3" style={{color: '#362625'}}>
+                            🏆 Winners
+                          </h4>
+                          {challenge.winners.map((winner, index) => (
+                            <div 
+                              key={winner.id || index} 
+                              className="p-4 border rounded-lg"
+                              style={{borderColor: '#FFE4D6', backgroundColor: '#FFF5E1'}}
+                            >
+                              <div className="flex items-start gap-4">
+                                {/* Position Badge */}
+                                <div className="flex items-center justify-center w-10 h-10 rounded-full font-bold text-white flex-shrink-0"
+                                  style={{backgroundColor: index === 0 ? '#D4AF37' : index === 1 ? '#C0C0C0' : '#CD7F32'}}>
+                                  {winner.position || index + 1}
+                                </div>
+
+                                {/* Artist Avatar */}
+                                {winner.artistAvatar && (
+                                  <img 
+                                    src={winner.artistAvatar} 
+                                    alt={winner.artistName}
+                                    className="w-12 h-12 rounded-full object-cover flex-shrink-0"
+                                    style={{border: '2px solid #D87C5A'}}
+                                  />
+                                )}
+
+                                {/* Winner Info */}
+                                <div className="flex-1">
+                                  <div className="flex justify-between items-start mb-2">
+                                    <div>
+                                      <p className="font-bold text-lg" style={{color: '#362625'}}>
+                                        {winner.artistName || `Artist ${winner.artistId}`}
+                                      </p>
+                                      {winner.artworkTitle && (
+                                        <p className="text-sm font-medium" style={{color: '#7f5539'}}>
+                                          📷 {winner.artworkTitle}
+                                        </p>
+                                      )}
+                                    </div>
+                                    
+                                    {/* Score */}
+                                    {winner.marks !== undefined && winner.marks !== null && (
+                                      <div className="text-right">
+                                        <p className="font-bold text-2xl" style={{color: '#D87C5A'}}>
+                                          {winner.marks}
+                                        </p>
+                                        <p className="text-xs" style={{color: '#7f5539'}}>points</p>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* Artwork Description */}
+                                  {winner.artworkDescription && (
+                                    <p className="text-sm mb-2" style={{color: '#7f5539'}}>
+                                      {winner.artworkDescription}
+                                    </p>
+                                  )}
+
+                                  {/* Like/Dislike Counts */}
+                                  <div className="flex items-center gap-4 text-sm">
+                                    <span className="flex items-center gap-1" style={{color: '#4CAF50'}}>
+                                      <ThumbsUp size={14} />
+                                      <span className="font-semibold">{winner.likesCount || 0}</span> Likes
+                                    </span>
+                                    <span className="flex items-center gap-1" style={{color: '#F44336'}}>
+                                      <ThumbsDown size={14} />
+                                      <span className="font-semibold">{winner.dislikesCount || 0}</span> Dislikes
+                                    </span>
+                                  </div>
+
+                                  {/* Submission Date */}
+                                  {winner.submissionDate && (
+                                    <p className="text-xs mt-2" style={{color: '#7f5539'}}>
+                                      Submitted: {new Date(winner.submissionDate).toLocaleDateString('en-US', { 
+                                        month: 'short', 
+                                        day: 'numeric', 
+                                        year: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                      })}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8">
+                          <Trophy className="h-12 w-12 mx-auto mb-3" style={{color: '#D87C5A', opacity: 0.3}} />
+                          <p className="text-sm font-medium" style={{color: '#7f5539'}}>
+                            No winners declared yet for this challenge
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Rewards Modal */}
+        {showRewardsModal && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            onClick={closeRewardsModal}
+          >
+            <div 
+              className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+              style={{backgroundColor: '#FFF5E1'}}
+            >
+              {/* Modal Header */}
+              <div className="sticky top-0 z-10 flex justify-between items-center p-6 border-b" style={{backgroundColor: '#D87C5A', borderColor: '#5D3A00'}}>
+                <div className="flex items-center gap-3">
+                  <Gift className="h-6 w-6 text-white" />
+                  <h2 className="text-2xl font-bold text-white">Challenge Rewards & Sponsorships</h2>
+                </div>
+                <button
+                  onClick={closeRewardsModal}
+                  className="p-2 hover:bg-white hover:bg-opacity-20 rounded-full transition-colors"
+                >
+                  <X className="h-6 w-6 text-white" />
+                </button>
+              </div>
+
+              {/* Modal Content */}
+              <div className="p-6">
+                {/* Challenge Info */}
+                {selectedChallengeForRewards && (
+                  <div className="mb-6 p-4 rounded-lg border" style={{backgroundColor: 'white', borderColor: '#FFE4D6'}}>
+                    <h3 className="text-xl font-bold mb-2" style={{color: '#362625'}}>
+                      {selectedChallengeForRewards.title}
+                    </h3>
+                    <p className="text-sm" style={{color: '#7f5539'}}>
+                      {selectedChallengeForRewards.description}
+                    </p>
+                  </div>
+                )}
+
+                {/* Loading State */}
+                {loadingRewards && (
+                  <div className="text-center py-12">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{borderColor: '#D87C5A'}}></div>
+                    <p className="text-sm font-medium" style={{color: '#7f5539'}}>Loading rewards...</p>
+                  </div>
+                )}
+
+                {/* No Rewards */}
+                {!loadingRewards && rewardsData.length === 0 && (
+                  <div className="text-center py-12">
+                    <Gift className="h-16 w-16 mx-auto mb-4" style={{color: '#D87C5A', opacity: 0.4}} />
+                    <h3 className="text-lg font-bold mb-2" style={{color: '#362625'}}>No Sponsorships Found</h3>
+                    <p className="text-sm font-medium mb-3" style={{color: '#7f5539'}}>
+                      This challenge doesn't have any sponsorship offers in the database yet.
+                    </p>
+                    {selectedChallengeForRewards && (
+                      <div className="mt-4 p-4 rounded-lg text-left max-w-md mx-auto" style={{backgroundColor: '#FFE4D6'}}>
+                        <p className="text-xs font-semibold mb-2" style={{color: '#5D3A00'}}>
+                          💡 Debug Info:
+                        </p>
+                        <p className="text-xs mb-1" style={{color: '#7f5539'}}>
+                          Challenge ID: <span className="font-mono font-bold">{selectedChallengeForRewards.id}</span>
+                        </p>
+                        <p className="text-xs mb-1" style={{color: '#7f5539'}}>
+                          Challenge Title: <span className="font-semibold">{selectedChallengeForRewards.title}</span>
+                        </p>
+                        <p className="text-xs mb-1" style={{color: '#7f5539'}}>
+                          Rewards Data Length: <span className="font-mono font-bold">{rewardsData.length}</span>
+                        </p>
+                        <p className="text-xs mb-1" style={{color: '#7f5539'}}>
+                          Loading State: <span className="font-mono font-bold">{loadingRewards ? 'true' : 'false'}</span>
+                        </p>
+                        <p className="text-xs mt-3 p-2 rounded" style={{color: '#5D3A00', backgroundColor: '#FFD95A'}}>
+                          <strong>Check browser console (F12) for detailed API response!</strong>
+                        </p>
+                        <p className="text-xs mt-2" style={{color: '#7f5539'}}>
+                          To add sponsorships, shops need to create offers for this challenge through the Shop Dashboard.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Rewards List */}
+                {!loadingRewards && rewardsData.length > 0 && (
+                  <div className="space-y-4">
+                    {rewardsData.map((reward, index) => (
+                      <div 
+                        key={reward.id || index} 
+                        className="border rounded-lg p-5 hover:shadow-md transition-shadow"
+                        style={{backgroundColor: 'white', borderColor: '#D87C5A'}}
+                      >
+                        {/* Reward Header */}
+                        <div className="flex justify-between items-start mb-4">
+                          <div className="flex items-center gap-3">
+                            <div className="p-3 rounded-full" style={{backgroundColor: '#FFE4D6'}}>
+                              <Store className="h-6 w-6" style={{color: '#D87C5A'}} />
+                            </div>
+                            <div>
+                              <h4 className="text-lg font-bold" style={{color: '#362625'}}>
+                                {reward.shopName}
+                              </h4>
+                              {reward.shopOwnerName && (
+                                <p className="text-sm" style={{color: '#7f5539'}}>
+                                  Owner: {reward.shopOwnerName}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Discount Badge */}
+                          <div className="text-center px-4 py-2 rounded-lg" style={{backgroundColor: '#4CAF50'}}>
+                            <p className="text-2xl font-bold text-white">
+                              {reward.discountPercentage}%
+                            </p>
+                            <p className="text-xs text-white">OFF</p>
+                          </div>
+                        </div>
+
+                        {/* Shop Description */}
+                        {reward.shopDescription && (
+                          <p className="text-sm mb-4 px-3 py-2 rounded-lg" style={{color: '#7f5539', backgroundColor: '#FFF5E1'}}>
+                            {reward.shopDescription}
+                          </p>
+                        )}
+
+                        {/* Shop Contact Info */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                          {reward.shopEmail && (
+                            <div className="flex items-center gap-2 text-sm p-2 rounded" style={{backgroundColor: '#FFF5E1'}}>
+                              <Mail size={16} style={{color: '#D87C5A'}} />
+                              <a href={`mailto:${reward.shopEmail}`} className="hover:underline" style={{color: '#362625'}}>
+                                {reward.shopEmail}
+                              </a>
+                            </div>
+                          )}
+                          {reward.shopContactNo && (
+                            <div className="flex items-center gap-2 text-sm p-2 rounded" style={{backgroundColor: '#FFF5E1'}}>
+                              <Phone size={16} style={{color: '#D87C5A'}} />
+                              <a href={`tel:${reward.shopContactNo}`} className="hover:underline" style={{color: '#362625'}}>
+                                {reward.shopContactNo}
+                              </a>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Discount Code */}
+                        <div className="border-t pt-4" style={{borderColor: '#FFE4D6'}}>
+                          <p className="text-sm font-medium mb-2" style={{color: '#7f5539'}}>Discount Code:</p>
+                          <div className="flex items-center gap-2">
+                            <code className="flex-1 px-4 py-2 rounded-lg font-mono text-lg font-bold" style={{backgroundColor: '#FFE4D6', color: '#5D3A00'}}>
+                              {reward.discountCode}
+                            </code>
+                            <button
+                              onClick={() => copyDiscountCode(reward.discountCode, reward.id)}
+                              className="px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2"
+                              style={{
+                                backgroundColor: copiedCode === reward.id ? '#4CAF50' : '#D87C5A',
+                                color: 'white',
+                                border: 'none',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              {copiedCode === reward.id ? (
+                                <>
+                                  <Check size={16} />
+                                  <span>Copied!</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Copy size={16} />
+                                  <span>Copy</span>
                                 </>
                               )}
                             </button>
                           </div>
-
-                          {/* Success Message */}
-                          {publishSuccess && (
-                            <div className="mt-4 p-4 rounded-lg flex items-center gap-3" style={{backgroundColor: '#d4edda', borderLeft: '4px solid #28a745'}}>
-                              <CheckCircle className="h-5 w-5" style={{color: '#28a745'}} />
-                              <div>
-                                <p className="font-bold text-sm" style={{color: '#155724'}}>
-                                  Winners Published Successfully!
-                                </p>
-                                <p className="text-xs" style={{color: '#155724'}}>
-                                  The winners are now visible on the main feed for all users.
-                                </p>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Error Message */}
-                          {publishError && (
-                            <div className="mt-4 p-4 rounded-lg flex items-center gap-3" style={{backgroundColor: '#f8d7da', borderLeft: '4px solid #dc3545'}}>
-                              <XCircle className="h-5 w-5" style={{color: '#dc3545'}} />
-                              <div>
-                                <p className="font-bold text-sm" style={{color: '#721c24'}}>
-                                  Failed to Publish
-                                </p>
-                                <p className="text-xs" style={{color: '#721c24'}}>
-                                  {publishError}
-                                </p>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* No Winners Warning */}
-                          {(!challenge.winners || challenge.winners.length === 0) && (
-                            <div className="mt-4 p-4 rounded-lg flex items-center gap-3" style={{backgroundColor: '#fff3cd', borderLeft: '4px solid #ffc107'}}>
-                              <AlertCircle className="h-5 w-5" style={{color: '#856404'}} />
-                              <p className="text-sm font-medium" style={{color: '#856404'}}>
-                                Winners must be calculated before publishing to the main feed.
-                              </p>
-                            </div>
-                          )}
                         </div>
-                      </>
-                    );
-                  })()}
-                </div>
-              )}
 
-              {/* No Challenge Selected Message or Empty Database State */}
-              {!selectedChallenge && (
-                <div className="text-center py-12">
-                  <Trophy className="h-16 w-16 mx-auto mb-4" style={{color: '#D87C5A', opacity: 0.4}} />
-                  {pastChallenges.length === 0 ? (
-                    <>
-                      <h3 className="text-lg font-bold mb-2" style={{color: '#362625'}}>No Completed Challenges Found</h3>
-                      <p className="text-sm font-medium" style={{color: '#7f5539'}}>
-                        There are no completed challenges in the database yet.
-                      </p>
-                      <p className="text-sm font-medium mt-2" style={{color: '#7f5539'}}>
-                        Completed challenges will appear here once they reach their deadline or are marked as completed.
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <h3 className="text-lg font-bold mb-2" style={{color: '#362625'}}>No Challenge Selected</h3>
-                      <p className="text-sm font-medium" style={{color: '#7f5539'}}>
-                        Select a completed challenge above to view its winners and scoring criteria
-                      </p>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Current Scoring Criteria Display */}
-            {selectedChallengeData?.hasCriteria && (
-              <div className="rounded-lg shadow-sm border h-full relative overflow-hidden" style={{backgroundColor: '#FFF5E1'}}>
-                <div className="p-6">
-                  <h3 className="text-lg font-semibold mb-4" style={{color: '#5D3A00'}}>Current Scoring Weights</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    <div className="text-center">
-                      <div className="font-semibold" style={{color: '#5D3A00'}}>{scoringCriteria.likesWeight}%</div>
-                      <div style={{color: '#D87C5A'}}>Likes</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="font-semibold" style={{color: '#5D3A00'}}>{scoringCriteria.commentsWeight}%</div>
-                      <div style={{color: '#D87C5A'}}>Comments</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="font-semibold" style={{color: '#5D3A00'}}>{scoringCriteria.buyerPreferenceWeight}%</div>
-                      <div style={{color: '#D87C5A'}}>Buyer Preference</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="font-semibold" style={{color: '#5D3A00'}}>{scoringCriteria.expertPanelWeight}%</div>
-                      <div style={{color: '#D87C5A'}}>Expert Panel</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {selectedChallengeData?.hasCriteria && (
-              <>
-
-                {/* Search and Sort */}
-                <div className="rounded-lg shadow-sm border h-full relative overflow-hidden" style={{backgroundColor: '#FFF5E1'}}>
-                  <div className="p-6">
-                    <div className="flex flex-col md:flex-row gap-4">
-                      <div className="flex-1">
-                        <div className="relative">
-                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2" size={20} style={{color: '#5D3A00'}} />
-                          <input
-                            type="text"
-                            placeholder="Search submissions..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent"
-                            style={{borderColor: '#FFE4D6', backgroundColor: 'white'}}
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <select
-                          value={sortBy}
-                          onChange={(e) => setSortBy(e.target.value)}
-                          className="px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent"
-                          style={{borderColor: '#FFE4D6', backgroundColor: 'white'}}
-                        >
-                          <option value="totalScore">Total Score</option>
-                          <option value="likes">Likes</option>
-                          <option value="expertScore">Expert Score</option>
-                          <option value="date">Date</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Winner Podium */}
-                <div className="rounded-lg shadow-sm border h-full relative overflow-hidden" style={{backgroundColor: '#FFF5E1'}}>
-                  <div className="p-6">
-                    <h2 className="text-xl font-semibold mb-4" style={{color: '#5D3A00'}}>Winners</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {[1, 2, 3].map(position => {
-                        const winner = submissions.find(s => s.position === position);
-                        return (
-                          <div key={position} className={`p-4 rounded-lg border-2 ${getPositionColor(position)}`}>
-                            <div className="flex items-center gap-2 mb-2">
-                              {getPositionIcon(position)}
-                              <span className="font-semibold">
-                                {position === 1 ? '1st Place' : position === 2 ? '2nd Place' : '3rd Place'}
+                        {/* Status and Send to Winner Section */}
+                        <div className="border-t mt-4 pt-4" style={{borderColor: '#FFE4D6'}}>
+                          <div className="flex items-center justify-between">
+                            {/* Status Badge */}
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm font-medium" style={{color: '#7f5539'}}>Status:</p>
+                              <span 
+                                className="px-3 py-1 rounded-full text-xs font-bold"
+                                style={{
+                                  backgroundColor: reward.status === 'valid' ? '#4CAF50' : '#FFA726',
+                                  color: 'white'
+                                }}
+                              >
+                                {reward.status === 'valid' ? '✓ Sent to Winner' : '⏳ Pending'}
                               </span>
                             </div>
-                            {winner ? (
-                              <div>
-                                <p className="font-medium">{winner.title}</p>
-                                <p className="text-sm text-gray-600">{winner.participant}</p>
-                                <div className="flex items-center gap-1 mt-1">
-                                  <Calculator className="h-4 w-4" style={{color: '#D87C5A'}} />
-                                  <span className="text-sm font-medium">{winner.totalScore}/100</span>
-                                </div>
-                              </div>
+
+                            {/* Send to Winner / View Reward Button */}
+                            {reward.status !== 'valid' ? (
+                              <button
+                                onClick={() => sendRewardToWinner(reward.id)}
+                                className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all hover:shadow-md"
+                                style={{
+                                  backgroundColor: '#4CAF50',
+                                  color: 'white',
+                                  border: 'none',
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                <Send size={16} />
+                                <span>Send to Winner</span>
+                              </button>
                             ) : (
-                              <p className="text-gray-500 text-sm">No winner for this position</p>
+                              <button
+                                className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all hover:shadow-md"
+                                style={{
+                                  backgroundColor: '#5D3A00',
+                                  color: 'white',
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                  opacity: 0.8
+                                }}
+                                onClick={() => {
+                                  // Scroll to discount code section
+                                  console.log('Reward already sent - viewing details');
+                                }}
+                              >
+                                <Check size={16} />
+                                <span>Reward Sent</span>
+                              </button>
                             )}
                           </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Submissions List */}
-                <div className="grid grid-cols-1 gap-6">
-                  {filteredSubmissions.map((submission) => (
-                    <div key={submission.id} className={`rounded-lg shadow-sm border-2 hover:shadow-lg transition-shadow overflow-hidden ${submission.position ? getPositionColor(submission.position) : ''}`} style={{backgroundColor: '#FFF5E1'}}>
-                      <div className="p-6">
-                        <div className="flex items-start gap-6">
-                          <img
-                            src={submission.imageUrl}
-                            alt={submission.title}
-                            className="w-24 h-24 object-cover rounded-lg"
-                          />
-                          
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <h3 className="text-lg font-semibold" style={{color: '#5D3A00'}}>{submission.title}</h3>
-                              {submission.position && (
-                                <div className="flex items-center gap-1">
-                                  {getPositionIcon(submission.position)}
-                                  <span className="text-sm font-medium">Winner</span>
-                                </div>
-                              )}
-                            </div>
-                            
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                              <div className="text-sm">
-                                <span className="text-gray-500">Participant:</span>
-                                <p className="font-medium" style={{color: '#5D3A00'}}>{submission.participant}</p>
-                              </div>
-                              <div className="text-sm">
-                                <span className="text-gray-500">Total Score:</span>
-                                <p className="font-bold" style={{color: '#D87C5A'}}>{submission.totalScore}/100</p>
-                              </div>
-                              <div className="text-sm">
-                                <span className="text-gray-500">Likes:</span>
-                                <p className="font-medium" style={{color: '#5D3A00'}}>{submission.likes}</p>
-                              </div>
-                              <div className="text-sm">
-                                <span className="text-gray-500">Expert Score:</span>
-                                <p className="font-medium" style={{color: '#5D3A00'}}>{submission.expertScore}/10</p>
-                              </div>
-                            </div>
-
-                            <div className="flex flex-wrap gap-1 mb-4">
-                              {submission.tags.map((tag) => (
-                                <span key={tag} className="px-2 py-1 text-xs rounded-full" style={{backgroundColor: '#FFE4D6', color: '#5D3A00'}}>
-                                  {tag}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-
-                          <div className="flex flex-col gap-2">
-                            <button
-                              onClick={() => setShowScoreBreakdown(showScoreBreakdown === submission.id ? null : submission.id)}
-                              className="flex items-center gap-2 px-4 py-2 border rounded-lg transition-colors"
-                              style={{
-                                borderColor: '#FFE4D6',
-                                color: '#5D3A00',
-                                backgroundColor: 'white'
-                              }}
-                              onMouseOver={(e) => {
-                                e.target.style.backgroundColor = '#FFE4D6';
-                              }}
-                              onMouseOut={(e) => {
-                                e.target.style.backgroundColor = 'white';
-                              }}
-                            >
-                              <Eye size={16} />
-                              Score Details
-                            </button>
-                          </div>
                         </div>
 
-                        {/* Score Breakdown */}
-                        {showScoreBreakdown === submission.id && (
-                          <div className="mt-6 p-4 rounded-lg" style={{backgroundColor: '#FFE4D6'}}>
-                            <h4 className="font-medium mb-3" style={{color: '#5D3A00'}}>Score Breakdown</h4>
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                              <div className="text-center">
-                                <div className="text-sm text-gray-600">Likes ({scoringCriteria.likesWeight}%)</div>
-                                <div className="font-semibold" style={{color: '#5D3A00'}}>{submission.likesScore}/100</div>
-                                <div className="text-xs text-gray-500">{submission.likes} likes</div>
-                              </div>
-                              <div className="text-center">
-                                <div className="text-sm text-gray-600">Comments ({scoringCriteria.commentsWeight}%)</div>
-                                <div className="font-semibold" style={{color: '#5D3A00'}}>{submission.commentsScore}/100</div>
-                                <div className="text-xs text-gray-500">{submission.comments} comments</div>
-                              </div>
-                              <div className="text-center">
-                                <div className="text-sm text-gray-600">Buyer Preference ({scoringCriteria.buyerPreferenceWeight}%)</div>
-                                <div className="font-semibold" style={{color: '#5D3A00'}}>{submission.buyerScore}/100</div>
-                                <div className="text-xs text-gray-500">{submission.buyerPreference}/10 avg</div>
-                              </div>
-                              <div className="text-center">
-                                <div className="text-sm text-gray-600">Expert Panel ({scoringCriteria.expertPanelWeight}%)</div>
-                                <div className="font-semibold" style={{color: '#5D3A00'}}>{submission.expertScoreNormalized}/100</div>
-                                <div className="text-xs text-gray-500">{submission.expertScore}/10 avg</div>
-                              </div>
-                            </div>
-                            <div className="mt-3 pt-3 border-t text-center">
-                              <div className="text-sm text-gray-600">Weighted Total Score</div>
-                              <div className="text-xl font-bold" style={{color: '#D87C5A'}}>{calculateWeightedScore(submission)}/100</div>
-                            </div>
-                          </div>
+                        {/* Created Date */}
+                        {reward.createdAt && (
+                          <p className="text-xs mt-3" style={{color: '#7f5539'}}>
+                            Sponsorship offered on: {new Date(reward.createdAt).toLocaleDateString('en-US', { 
+                              month: 'long', 
+                              day: 'numeric', 
+                              year: 'numeric' 
+                            })}
+                          </p>
                         )}
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
+                    ))}
+                  </div>
+                )}
+              </div>
 
-            {/* Past Challenges Winners Section (always visible below criteria button) */}
-            <div className="rounded-lg shadow-sm border h-full relative overflow-hidden mt-8" style={{backgroundColor: '#FFF5E1'}}>
-              <div className="p-6">
-                <h2 className="text-xl font-semibold mb-4" style={{color: '#5D3A00'}}>Previous Challenges Winners</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {pastChallenges.map((challenge) => (
-                    <div key={challenge.id} className="rounded-lg border bg-white p-4" style={{borderColor: '#FFE4D6'}}>
-                      <h3 className="font-semibold mb-1" style={{color: '#D87C5A'}}>{challenge.name}</h3>
-                      <p className="text-sm text-gray-600 mb-2">{challenge.description}</p>
-                      <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
-                        <Clock size={14} />
-                        <span>Deadline: {challenge.deadline}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
-                        <Users size={14} />
-                        <span>{challenge.participants} participants • {challenge.submissions} submissions</span>
-                      </div>
-                      <div className="mt-2">
-                        <span className="block text-xs font-semibold text-green-700 mb-1">Winners:</span>
-                        <div className="space-y-1">
-                          {challenge.winners.map((winner) => (
-                            <div key={winner.position} className="flex items-center gap-2">
-                              {getPositionIcon(winner.position)}
-                              <span className="font-medium" style={{color: '#5D3A00'}}>
-                                {winner.position === 1 ? '1st Place' : winner.position === 2 ? '2nd Place' : '3rd Place'}:
-                              </span>
-                              <span>{winner.name}</span>
-                              <span className="text-gray-500">- {winner.title}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+              {/* Modal Footer */}
+              <div className="sticky bottom-0 border-t p-4" style={{backgroundColor: 'white', borderColor: '#FFE4D6'}}>
+                <button
+                  onClick={closeRewardsModal}
+                  className="w-full px-6 py-3 rounded-lg font-medium transition-all hover:shadow-md"
+                  style={{
+                    backgroundColor: '#D87C5A',
+                    color: 'white',
+                    border: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Close
+                </button>
               </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </>
   );

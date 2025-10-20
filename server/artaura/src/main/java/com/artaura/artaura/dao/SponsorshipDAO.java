@@ -1,9 +1,9 @@
 package com.artaura.artaura.dao;
 
+import java.util.List;
+
 import com.artaura.artaura.dto.sponsorship.ChallengeForSponsorshipDTO;
 import com.artaura.artaura.dto.sponsorship.SponsorshipOfferDTO;
-
-import java.util.List;
 
 public interface SponsorshipDAO {
 
@@ -33,4 +33,7 @@ public interface SponsorshipDAO {
 
     // Generate unique discount code
     String generateDiscountCode(String shopName, String challengeTitle);
+
+    // Update sponsorship offer status to 'valid' (sent to winner)
+    void updateSponsorshipStatus(Long offerId, String status);
 }

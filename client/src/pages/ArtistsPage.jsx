@@ -79,7 +79,7 @@ const ArtistsPage = () => {
       .then((response) => {
         console.log("Raw API response:", response.data); // Debug logging
         console.log("First artist data:", response.data[0]); // Debug first artist
-
+        
         // Directly use backend data, no mock merge
         setArtists(response.data);
         setFilteredArtists(response.data);
@@ -113,22 +113,21 @@ const ArtistsPage = () => {
 
     // Search filter
     if (searchTerm) {
-      filtered = filtered.filter((artist) => {
-        const name =
-          artist.first_name && artist.last_name
-            ? `${artist.first_name} ${artist.last_name}`
-            : artist.name || "";
-        const specialty = artist.specialization || artist.specialty || "";
-        const location = artist.location || "";
-        const bio = artist.bio || "";
-
-        return (
-          name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          specialty.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          bio.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-      });
+      filtered = filtered.filter(
+        (artist) => {
+          const name = artist.first_name && artist.last_name 
+            ? `${artist.first_name} ${artist.last_name}` 
+            : (artist.name || '');
+          const specialty = artist.specialization || artist.specialty || '';
+          const location = artist.location || '';
+          const bio = artist.bio || '';
+          
+          return name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                 specialty.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                 location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                 bio.toLowerCase().includes(searchTerm.toLowerCase());
+        }
+      );
     }
 
     // Specialty filter
@@ -137,8 +136,7 @@ const ArtistsPage = () => {
       selectedSpecialty !== "All Specialties"
     ) {
       filtered = filtered.filter(
-        (artist) =>
-          (artist.specialization || artist.specialty) === selectedSpecialty
+        (artist) => (artist.specialization || artist.specialty) === selectedSpecialty
       );
     }
 
@@ -155,9 +153,7 @@ const ArtistsPage = () => {
         filtered.sort((a, b) => (b.rate || 0) - (a.rate || 0));
         break;
       case "followers":
-        filtered.sort(
-          (a, b) => (b.totalFollowers || 0) - (a.totalFollowers || 0)
-        );
+        filtered.sort((a, b) => (b.totalFollowers || 0) - (a.totalFollowers || 0));
         break;
       case "artworks":
         filtered.sort((a, b) => (b.totalSales || 0) - (a.totalSales || 0));
@@ -268,21 +264,17 @@ const ArtistsPage = () => {
             </div>
             <div className="flex-1">
               <h3 className="font-bold text-[#7f5539] text-lg">
-                {artist.first_name && artist.last_name
+                {artist.first_name && artist.last_name 
                   ? `${artist.first_name} ${artist.last_name}`
-                  : artist.name || "Unknown Artist"}
+                  : artist.name || 'Unknown Artist'}
               </h3>
               <div className="flex items-center gap-2 text-[#7f5539]/70 text-sm">
-                {getSpecialtyIcon(
-                  artist.specialization || artist.specialty || "Digital Art"
-                )}
-                <span>
-                  {artist.specialization || artist.specialty || "Digital Art"}
-                </span>
+                {getSpecialtyIcon(artist.specialization || artist.specialty || 'Digital Art')}
+                <span>{artist.specialization || artist.specialty || 'Digital Art'}</span>
               </div>
               <div className="flex items-center gap-1 text-[#7f5539]/70 text-sm mt-1">
                 <MapPin className="w-3 h-3" />
-                <span>{artist.location || "Unknown Location"}</span>
+                <span>{artist.location || 'Unknown Location'}</span>
               </div>
             </div>
           </div>
@@ -415,21 +407,19 @@ const ArtistsPage = () => {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setViewMode("grid")}
-                  className={`p-2 rounded-lg ${
-                    viewMode === "grid"
+                  className={`p-2 rounded-lg ${viewMode === "grid"
                       ? "bg-[#D87C5A] text-white"
                       : "bg-[#FFD95A] text-[#7f5539]"
-                  }`}
+                    }`}
                 >
                   <Grid className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => setViewMode("list")}
-                  className={`p-2 rounded-lg ${
-                    viewMode === "list"
+                  className={`p-2 rounded-lg ${viewMode === "list"
                       ? "bg-[#D87C5A] text-white"
                       : "bg-[#FFD95A] text-[#7f5539]"
-                  }`}
+                    }`}
                 >
                   <List className="w-4 h-4" />
                 </button>
@@ -514,11 +504,10 @@ const ArtistsPage = () => {
             </div>
           ) : (
             <div
-              className={`grid gap-6 ${
-                viewMode === "grid"
+              className={`grid gap-6 ${viewMode === "grid"
                   ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
                   : "grid-cols-1 max-w-4xl mx-auto"
-              }`}
+                }`}
             >
               {filteredArtists.map((artist, index) => (
                 <ArtistCard
