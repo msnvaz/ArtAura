@@ -42,11 +42,8 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public void deleteProduct(Long id) {
-        try {
-            productDAO.deleteById(id);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to delete product: " + e.getMessage());
-        }
+        // Let the DAO exceptions bubble up directly - they have detailed messages
+        productDAO.deleteById(id);
     }
 
     @Override

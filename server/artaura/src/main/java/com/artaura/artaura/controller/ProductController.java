@@ -77,11 +77,17 @@ public class ProductController {
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<String> deleteProduct(@PathVariable Long id) {
         try {
+            System.out.println("🗑️ DELETE request for product ID: " + id);
             productService.deleteProduct(id);
+            System.out.println("✅ Product " + id + " deleted successfully");
             return ResponseEntity.ok("Product deleted successfully");
         } catch (RuntimeException e) {
+            System.err.println("❌ Delete failed: " + e.getMessage());
+            // Return the exact error message from DAO (about orders, constraints, etc.)
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
+            System.err.println("❌ Unexpected error: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Server error occurred while deleting product");
         }
