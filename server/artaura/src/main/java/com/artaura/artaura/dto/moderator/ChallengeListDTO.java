@@ -15,5 +15,6 @@ public class ChallengeListDTO {
     private boolean requestSponsorship;
     private String status;
     private int moderatorId;
-    private ScoringCriteriaDTO scoringCriteria;
+    // Removed scoringCriteria - using fixed marks scoring now
+    // Each Like = +10 marks, Each Dislike = -5 marks, Minimum score = 0
 }

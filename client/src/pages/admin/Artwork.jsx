@@ -349,15 +349,6 @@ const ArtworkManagement = () => {
               <Eye size={16} />
               View Full Resolution
             </button>
-            <button
-              className="px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
-              style={{backgroundColor: '#D87C5A', color: 'white'}}
-              onMouseOver={(e) => e.target.style.backgroundColor = '#B85A3A'}
-              onMouseOut={(e) => e.target.style.backgroundColor = '#D87C5A'}
-            >
-              <Plus size={16} />
-              Contact Artist
-            </button>
           </div>
         </div>
       </div>

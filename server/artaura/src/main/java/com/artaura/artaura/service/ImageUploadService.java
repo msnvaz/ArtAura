@@ -18,24 +18,19 @@ public class ImageUploadService {
         // Get the current working directory
         String currentDir = System.getProperty("user.dir");
 
-        // Calculate the correct path to client/public/uploads using robust detection
+        // Calculate the correct path to project root
         String projectRoot;
-        if (currentDir.contains("ArtAura2")) {
-            // Extract everything up to and including ArtAura2
-            int artAuraIndex = currentDir.indexOf("ArtAura2");
-            projectRoot = currentDir.substring(0, artAuraIndex + 8) + File.separator; // 8 is length of "ArtAura2"
-        } else if (currentDir.contains("server" + File.separator + "artaura")) {
-            // We're in server/artaura, need to go up two levels to project root
-            projectRoot = currentDir.substring(0, currentDir.lastIndexOf("server" + File.separator + "artaura"));
-        } else if (currentDir.endsWith("artaura")) {
-            // Fallback: if just in artaura directory
-            projectRoot = currentDir.substring(0, currentDir.lastIndexOf("artaura"));
+        if (currentDir.contains("ArtAura")) {
+            // Extract everything up to and including ArtAura
+            int artAuraIndex = currentDir.indexOf("ArtAura");
+            projectRoot = currentDir.substring(0, artAuraIndex + 7); // 7 is length of "ArtAura"
         } else {
             // Fallback: assume we're already in project root
-            projectRoot = currentDir + File.separator;
+            projectRoot = currentDir;
         }
 
-        String uploadDirPath = projectRoot + "client" + File.separator + "public" + File.separator + "uploads" + File.separator + "profiles" + File.separator;
+        // Build the upload directory path to client/public/nic
+        String uploadDirPath = projectRoot + File.separator + "client" + File.separator + "public" + File.separator + "nic" + File.separator;
 
         // Create upload directory if it doesn't exist
         File uploadDir = new File(uploadDirPath);
@@ -55,7 +50,7 @@ public class ImageUploadService {
         Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
         // Return relative path for database storage
-        String relativePath = "/uploads/profiles/" + filename;
+        String relativePath = "/nic/" + filename;
 
         return relativePath;
     }
@@ -65,22 +60,20 @@ public class ImageUploadService {
             if (imagePath != null && !imagePath.isEmpty()) {
                 String currentDir = System.getProperty("user.dir");
 
-                // Use the same robust path calculation logic as saveImage
+                // Calculate the correct path to project root
                 String projectRoot;
-                if (currentDir.contains("ArtAura2")) {
-                    // Extract everything up to and including ArtAura2
-                    int artAuraIndex = currentDir.indexOf("ArtAura2");
-                    projectRoot = currentDir.substring(0, artAuraIndex + 8) + File.separator; // 8 is length of "ArtAura2"
-                } else if (currentDir.contains("server" + File.separator + "artaura")) {
-                    projectRoot = currentDir.substring(0, currentDir.lastIndexOf("server" + File.separator + "artaura"));
-                } else if (currentDir.endsWith("artaura")) {
-                    projectRoot = currentDir.substring(0, currentDir.lastIndexOf("artaura"));
+                if (currentDir.contains("ArtAura")) {
+                    int artAuraIndex = currentDir.indexOf("ArtAura");
+                    projectRoot = currentDir.substring(0, artAuraIndex + 7);
                 } else {
-                    projectRoot = currentDir + File.separator;
+                    projectRoot = currentDir;
                 }
 
-                // Convert URL path back to file path for client/public/uploads
-                String filePath = imagePath.replace("/uploads/", projectRoot + "client" + File.separator + "public" + File.separator + "uploads" + File.separator);
+                // Convert URL path back to file path
+                // If imagePath is "/nic/filename.jpg", extract just the filename
+                String filename = imagePath.substring(imagePath.lastIndexOf('/') + 1);
+                String filePath = projectRoot + File.separator + "client" + File.separator + "public" + File.separator + "nic" + File.separator + filename;
+                
                 Path path = Paths.get(filePath);
                 Files.deleteIfExists(path);
             }

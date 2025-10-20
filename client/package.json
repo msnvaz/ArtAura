@@ -26,6 +26,7 @@
     "react-dom": "^19.1.0",
     "react-feather": "^2.0.10",
     "react-hook-form": "^7.58.1",
+    "react-hot-toast": "^2.6.0",
     "react-image-crop": "^11.0.10",
     "react-router-dom": "^7.6.2",
     "react-toastify": "^11.0.5",

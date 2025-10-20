@@ -1,17 +1,23 @@
-import { Award, Calculator, Clock, Crown, Eye, Medal, Search, Settings, Shield, Star, Trophy, Users } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { AlertCircle, Award, Calculator, CheckCircle, Clock, Crown, Eye, Heart, Medal, Megaphone, MessageCircle, Search, Send, Shield, Trophy, Users, XCircle } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const WinnerSelection = () => {
   const navigate = useNavigate();
   const [selectedChallenge, setSelectedChallenge] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [challengeSearchTerm, setChallengeSearchTerm] = useState(''); // New: for filtering completed challenges
   const [sortBy, setSortBy] = useState('totalScore');
   const [showScoreBreakdown, setShowScoreBreakdown] = useState(null);
   
   // State for fetching challenges from database
   const [challenges, setChallenges] = useState([]);
+  
+  // State for publishing winners
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [publishSuccess, setPublishSuccess] = useState(false);
+  const [publishError, setPublishError] = useState(null);
 
   // Fetch challenges from backend
   useEffect(() => {
@@ -19,13 +25,85 @@ const WinnerSelection = () => {
       try {
         const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/challenges`);
         setChallenges(response.data);
+        // Debug: show how many challenges were fetched
+        console.debug('Fetched challenges from API:', Array.isArray(response.data) ? response.data.length : 0);
+        console.debug('Raw challenges data:', response.data);
+        // Log each challenge's status
+        if (Array.isArray(response.data)) {
+          response.data.forEach((ch, idx) => {
+            console.debug(`Challenge ${idx + 1}: "${ch.title || ch.name}" - Status: "${ch.status}"`);
+          });
+        }
       } catch (err) {
         console.error('Error fetching challenges:', err);
+        console.error('Error details:', err.response?.data || err.message);
         // Silently fail - will use fallback mock data
       }
     };
     fetchChallenges();
   }, []);
+
+  // Function to publish winners to main feed
+  const handlePublishWinners = async () => {
+    if (!selectedChallenge) {
+      setPublishError('Please select a challenge first');
+      return;
+    }
+
+    const challenge = pastChallenges.find(c => String(c.id) === String(selectedChallenge));
+    if (!challenge) {
+      setPublishError('Challenge not found');
+      return;
+    }
+
+    setIsPublishing(true);
+    setPublishError(null);
+    setPublishSuccess(false);
+
+    try {
+      // Prepare the data to publish
+      const publishData = {
+        challengeId: challenge.id,
+        challengeName: challenge.name,
+        challengeDescription: challenge.description,
+        completedDate: challenge.completedDate,
+        winners: challenge.winners,
+        scoringCriteria: challenge.scoringCriteria,
+        category: challenge.category,
+        rewards: challenge.rewards
+      };
+
+      console.log('Publishing winners to main feed:', publishData);
+
+      // API call to publish winners (uncomment when backend is ready)
+      // const response = await axios.post(
+      //   `${import.meta.env.VITE_API_URL}/api/challenges/${challenge.id}/publish-winners`,
+      //   publishData,
+      //   {
+      //     headers: { 
+      //       'Authorization': `Bearer ${localStorage.getItem('token')}` 
+      //     }
+      //   }
+      // );
+
+      // Simulate API call with dummy data
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      setPublishSuccess(true);
+      setIsPublishing(false);
+
+      // Show success message for 3 seconds
+      setTimeout(() => {
+        setPublishSuccess(false);
+      }, 3000);
+
+      console.log('Winners published successfully!');
+    } catch (err) {
+      console.error('Error publishing winners:', err);
+      setPublishError(err.response?.data?.message || 'Failed to publish winners. Please try again.');
+      setIsPublishing(false);
+    }
+  };
 
   // Mock scoring criteria for the selected challenge
   const scoringCriteria = {
@@ -217,85 +295,61 @@ const WinnerSelection = () => {
   
   // Filter only challenges that are EXPLICITLY marked as 'completed' in database
   const completedChallenges = challenges.filter(challenge => {
-    return challenge.status === 'completed';
+    // Accept several possible status spellings (case-insensitive) coming from DB
+    const status = String(challenge.status || '').toLowerCase();
+    const isCompleted = status === 'completed' || status === 'complete' || status === 'finished' || status === 'done';
+    console.debug(`Challenge "${challenge.title || challenge.name}" status: "${challenge.status}" → isCompleted: ${isCompleted}`);
+    return isCompleted;
   }).map(challenge => {
-    // Calculate completion date:
-    // - If status is 'completed', use deadline as completion date
-    // - Otherwise, use deadline as completion date
-    const completedDate = challenge.deadlineDateTime;
-    
+    // Be defensive with field names coming from different API versions
+    const completedDate = challenge.deadlineDateTime || challenge.completedDate || challenge.deadline || challenge.deadlineDate;
+    const title = challenge.title || challenge.name || challenge.challengeName;
+    const publishDateTime = challenge.publishDateTime || challenge.publishedAt || challenge.publishDate;
+    const participants = challenge.participants || challenge.participantCount || challenge.maxParticipants || 0;
+    const submissionsCount = challenge.submissions || challenge.submissionCount || 0;
+
     return {
       id: challenge.id,
-      name: challenge.title,
-      description: challenge.description || 'No description available',
-      category: challenge.category,
-      deadline: challenge.deadlineDateTime,
+      name: title || `Challenge ${challenge.id}`,
+      description: challenge.description || challenge.desc || 'No description available',
+      category: challenge.category || challenge.type || null,
+      deadline: completedDate,
       completedDate: completedDate,
-      publishDateTime: challenge.publishDateTime,
-      maxParticipants: challenge.maxParticipants,
-      rewards: challenge.rewards,
-      requestSponsorship: challenge.requestSponsorship,
+      publishDateTime: publishDateTime,
+      maxParticipants: challenge.maxParticipants || participants,
+      rewards: challenge.rewards || challenge.prize || null,
+      requestSponsorship: challenge.requestSponsorship || false,
       status: 'completed',
-      moderatorId: challenge.moderatorId,
-      participants: 0, // Will be populated from submissions data
-      submissions: 0, // Will be populated from submissions data
-      scoringCriteria: challenge.scoringCriteria || {
+      moderatorId: challenge.moderatorId || (challenge.moderator && challenge.moderator.id) || null,
+      participants: participants,
+      submissions: submissionsCount,
+      scoringCriteria: challenge.scoringCriteria || challenge.scoring || {
         likesWeight: 34,
         commentsWeight: 33,
         shareWeight: 33
       },
-      winners: generateDummyWinners() // Generate dummy winners
+      winners: challenge.winners || generateDummyWinners()
     };
   }).sort((a, b) => new Date(b.completedDate) - new Date(a.completedDate));
 
-  // Use database challenges if available, otherwise fall back to mock data
-  const pastChallenges = completedChallenges.length > 0 ? completedChallenges : [
-    {
-      id: 'abstract-art-contest',
-      name: 'Abstract Art Contest',
-      description: 'A national web design challenge for creative portfolios and landing pages.',
-      deadline: '2025-07-30',
-      completedDate: '2025-07-30',
-      status: 'completed',
-      participants: 180,
-      submissions: 120,
-      winners: [
-        { position: 1, name: 'Ishara Rajapaksa', title: 'Modern Web Portfolio' },
-        { position: 2, name: 'Prabath Wijesekara', title: 'Creative Landing Page' },
-        { position: 3, name: 'Kavitha Bandara', title: 'Responsive Blog UI' }
-      ]
-    },
-    {
-      id: 'digital-art-2024',
-      name: 'Digital Art 2024',
-      description: 'A digital art contest for surreal and fantasy artworks.',
-      deadline: '2024-09-15',
-      completedDate: '2024-09-15',
-      status: 'completed',
-      participants: 140,
-      submissions: 90,
-      winners: [
-        { position: 1, name: 'Malith Gunasekara', title: 'Neon Cityscape' },
-        { position: 2, name: 'Sanduni Dias', title: 'Surreal Portrait' },
-        { position: 3, name: 'Dinesh Karunaratne', title: 'Fantasy Forest' }
-      ]
-    },
-    {
-      id: 'landscape-photography-2025',
-      name: 'Landscape Photography Challenge',
-      description: 'Capture the beauty of nature in stunning landscape photography.',
-      deadline: '2025-06-20',
-      completedDate: '2025-06-20',
-      status: 'completed',
-      participants: 95,
-      submissions: 75,
-      winners: [
-        { position: 1, name: 'Nuwan Perera', title: 'Misty Mountains' },
-        { position: 2, name: 'Chamari Silva', title: 'Golden Hour Beach' },
-        { position: 3, name: 'Rohan Fernando', title: 'Valley of Colors' }
-      ]
-    }
-  ].sort((a, b) => new Date(b.completedDate) - new Date(a.completedDate)); // Sort by completion date, most recent first
+  // Debug: log how many completed challenges we have
+  console.debug('Completed challenges count:', completedChallenges.length);
+  console.debug('Completed challenges:', completedChallenges.map(c => ({id: c.id, name: c.name, status: c.status})));
+
+  // ONLY use database challenges - no mock/dummy data
+  // This ensures dropdown shows actual challenge names from the challenges table
+  const pastChallenges = completedChallenges;
+
+  // Filter challenges based on search term
+  const filteredPastChallenges = pastChallenges.filter(challenge => {
+    if (!challengeSearchTerm) return true; // Show all if no search term
+    const searchLower = challengeSearchTerm.toLowerCase();
+    return (
+      challenge.name?.toLowerCase().includes(searchLower) ||
+      challenge.description?.toLowerCase().includes(searchLower) ||
+      challenge.category?.toLowerCase().includes(searchLower)
+    );
+  });
 
   return (
     <>
@@ -382,19 +436,70 @@ const WinnerSelection = () => {
                 <label className="block text-xs font-bold uppercase tracking-widest mb-3" style={{color: '#362625'}}>
                   Select Completed Challenge (Sorted by Completion Date)
                 </label>
+                
+                {/* Search Input for Filtering Challenges */}
+                <div className="relative mb-4">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                  <input
+                    type="text"
+                    placeholder="Search completed challenges by name, description, or category..."
+                    value={challengeSearchTerm}
+                    onChange={(e) => setChallengeSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent font-medium text-gray-700 placeholder:font-normal placeholder:text-gray-400"
+                    style={{borderColor: '#D87C5A', backgroundColor: 'white'}}
+                  />
+                  {challengeSearchTerm && (
+                    <button
+                      onClick={() => setChallengeSearchTerm('')}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      title="Clear search"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+
+                {/* Dropdown with filtered challenges */}
                 <select
                   value={selectedChallenge}
-                  onChange={(e) => setSelectedChallenge(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    // Ensure the selected value is one of the completed challenges
+                    if (val === '') {
+                      setSelectedChallenge('');
+                      return;
+                    }
+                    const exists = filteredPastChallenges.find(c => String(c.id) === String(val));
+                    if (!exists) {
+                      // Guard: do not allow selecting non-completed challenges
+                      // Provide a friendly message and keep selection empty
+                      alert('Please select a challenge that is marked as completed.');
+                      setSelectedChallenge('');
+                      return;
+                    }
+                    setSelectedChallenge(val);
+                  }}
                   className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent text-lg font-semibold"
                   style={{borderColor: '#D87C5A', backgroundColor: 'white', color: '#362625'}}
                 >
-                  <option value="">Select a challenge...</option>
-                  {pastChallenges.map(challenge => (
+                  <option value="">
+                    {filteredPastChallenges.length === 0 && challengeSearchTerm 
+                      ? `No challenges found for "${challengeSearchTerm}"` 
+                      : 'Select a challenge...'}
+                  </option>
+                  {filteredPastChallenges.map(challenge => (
                     <option key={challenge.id} value={challenge.id}>
                       {challenge.name} - Completed: {new Date(challenge.completedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </option>
                   ))}
                 </select>
+                
+                {/* Show count of filtered results */}
+                {challengeSearchTerm && (
+                  <p className="mt-2 text-sm" style={{color: '#7f5539'}}>
+                    Showing {filteredPastChallenges.length} of {pastChallenges.length} completed challenge{pastChallenges.length !== 1 ? 's' : ''}
+                  </p>
+                )}
               </div>
 
               {/* Display Winners for Selected Challenge */}
@@ -402,6 +507,10 @@ const WinnerSelection = () => {
                 <div className="space-y-4">
                   {(() => {
                     const challenge = pastChallenges.find(c => String(c.id) === String(selectedChallenge));
+                    // Debug: log selected challenge data
+                    console.debug('Selected challenge:', challenge);
+                    console.debug('Scoring criteria:', challenge?.scoringCriteria);
+                    console.debug('Winners:', challenge?.winners);
                     return (
                       <>
                         {/* Challenge Info */}
@@ -574,20 +683,119 @@ const WinnerSelection = () => {
                             </div>
                           </div>
                         </div>
+
+                        {/* Publish Winners Button */}
+                        <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-6 border-2 border-dashed" style={{borderColor: '#D87C5A'}}>
+                          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                              <div className="p-3 rounded-full" style={{backgroundColor: '#D87C5A'}}>
+                                <Megaphone className="h-6 w-6 text-white" />
+                              </div>
+                              <div>
+                                <h4 className="text-lg font-bold" style={{color: '#5D3A00'}}>
+                                  Publish Winners to Main Feed
+                                </h4>
+                                <p className="text-sm font-medium" style={{color: '#7f5539'}}>
+                                  Share the winners and results with all ArtAura users
+                                </p>
+                              </div>
+                            </div>
+                            <button
+                              onClick={handlePublishWinners}
+                              disabled={isPublishing || !challenge.winners || challenge.winners.length === 0}
+                              className={`px-6 py-3 rounded-lg font-bold text-white transition-all duration-300 flex items-center gap-2 ${
+                                isPublishing || !challenge.winners || challenge.winners.length === 0
+                                  ? 'bg-gray-400 cursor-not-allowed opacity-60'
+                                  : 'bg-gradient-to-r from-[#D87C5A] to-[#c4664a] hover:from-[#c4664a] hover:to-[#D87C5A] shadow-lg hover:shadow-xl transform hover:-translate-y-0.5'
+                              }`}
+                            >
+                              {isPublishing ? (
+                                <>
+                                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                                  Publishing...
+                                </>
+                              ) : publishSuccess ? (
+                                <>
+                                  <CheckCircle className="h-5 w-5" />
+                                  Published!
+                                </>
+                              ) : (
+                                <>
+                                  <Megaphone className="h-5 w-5" />
+                                  Publish Winners
+                                </>
+                              )}
+                            </button>
+                          </div>
+
+                          {/* Success Message */}
+                          {publishSuccess && (
+                            <div className="mt-4 p-4 rounded-lg flex items-center gap-3" style={{backgroundColor: '#d4edda', borderLeft: '4px solid #28a745'}}>
+                              <CheckCircle className="h-5 w-5" style={{color: '#28a745'}} />
+                              <div>
+                                <p className="font-bold text-sm" style={{color: '#155724'}}>
+                                  Winners Published Successfully!
+                                </p>
+                                <p className="text-xs" style={{color: '#155724'}}>
+                                  The winners are now visible on the main feed for all users.
+                                </p>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Error Message */}
+                          {publishError && (
+                            <div className="mt-4 p-4 rounded-lg flex items-center gap-3" style={{backgroundColor: '#f8d7da', borderLeft: '4px solid #dc3545'}}>
+                              <XCircle className="h-5 w-5" style={{color: '#dc3545'}} />
+                              <div>
+                                <p className="font-bold text-sm" style={{color: '#721c24'}}>
+                                  Failed to Publish
+                                </p>
+                                <p className="text-xs" style={{color: '#721c24'}}>
+                                  {publishError}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* No Winners Warning */}
+                          {(!challenge.winners || challenge.winners.length === 0) && (
+                            <div className="mt-4 p-4 rounded-lg flex items-center gap-3" style={{backgroundColor: '#fff3cd', borderLeft: '4px solid #ffc107'}}>
+                              <AlertCircle className="h-5 w-5" style={{color: '#856404'}} />
+                              <p className="text-sm font-medium" style={{color: '#856404'}}>
+                                Winners must be calculated before publishing to the main feed.
+                              </p>
+                            </div>
+                          )}
+                        </div>
                       </>
                     );
                   })()}
                 </div>
               )}
 
-              {/* No Challenge Selected Message */}
+              {/* No Challenge Selected Message or Empty Database State */}
               {!selectedChallenge && (
                 <div className="text-center py-12">
                   <Trophy className="h-16 w-16 mx-auto mb-4" style={{color: '#D87C5A', opacity: 0.4}} />
-                  <h3 className="text-lg font-bold mb-2" style={{color: '#362625'}}>No Challenge Selected</h3>
-                  <p className="text-sm font-medium" style={{color: '#7f5539'}}>
-                    Select a completed challenge above to view its winners and scoring criteria
-                  </p>
+                  {pastChallenges.length === 0 ? (
+                    <>
+                      <h3 className="text-lg font-bold mb-2" style={{color: '#362625'}}>No Completed Challenges Found</h3>
+                      <p className="text-sm font-medium" style={{color: '#7f5539'}}>
+                        There are no completed challenges in the database yet.
+                      </p>
+                      <p className="text-sm font-medium mt-2" style={{color: '#7f5539'}}>
+                        Completed challenges will appear here once they reach their deadline or are marked as completed.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <h3 className="text-lg font-bold mb-2" style={{color: '#362625'}}>No Challenge Selected</h3>
+                      <p className="text-sm font-medium" style={{color: '#7f5539'}}>
+                        Select a completed challenge above to view its winners and scoring criteria
+                      </p>
+                    </>
+                  )}
                 </div>
               )}
             </div>

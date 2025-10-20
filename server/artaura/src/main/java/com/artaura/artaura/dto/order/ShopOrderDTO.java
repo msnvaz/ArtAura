@@ -21,6 +21,15 @@ public class ShopOrderDTO {
     private String status; // pending, approved, cancelled
     private Timestamp date;
 
+    // Product tracking for stock management
+    private Long productId; // Main product in the order
+    private Integer quantity; // Quantity ordered (default 1)
+    private String productName; // Product name
+    private String productImage; // Product image URL
+    private String artistName; // Artist username
+    private Double total; // Total amount as Double
+    private java.time.LocalDateTime dateTime; // Date as LocalDateTime
+
     public ShopOrderDTO() {
     }
 
@@ -29,7 +38,8 @@ public class ShopOrderDTO {
             String artistFirstName, String artistLastName,
             String artistEmail, String artistContactNo,
             String items, BigDecimal totalAmount,
-            String status, Timestamp date) {
+            String status, Timestamp date,
+            Long productId, Integer quantity) {
         this.orderId = orderId;
         this.shopId = shopId;
         this.artistId = artistId;
@@ -41,5 +51,7 @@ public class ShopOrderDTO {
         this.totalAmount = totalAmount;
         this.status = status;
         this.date = date;
+        this.productId = productId;
+        this.quantity = quantity;
     }
 }

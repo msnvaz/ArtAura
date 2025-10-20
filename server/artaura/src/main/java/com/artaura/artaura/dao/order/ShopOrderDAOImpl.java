@@ -37,6 +37,9 @@ public class ShopOrderDAOImpl implements ShopOrderDAO {
         order.setTotalAmount(rs.getBigDecimal("total"));
         order.setStatus(rs.getString("status"));
         order.setDate(rs.getTimestamp("date"));
+        // New fields for stock management
+        order.setProductId(rs.getObject("product_id") != null ? rs.getLong("product_id") : null);
+        order.setQuantity(rs.getObject("quantity") != null ? rs.getInt("quantity") : 1);
         return order;
     };
 
@@ -45,7 +48,7 @@ public class ShopOrderDAOImpl implements ShopOrderDAO {
         logger.info("Fetching orders for shop ID: {}", shopId);
         String sql = "SELECT so.order_id, so.shop_id, so.artist_id, " +
                 "a.first_name, a.last_name, a.email, a.contactNo, " +
-                "so.items, so.total, so.status, so.date " +
+                "so.items, so.total, so.status, so.date, so.product_id, so.quantity " +
                 "FROM shop_orders so " +
                 "INNER JOIN artists a ON so.artist_id = a.artist_id " +
                 "WHERE so.shop_id = ? ORDER BY so.date DESC";
@@ -59,7 +62,7 @@ public class ShopOrderDAOImpl implements ShopOrderDAO {
         logger.info("Fetching order with ID: {}", orderId);
         String sql = "SELECT so.order_id, so.shop_id, so.artist_id, " +
                 "a.first_name, a.last_name, a.email, a.contactNo, " +
-                "so.items, so.total, so.status, so.date " +
+                "so.items, so.total, so.status, so.date, so.product_id, so.quantity " +
                 "FROM shop_orders so " +
                 "INNER JOIN artists a ON so.artist_id = a.artist_id " +
                 "WHERE so.order_id = ?";
@@ -76,8 +79,8 @@ public class ShopOrderDAOImpl implements ShopOrderDAO {
     @Override
     public ShopOrderDTO save(ShopOrderDTO order) {
         logger.info("Creating new order: {}", order);
-        String sql = "INSERT INTO shop_orders (shop_id, artist_id, items, total, status, date) " +
-                "VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO shop_orders (shop_id, artist_id, items, total, status, date, product_id, quantity) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
@@ -88,6 +91,12 @@ public class ShopOrderDAOImpl implements ShopOrderDAO {
             ps.setBigDecimal(4, order.getTotalAmount());
             ps.setString(5, order.getStatus());
             ps.setTimestamp(6, order.getDate());
+            if (order.getProductId() != null) {
+                ps.setLong(7, order.getProductId());
+            } else {
+                ps.setNull(7, java.sql.Types.BIGINT);
+            }
+            ps.setInt(8, order.getQuantity() != null ? order.getQuantity() : 1);
             return ps;
         }, keyHolder);
 
@@ -106,7 +115,7 @@ public class ShopOrderDAOImpl implements ShopOrderDAO {
     public ShopOrderDTO update(ShopOrderDTO order) {
         logger.info("Updating order: {}", order);
         String sql = "UPDATE shop_orders SET shop_id = ?, artist_id = ?, " +
-                "items = ?, total = ?, status = ?, date = ? WHERE order_id = ?";
+                "items = ?, total = ?, status = ?, date = ?, product_id = ?, quantity = ? WHERE order_id = ?";
 
         int rowsAffected = jdbcTemplate.update(sql,
                 order.getShopId(),
@@ -115,6 +124,8 @@ public class ShopOrderDAOImpl implements ShopOrderDAO {
                 order.getTotalAmount(),
                 order.getStatus(),
                 order.getDate(),
+                order.getProductId(),
+                order.getQuantity() != null ? order.getQuantity() : 1,
                 order.getOrderId());
 
         logger.info("Updated {} row(s) for order ID: {}", rowsAffected, order.getOrderId());

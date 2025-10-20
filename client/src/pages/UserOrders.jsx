@@ -249,10 +249,10 @@ const UserOrders = () => {
     setSelectedCommissionOrder(null);
   };
 
-  const renderStars = (rating = 5) => {
+  const renderStars = (rating = 5, orderIdOrIndex = 0) => {
     return Array.from({ length: 5 }, (_, i) => (
       <Star
-        key={i}
+        key={`${orderIdOrIndex}-star-${i}`}
         className={`w-4 h-4 ${
           i < rating ? "text-yellow-400 fill-current" : "text-gray-300"
         }`}
