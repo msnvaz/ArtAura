@@ -137,7 +137,7 @@ const ArtworkDetailModal = ({
                                 </div>
 
                                 {/* Engagement Stats */}
-                                <div className="flex items-center space-x-6 mb-6 p-4 bg-[#fdf9f4]/50 rounded-lg">
+                                {/* <div className="flex items-center space-x-6 mb-6 p-4 bg-[#fdf9f4]/50 rounded-lg">
                                     <div className="flex items-center space-x-2">
                                         <Heart className="h-5 w-5 text-red-500" />
                                         <span className="font-medium text-[#7f5539]">{artwork.likes} likes</span>
@@ -146,7 +146,7 @@ const ArtworkDetailModal = ({
                                         <Eye className="h-5 w-5 text-blue-500" />
                                         <span className="font-medium text-[#7f5539]">{artwork.views} views</span>
                                     </div>
-                                </div>
+                                </div> */}
 
                                 {/* Price */}
                                 <div className="mb-6">
@@ -186,21 +186,21 @@ const ArtworkDetailModal = ({
                             {/* Additional Actions */}
                             <div className="pt-6 border-t border-[#fdf9f4]/50">
                                 <div className="grid grid-cols-2 gap-4">
-                                    <button className="flex items-center justify-center space-x-2 bg-[#7f5539]/10 text-[#7f5539] px-4 py-3 rounded-lg hover:bg-[#7f5539]/20 transition-colors font-medium">
+                                    {/* <button className="flex items-center justify-center space-x-2 bg-[#7f5539]/10 text-[#7f5539] px-4 py-3 rounded-lg hover:bg-[#7f5539]/20 transition-colors font-medium">
                                         <Share2 className="h-4 w-4" />
                                         <span>Share</span>
-                                    </button>
-                                    <button className="flex items-center justify-center space-x-2 bg-[#7f5539]/10 text-[#7f5539] px-4 py-3 rounded-lg hover:bg-[#7f5539]/20 transition-colors font-medium">
+                                    </button> */}
+                                    {/* <button className="flex items-center justify-center space-x-2 bg-[#7f5539]/10 text-[#7f5539] px-4 py-3 rounded-lg hover:bg-[#7f5539]/20 transition-colors font-medium">
                                         <Download className="h-4 w-4" />
                                         <span>Download</span>
-                                    </button>
-                                    <button
+                                    </button> */}
+                                    {/* <button
                                         onClick={handleToggleFeature}
                                         className="flex items-center justify-center space-x-2 bg-blue-50 text-blue-600 px-4 py-3 rounded-lg hover:bg-blue-100 transition-colors font-medium"
                                     >
                                         <Star className="h-4 w-4" />
                                         <span>{artwork.featured ? 'Unfeature' : 'Feature'}</span>
-                                    </button>
+                                    </button> */}
                                     <button
                                         onClick={handleDelete}
                                         className="flex items-center justify-center space-x-2 bg-red-50 text-red-600 px-4 py-3 rounded-lg hover:bg-red-100 transition-colors font-medium"
