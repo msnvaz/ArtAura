@@ -31,6 +31,10 @@ public class ChallengeSubmissionDTO {
     private Integer dislikesCount;
     private String userReaction; // "like", "dislike", or null
 
+    // Scoring and Winner information
+    private Integer marks; // Calculated: MAX(0, (Likes × 10) - (Dislikes × 5))
+    private Integer position; // Winner position: 1, 2, 3, etc. (null if not a winner)
+
     // Constructors
     public ChallengeSubmissionDTO() {}
 
@@ -97,6 +101,13 @@ public class ChallengeSubmissionDTO {
 
     public String getUserReaction() { return userReaction; }
     public void setUserReaction(String userReaction) { this.userReaction = userReaction; }
+
+    // Scoring and Winner information getters and setters
+    public Integer getMarks() { return marks; }
+    public void setMarks(Integer marks) { this.marks = marks; }
+
+    public Integer getPosition() { return position; }
+    public void setPosition(Integer position) { this.position = position; }
 
     // Legacy compatibility methods for backward compatibility
     public Long getSubmissionId() { return this.id; }
