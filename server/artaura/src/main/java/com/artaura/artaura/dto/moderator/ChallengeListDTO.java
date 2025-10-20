@@ -18,6 +18,11 @@ public class ChallengeListDTO {
     private int moderatorId;
     private int participantCount; // Number of participants who submitted
     private String discountCode; // Discount code for winners
+    
+    // Sponsorship details
+    private String sponsorShopName; // Shop name for sponsored challenges
+    private Integer sponsorDiscountPercentage; // Discount percentage for sponsored challenges
+    
     // Removed scoringCriteria - using fixed marks scoring now
     // Each Like = +10 marks, Each Dislike = -5 marks, Minimum score = 0
 }
