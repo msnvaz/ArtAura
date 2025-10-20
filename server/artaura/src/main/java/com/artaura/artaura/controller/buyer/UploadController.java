@@ -31,17 +31,27 @@ public class UploadController {
                 projectRoot = "C:" + File.separator + "Users" + File.separator + "aaa" + File.separator + "Desktop" + File.separator + "ArtAura" + File.separator;
             }
 
-            // Save to main client/public/uploads directory (NOT uploads/buyer)
+            // Save to main client/public/uploads directory (NOT server/client)
             String uploadDir = projectRoot + "client" + File.separator + "public" + File.separator + "uploads" + File.separator;
+            
+            System.out.println("Current Dir: " + currentDir);
+            System.out.println("Project Root: " + projectRoot);
+            System.out.println("Upload Dir: " + uploadDir);
+            
             Files.createDirectories(Paths.get(uploadDir));
             String fileName = System.currentTimeMillis() + "_" + imageFile.getOriginalFilename();
             File dest = new File(uploadDir + fileName);
             imageFile.transferTo(dest);
 
-            // Return the full Windows path as requested
-            String imageUrl = dest.getAbsolutePath();
+            // Return only the relative path for database storage (not the full Windows path)
+            String imageUrl = "/uploads/" + fileName;
+            
+            System.out.println("File saved to: " + dest.getAbsolutePath());
+            System.out.println("Returning relative path: " + imageUrl);
+            
             return ResponseEntity.ok(Map.of("imageUrl", imageUrl));
         } catch (IOException e) {
+            System.err.println("Upload failed: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Failed to upload image"));
         }

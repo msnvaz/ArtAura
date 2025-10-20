@@ -525,33 +525,33 @@ const UserOrders = () => {
                       {/* Commission Preview */}
                       <div className="flex items-center gap-3">
                         {order.imageUrls && order.imageUrls.length > 0 ? (
-                          order.imageUrls.slice(0, 3).map((img, idx) => {
-                            // Extract filename from full Windows path and serve from client/public/uploads
-                            let imageSrc = img;
-                            if (img.includes("\\")) {
-                              // If it's a full Windows path like C:\Users\aaa\Desktop\ArtAura\client\public\uploads\1760895440943_refernce-7.jpeg
-                              const filename = img.split("\\").pop(); // Get just the filename
-                              imageSrc = `/uploads/${filename}`; // Serve from client/public/uploads
-                            } else if (img.startsWith("/uploads/")) {
-                              // If it's already a relative path like /uploads/filename.jpg
-                              imageSrc = img;
-                            }
-
-                            return (
-                              <img
-                                key={idx}
-                                src={imageSrc}
-                                alt="Reference"
-                                className="w-12 h-12 rounded-lg object-cover border border-[#FFD95A]"
-                                onError={(e) => {
-                                  console.error(
-                                    `Failed to load image: ${imageSrc}`
-                                  );
-                                  e.target.style.display = "none";
-                                }}
-                              />
-                            );
-                          })
+                          order.imageUrls
+                            .slice(0, 3)
+                            .map((img, idx) => {
+                              // Handle both clean relative paths and legacy full Windows paths
+                              let imageSrc = img;
+                              if (img.includes('\\')) {
+                                // Legacy: full Windows path like C:\Users\aaa\Desktop\ArtAura\client\public\uploads\filename.jpg
+                                const filename = img.split('\\').pop();
+                                imageSrc = `/uploads/${filename}`;
+                              } else if (img.startsWith("/uploads/")) {
+                                // New: clean relative path like /uploads/filename.jpg
+                                imageSrc = img;
+                              }
+                              
+                              return (
+                                <img
+                                  key={idx}
+                                  src={imageSrc}
+                                  alt="Reference"
+                                  className="w-12 h-12 rounded-lg object-cover border border-[#FFD95A]"
+                                  onError={(e) => {
+                                    console.error(`Failed to load image: ${imageSrc}`);
+                                    e.target.style.display = 'none';
+                                  }}
+                                />
+                              );
+                            })
                         ) : (
                           <div className="w-12 h-12 rounded-lg bg-[#FFF5E1] border border-[#FFD95A] flex items-center justify-center text-[#7f5539] text-xs font-medium">
                             No Images

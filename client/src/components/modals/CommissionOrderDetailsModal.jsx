@@ -277,17 +277,17 @@ const CommissionOrderDetailsModal = ({ order, isOpen, onClose }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {order.imageUrls && order.imageUrls.length > 0 ? (
                 order.imageUrls.map((img, idx) => {
-                  // Extract filename from full Windows path and serve from client/public/uploads
+                  // Handle both clean relative paths and legacy full Windows paths
                   let imageSrc = img;
-                  if (img.includes("\\")) {
-                    // If it's a full Windows path like C:\Users\aaa\Desktop\ArtAura\client\public\uploads\1760895440943_refernce-7.jpeg
-                    const filename = img.split("\\").pop(); // Get just the filename
-                    imageSrc = `/uploads/${filename}`; // Serve from client/public/uploads
+                  if (img.includes('\\')) {
+                    // Legacy: full Windows path like C:\Users\aaa\Desktop\ArtAura\client\public\uploads\filename.jpg
+                    const filename = img.split('\\').pop();
+                    imageSrc = `/uploads/${filename}`;
                   } else if (img.startsWith("/uploads/")) {
-                    // If it's already a relative path like /uploads/filename.jpg
+                    // New: clean relative path like /uploads/filename.jpg
                     imageSrc = img;
                   }
-
+                  
                   return (
                     <div key={idx} className="relative group">
                       <img
@@ -296,7 +296,7 @@ const CommissionOrderDetailsModal = ({ order, isOpen, onClose }) => {
                         className="w-full h-48 rounded-lg object-cover border-3 border-[#FFD95A] shadow-lg hover:scale-105 transition-transform duration-300 bg-[#FFF5E1]"
                         onError={(e) => {
                           console.error(`Failed to load image: ${imageSrc}`);
-                          e.target.style.display = "none";
+                          e.target.style.display = 'none';
                         }}
                       />
                       <span className="absolute bottom-2 right-2 bg-[#D87C5A] text-white text-sm px-3 py-1 rounded-full font-bold shadow-lg">

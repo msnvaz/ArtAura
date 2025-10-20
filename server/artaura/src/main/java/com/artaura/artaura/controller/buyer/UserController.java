@@ -69,12 +69,11 @@ public class UserController {
             }
             
             imageFile.transferTo(dest);
-            // Store the full Windows path instead of relative URL
-            imagePath = dest.getAbsolutePath();
+            imagePath = "/uploads/buyer/" + fileName;
             updatedProfile.setImage(imagePath);
             
             System.out.println("File saved to: " + dest.getAbsolutePath());
-            System.out.println("Full path stored in database: " + imagePath);
+            System.out.println("Relative path: " + imagePath);
         }
         
         UserProfileDTO profile = userService.updateUserProfile(userId, updatedProfile);
