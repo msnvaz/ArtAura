@@ -323,6 +323,16 @@ const ShopDiscoveryTab = () => {
                                     <Package className="h-4 w-4 text-[#7f5539]/60" />
                                     <span>{selectedShopProducts.length} Products</span>
                                 </div>
+                                {(selectedShop.streetAddress || selectedShop.city) && (
+                                    <div className="flex items-center space-x-2 col-span-full">
+                                        <MapPin className="h-4 w-4 text-[#7f5539]/60" />
+                                        <span>
+                                            {[selectedShop.streetAddress, selectedShop.city, selectedShop.state, selectedShop.country, selectedShop.zipCode]
+                                                .filter(Boolean)
+                                                .join(', ')}
+                                        </span>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -460,32 +470,45 @@ const ShopDiscoveryTab = () => {
                             {safeFilteredShops.map((shop) => (
                                 <div
                                     key={shop.shopId}
-                                    className={`bg-[#fdf9f4]/30 rounded-lg p-4 cursor-pointer hover:shadow-md transition-all ${viewMode === 'list' ? 'flex items-center space-x-4' : ''
-                                        }`}
+                                    className={`bg-white rounded-xl p-6 cursor-pointer transition-all duration-300 border border-[#7f5539]/10
+                                        shadow-[0_2px_8px_rgba(127,85,57,0.08)] hover:shadow-[0_8px_30px_rgba(127,85,57,0.2)] 
+                                        hover:-translate-y-1 hover:border-[#7f5539]/20
+                                        ${viewMode === 'list' ? 'flex items-center space-x-6' : ''}`}
                                     onClick={() => handleShopClick(shop)}
                                 >
-                                    <div className={`p-3 bg-[#7f5539]/10 rounded-full ${viewMode === 'list' ? 'flex-shrink-0' : 'mx-auto mb-3 w-fit'}`}>
-                                        <Store className="h-6 w-6 text-[#7f5539]" />
+                                    <div className={`p-4 bg-gradient-to-br from-[#7f5539]/10 to-[#7f5539]/5 rounded-xl 
+                                        shadow-inner ${viewMode === 'list' ? 'flex-shrink-0' : 'mx-auto mb-4 w-fit'}`}>
+                                        <Store className="h-8 w-8 text-[#7f5539]" />
                                     </div>
 
                                     <div className={`${viewMode === 'list' ? 'flex-1' : 'text-center'}`}>
-                                        <h5 className="font-semibold text-[#7f5539] mb-2">{shop.shopName}</h5>
-                                        <p className="text-[#7f5539]/70 text-sm mb-2 line-clamp-2">{shop.description}</p>
+                                        <h5 className="font-bold text-[#7f5539] mb-2 text-lg">{shop.shopName}</h5>
+                                        <p className="text-[#7f5539]/70 text-sm mb-3 line-clamp-2">{shop.description}</p>
 
-                                        <div className={`${viewMode === 'list' ? 'flex items-center space-x-4' : 'space-y-1'} text-xs text-[#7f5539]/60`}>
-                                            <div className="flex items-center space-x-1">
-                                                <Store className="h-3 w-3" />
-                                                <span>{shop.businessType}</span>
+                                        <div className={`${viewMode === 'list' ? 'flex items-center flex-wrap gap-4' : 'space-y-2'} text-xs text-[#7f5539]/60`}>
+                                            <div className="flex items-center space-x-2 bg-[#7f5539]/5 px-3 py-1.5 rounded-full">
+                                                <Store className="h-3.5 w-3.5 text-[#7f5539]" />
+                                                <span className="font-medium">{shop.businessType}</span>
                                             </div>
-                                            <div className="flex items-center space-x-1">
-                                                <Phone className="h-3 w-3" />
+                                            <div className="flex items-center space-x-2 bg-[#7f5539]/5 px-3 py-1.5 rounded-full">
+                                                <Phone className="h-3.5 w-3.5 text-[#7f5539]" />
                                                 <span>{shop.contactNo}</span>
                                             </div>
+                                            {(shop.streetAddress || shop.city) && (
+                                                <div className="flex items-center space-x-2 bg-[#7f5539]/5 px-3 py-1.5 rounded-full">
+                                                    <MapPin className="h-3.5 w-3.5 text-[#7f5539]" />
+                                                    <span className="line-clamp-1">
+                                                        {[shop.streetAddress, shop.city, shop.state, shop.country, shop.zipCode]
+                                                            .filter(Boolean)
+                                                            .join(', ')}
+                                                    </span>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 
                                     {viewMode === 'list' && (
-                                        <ExternalLink className="h-4 w-4 text-[#7f5539]/60 flex-shrink-0" />
+                                        <ExternalLink className="h-5 w-5 text-[#7f5539]/60 flex-shrink-0 group-hover:text-[#7f5539]" />
                                     )}
                                 </div>
                             ))}

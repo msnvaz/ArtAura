@@ -66,9 +66,12 @@ public class ShopDAOImpl implements ShopDAO {
 
     @Override
     public List<ShopDTO> findAll() {
-        String sql = "SELECT shop_id, shop_name, owner_name, email, contact_no, business_type, "
-                + "business_license, tax_id, description, status, agreed_terms, created_at "
-                + "FROM shops WHERE status = 'active' ORDER BY shop_name";
+        String sql = "SELECT s.shop_id, s.shop_name, s.owner_name, s.email, s.contact_no, s.business_type, "
+                + "s.business_license, s.tax_id, s.description, s.status, s.agreed_terms, s.created_at, "
+                + "a.street_address, a.city, a.state, a.country, a.zip_code "
+                + "FROM shops s "
+                + "LEFT JOIN addresses a ON s.shop_id = a.shop_id "
+                + "WHERE s.status = 'active' ORDER BY s.shop_name";
         return jdbc.query(sql, (rs, rowNum) -> mapShop(rs));
     }
 
@@ -86,6 +89,18 @@ public class ShopDAOImpl implements ShopDAO {
         shop.setStatus(rs.getString("status"));
         shop.setAgreedTerms(rs.getBoolean("agreed_terms"));
         shop.setCreatedAt(rs.getTimestamp("created_at"));
+
+        // Map address fields (may be null if no address exists)
+        try {
+            shop.setStreetAddress(rs.getString("street_address"));
+            shop.setCity(rs.getString("city"));
+            shop.setState(rs.getString("state"));
+            shop.setCountry(rs.getString("country"));
+            shop.setZipCode(rs.getString("zip_code"));
+        } catch (Exception e) {
+            // Address fields don't exist in this query, leave them null
+        }
+
         return shop;
     }
 }
