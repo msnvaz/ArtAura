@@ -374,25 +374,20 @@ const UserOrders = () => {
                             )}`}
                           >
                             {getStatusIcon(order.status)}
-                            {order.status.charAt(0).toUpperCase() +
-                              order.status.slice(1)}
+                            {order.status
+                              ? order.status.charAt(0).toUpperCase() +
+                                order.status.slice(1)
+                              : "Unknown"}
                           </span>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-[#7f5539]/70">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-[#7f5539]/70">
                           <div>
                             <span className="font-medium">Order Date:</span>
                             <br />
                             {order.orderDate
                               ? new Date(order.orderDate).toLocaleDateString()
                               : ""}
-                          </div>
-                          <div>
-                            <span className="font-medium">Total Amount:</span>
-                            <br />
-                            <span className="text-[#D87C5A] font-semibold">
-                              LKR {order.totalAmount?.toLocaleString()}
-                            </span>
                           </div>
                           <div>
                             <span className="font-medium">
@@ -486,8 +481,10 @@ const UserOrders = () => {
                             )}`}
                           >
                             {getStatusIcon(order.status)}
-                            {order.status?.charAt(0).toUpperCase() +
-                              order.status?.slice(1)}
+                            {order.status
+                              ? order.status.charAt(0).toUpperCase() +
+                                order.status.slice(1)
+                              : "Unknown"}
                           </span>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-[#7f5539]/70">
@@ -525,33 +522,33 @@ const UserOrders = () => {
                       {/* Commission Preview */}
                       <div className="flex items-center gap-3">
                         {order.imageUrls && order.imageUrls.length > 0 ? (
-                          order.imageUrls
-                            .slice(0, 3)
-                            .map((img, idx) => {
-                              // Handle both clean relative paths and legacy full Windows paths
-                              let imageSrc = img;
-                              if (img.includes('\\')) {
-                                // Legacy: full Windows path like C:\Users\aaa\Desktop\ArtAura\client\public\uploads\filename.jpg
-                                const filename = img.split('\\').pop();
-                                imageSrc = `/uploads/${filename}`;
-                              } else if (img.startsWith("/uploads/")) {
-                                // New: clean relative path like /uploads/filename.jpg
-                                imageSrc = img;
-                              }
-                              
-                              return (
-                                <img
-                                  key={idx}
-                                  src={imageSrc}
-                                  alt="Reference"
-                                  className="w-12 h-12 rounded-lg object-cover border border-[#FFD95A]"
-                                  onError={(e) => {
-                                    console.error(`Failed to load image: ${imageSrc}`);
-                                    e.target.style.display = 'none';
-                                  }}
-                                />
-                              );
-                            })
+                          order.imageUrls.slice(0, 3).map((img, idx) => {
+                            // Handle both clean relative paths and legacy full Windows paths
+                            let imageSrc = img;
+                            if (img.includes("\\")) {
+                              // Legacy: full Windows path like C:\Users\aaa\Desktop\ArtAura\client\public\uploads\filename.jpg
+                              const filename = img.split("\\").pop();
+                              imageSrc = `/uploads/${filename}`;
+                            } else if (img.startsWith("/uploads/")) {
+                              // New: clean relative path like /uploads/filename.jpg
+                              imageSrc = img;
+                            }
+
+                            return (
+                              <img
+                                key={idx}
+                                src={imageSrc}
+                                alt="Reference"
+                                className="w-12 h-12 rounded-lg object-cover border border-[#FFD95A]"
+                                onError={(e) => {
+                                  console.error(
+                                    `Failed to load image: ${imageSrc}`
+                                  );
+                                  e.target.style.display = "none";
+                                }}
+                              />
+                            );
+                          })
                         ) : (
                           <div className="w-12 h-12 rounded-lg bg-[#FFF5E1] border border-[#FFD95A] flex items-center justify-center text-[#7f5539] text-xs font-medium">
                             No Images
@@ -575,8 +572,27 @@ const UserOrders = () => {
 
                         {/* Show Payment Status for paid orders */}
                         {order.hasPayment && (
-                          <span className="bg-green-100 text-green-800 px-3 py-2 rounded text-sm font-medium">
-                            ✓ Paid
+                          <span
+                            className={`px-3 py-2 rounded text-sm font-medium ${
+                              order.paymentStatus === "completed" ||
+                              order.paymentStatus === "COMPLETED"
+                                ? "bg-green-100 text-green-800"
+                                : order.paymentStatus === "pending" ||
+                                  order.paymentStatus === "PENDING"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : order.paymentStatus === "failed" ||
+                                  order.paymentStatus === "FAILED"
+                                ? "bg-red-100 text-red-800"
+                                : "bg-gray-100 text-gray-800"
+                            }`}
+                          >
+                            {order.paymentStatus === "completed" ||
+                            order.paymentStatus === "COMPLETED"
+                              ? "✓ Paid"
+                              : order.paymentStatus
+                              ? order.paymentStatus.charAt(0).toUpperCase() +
+                                order.paymentStatus.slice(1).toLowerCase()
+                              : "Payment Made"}
                           </span>
                         )}
 
