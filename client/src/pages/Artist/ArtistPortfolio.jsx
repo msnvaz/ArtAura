@@ -15,6 +15,7 @@ import AchievementsSection from '../../components/artist/AchievementsSection';
 import ChallengeParticipation from '../../components/artist/ChallengeParticipation';
 import EditArtworkModal from '../../components/artworks/EditArtworkModal';
 import ShopDiscoveryTab from '../../components/artist/ShopDiscoveryTab';
+import ArtistOrders from '../../components/artist/ArtistOrders';
 import DeleteConfirmationModal from '../../components/artworks/DeleteConfirmationModal';
 import SmartImage from '../../components/common/SmartImage';
 import ImageWithFallback from '../../components/ImageWithFallback';
@@ -1984,6 +1985,7 @@ const ArtistPortfolio = () => {
                 { id: 'orders', label: 'Commission Requests', count: requestsCount },
                 { id: 'artwork-orders', label: 'Orders', count: artworkOrdersCount },
                 { id: 'shops', label: 'Shops', icon: Store },
+                { id: 'my-orders', label: 'My Orders', icon: Package },
                 { id: 'exhibitions', label: 'Exhibitions', count: exhibitionsCount },
                 { id: 'achievements', label: 'Achievements', count: achievementsCount },
                 { id: 'analytics', label: 'Analytics' }
@@ -3350,6 +3352,11 @@ const ArtistPortfolio = () => {
         {/* Shops Tab */}
         {activeTab === 'shops' && (
           <ShopDiscoveryTab />
+        )}
+
+        {/* My Orders Tab */}
+        {activeTab === 'my-orders' && (
+          <ArtistOrders />
         )}
       </div>
 

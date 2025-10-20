@@ -13,7 +13,8 @@ public class ChallengeListDTO {
     private int maxParticipants;
     private String rewards;
     private boolean requestSponsorship;
-    private String status;
+    private String sponsorship; // ENUM: 'none', 'pending', 'active' from database
+    private String status; // Challenge status: 'draft', 'active', 'completed'
     private int moderatorId;
     // Removed scoringCriteria - using fixed marks scoring now
     // Each Like = +10 marks, Each Dislike = -5 marks, Minimum score = 0

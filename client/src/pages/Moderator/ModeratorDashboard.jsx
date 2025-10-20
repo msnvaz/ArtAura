@@ -102,31 +102,32 @@ const ModeratorDashboard = () => {
       setSubmissionsError(null);
       
       try {
-        // Fetch submissions from backend with likes and dislikes
+        // Fetch submissions from backend with marks calculated and positions assigned
+        // API endpoint: GET /api/challenges/{challengeId}/winners
+        // Formula: MAX(0, (Likes × 10) - (Dislikes × 5))
         const response = await axios.get(
-          `${import.meta.env.VITE_API_URL}/api/challenges/${selectedWinnerChallenge}/submissions/reactions`
+          `${import.meta.env.VITE_API_URL}/api/challenges/${selectedWinnerChallenge}/winners`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
         );
         
-        // Calculate scores for each submission
+        // Map backend response to frontend format
         const submissionsWithScores = response.data.map(submission => ({
-          ...submission,
+          submissionId: submission.id,
+          title: submission.artworkTitle,
+          artistName: submission.artistName,
+          imageUrl: submission.artworkImagePath,
           totalLikes: submission.likesCount || 0,
           totalDislikes: submission.dislikesCount || 0,
-          calculatedScore: calculateScore(submission.likesCount || 0, submission.dislikesCount || 0)
+          calculatedScore: submission.marks || 0, // Marks from backend
+          position: submission.position || null // Position from backend (1, 2, 3)
         }));
         
-        // Sort by calculated score in descending order
-        const sortedSubmissions = submissionsWithScores.sort((a, b) => 
-          b.calculatedScore - a.calculatedScore
-        );
-        
-        // Assign positions to top 3
-        const submissionsWithPositions = sortedSubmissions.map((sub, index) => ({
-          ...sub,
-          position: index < 3 ? index + 1 : null
-        }));
-        
-        setWinnerSubmissions(submissionsWithPositions);
+        setWinnerSubmissions(submissionsWithScores);
+        console.log('Loaded submissions with marks:', submissionsWithScores);
       } catch (err) {
         console.error('Error fetching submissions:', err);
         setSubmissionsError('Failed to load submissions. Using mock data for demonstration.');
@@ -192,7 +193,7 @@ const ModeratorDashboard = () => {
     };
     
     fetchSubmissions();
-  }, [selectedWinnerChallenge]);
+  }, [selectedWinnerChallenge, token]);
 
   // Dummy contestant data for scoring criteria
   const getContestantData = (challengeId) => {
@@ -1230,11 +1231,23 @@ const ModeratorDashboard = () => {
                             </div>
                           )}
 
-                          {challenge.requestSponsorship && (
-                            <div className="flex items-center gap-2 text-xs">
-                              <span className="px-2 py-1 rounded" style={{backgroundColor: '#e3f2fd', color: '#1976d2'}}>
-                                🤝 Sponsorship Requested
-                              </span>
+                          {/* Sponsorship Status Display */}
+                          {challenge.sponsorship && challenge.sponsorship !== 'none' && (
+                            <div className="mt-3">
+                              {challenge.sponsorship === 'pending' && (
+                                <div className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg bg-yellow-50 border border-yellow-200">
+                                  <span className="font-semibold text-yellow-700">
+                                    ⏳ Sponsorship Pending
+                                  </span>
+                                </div>
+                              )}
+                              {challenge.sponsorship === 'active' && (
+                                <div className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 animate-pulse">
+                                  <span className="font-semibold text-purple-700">
+                                    ✨ Sponsored Challenge
+                                  </span>
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
