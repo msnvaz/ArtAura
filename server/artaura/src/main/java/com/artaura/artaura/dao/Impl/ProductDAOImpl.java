@@ -95,11 +95,12 @@ public class ProductDAOImpl implements ProductDAO {
     @Override
     public void deleteById(Long id) {
         System.out.println("🗑️ ProductDAOImpl: Attempting to delete product with ID: " + id);
-        
+
         try {
             // No need to check for orders anymore - the database has ON DELETE SET NULL
-            // The product_id in shop_orders will automatically become NULL when product is deleted
-            
+            // The product_id in shop_orders will automatically become NULL when product is
+            // deleted
+
             String sql = "DELETE FROM products WHERE id = ?";
             int rowsAffected = jdbcTemplate.update(sql, id);
 
@@ -107,9 +108,10 @@ public class ProductDAOImpl implements ProductDAO {
                 System.err.println("❌ Product not found with id: " + id);
                 throw new RuntimeException("Product not found with id: " + id);
             }
-            
-            System.out.println("✅ Product " + id + " deleted successfully. Associated orders now have product_id = NULL.");
-            
+
+            System.out.println(
+                    "✅ Product " + id + " deleted successfully. Associated orders now have product_id = NULL.");
+
         } catch (org.springframework.dao.DataIntegrityViolationException e) {
             System.err.println("❌ Database constraint violation: " + e.getMessage());
             throw new RuntimeException("Cannot delete product due to database constraint: " + e.getMessage());
