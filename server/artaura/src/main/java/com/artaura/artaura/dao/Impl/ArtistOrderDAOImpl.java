@@ -33,8 +33,7 @@ public class ArtistOrderDAOImpl implements ArtistOrderDAO {
             String productName = (String) productInfo.get("name");
 
             String sql = "INSERT INTO shop_orders (shop_id, artist_id, items, total, status, product_id, quantity, date) "
-                    +
-                    "VALUES (?, ?, ?, ?, 'pending', ?, ?, NOW())";
+                    + "VALUES (?, ?, ?, ?, 'pending', ?, ?, NOW())";
 
             KeyHolder keyHolder = new GeneratedKeyHolder();
 
@@ -61,27 +60,27 @@ public class ArtistOrderDAOImpl implements ArtistOrderDAO {
 
     @Override
     public List<ArtistOrderDTO> getOrdersByArtist(Long artistId) {
-        String sql = "SELECT so.order_id, so.shop_id, s.shop_name, so.product_id, p.name as product_name, " +
-                "p.image as product_image, so.quantity, so.total, so.status, so.date " +
-                "FROM shop_orders so " +
-                "JOIN shops s ON so.shop_id = s.shop_id " +
-                "LEFT JOIN products p ON so.product_id = p.id " +
-                "WHERE so.artist_id = ? " +
-                "ORDER BY so.date DESC";
+        String sql = "SELECT so.order_id, so.shop_id, s.shop_name, so.product_id, p.name as product_name, "
+                + "p.image as product_image, so.quantity, so.total, so.status, so.date "
+                + "FROM shop_orders so "
+                + "JOIN shops s ON so.shop_id = s.shop_id "
+                + "LEFT JOIN products p ON so.product_id = p.id "
+                + "WHERE so.artist_id = ? "
+                + "ORDER BY so.date DESC";
 
         return jdbcTemplate.query(sql, this::mapToArtistOrderDTO, artistId);
     }
 
     @Override
     public List<ShopOrderDTO> getOrdersByShop(Long shopId) {
-        String sql = "SELECT so.order_id, so.shop_id, so.artist_id, u.username as artist_name, " +
-                "so.items, so.total, so.status, so.date, so.product_id, so.quantity, " +
-                "p.name as product_name, p.image as product_image " +
-                "FROM shop_orders so " +
-                "LEFT JOIN users u ON so.artist_id = u.id " +
-                "LEFT JOIN products p ON so.product_id = p.id " +
-                "WHERE so.shop_id = ? " +
-                "ORDER BY so.date DESC";
+        String sql = "SELECT so.order_id, so.shop_id, so.artist_id, u.username as artist_name, "
+                + "so.items, so.total, so.status, so.date, so.product_id, so.quantity, "
+                + "p.name as product_name, p.image as product_image "
+                + "FROM shop_orders so "
+                + "LEFT JOIN users u ON so.artist_id = u.id "
+                + "LEFT JOIN products p ON so.product_id = p.id "
+                + "WHERE so.shop_id = ? "
+                + "ORDER BY so.date DESC";
 
         return jdbcTemplate.query(sql, this::mapToShopOrderDTO, shopId);
     }
@@ -101,12 +100,12 @@ public class ArtistOrderDAOImpl implements ArtistOrderDAO {
 
     @Override
     public ArtistOrderDTO getOrderById(Long orderId) {
-        String sql = "SELECT so.order_id, so.shop_id, s.shop_name, so.product_id, p.name as product_name, " +
-                "p.image as product_image, so.quantity, so.total, so.status, so.date " +
-                "FROM shop_orders so " +
-                "JOIN shops s ON so.shop_id = s.shop_id " +
-                "LEFT JOIN products p ON so.product_id = p.id " +
-                "WHERE so.order_id = ?";
+        String sql = "SELECT so.order_id, so.shop_id, s.shop_name, so.product_id, p.name as product_name, "
+                + "p.image as product_image, so.quantity, so.total, so.status, so.date "
+                + "FROM shop_orders so "
+                + "JOIN shops s ON so.shop_id = s.shop_id "
+                + "LEFT JOIN products p ON so.product_id = p.id "
+                + "WHERE so.order_id = ?";
 
         return jdbcTemplate.queryForObject(sql, this::mapToArtistOrderDTO, orderId);
     }
@@ -176,7 +175,7 @@ public class ArtistOrderDAOImpl implements ArtistOrderDAO {
 
         Timestamp timestamp = rs.getTimestamp("date");
         if (timestamp != null) {
-            dto.setDateTime(timestamp.toLocalDateTime());
+            dto.setDate(timestamp); // Use Timestamp directly for ShopOrderDTO
         }
 
         return dto;
