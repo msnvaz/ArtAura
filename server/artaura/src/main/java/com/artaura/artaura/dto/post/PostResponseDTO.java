@@ -14,5 +14,6 @@ public class PostResponseDTO {
     private String location;
     private LocalDateTime created_at;
     private int likes;
+    private int comments;
 
 }
