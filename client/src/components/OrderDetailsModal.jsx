@@ -201,7 +201,7 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
           {/* Modal Content */}
           <div className="p-6 space-y-6">
             {/* Order Status & Info */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-[#FFF5E1] rounded-lg p-4">
                 <h3 className="font-semibold text-[#7f5539] mb-2">
                   Order Status
@@ -224,14 +224,6 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
                   {order.orderDate
                     ? new Date(order.orderDate).toLocaleString()
                     : ""}
-                </p>
-              </div>
-              <div className="bg-[#FFF5E1] rounded-lg p-4">
-                <h3 className="font-semibold text-[#7f5539] mb-2">
-                  Total Amount
-                </h3>
-                <p className="text-2xl font-bold text-[#D87C5A]">
-                  LKR {order.totalAmount?.toLocaleString()}
                 </p>
               </div>
             </div>
@@ -271,10 +263,6 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
                     {order.shippingAddress || "-"}
                   </div>
                   <div>
-                    <span className="font-medium">Shipping Fee:</span> LKR{" "}
-                    {order.shippingFee?.toLocaleString()}
-                  </div>
-                  <div>
                     <span className="font-medium">Payment Method:</span>{" "}
                     {order.paymentMethod || "-"}
                   </div>
@@ -293,14 +281,6 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
                     {order.orderDate
                       ? new Date(order.orderDate).toLocaleString()
                       : ""}
-                  </div>
-                  <div>
-                    <span className="font-medium">Total Amount:</span> LKR{" "}
-                    {order.totalAmount?.toLocaleString()}
-                  </div>
-                  <div>
-                    <span className="font-medium">Shipping Fee:</span> LKR{" "}
-                    {order.shippingFee?.toLocaleString()}
                   </div>
                   <div>
                     <span className="font-medium">Payment Method:</span>{" "}

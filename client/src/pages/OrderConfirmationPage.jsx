@@ -1,7 +1,6 @@
 import React, { useEffect } from "react";
 import {
   CheckCircle,
-  Download,
   Mail,
   Phone,
   MapPin,
@@ -40,27 +39,6 @@ const OrderConfirmationPage = () => {
     window.location.href = "/shop-products";
   };
 
-  const handleDownloadReceipt = () => {
-    // Simulate downloading receipt
-    const receiptData = {
-      orderId,
-      billingInfo,
-      orderSummary,
-      paymentMethod,
-      orderDate: new Date().toLocaleDateString(),
-    };
-
-    const dataStr =
-      "data:text/json;charset=utf-8," +
-      encodeURIComponent(JSON.stringify(receiptData, null, 2));
-    const downloadAnchorNode = document.createElement("a");
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", `receipt-${orderId}.json`);
-    document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
-  };
-
   return (
     <div className="min-h-screen bg-[#FFF5E1]">
       <Navbar />
@@ -78,10 +56,6 @@ const OrderConfirmationPage = () => {
               Thank you for your purchase. Your order has been successfully
               placed.
             </p>
-            <div className="bg-white rounded-lg border border-[#FFD95A] p-4 inline-block">
-              <p className="text-sm text-[#7f5539]/70">Order Number</p>
-              <p className="text-xl font-bold text-[#D87C5A]">{orderId}</p>
-            </div>
           </div>
 
           {/* Order Details */}
@@ -254,36 +228,11 @@ const OrderConfirmationPage = () => {
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
-              onClick={handleDownloadReceipt}
-              className="flex items-center justify-center gap-2 bg-white border-2 border-[#FFD95A] text-[#7f5539] px-6 py-3 rounded-lg font-medium hover:bg-[#FFF5E1] transition-colors"
-            >
-              <Download className="w-4 h-4" />
-              Download Receipt
-            </button>
-
-            <button
               onClick={handleContinueShopping}
               className="flex items-center justify-center gap-2 bg-[#D87C5A] hover:bg-[#7f5539] text-white px-6 py-3 rounded-lg font-medium transition-colors"
             >
               Continue Shopping
             </button>
-          </div>
-
-          {/* Support Information */}
-          <div className="mt-8 text-center">
-            <p className="text-sm text-[#7f5539]/70 mb-2">
-              Need help with your order? Contact our support team.
-            </p>
-            <div className="flex items-center justify-center gap-4 text-sm text-[#7f5539]">
-              <div className="flex items-center gap-1">
-                <Mail className="w-3 h-3" />
-                <span>support@artaura.com</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Phone className="w-3 h-3" />
-                <span>011-2433333</span>
-              </div>
-            </div>
           </div>
         </div>
       </div>

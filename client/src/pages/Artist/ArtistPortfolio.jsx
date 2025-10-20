@@ -10,6 +10,7 @@ import ChangeCoverModal from '../../components/profile/ChangeCoverModal';
 import EditPostModel from '../../components/artist/EditPostModel';
 import { AcceptOrderModal, RejectOrderModal } from '../../components/orders/OrderModals';
 import CommissionActionModal from '../../components/modals/CommissionActionModal';
+import CommissionImagesModal from '../../components/modals/CommissionImagesModal';
 import ExhibitionsSection from '../../components/artist/ExhibitionsSection';
 import AchievementsSection from '../../components/artist/AchievementsSection';
 import ChallengeParticipation from '../../components/artist/ChallengeParticipation';
@@ -68,7 +69,8 @@ import {
   Truck,
   CheckCircle,
   Package,
-  Home
+  Home,
+  Image as ImageIcon
 } from 'lucide-react';
 
 import { useImageWithFallback } from '../../util/imageUtils';
@@ -182,6 +184,11 @@ const ArtistPortfolio = () => {
   const [showCommissionActionModal, setShowCommissionActionModal] = useState(false);
   const [selectedCommissionRequest, setSelectedCommissionRequest] = useState(null);
   const [commissionAction, setCommissionAction] = useState('accept'); // 'accept' or 'reject'
+
+  // Commission images modal state
+  const [showCommissionImagesModal, setShowCommissionImagesModal] = useState(false);
+  const [selectedCommissionImages, setSelectedCommissionImages] = useState([]);
+  const [selectedCommissionTitle, setSelectedCommissionTitle] = useState('');
 
   // Artwork orders state
   const [artworkOrders, setArtworkOrders] = useState([]);
@@ -496,7 +503,20 @@ const ArtistPortfolio = () => {
       });
 
       if (requestsResponse.data && requestsResponse.data.success) {
-        setCommissionRequests(requestsResponse.data.data || []);
+        const requests = requestsResponse.data.data || [];
+
+        // Debug logging only in development
+        if (import.meta.env.DEV) {
+          console.log('📦 Commission Requests loaded:', requests.length);
+          const imagesInfo = requests
+            .filter(r => r.referenceImages && r.referenceImages.length > 0)
+            .map(r => `${r.title}: ${r.referenceImages.length} images`);
+          if (imagesInfo.length > 0) {
+            console.log('📸 Requests with images:', imagesInfo.join(', '));
+          }
+        }
+
+        setCommissionRequests(requests);
       }
 
       // Fetch commission requests count
@@ -1773,6 +1793,21 @@ const ArtistPortfolio = () => {
     }
   };
 
+  // Commission images modal handlers
+  const handleViewCommissionImages = (request) => {
+    if (request.referenceImages && request.referenceImages.length > 0) {
+      setSelectedCommissionImages(request.referenceImages);
+      setSelectedCommissionTitle(request.title);
+      setShowCommissionImagesModal(true);
+    }
+  };
+
+  const handleCloseCommissionImagesModal = () => {
+    setShowCommissionImagesModal(false);
+    setSelectedCommissionImages([]);
+    setSelectedCommissionTitle('');
+  };
+
   // Commission action modal handlers
   const handleOpenAcceptModal = (request) => {
     setSelectedCommissionRequest(request);
@@ -2635,15 +2670,43 @@ const ArtistPortfolio = () => {
                         {/* Commission Request Info */}
                         <div className="flex-1">
                           <div className="flex items-start space-x-4">
-                            {request.referenceImages && request.referenceImages.length > 0 && (
-                              <img
-                                src={getImageUrl(request.referenceImages[0])}
-                                alt="Reference"
-                                className="w-16 h-16 object-cover rounded-lg"
-                                onError={(e) => {
-                                  e.target.style.display = 'none';
-                                }}
-                              />
+                            {request.referenceImages && request.referenceImages.length > 0 ? (
+                              <div className="relative w-16 h-16 flex-shrink-0">
+                                <img
+                                  src={getImageUrl(request.referenceImages[0])}
+                                  alt="Reference"
+                                  className="w-16 h-16 object-cover rounded-lg border border-[#7f5539]/20"
+                                  onError={(e) => {
+                                    // Only log in development mode
+                                    if (import.meta.env.DEV) {
+                                      console.warn('⚠️ Commission image not found:', request.referenceImages[0]);
+                                    }
+                                    e.target.onerror = null;
+                                    // Hide the img and show placeholder instead
+                                    e.target.style.display = 'none';
+                                    const placeholder = e.target.nextElementSibling;
+                                    if (placeholder) placeholder.style.display = 'flex';
+                                  }}
+                                  onLoad={() => {
+                                    if (import.meta.env.DEV) {
+                                      console.log('✅ Image loaded:', request.referenceImages[0]);
+                                    }
+                                  }}
+                                />
+                                {/* Fallback placeholder - hidden by default, shown on error */}
+                                <div
+                                  className="absolute inset-0 bg-[#fdf9f4] rounded-lg flex-col items-center justify-center border border-[#7f5539]/20"
+                                  style={{ display: 'none' }}
+                                >
+                                  <Palette className="w-6 h-6 text-[#7f5539]/30 mb-1" />
+                                  <span className="text-[9px] text-[#7f5539]/40 text-center px-1">Image<br />Missing</span>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="w-16 h-16 bg-[#fdf9f4] rounded-lg flex flex-col items-center justify-center border border-[#7f5539]/20">
+                                <Palette className="w-6 h-6 text-[#7f5539]/30 mb-1" />
+                                <span className="text-[9px] text-[#7f5539]/40">No Image</span>
+                              </div>
                             )}
                             <div className="flex-1 min-w-0">
                               <h4 className="text-lg font-semibold text-[#7f5539] truncate">{request.title}</h4>
@@ -2700,6 +2763,17 @@ const ArtistPortfolio = () => {
                             }`}>
                             {request.status}
                           </span>
+
+                          {/* View Images Button - Show if there are reference images */}
+                          {request.referenceImages && request.referenceImages.length > 0 && (
+                            <button
+                              onClick={() => handleViewCommissionImages(request)}
+                              className="bg-[#7f5539] text-white px-4 py-2 rounded-lg hover:bg-[#5f3f29] transition-colors text-sm font-medium flex items-center space-x-2"
+                            >
+                              <ImageIcon className="h-4 w-4" />
+                              <span>View Images ({request.referenceImages.length})</span>
+                            </button>
+                          )}
 
                           {/* Action Buttons */}
                           {request.status === 'PENDING' && (
@@ -3467,6 +3541,14 @@ const ArtistPortfolio = () => {
         onReject={handleRejectCommissionRequest}
         request={selectedCommissionRequest}
         action={commissionAction}
+      />
+
+      {/* Commission Images Modal */}
+      <CommissionImagesModal
+        isOpen={showCommissionImagesModal}
+        onClose={handleCloseCommissionImagesModal}
+        images={selectedCommissionImages}
+        commissionTitle={selectedCommissionTitle}
       />
 
       {/* Debug Component - Remove this in production */}
