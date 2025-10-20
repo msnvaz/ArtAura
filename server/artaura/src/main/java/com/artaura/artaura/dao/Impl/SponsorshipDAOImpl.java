@@ -115,9 +115,48 @@ public class SponsorshipDAOImpl implements SponsorshipDAO {
 
     @Override
     public void updateChallengeToSponsored(Long challengeId) {
-        String sql = "UPDATE challenges SET sponsorship = 'active', status = 'active' WHERE id = ? AND sponsorship = 'pending'";
-        jdbcTemplate.update(sql, challengeId);
-        System.out.println("✅ Updated challenge " + challengeId + " to sponsored and active status");
+        // First, get the shop name and discount percentage for this challenge
+        String getShopInfoSql = "SELECT s.shop_name, so.discount_percentage " +
+                "FROM sponsorship_offers so " +
+                "JOIN shops s ON so.shop_id = s.shop_id " +
+                "WHERE so.challenge_id = ? " +
+                "LIMIT 1";
+        
+        try {
+            // Get sponsor information
+            String[] sponsorInfo = jdbcTemplate.queryForObject(getShopInfoSql, (rs, rowNum) -> {
+                String shopName = rs.getString("shop_name");
+                int discountPercentage = rs.getInt("discount_percentage");
+                return new String[]{shopName, String.valueOf(discountPercentage)};
+            }, challengeId);
+            
+            if (sponsorInfo != null && sponsorInfo.length == 2) {
+                String shopName = sponsorInfo[0];
+                String discountPercentage = sponsorInfo[1];
+                
+                // Create the rewards text
+                String rewardsText = "Sponsored by: " + shopName + "\n" + discountPercentage + "% OFF";
+                
+                // Update challenge with sponsorship status, active status, and rewards
+                String sql = "UPDATE challenges SET sponsorship = 'active', status = 'active', rewards = ? " +
+                        "WHERE id = ? AND sponsorship = 'pending'";
+                jdbcTemplate.update(sql, rewardsText, challengeId);
+                
+                System.out.println("✅ Updated challenge " + challengeId + " to sponsored and active status");
+                System.out.println("✅ Set rewards to: " + rewardsText);
+            } else {
+                // If no sponsor info found, just update sponsorship and status
+                String sql = "UPDATE challenges SET sponsorship = 'active', status = 'active' WHERE id = ? AND sponsorship = 'pending'";
+                jdbcTemplate.update(sql, challengeId);
+                System.out.println("✅ Updated challenge " + challengeId + " to sponsored and active status (no sponsor info found)");
+            }
+        } catch (Exception e) {
+            // If error getting sponsor info, just update sponsorship and status
+            System.err.println("⚠️ Error getting sponsor info for challenge " + challengeId + ": " + e.getMessage());
+            String sql = "UPDATE challenges SET sponsorship = 'active', status = 'active' WHERE id = ? AND sponsorship = 'pending'";
+            jdbcTemplate.update(sql, challengeId);
+            System.out.println("✅ Updated challenge " + challengeId + " to sponsored and active status (fallback)");
+        }
     }
 
     @Override
@@ -139,11 +178,11 @@ public class SponsorshipDAOImpl implements SponsorshipDAO {
             String countSql = "SELECT COUNT(*) FROM sponsorship_offers WHERE challenge_id = ?";
             Integer count = jdbcTemplate.queryForObject(countSql, Integer.class, challengeId);
 
-            // If no more sponsors, set back to pending
+            // If no more sponsors, set back to pending and clear sponsor rewards
             if (count != null && count == 0) {
-                String updateSql = "UPDATE challenges SET sponsorship = 'pending' WHERE id = ?";
+                String updateSql = "UPDATE challenges SET sponsorship = 'pending', rewards = NULL WHERE id = ?";
                 jdbcTemplate.update(updateSql, challengeId);
-                System.out.println("✅ Updated challenge " + challengeId + " back to requesting sponsorship");
+                System.out.println("✅ Updated challenge " + challengeId + " back to requesting sponsorship and cleared rewards");
             }
         }
     }

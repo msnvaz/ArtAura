@@ -398,8 +398,25 @@ const CatalogManagement = () => {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        showToast(`❌ ${error.message || "Failed to delete product"}`, "error", 2000);
+        // Handle both JSON and plain text error responses
+        const contentType = response.headers.get("content-type");
+        let errorMessage = "Failed to delete product";
+        
+        try {
+          if (contentType && contentType.includes("application/json")) {
+            const error = await response.json();
+            errorMessage = error.message || errorMessage;
+          } else {
+            // Backend returns plain text for RuntimeException
+            const errorText = await response.text();
+            errorMessage = errorText || errorMessage;
+          }
+        } catch (parseError) {
+          console.error("Error parsing error response:", parseError);
+          // If parsing fails completely, use default message
+        }
+        
+        showToast(`❌ ${errorMessage}`, "error", 3000);
         return;
       }
 

@@ -80,16 +80,25 @@ public class ChallengeDAOImpl implements ChallengeDAO {
     @Override
     public List<ChallengeListDTO> getAllChallenges() {
         // Return all challenges regardless of status (moderators can see drafts, active, completed)
-        String sql = "SELECT * FROM challenges ORDER BY publish_date_time DESC";
+        // JOIN with sponsorship_offers and shops to get sponsor information
+        String sql = "SELECT c.*, s.shop_name as sponsor_shop_name, so.discount_percentage as sponsor_discount_percentage " +
+                     "FROM challenges c " +
+                     "LEFT JOIN sponsorship_offers so ON c.id = so.challenge_id AND c.sponsorship = 'active' " +
+                     "LEFT JOIN shops s ON so.shop_id = s.shop_id " +
+                     "ORDER BY c.publish_date_time DESC";
         return jdbcTemplate.query(sql, new ChallengeRowMapper());
     }
 
     @Override
     public List<ChallengeListDTO> getCompletedChallenges() {
-        // Return only challenges with 'completed' status with participant count
+        // Return only challenges with 'completed' status with participant count and sponsor information
         String sql = "SELECT c.*, " +
-                     "COALESCE((SELECT COUNT(DISTINCT artist_id) FROM challenge_participants WHERE challenge_id = c.id), 0) as participant_count " +
+                     "COALESCE((SELECT COUNT(DISTINCT artist_id) FROM challenge_participants WHERE challenge_id = c.id), 0) as participant_count, " +
+                     "s.shop_name as sponsor_shop_name, " +
+                     "so.discount_percentage as sponsor_discount_percentage " +
                      "FROM challenges c " +
+                     "LEFT JOIN sponsorship_offers so ON c.id = so.challenge_id AND c.sponsorship = 'active' " +
+                     "LEFT JOIN shops s ON so.shop_id = s.shop_id " +
                      "WHERE c.status = 'completed' " +
                      "ORDER BY c.deadline_date_time DESC";
         return jdbcTemplate.query(sql, new ChallengeRowMapper());
