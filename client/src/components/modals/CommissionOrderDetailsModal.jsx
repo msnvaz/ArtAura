@@ -276,20 +276,35 @@ const CommissionOrderDetailsModal = ({ order, isOpen, onClose }) => {
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {order.imageUrls && order.imageUrls.length > 0 ? (
-                order.imageUrls.map((img, idx) => (
-                  <div key={idx} className="relative group">
-                    <img
-                      src={
-                        img.startsWith("/uploads/") ? `${API_URL}${img}` : img
-                      }
-                      alt={`Reference ${idx + 1}`}
-                      className="w-full h-48 rounded-lg object-cover border-3 border-[#FFD95A] shadow-lg hover:scale-105 transition-transform duration-300 bg-[#FFF5E1]"
-                    />
-                    <span className="absolute bottom-2 right-2 bg-[#D87C5A] text-white text-sm px-3 py-1 rounded-full font-bold shadow-lg">
-                      {idx + 1}
-                    </span>
-                  </div>
-                ))
+                order.imageUrls.map((img, idx) => {
+                  // Handle both clean relative paths and legacy full Windows paths
+                  let imageSrc = img;
+                  if (img.includes('\\')) {
+                    // Legacy: full Windows path like C:\Users\aaa\Desktop\ArtAura\client\public\uploads\filename.jpg
+                    const filename = img.split('\\').pop();
+                    imageSrc = `/uploads/${filename}`;
+                  } else if (img.startsWith("/uploads/")) {
+                    // New: clean relative path like /uploads/filename.jpg
+                    imageSrc = img;
+                  }
+                  
+                  return (
+                    <div key={idx} className="relative group">
+                      <img
+                        src={imageSrc}
+                        alt={`Reference ${idx + 1}`}
+                        className="w-full h-48 rounded-lg object-cover border-3 border-[#FFD95A] shadow-lg hover:scale-105 transition-transform duration-300 bg-[#FFF5E1]"
+                        onError={(e) => {
+                          console.error(`Failed to load image: ${imageSrc}`);
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                      <span className="absolute bottom-2 right-2 bg-[#D87C5A] text-white text-sm px-3 py-1 rounded-full font-bold shadow-lg">
+                        {idx + 1}
+                      </span>
+                    </div>
+                  );
+                })
               ) : (
                 <div className="col-span-full text-center py-12">
                   <ImageIcon className="w-16 h-16 text-[#D87C5A]/40 mx-auto mb-4" />

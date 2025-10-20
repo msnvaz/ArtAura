@@ -9,8 +9,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
-import java.util.Map;
-import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/buyer/artists")
@@ -29,52 +27,9 @@ public class BuyerArtistController {
     }
 
     @PostMapping("/{id}/follow")
-    public ResponseEntity<Map<String, Object>> followArtist(@PathVariable Long id, @RequestHeader("Authorization") String token) {
-        Map<String, Object> response = new HashMap<>();
-        try {
-            boolean success = artistService.followArtist(id, token);
-            response.put("success", success);
-            response.put("message", success ? "Successfully followed artist" : "Already following this artist");
-            response.put("isFollowing", success);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", "Failed to follow artist: " + e.getMessage());
-            response.put("isFollowing", false);
-            return ResponseEntity.badRequest().body(response);
-        }
-    }
-
-    @DeleteMapping("/{id}/unfollow")
-    public ResponseEntity<Map<String, Object>> unfollowArtist(@PathVariable Long id, @RequestHeader("Authorization") String token) {
-        Map<String, Object> response = new HashMap<>();
-        try {
-            boolean success = artistService.unfollowArtist(id, token);
-            response.put("success", success);
-            response.put("message", success ? "Successfully unfollowed artist" : "Not following this artist");
-            response.put("isFollowing", false);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", "Failed to unfollow artist: " + e.getMessage());
-            return ResponseEntity.badRequest().body(response);
-        }
-    }
-
-    @GetMapping("/{id}/follow-status")
-    public ResponseEntity<Map<String, Object>> getFollowStatus(@PathVariable Long id, @RequestHeader("Authorization") String token) {
-        Map<String, Object> response = new HashMap<>();
-        try {
-            boolean isFollowing = artistService.isFollowing(id, token);
-            response.put("isFollowing", isFollowing);
-            response.put("success", true);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            response.put("isFollowing", false);
-            response.put("success", false);
-            response.put("message", "Failed to check follow status: " + e.getMessage());
-            return ResponseEntity.badRequest().body(response);
-        }
+    public ResponseEntity<?> followArtist(@PathVariable Long id, @RequestHeader("Authorization") String token) {
+        artistService.followArtist(id, token);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/{artistId}/profile")

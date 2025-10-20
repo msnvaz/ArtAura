@@ -1,16 +1,24 @@
 package com.artaura.artaura.controller;
 
-import com.artaura.artaura.dto.sponsorship.ChallengeForSponsorshipDTO;
-import com.artaura.artaura.dto.sponsorship.SponsorshipOfferDTO;
-import com.artaura.artaura.service.SponsorshipService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.artaura.artaura.dto.sponsorship.ChallengeForSponsorshipDTO;
+import com.artaura.artaura.dto.sponsorship.SponsorshipOfferDTO;
+import com.artaura.artaura.service.SponsorshipService;
 
 @RestController
 @RequestMapping("/api/sponsorships")
@@ -169,6 +177,54 @@ public class SponsorshipController {
 
         } catch (Exception e) {
             System.err.println("❌ Error deleting sponsorship offer: " + e.getMessage());
+            e.printStackTrace();
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "Internal server error: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * Update sponsorship offer status (e.g., to 'valid' when sent to winner)
+     * PUT /api/sponsorships/offers/{offerId}/status
+     * Request body: { "status": "valid" }
+     */
+    @PutMapping("/offers/{offerId}/status")
+    public ResponseEntity<Map<String, Object>> updateSponsorshipStatus(
+            @PathVariable Long offerId,
+            @RequestBody Map<String, String> request) {
+        try {
+            String status = request.get("status");
+            
+            if (status == null || status.trim().isEmpty()) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "Status is required");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
+
+            System.out.println("📝 Updating sponsorship offer " + offerId + " status to: " + status);
+            sponsorshipService.updateSponsorshipStatus(offerId, status);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Sponsorship status updated successfully");
+            response.put("offerId", offerId);
+            response.put("status", status);
+
+            System.out.println("✅ Sponsorship status updated");
+            return ResponseEntity.ok(response);
+
+        } catch (RuntimeException e) {
+            System.err.println("❌ Error: " + e.getMessage());
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+
+        } catch (Exception e) {
+            System.err.println("❌ Error updating sponsorship status: " + e.getMessage());
             e.printStackTrace();
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
