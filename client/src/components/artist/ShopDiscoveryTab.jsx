@@ -208,6 +208,12 @@ const ShopDiscoveryTab = () => {
         setSelectedShopProducts([]);
     };
 
+    // Helper function to get shop name for a product
+    const getShopNameForProduct = (shopId) => {
+        const shop = shops.find(s => s.shopId === shopId);
+        return shop ? shop.shopName : 'Unknown Shop';
+    };
+
     // Add safety check for undefined data - MUST be defined before filtering
     const safeShops = Array.isArray(shops) ? shops : [];
     const safeProducts = Array.isArray(products) ? products : [];
@@ -550,6 +556,14 @@ const ShopDiscoveryTab = () => {
 
                                     <div className={`${viewMode === 'list' ? 'flex-1' : ''} space-y-3`}>
                                         <div>
+                                            {/* Shop Name Tag */}
+                                            <div className="flex items-center space-x-2 mb-2">
+                                                <span className="inline-flex items-center space-x-1 text-xs bg-[#7f5539]/10 text-[#7f5539] px-2.5 py-1 rounded-full border border-[#7f5539]/20">
+                                                    <Store className="h-3 w-3" />
+                                                    <span className="font-medium">{getShopNameForProduct(product.shopId)}</span>
+                                                </span>
+                                            </div>
+                                            
                                             <h5 className="font-semibold text-[#7f5539] mb-2">{product.name}</h5>
                                             <p className="text-[#7f5539]/70 text-sm mb-2 line-clamp-2">{product.description}</p>
 
