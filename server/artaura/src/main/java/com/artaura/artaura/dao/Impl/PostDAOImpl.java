@@ -98,7 +98,24 @@ public class PostDAOImpl implements PostDAO {
 
     @Override
     public List<PostResponseDTO> getPostsByUser(String role, Long userId) {
-        String sql = "SELECT * FROM post WHERE user_id = ? AND role = ? ORDER BY created_at DESC";
+        String sql = """
+            SELECT p.*, 
+                   COALESCE(l.likes_count, 0) as likes_count,
+                   COALESCE(c.comments_count, 0) as comments_count
+            FROM post p
+            LEFT JOIN (
+                SELECT post_id, COUNT(*) as likes_count 
+                FROM post_likes 
+                GROUP BY post_id
+            ) l ON p.post_id = l.post_id
+            LEFT JOIN (
+                SELECT post_id, COUNT(*) as comments_count 
+                FROM post_comments 
+                GROUP BY post_id
+            ) c ON p.post_id = c.post_id
+            WHERE p.user_id = ? AND p.role = ? 
+            ORDER BY p.created_at DESC
+            """;
 
         return jdbcTemplate.query(sql, new Object[]{userId, role}, (rs, rowNum) -> {
             PostResponseDTO post = new PostResponseDTO();
@@ -122,7 +139,9 @@ public class PostDAOImpl implements PostDAO {
 
             post.setLocation(rs.getString("location"));
             post.setCreated_at(rs.getTimestamp("created_at").toLocalDateTime());
-            post.setLikes(rs.getInt("likes"));
+            // Use the aggregated counts from the separate tables
+            post.setLikes(rs.getInt("likes_count"));
+            post.setComments(rs.getInt("comments_count"));
             return post;
         });
     }

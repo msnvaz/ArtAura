@@ -541,13 +541,12 @@ const ArtistPortfolio = () => {
         ordersResponse.data?.forEach((order, index) => {
           console.log(`Order ${index + 1} (ID: ${order.orderId}):`, {
             totalAmount: order.totalAmount,
-            totalAmountType: typeof order.totalAmount
+            totalAmountType: typeof order.totalAmount,
+            totalAmountParsed: typeof order.totalAmount === 'string' ? parseFloat(order.totalAmount) : order.totalAmount
           });
         });
         setArtworkOrders(ordersResponse.data || []);
-      }
-
-      // Fetch artwork orders count
+      }      // Fetch artwork orders count
       const countResponse = await artistArtworkOrderApi.getArtworkOrdersCount();
       if (countResponse && countResponse.success) {
         const countData = countResponse.data;
@@ -609,6 +608,21 @@ const ArtistPortfolio = () => {
         );
 
         console.log('Posts API response:', response.data);
+
+        // Debug: Check the structure of posts to identify comment field
+        if (response.data && response.data.length > 0) {
+          console.log('Sample post structure:', response.data[0]);
+          console.log('Post engagement fields available:', {
+            // Like fields
+            likes: response.data[0].likes,
+            likesCount: response.data[0].likesCount,
+            like_count: response.data[0].like_count,
+            // Comment fields
+            comments: response.data[0].comments,
+            commentsCount: response.data[0].commentsCount,
+            comment_count: response.data[0].comment_count
+          });
+        }
 
         // Sort posts by creation date (newest first) as a fallback
         const sortedPosts = Array.isArray(response.data) ? response.data.sort((a, b) => {
@@ -1912,8 +1926,8 @@ const ArtistPortfolio = () => {
                       <div className="text-sm text-[#7f5539]/60">Artworks</div>
                     </div>
                     <div>
-                      <div className="text-2xl font-bold text-[#7f5539]">{artistProfile.stats.sales}</div>
-                      <div className="text-sm text-[#7f5539]/60">Sales</div>
+                      <div className="text-2xl font-bold text-[#7f5539]">{portfolioPosts.length}</div>
+                      <div className="text-sm text-[#7f5539]/60">Posts</div>
                     </div>
                     <div>
                       <div className="text-2xl font-bold text-[#7f5539]">{artistProfile.stats.followers}</div>
@@ -2961,44 +2975,71 @@ const ArtistPortfolio = () => {
         {/* Analytics Tab */}
         {activeTab === 'analytics' && (
           <div className="space-y-8">
-            {/* Performance Overview */}
+            {/* Key Metrics Overview */}
             <div className="bg-white rounded-lg shadow-sm border border-[#fdf9f4]/20 p-6">
               <h3 className="text-xl font-semibold text-[#7f5539] mb-6 flex items-center">
                 <BarChart3 className="mr-2" size={24} />
-                Portfolio Performance Overview
+                Analytics Overview
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {/* Total Posts */}
                 <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-blue-600 text-sm font-medium">Total Portfolio Views</p>
-                      <p className="text-2xl font-bold text-blue-800">{artistProfile.stats.views.toLocaleString()}</p>
+                      <p className="text-blue-600 text-sm font-medium">Total Posts</p>
+                      <p className="text-2xl font-bold text-blue-800">{portfolioPosts.length}</p>
                       <div className="flex items-center mt-1">
                         <TrendingUp className="text-green-500 mr-1" size={16} />
                         <span className="text-green-600 text-sm">+15.3%</span>
                       </div>
                     </div>
-                    <Eye className="text-blue-500" size={32} />
+                    <FileText className="text-blue-500" size={32} />
                   </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4">
+                {/* Total Likes */}
+                <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-green-600 text-sm font-medium">Total Engagement</p>
-                      <p className="text-2xl font-bold text-green-800">
-                        {(portfolioPosts.reduce((sum, post) => sum + (post.likes || 0) + (post.comments || 0), 0) +
-                          (Array.isArray(artworks) ? artworks.reduce((sum, art) => sum + (art.likes || 0), 0) : 0)).toLocaleString()}
+                      <p className="text-red-600 text-sm font-medium">Total Likes</p>
+                      <p className="text-2xl font-bold text-red-800">
+                        {portfolioPosts.reduce((sum, post) => {
+                          // Check for different possible like field names and ensure it's a number
+                          const likes = post.likes || post.likesCount || post.like_count || 0;
+                          return sum + (typeof likes === 'number' ? likes : 0);
+                        }, 0).toLocaleString()}
                       </p>
                       <div className="flex items-center mt-1">
                         <TrendingUp className="text-green-500 mr-1" size={16} />
                         <span className="text-green-600 text-sm">+22.7%</span>
                       </div>
                     </div>
-                    <Heart className="text-green-500" size={32} />
+                    <Heart className="text-red-500" size={32} />
                   </div>
                 </div>
 
+                {/* Total Comments */}
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-blue-600 text-sm font-medium">Total Comments</p>
+                      <p className="text-2xl font-bold text-blue-800">
+                        {portfolioPosts.reduce((sum, post) => {
+                          // Check for different possible comment field names
+                          const comments = post.comments || post.commentsCount || post.comment_count || 0;
+                          return sum + (typeof comments === 'number' ? comments : 0);
+                        }, 0)}
+                      </p>
+                      <div className="flex items-center mt-1">
+                        <TrendingUp className="text-green-500 mr-1" size={16} />
+                        <span className="text-green-600 text-sm">+18.2%</span>
+                      </div>
+                    </div>
+                    <MessageCircle className="text-blue-500" size={32} />
+                  </div>
+                </div>
+
+                {/* Total Followers */}
                 <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4">
                   <div className="flex items-center justify-between">
                     <div>
@@ -3006,352 +3047,205 @@ const ArtistPortfolio = () => {
                       <p className="text-2xl font-bold text-purple-800">{artistProfile.stats.followers}</p>
                       <div className="flex items-center mt-1">
                         <TrendingUp className="text-green-500 mr-1" size={16} />
-                        <span className="text-green-600 text-sm">+18.2%</span>
+                        <span className="text-green-600 text-sm">+12.5%</span>
                       </div>
                     </div>
                     <Users className="text-purple-500" size={32} />
                   </div>
                 </div>
-
-                <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-orange-600 text-sm font-medium">Artworks Sold</p>
-                      <p className="text-2xl font-bold text-orange-800">{artistProfile.stats.sales}</p>
-                      <div className="flex items-center mt-1">
-                        <TrendingUp className="text-green-500 mr-1" size={16} />
-                        <span className="text-green-600 text-sm">+12.5%</span>
-                      </div>
-                    </div>
-                    <DollarSign className="text-orange-500" size={32} />
-                  </div>
-                </div>
               </div>
             </div>
 
-            {/* Detailed Analytics */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Portfolio Insights */}
-              <div className="bg-white rounded-lg shadow-sm border border-[#fdf9f4]/20 p-6">
-                <h4 className="text-lg font-semibold text-[#7f5539] mb-4 flex items-center">
-                  <PieChart className="mr-2" size={20} />
-                  Portfolio Insights
-                </h4>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-3 bg-[#fdf9f4]/50 rounded-lg">
-                    <div className="flex items-center">
-                      <Eye className="text-[#7f5539] mr-2" size={16} />
-                      <span className="text-sm font-medium">Avg. Views per Artwork</span>
+            {/* Business Metrics */}
+            <div className="bg-white rounded-lg shadow-sm border border-[#fdf9f4]/20 p-6">
+              <h3 className="text-xl font-semibold text-[#7f5539] mb-6 flex items-center">
+                <DollarSign className="mr-2" size={24} />
+                Business Metrics
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Total Orders */}
+                <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-green-600 text-sm font-medium">Total Orders</p>
+                      <p className="text-2xl font-bold text-green-800">{artworkOrdersCount}</p>
+                      <div className="flex items-center mt-1">
+                        <TrendingUp className="text-green-500 mr-1" size={16} />
+                        <span className="text-green-600 text-sm">+8.3%</span>
+                      </div>
                     </div>
-                    <span className="text-[#7f5539] font-semibold">
-                      {Array.isArray(artworks) && artworks.length > 0
-                        ? Math.round(artworks.reduce((sum, art) => sum + (art.views || 0), 0) / artworks.length)
-                        : 0}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-[#fdf9f4]/50 rounded-lg">
-                    <div className="flex items-center">
-                      <Heart className="text-[#7f5539] mr-2" size={16} />
-                      <span className="text-sm font-medium">Avg. Likes per Artwork</span>
-                    </div>
-                    <span className="text-[#7f5539] font-semibold">
-                      {Array.isArray(artworks) && artworks.length > 0
-                        ? Math.round(artworks.reduce((sum, art) => sum + (art.likes || 0), 0) / artworks.length)
-                        : 0}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-[#fdf9f4]/50 rounded-lg">
-                    <div className="flex items-center">
-                      <Target className="text-[#7f5539] mr-2" size={16} />
-                      <span className="text-sm font-medium">Conversion Rate</span>
-                    </div>
-                    <span className="text-[#7f5539] font-semibold">
-                      {artistProfile.stats.artworks > 0
-                        ? ((artistProfile.stats.sales / artistProfile.stats.artworks) * 100).toFixed(1)
-                        : '0.0'}%
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-[#fdf9f4]/50 rounded-lg">
-                    <div className="flex items-center">
-                      <Star className="text-[#7f5539] mr-2" size={16} />
-                      <span className="text-sm font-medium">Featured Artworks</span>
-                    </div>
-                    <span className="text-[#7f5539] font-semibold">
-                      {Array.isArray(artworks) ? artworks.filter(art => art.featured).length : 0}
-                    </span>
+                    <Package className="text-green-500" size={32} />
                   </div>
                 </div>
-              </div>
 
-              {/* Audience Demographics */}
-              <div className="bg-white rounded-lg shadow-sm border border-[#fdf9f4]/20 p-6">
-                <h4 className="text-lg font-semibold text-[#7f5539] mb-4 flex items-center">
-                  <Users className="mr-2" size={20} />
-                  Audience Demographics
-                </h4>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-3 bg-[#fdf9f4]/50 rounded-lg">
-                    <div className="flex items-center">
-                      <MapPin className="text-[#7f5539] mr-2" size={16} />
-                      <span className="text-sm font-medium">Top Location</span>
+                {/* Total Commission Artworks */}
+                <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-orange-600 text-sm font-medium">Commission Artworks</p>
+                      <p className="text-2xl font-bold text-orange-800">{requestsCount}</p>
+                      <div className="flex items-center mt-1">
+                        <TrendingUp className="text-green-500 mr-1" size={16} />
+                        <span className="text-green-600 text-sm">+15.7%</span>
+                      </div>
                     </div>
-                    <span className="text-[#7f5539] font-semibold">New York, USA (32%)</span>
+                    <Palette className="text-orange-500" size={32} />
                   </div>
-                  <div className="flex items-center justify-between p-3 bg-[#fdf9f4]/50 rounded-lg">
-                    <div className="flex items-center">
-                      <Clock className="text-[#7f5539] mr-2" size={16} />
-                      <span className="text-sm font-medium">Peak Activity</span>
+                </div>
+
+                {/* Total Revenue */}
+                <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-emerald-600 text-sm font-medium">Total Revenue</p>
+                      <p className="text-2xl font-bold text-emerald-800">
+                        Rs {(() => {
+                          // Calculate total revenue from AW_orders (all artwork orders)
+                          const artworkRevenue = artworkOrders.reduce((sum, order) => {
+                            const amount = order.totalAmount || 0;
+                            const numericAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+                            return sum + (isNaN(numericAmount) ? 0 : numericAmount);
+                          }, 0);
+
+                          // Calculate total revenue from delivered commission requests
+                          const commissionRevenue = commissionRequests.reduce((sum, commission) => {
+                            // Only include delivered commissions (delivery_status = 'delivered')
+                            if (commission.deliveryStatus === 'delivered') {
+                              const budget = commission.budget || 0;
+                              const numericBudget = typeof budget === 'string' ? parseFloat(budget) : budget;
+                              return sum + (isNaN(numericBudget) ? 0 : numericBudget);
+                            }
+                            return sum;
+                          }, 0);
+
+                          // Total revenue = AW_orders total_amount + delivered commission_requests budget
+                          const totalRevenue = artworkRevenue + commissionRevenue;
+                          return totalRevenue.toLocaleString();
+                        })()}
+                      </p>
+                      <div className="flex items-center mt-1">
+                        <TrendingUp className="text-green-500 mr-1" size={16} />
+                        <span className="text-green-600 text-sm">+23.5%</span>
+                      </div>
                     </div>
-                    <span className="text-[#7f5539] font-semibold">6-9 PM EST</span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-[#fdf9f4]/50 rounded-lg">
-                    <div className="flex items-center">
-                      <Target className="text-[#7f5539] mr-2" size={16} />
-                      <span className="text-sm font-medium">Primary Age Group</span>
-                    </div>
-                    <span className="text-[#7f5539] font-semibold">25-34 years (42%)</span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-[#fdf9f4]/50 rounded-lg">
-                    <div className="flex items-center">
-                      <Globe className="text-[#7f5539] mr-2" size={16} />
-                      <span className="text-sm font-medium">International Reach</span>
-                    </div>
-                    <span className="text-[#7f5539] font-semibold">23 countries</span>
+                    <DollarSign className="text-emerald-500" size={32} />
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Top Performing Content */}
-            <div className="bg-white rounded-lg shadow-sm border border-[#fdf9f4]/20 p-6">
-              <h4 className="text-lg font-semibold text-[#7f5539] mb-6 flex items-center">
-                <Star className="mr-2" size={20} />
-                Top Performing Content
-              </h4>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Top Artworks */}
-                <div>
-                  <h5 className="text-md font-semibold text-[#7f5539] mb-4">Best Selling Artworks</h5>
-                  <div className="space-y-3">
-                    {artworks
-                      .sort((a, b) => b.likes - a.likes)
-                      .slice(0, 4)
-                      .map((artwork, index) => (
-                        <div key={artwork.id} className="flex items-center justify-between p-3 bg-[#fdf9f4]/30 rounded-lg">
-                          <div className="flex items-center space-x-3">
-                            <div className="flex items-center justify-center w-6 h-6 bg-[#7f5539] text-white rounded-full text-xs font-bold">
-                              {index + 1}
-                            </div>
-                            <img
-                              src={artwork.imageUrl?.startsWith('http') ? artwork.imageUrl : getArtworkUrl(artwork.imageUrl)}
-                              alt={artwork.title}
-                              className="w-12 h-12 rounded-lg object-cover"
-                              onError={(e) => {
-                                console.error('Failed to load top artwork image:', artwork.imageUrl);
-                                console.error('Top artwork: Constructed URL was:', e.target.src);
-                                e.target.src = 'https://images.pexels.com/photos/1070981/pexels-photo-1070981.jpeg?auto=compress&cs=tinysrgb&w=400';
-                                e.target.onerror = null;
-                              }}
-                            />
-                            <div>
-                              <p className="font-medium text-[#7f5539] text-sm">{artwork.title}</p>
-                              {/* <p className="text-xs text-[#7f5539]/60">{artwork.likes} likes • {artwork.views} views</p> */}
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-semibold text-[#7f5539] text-sm">{artwork.price}</p>
-                            <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${artwork.status === 'Sold' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
-                              }`}>
-                              {artwork.status}
-                            </span>
-                          </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Top Posts (Most Liked) */}
+              <div className="bg-white rounded-lg shadow-sm border border-[#fdf9f4]/20 p-6">
+                <h4 className="text-lg font-semibold text-[#7f5539] mb-4 flex items-center">
+                  <Star className="mr-2" size={20} />
+                  Top Posts (Most Liked)
+                </h4>
+                <div className="space-y-3">
+                  {portfolioPosts
+                    .sort((a, b) => (b.likes || 0) - (a.likes || 0))
+                    .slice(0, 4)
+                    .map((post, index) => (
+                      <div key={post.id} className="flex items-center space-x-3 p-3 bg-[#fdf9f4]/30 rounded-lg">
+                        <div className="flex items-center justify-center w-6 h-6 bg-[#7f5539] text-white rounded-full text-xs font-bold">
+                          {index + 1}
                         </div>
-                      ))}
-                  </div>
-                </div>
-
-                {/* Top Posts */}
-                <div>
-                  <h5 className="text-md font-semibold text-[#7f5539] mb-4">Most Engaging Posts</h5>
-                  <div className="space-y-3">
-                    {portfolioPosts
-                      .sort((a, b) => (b.likes + b.comments) - (a.likes + a.comments))
-                      .slice(0, 4)
-                      .map((post, index) => (
-                        <div key={post.id} className="flex items-center justify-between p-3 bg-[#fdf9f4]/30 rounded-lg">
-                          <div className="flex items-center space-x-3">
-                            <div className="flex items-center justify-center w-6 h-6 bg-[#7f5539] text-white rounded-full text-xs font-bold">
-                              {index + 1}
-                            </div>
-                            <img
-                              src={post.images && post.images.length > 0 ?
-                                (post.images[0]?.startsWith('http') ? post.images[0] : getImageUrl(post.images[0])) :
-                                (post.image?.startsWith('http') ? post.image : getImageUrl(post.image))}
-                              alt={`Post ${post.id}`}
-                              className="w-12 h-12 rounded-lg object-cover"
-                              onError={(e) => {
-                                console.error('Failed to load post image:', post.images?.[0] || post.image);
-                                console.error('Post thumbnail: Constructed URL was:', e.target.src);
-                                e.target.src = 'https://images.pexels.com/photos/1070981/pexels-photo-1070981.jpeg?auto=compress&cs=tinysrgb&w=400';
-                                e.target.onerror = null;
-                              }}
-                            />
-                            <div>
-                              <p className="font-medium text-[#7f5539] text-sm">
-                                {post.caption.substring(0, 30)}...
-                              </p>
-                              <p className="text-xs text-[#7f5539]/60">{post.likes || 0} likes • {post.comments || 0} comments</p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
-                              {(((post.likes || 0) + (post.comments || 0)) / 10).toFixed(1)}% engagement
-                            </span>
-                          </div>
+                        <img
+                          src={post.images && post.images.length > 0 ?
+                            (post.images[0]?.startsWith('http') ? post.images[0] : getImageUrl(post.images[0])) :
+                            (post.image?.startsWith('http') ? post.image : getImageUrl(post.image))}
+                          alt={`Post ${post.id}`}
+                          className="w-10 h-10 rounded-lg object-cover"
+                          onError={(e) => {
+                            e.target.src = 'https://images.pexels.com/photos/1070981/pexels-photo-1070981.jpeg?auto=compress&cs=tinysrgb&w=400';
+                            e.target.onerror = null;
+                          }}
+                        />
+                        <div className="flex-1">
+                          <p className="font-medium text-[#7f5539] text-sm truncate">
+                            {post.caption.substring(0, 30)}...
+                          </p>
+                          <p className="text-xs text-[#7f5539]/60">{post.likes || 0} likes</p>
                         </div>
-                      ))}
-                  </div>
+                      </div>
+                    ))}
                 </div>
               </div>
-            </div>
 
-            {/* Engagement Metrics */}
-            <div className="bg-white rounded-lg shadow-sm border border-[#fdf9f4]/20 p-6">
-              <h4 className="text-lg font-semibold text-[#7f5539] mb-6 flex items-center">
-                <Activity className="mr-2" size={20} />
-                Engagement Breakdown
-              </h4>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                <div className="text-center p-4 bg-gradient-to-br from-red-50 to-red-100 rounded-lg">
-                  <Heart className="mx-auto text-red-500 mb-2" size={24} />
-                  <p className="text-2xl font-bold text-[#7f5539]">
-                    {(portfolioPosts.reduce((sum, post) => sum + (post.likes || 0), 0) +
-                      (Array.isArray(artworks) ? artworks.reduce((sum, art) => sum + (art.likes || 0), 0) : 0)).toLocaleString()}
-                  </p>
-                  <p className="text-sm text-gray-600">Total Likes</p>
-                  <div className="flex items-center justify-center mt-1">
-                    <TrendingUp className="text-green-500 mr-1" size={12} />
-                    <span className="text-green-600 text-xs">+8.3%</span>
-                  </div>
-                </div>
-
-                <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg">
-                  <MessageCircle className="mx-auto text-blue-500 mb-2" size={24} />
-                  <p className="text-2xl font-bold text-[#7f5539]">
-                    {portfolioPosts.reduce((sum, post) => sum + (post.comments || 0), 0)}
-                  </p>
-                  <p className="text-sm text-gray-600">Comments</p>
-                  <div className="flex items-center justify-center mt-1">
-                    <TrendingUp className="text-green-500 mr-1" size={12} />
-                    <span className="text-green-600 text-xs">+12.7%</span>
-                  </div>
-                </div>
-
-                <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg">
-                  <Share2 className="mx-auto text-green-500 mb-2" size={24} />
-                  <p className="text-2xl font-bold text-[#7f5539]">156</p>
-                  <p className="text-sm text-gray-600">Shares</p>
-                  <div className="flex items-center justify-center mt-1">
-                    <TrendingUp className="text-green-500 mr-1" size={12} />
-                    <span className="text-green-600 text-xs">+15.2%</span>
-                  </div>
-                </div>
-
-                <div className="text-center p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg">
-                  <Download className="mx-auto text-purple-500 mb-2" size={24} />
-                  <p className="text-2xl font-bold text-[#7f5539]">89</p>
-                  <p className="text-sm text-gray-600">Downloads</p>
-                  <div className="flex items-center justify-center mt-1">
-                    <TrendingUp className="text-green-500 mr-1" size={12} />
-                    <span className="text-green-600 text-xs">+6.8%</span>
-                  </div>
+              {/* Top Commission Artworks (Recent 4) */}
+              <div className="bg-white rounded-lg shadow-sm border border-[#fdf9f4]/20 p-6">
+                <h4 className="text-lg font-semibold text-[#7f5539] mb-4 flex items-center">
+                  <Palette className="mr-2" size={20} />
+                  Recent Commissions
+                </h4>
+                <div className="space-y-3">
+                  {commissionRequests
+                    .sort((a, b) => new Date(b.requestDate) - new Date(a.requestDate))
+                    .slice(0, 4)
+                    .map((commission, index) => (
+                      <div key={commission.id} className="flex items-center space-x-3 p-3 bg-[#fdf9f4]/30 rounded-lg">
+                        <div className="flex items-center justify-center w-6 h-6 bg-[#7f5539] text-white rounded-full text-xs font-bold">
+                          {index + 1}
+                        </div>
+                        <div className="w-10 h-10 bg-gradient-to-br from-orange-100 to-orange-200 rounded-lg flex items-center justify-center">
+                          <Palette className="text-orange-600" size={16} />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium text-[#7f5539] text-sm truncate">
+                            {commission.title || `Commission #${commission.id}`}
+                          </p>
+                          <p className="text-xs text-[#7f5539]/60">Rs {commission.budget?.toLocaleString() || 'N/A'}</p>
+                        </div>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${commission.status === 'completed' ? 'bg-green-100 text-green-800' :
+                          commission.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
+                            'bg-yellow-100 text-yellow-800'
+                          }`}>
+                          {commission.status}
+                        </span>
+                      </div>
+                    ))}
                 </div>
               </div>
-            </div>
 
-            {/* Revenue & Sales Analytics */}
-            <div className="bg-white rounded-lg shadow-sm border border-[#fdf9f4]/20 p-6">
-              <h4 className="text-lg font-semibold text-[#7f5539] mb-6 flex items-center">
-                <DollarSign className="mr-2" size={20} />
-                Revenue & Sales Analytics
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-lg p-4">
-                  <h5 className="text-emerald-700 font-medium mb-2">Total Revenue</h5>
-                  <p className="text-2xl font-bold text-emerald-800">$15,400</p>
-                  <p className="text-sm text-emerald-600 mt-1">+23.5% from last month</p>
-                  <div className="mt-3 text-xs text-emerald-700">
-                    From {artistProfile.stats.sales} sold artworks
-                  </div>
-                </div>
-
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4">
-                  <h5 className="text-blue-700 font-medium mb-2">Average Sale Price</h5>
-                  <p className="text-2xl font-bold text-blue-800">
-                    ${artistProfile.stats.sales > 0
-                      ? Math.round(15400 / artistProfile.stats.sales).toLocaleString()
-                      : '0'}
-                  </p>
-                  <p className="text-sm text-blue-600 mt-1">+12.8% from last month</p>
-                  <div className="mt-3 text-xs text-blue-700">
-                    Based on recent sales
-                  </div>
-                </div>
-
-                <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg p-4">
-                  <h5 className="text-amber-700 font-medium mb-2">Sales Conversion</h5>
-                  <p className="text-2xl font-bold text-amber-800">
-                    {((artistProfile.stats.sales / artistProfile.stats.views) * 100).toFixed(2)}%
-                  </p>
-                  <p className="text-sm text-amber-600 mt-1">+1.2% from last month</p>
-                  <div className="mt-3 text-xs text-amber-700">
-                    Views to sales ratio
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Growth Trends */}
-            <div className="bg-white rounded-lg shadow-sm border border-[#fdf9f4]/20 p-6">
-              <h4 className="text-lg font-semibold text-[#7f5539] mb-6 flex items-center">
-                <TrendingUp className="mr-2" size={20} />
-                Growth Trends (Last 30 Days)
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="p-4 bg-[#fdf9f4]/30 rounded-lg text-center">
-                  <div className="flex items-center justify-center mb-2">
-                    <Eye className="text-blue-500 mr-1" size={20} />
-                    <TrendingUp className="text-green-500" size={16} />
-                  </div>
-                  <p className="text-sm text-[#7f5539]/70">Portfolio Views</p>
-                  <p className="text-lg font-bold text-[#7f5539]">+15.3%</p>
-                </div>
-
-                <div className="p-4 bg-[#fdf9f4]/30 rounded-lg text-center">
-                  <div className="flex items-center justify-center mb-2">
-                    <Users className="text-purple-500 mr-1" size={20} />
-                    <TrendingUp className="text-green-500" size={16} />
-                  </div>
-                  <p className="text-sm text-[#7f5539]/70">New Followers</p>
-                  <p className="text-lg font-bold text-[#7f5539]">+18.2%</p>
-                </div>
-
-                <div className="p-4 bg-[#fdf9f4]/30 rounded-lg text-center">
-                  <div className="flex items-center justify-center mb-2">
-                    <Heart className="text-red-500 mr-1" size={20} />
-                    <TrendingUp className="text-green-500" size={16} />
-                  </div>
-                  <p className="text-sm text-[#7f5539]/70">Engagement Rate</p>
-                  <p className="text-lg font-bold text-[#7f5539]">+22.7%</p>
-                </div>
-
-                <div className="p-4 bg-[#fdf9f4]/30 rounded-lg text-center">
-                  <div className="flex items-center justify-center mb-2">
-                    <DollarSign className="text-green-500 mr-1" size={20} />
-                    <TrendingUp className="text-green-500" size={16} />
-                  </div>
-                  <p className="text-sm text-[#7f5539]/70">Revenue Growth</p>
-                  <p className="text-lg font-bold text-[#7f5539]">+23.5%</p>
+              {/* Top Orders (Recent 4) */}
+              <div className="bg-white rounded-lg shadow-sm border border-[#fdf9f4]/20 p-6">
+                <h4 className="text-lg font-semibold text-[#7f5539] mb-4 flex items-center">
+                  <Package className="mr-2" size={20} />
+                  Recent Orders
+                </h4>
+                <div className="space-y-3">
+                  {artworkOrders
+                    .sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate))
+                    .slice(0, 4)
+                    .map((order, index) => (
+                      <div key={order.orderId} className="flex items-center space-x-3 p-3 bg-[#fdf9f4]/30 rounded-lg">
+                        <div className="flex items-center justify-center w-6 h-6 bg-[#7f5539] text-white rounded-full text-xs font-bold">
+                          {index + 1}
+                        </div>
+                        <div className="w-10 h-10 bg-gradient-to-br from-green-100 to-green-200 rounded-lg flex items-center justify-center">
+                          <Package className="text-green-600" size={16} />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium text-[#7f5539] text-sm truncate">
+                            Order #{order.orderId}
+                          </p>
+                          <p className="text-xs text-[#7f5539]/60">
+                            Rs {(() => {
+                              const amount = order.totalAmount || 0;
+                              const numericAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+                              return isNaN(numericAmount) ? 'N/A' : numericAmount.toLocaleString();
+                            })()}
+                          </p>
+                        </div>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${order.deliveryStatus === 'delivered' ? 'bg-green-100 text-green-800' :
+                          order.deliveryStatus === 'shipped' ? 'bg-blue-100 text-blue-800' :
+                            'bg-yellow-100 text-yellow-800'
+                          }`}>
+                          {order.deliveryStatus}
+                        </span>
+                      </div>
+                    ))}
                 </div>
               </div>
             </div>
