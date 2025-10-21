@@ -259,6 +259,64 @@ const CatalogManagement = () => {
       return;
     }
 
+    // Validation checks
+    if (!newProduct.name.trim()) {
+      showToast("❌ Product name is required", "error", 3000);
+      return;
+    }
+
+    if (newProduct.name.trim().length < 3) {
+      showToast("❌ Product name must be at least 3 characters", "error", 3000);
+      return;
+    }
+
+    if (newProduct.name.trim().length > 100) {
+      showToast("❌ Product name must not exceed 100 characters", "error", 3000);
+      return;
+    }
+
+    if (!newProduct.sku.trim()) {
+      showToast("❌ SKU is required", "error", 3000);
+      return;
+    }
+
+    if (newProduct.sku.trim().length < 2) {
+      showToast("❌ SKU must be at least 2 characters", "error", 3000);
+      return;
+    }
+
+    // Check for duplicate SKU
+    const duplicateSku = products.find(p => p.sku.toLowerCase() === newProduct.sku.trim().toLowerCase());
+    if (duplicateSku) {
+      showToast("❌ A product with this SKU already exists", "error", 3000);
+      return;
+    }
+
+    if (!newProduct.category || newProduct.category === 'all') {
+      showToast("❌ Please select a valid category", "error", 3000);
+      return;
+    }
+
+    if (!newProduct.price || parseFloat(newProduct.price) <= 0) {
+      showToast("❌ Price must be greater than 0", "error", 3000);
+      return;
+    }
+
+    if (parseFloat(newProduct.price) > 1000000) {
+      showToast("❌ Price cannot exceed Rs. 1,000,000", "error", 3000);
+      return;
+    }
+
+    if (!newProduct.stock || parseInt(newProduct.stock) < 0) {
+      showToast("❌ Stock must be 0 or greater", "error", 3000);
+      return;
+    }
+
+    if (parseInt(newProduct.stock) > 100000) {
+      showToast("❌ Stock cannot exceed 100,000 units", "error", 3000);
+      return;
+    }
+
     // Validate image path
     if (!newProduct.image || newProduct.image === '/src/assets/catalog.jpeg') {
       console.warn('⚠️ No custom image uploaded, using default');
@@ -335,6 +393,71 @@ const CatalogManagement = () => {
 
     if (!shopId) {
       showToast("❌ Shop ID not found. Please log in again.", "error", 3000);
+      return;
+    }
+
+    // Validation checks
+    if (!productToEdit.name.trim()) {
+      showToast("❌ Product name is required", "error", 3000);
+      return;
+    }
+
+    if (productToEdit.name.trim().length < 3) {
+      showToast("❌ Product name must be at least 3 characters", "error", 3000);
+      return;
+    }
+
+    if (productToEdit.name.trim().length > 100) {
+      showToast("❌ Product name must not exceed 100 characters", "error", 3000);
+      return;
+    }
+
+    if (!productToEdit.sku.trim()) {
+      showToast("❌ SKU is required", "error", 3000);
+      return;
+    }
+
+    if (productToEdit.sku.trim().length < 2) {
+      showToast("❌ SKU must be at least 2 characters", "error", 3000);
+      return;
+    }
+
+    // Check for duplicate SKU (excluding current product)
+    const duplicateSku = products.find(p => 
+      p.sku.toLowerCase() === productToEdit.sku.trim().toLowerCase() && p.id !== productToEdit.id
+    );
+    if (duplicateSku) {
+      showToast("❌ A product with this SKU already exists", "error", 3000);
+      return;
+    }
+
+    if (!productToEdit.category || productToEdit.category === 'all') {
+      showToast("❌ Please select a valid category", "error", 3000);
+      return;
+    }
+
+    if (!productToEdit.price || parseFloat(productToEdit.price) <= 0) {
+      showToast("❌ Price must be greater than 0", "error", 3000);
+      return;
+    }
+
+    if (parseFloat(productToEdit.price) > 1000000) {
+      showToast("❌ Price cannot exceed Rs. 1,000,000", "error", 3000);
+      return;
+    }
+
+    if (!productToEdit.stock || parseInt(productToEdit.stock) < 0) {
+      showToast("❌ Stock must be 0 or greater", "error", 3000);
+      return;
+    }
+
+    if (parseInt(productToEdit.stock) > 100000) {
+      showToast("❌ Stock cannot exceed 100,000 units", "error", 3000);
+      return;
+    }
+
+    if (productToEdit.sales && parseInt(productToEdit.sales) < 0) {
+      showToast("❌ Sales cannot be negative", "error", 3000);
       return;
     }
 
