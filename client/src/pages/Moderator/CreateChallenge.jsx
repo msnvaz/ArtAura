@@ -3,10 +3,8 @@ import {
   Calendar,
   Clock,
   FileText,
-  Heart,
   Plus,
   Send,
-  Settings,
   Shield,
   Sparkles,
   Target,
@@ -16,7 +14,7 @@ import {
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const CreateChallenge = ({ onBack, onSubmit }) => {
+const CreateChallenge = () => {
   const [formData, setFormData] = useState({
     title: "",
     publishDate: "",
@@ -170,8 +168,6 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
     const time = now.toTimeString().slice(0, 5);
     return { date, time };
   };
-
-  const { date: currentDate } = getCurrentDateTime();
 
   return (
     <>
@@ -694,54 +690,6 @@ const CreateChallenge = ({ onBack, onSubmit }) => {
                     <p className="mt-1 text-sm" style={{ color: "#D87C5A" }}>
                       {formData.rewards.length}/500 characters
                     </p>
-                  </div>
-                </div>
-
-                {/* Fixed Scoring System Info */}
-                <div className="space-y-4">
-                  <div
-                    className="flex items-center gap-2 pb-2 border-b"
-                    style={{ borderColor: "#FFE4D6" }}
-                  >
-                    <Settings size={20} style={{ color: "#D87C5A" }} />
-                    <h3
-                      className="text-lg font-semibold"
-                      style={{ color: "#5D3A00" }}
-                    >
-                      Scoring System
-                    </h3>
-                  </div>
-
-                  {/* Scoring Info Box */}
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                    <h4 className="font-semibold text-blue-900 mb-3">📊 Fixed Marks Scoring</h4>
-                    <p className="text-sm text-blue-800 mb-4">
-                      Winners will be automatically calculated based on the following fixed scoring system:
-                    </p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="bg-white rounded-lg p-4 border border-blue-300">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Heart size={20} className="text-red-500" />
-                          <span className="font-semibold text-gray-800">Each Like</span>
-                        </div>
-                        <p className="text-2xl font-bold text-green-600">+10 marks</p>
-                      </div>
-                      <div className="bg-white rounded-lg p-4 border border-blue-300">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Heart size={20} className="text-gray-500" style={{ transform: "rotate(180deg)" }} />
-                          <span className="font-semibold text-gray-800">Each Dislike</span>
-                        </div>
-                        <p className="text-2xl font-bold text-red-600">-5 marks</p>
-                      </div>
-                    </div>
-                    <div className="mt-4 p-3 bg-blue-100 rounded-lg">
-                      <p className="text-sm text-blue-900">
-                        <span className="font-semibold">Formula:</span> Score = MAX(0, (Total Likes × 10) - (Total Dislikes × 5))
-                      </p>
-                      <p className="text-xs text-blue-700 mt-1">
-                        ⚠️ <span className="font-semibold">Note:</span> Minimum score is 0 (no negative scores)
-                      </p>
-                    </div>
                   </div>
                 </div>
 

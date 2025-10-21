@@ -123,9 +123,12 @@ const CartPage = () => {
                     <div key={item.artwork_id} className="p-6">
                       <div className="flex gap-4">
                         <img
-                          src={item.image_url}
+                          src={item.imageUrl || item.image_url}
                           alt={item.title}
                           className="w-24 h-24 object-cover rounded-lg border border-[#FFE4D6]"
+                          onError={(e) => {
+                            e.target.src = "/art1.jpeg"; // Fallback image
+                          }}
                         />
                         <div className="flex-1">
                           <div className="flex justify-between items-start mb-2">

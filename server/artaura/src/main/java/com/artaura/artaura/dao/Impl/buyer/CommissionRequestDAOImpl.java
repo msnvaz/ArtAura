@@ -84,7 +84,9 @@ public class CommissionRequestDAOImpl implements ComissionRequestDAO {
     @Override
     public List<CommissionResponseDTO> getCommissionRequestsByClientId(Long clientId) {
         String sql = "SELECT cr.*, " +
-                     "CASE WHEN p.commission_request_id IS NOT NULL THEN true ELSE false END as has_payment " +
+                     "CASE WHEN p.commission_request_id IS NOT NULL THEN true ELSE false END as has_payment, " +
+                     "p.amount as payment_amount, " +
+                     "p.status as payment_status " +
                      "FROM commission_requests cr " +
                      "LEFT JOIN payment p ON cr.id = p.commission_request_id " +
                      "WHERE cr.buyer_id = ?";
@@ -111,6 +113,14 @@ public class CommissionRequestDAOImpl implements ComissionRequestDAO {
             
             // Set the payment status based on whether a payment record exists
             dto.setHasPayment(rs.getBoolean("has_payment"));
+            
+            // Set the actual payment amount from the payment table
+            String paymentAmount = rs.getString("payment_amount");
+            dto.setPaymentAmount(paymentAmount);
+            
+            // Set the payment status from the payment table
+            String paymentStatus = rs.getString("payment_status");
+            dto.setPaymentStatus(paymentStatus);
 
             // Fetch reference images for this commission request
             String imgSql = "SELECT image_url FROM commission_reference_images WHERE commission_request_id = ?";

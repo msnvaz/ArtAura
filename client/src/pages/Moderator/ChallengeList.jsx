@@ -1,5 +1,5 @@
   import axios from 'axios';
-import { AlertCircle, Calendar, CheckCircle, Clock, Edit, Eye, FileText, Filter, Heart, Search, Trash2, Trophy, Users } from 'lucide-react';
+import { Calendar, CheckCircle, Clock, Edit, Eye, FileText, Filter, Heart, Search, Trash2, Trophy, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -23,6 +23,9 @@ const ChallengeList = () => {
   const [challengeToEdit, setChallengeToEdit] = useState(null);
   const [editForm, setEditForm] = useState({ title: '', description: '', requestSponsorship: false });
   const [deleteLoading, setDeleteLoading] = useState(false);
+  // Modal position states removed
+
+  // Position calculation no longer needed with centered modals
 
   // Fetch Challenges
   const fetchChallenges = async () => {
@@ -387,7 +390,7 @@ const ChallengeList = () => {
       {(() => {
         const stats = getChallengeStats();
         return (
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg p-4 border-2 border-amber-300 shadow-md hover:shadow-lg transition-all duration-300">
               <div className="flex items-center justify-between">
                 <div>
@@ -415,15 +418,6 @@ const ChallengeList = () => {
                 <CheckCircle className="h-8 w-8 text-green-500" />
               </div>
             </div>
-            <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-semibold text-yellow-700 uppercase tracking-wider">Under Review</p>
-                  <p className="text-3xl font-extrabold text-yellow-900 mt-1">{stats.review}</p>
-                </div>
-                <AlertCircle className="h-8 w-8 text-yellow-500" />
-              </div>
-            </div>
             <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
               <div className="flex items-center justify-between">
                 <div>
@@ -443,19 +437,16 @@ const ChallengeList = () => {
         if (stats.sponsored > 0 || stats.pendingSponsorship > 0) {
           return (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <div className="bg-gradient-to-br from-purple-50 via-pink-50 to-purple-50 rounded-lg p-6 border-2 border-purple-300 shadow-lg hover:shadow-xl transition-all duration-300">
+              <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg p-6 border-2 border-purple-300 shadow-lg hover:shadow-xl transition-all duration-300">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-bold text-purple-700 uppercase tracking-widest flex items-center gap-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
+                    <p className="text-sm font-bold text-purple-700 uppercase tracking-widest">
                       Active Sponsorships
                     </p>
                     <p className="text-4xl font-black text-purple-900 mt-2">{stats.sponsored}</p>
-                    <p className="text-xs text-purple-600 mt-1 font-medium">✨ Featured Challenges</p>
+                    <p className="text-xs text-purple-600 mt-1 font-medium">Collaborative Challenges</p>
                   </div>
-                  <div className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-full p-4 animate-pulse">
+                  <div className="bg-gradient-to-br from-purple-500 to-blue-500 rounded-full p-4">
                     <Trophy className="h-10 w-10 text-white" />
                   </div>
                 </div>
@@ -463,8 +454,8 @@ const ChallengeList = () => {
               <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-lg p-6 border-2 border-yellow-300 shadow-lg hover:shadow-xl transition-all duration-300">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-bold text-yellow-700 uppercase tracking-widest flex items-center gap-2">
-                      ⏳ Pending Sponsorships
+                    <p className="text-sm font-bold text-yellow-700 uppercase tracking-widest">
+                      Pending Sponsorships
                     </p>
                     <p className="text-4xl font-black text-yellow-900 mt-2">{stats.pendingSponsorship}</p>
                     <p className="text-xs text-yellow-600 mt-1 font-medium">Awaiting Approval</p>
@@ -538,46 +529,23 @@ const ChallengeList = () => {
                   background: 'linear-gradient(135deg, #ffffff 0%, #faf5ff 50%, #fef3f7 100%)'
                 } : {}}
               >
-                {/* Special Corner Ribbon for Active Sponsored Challenges */}
-                {isActiveSponsored && (
-                  <div className="absolute top-0 right-0 z-10">
-                    <div className="relative">
-                      <div className="absolute top-3 right-3 bg-gradient-to-br from-purple-500 via-purple-600 to-pink-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-lg shadow-lg flex items-center gap-1 animate-pulse">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                        SPONSORED
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
                 <div className="flex flex-col flex-1 p-6">
                   {/* Sponsored Challenge Banner */}
                   {isActiveSponsored && (
-                    <div className="mb-4 -mt-2 -mx-2 px-4 py-3 bg-gradient-to-r from-purple-500 via-purple-600 to-pink-500 rounded-t-lg">
-                      <div className="flex flex-col items-center justify-center gap-2 text-white">
-                        <div className="flex items-center gap-2">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 animate-pulse" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                          </svg>
-                          <span className="font-bold text-sm uppercase tracking-wider">✨ SPONSORED CHALLENGE ✨</span>
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 animate-pulse" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                          </svg>
+                    <div className="mb-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg px-4 py-3 border-l-4 border-purple-500">
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-semibold text-gray-700">Sponsorship Challenge</span>
+                          {challenge.sponsorDiscountPercentage && (
+                            <span className="bg-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full">
+                              {challenge.sponsorDiscountPercentage}% Discount
+                            </span>
+                          )}
                         </div>
-                        {/* Display sponsor information if available */}
-                        {(challenge.sponsorShopName || challenge.sponsorDiscountPercentage) && (
-                          <div className="flex items-center gap-2 text-sm font-semibold bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm">
-                            {challenge.sponsorShopName && (
-                              <span>Sponsored by: {challenge.sponsorShopName}</span>
-                            )}
-                            {challenge.sponsorDiscountPercentage && (
-                              <span className="bg-white/30 px-2 py-0.5 rounded-full">
-                                {challenge.sponsorDiscountPercentage}% OFF
-                              </span>
-                            )}
-                          </div>
+                        {challenge.sponsorShopName && (
+                          <p className="text-sm text-gray-600">
+                            In collaboration with <span className="font-semibold text-purple-700">{challenge.sponsorShopName}</span>
+                          </p>
                         )}
                       </div>
                     </div>
@@ -600,12 +568,12 @@ const ChallengeList = () => {
                       <>
                         {challenge.sponsorship === 'pending' && (
                           <span className="ml-2 px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800 flex items-center gap-1">
-                            ⏳ Sponsorship Pending
+                            Sponsorship Pending
                           </span>
                         )}
                         {challenge.sponsorship === 'active' && (
-                          <span className="ml-2 px-2 py-1 text-xs font-semibold rounded-full bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 flex items-center gap-1 animate-pulse">
-                            ✨ Sponsored Challenge
+                          <span className="ml-2 px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800 flex items-center gap-1">
+                            Sponsorship Active
                           </span>
                         )}
                       </>
@@ -714,8 +682,12 @@ const ChallengeList = () => {
 
           {/* Single Challenge Details Modal rendered only once outside the map */}
           {showDetailsModal && challengeToView && (
-            <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 backdrop-blur-sm">
-              <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full mx-4 transform transition-all duration-300 ease-out scale-100 relative">
+            <div className="fixed inset-0 z-50 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center overflow-hidden">
+              <div className="absolute inset-0" aria-hidden="true"></div>
+              <div
+                className="w-full max-w-md px-4"
+              >
+                <div className="bg-white rounded-2xl p-8 shadow-2xl w-full max-h-[80vh] overflow-y-auto transform transition-all duration-300 ease-out scale-100 relative">
                 <div className="text-center mb-6">
                   <h3 className="text-2xl font-bold text-[#362625] mb-2">Challenge Details</h3>
                 </div>
@@ -786,22 +758,22 @@ const ChallengeList = () => {
                     <div className={`rounded-lg p-3 mt-2 ${
                       challengeToView.sponsorship === 'pending' 
                         ? 'bg-yellow-50 border-2 border-yellow-200' 
-                        : 'bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200'
+                        : 'bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-purple-200'
                     }`}>
                       {challengeToView.sponsorship === 'pending' && (
                         <>
                           <div className="font-semibold text-yellow-700 mb-1 flex items-center gap-2">
-                            ⏳ Sponsorship Pending
+                            Sponsorship Pending
                           </div>
-                          <p className="text-xs text-yellow-600">Awaiting shop sponsor approval</p>
+                          <p className="text-xs text-yellow-600">Awaiting sponsor approval</p>
                         </>
                       )}
                       {challengeToView.sponsorship === 'active' && (
                         <>
-                          <div className="font-semibold text-purple-700 mb-1 flex items-center gap-2 animate-pulse">
-                            ✨ Sponsored Challenge
+                          <div className="font-semibold text-purple-700 mb-1 flex items-center gap-2">
+                            Sponsorship Active
                           </div>
-                          <p className="text-xs text-purple-600">This challenge is sponsored and featured!</p>
+                          <p className="text-xs text-purple-600">This challenge is run in collaboration with our sponsors</p>
                         </>
                       )}
                     </div>
@@ -850,11 +822,6 @@ const ChallengeList = () => {
                         <div className="text-xs text-gray-500">marks deducted</div>
                       </div>
                     </div>
-                    <div className="bg-blue-100 rounded-lg p-3 border border-blue-300">
-                      <p className="text-sm text-blue-900">
-                        <span className="font-bold">Scoring Formula:</span> Score = (Total Likes × 10) - (Total Dislikes × 5)
-                      </p>
-                    </div>
                   </div>
                 </div>
                 {/* Close button at the bottom */}
@@ -867,6 +834,7 @@ const ChallengeList = () => {
                     Close
                   </button>
                 </div>
+              </div>
               </div>
             </div>
           )}
@@ -884,8 +852,12 @@ const ChallengeList = () => {
       </div>
     {/* Edit Challenge Modal */}
     {showEditModal && (
-      <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 backdrop-blur-sm">
-        <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full mx-4 transform transition-all duration-300 ease-out scale-100">
+      <div className="fixed inset-0 z-50 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center overflow-hidden">
+        <div className="absolute inset-0" aria-hidden="true"></div>
+        <div
+          className="w-full max-w-md px-4"
+        >
+          <div className="bg-white rounded-2xl p-8 shadow-2xl w-full max-h-[80vh] overflow-y-auto transform transition-all duration-300 ease-out scale-100">
           <div className="text-center mb-6">
             <h3 className="text-2xl font-bold text-[#362625] mb-2">Edit Challenge</h3>
           </div>
@@ -1011,13 +983,18 @@ const ChallengeList = () => {
             </div>
           </form>
         </div>
+        </div>
       </div>
     )}
 
     {/* Delete Confirmation Modal */}
     {showDeleteModal && (
-      <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 backdrop-blur-sm">
-        <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full mx-4 transform transition-all duration-300 ease-out scale-100">
+      <div className="fixed inset-0 z-50 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center overflow-hidden">
+        <div className="absolute inset-0" aria-hidden="true"></div>
+        <div
+          className="w-full max-w-md px-4"
+        >
+          <div className="bg-white rounded-2xl p-8 shadow-2xl w-full transform transition-all duration-300 ease-out scale-100">
           <div className="text-center">
             <h3 className="text-2xl font-bold text-[#362625] mb-2">
               Confirm Delete
@@ -1042,6 +1019,7 @@ const ChallengeList = () => {
               </button>
             </div>
           </div>
+        </div>
         </div>
       </div>
     )}

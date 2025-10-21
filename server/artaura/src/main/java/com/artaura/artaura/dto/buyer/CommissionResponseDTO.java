@@ -26,6 +26,8 @@ public class CommissionResponseDTO {
     private List<String> imageUrls; // Reference images
     private String deliveryStatus; // Added deliveryStatus field to include delivery status
     private boolean hasPayment; // Field to check if commission has been paid
+    private String paymentAmount; // Field to store the actual payment amount from payment table
+    private String paymentStatus; // Field to store the payment status from payment table
 
 
     // Getters and Setters
@@ -179,6 +181,22 @@ public class CommissionResponseDTO {
 
     public void setHasPayment(boolean hasPayment) {
         this.hasPayment = hasPayment;
+    }
+
+    public String getPaymentAmount() {
+        return paymentAmount;
+    }
+
+    public void setPaymentAmount(String paymentAmount) {
+        this.paymentAmount = paymentAmount;
+    }
+
+    public String getPaymentStatus() {
+        return paymentStatus;
+    }
+
+    public void setPaymentStatus(String paymentStatus) {
+        this.paymentStatus = paymentStatus;
     }
 
 }

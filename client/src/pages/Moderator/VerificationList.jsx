@@ -339,41 +339,49 @@ const VerificationList = () => {
       )}
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-lg p-4 border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Exhibitions</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 items-stretch">
+        <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg p-4 border-2 border-amber-300 shadow-md hover:shadow-lg transition-all duration-300 h-full">
+          <div className="flex h-full flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-bold text-amber-700 uppercase tracking-widest">Total Exhibitions</p>
+                <p className="text-3xl font-black text-amber-900 mt-1">{stats.total}</p>
+              </div>
+              <Shield className="h-8 w-8 text-amber-500" />
             </div>
-            <Shield className="h-8 w-8 text-gray-400" />
           </div>
         </div>
-        <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-yellow-800">Pending Review</p>
-              <p className="text-2xl font-bold text-yellow-900">{stats.pending}</p>
+        <div className="bg-yellow-50 rounded-lg p-4 border-2 border-yellow-200 shadow-sm hover:shadow-md transition-all duration-300 h-full">
+          <div className="flex h-full flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold text-yellow-700 uppercase tracking-wider">Pending Review</p>
+                <p className="text-3xl font-extrabold text-yellow-900 mt-1">{stats.pending}</p>
+              </div>
+              <AlertCircle className="h-8 w-8 text-yellow-500" />
             </div>
-            <AlertCircle className="h-8 w-8 text-yellow-500" />
           </div>
         </div>
-        <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-green-800">Approved</p>
-              <p className="text-2xl font-bold text-green-900">{stats.approved}</p>
+        <div className="bg-green-50 rounded-lg p-4 border-2 border-green-200 shadow-sm hover:shadow-md transition-all duration-300 h-full">
+          <div className="flex h-full flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold text-green-700 uppercase tracking-wider">Approved</p>
+                <p className="text-3xl font-extrabold text-green-900 mt-1">{stats.approved}</p>
+              </div>
+              <CheckCircle className="h-8 w-8 text-green-500" />
             </div>
-            <CheckCircle className="h-8 w-8 text-green-500" />
           </div>
         </div>
-        <div className="bg-red-50 rounded-lg p-4 border border-red-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-red-800">Rejected</p>
-              <p className="text-2xl font-bold text-red-900">{stats.rejected}</p>
+        <div className="bg-red-50 rounded-lg p-4 border-2 border-red-200 shadow-sm hover:shadow-md transition-all duration-300 h-full">
+          <div className="flex h-full flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold text-red-700 uppercase tracking-wider">Rejected</p>
+                <p className="text-3xl font-extrabold text-red-900 mt-1">{stats.rejected}</p>
+              </div>
+              <XCircle className="h-8 w-8 text-red-500" />
             </div>
-            <XCircle className="h-8 w-8 text-red-500" />
           </div>
         </div>
       </div>
@@ -542,8 +550,8 @@ const VerificationList = () => {
 
       {/* Exhibition Details Modal */}
       {showDetailsModal && selectedExhibition && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-6xl w-full h-[95vh] flex flex-col shadow-2xl">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-hidden">
+          <div className="bg-white rounded-xl max-w-6xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
             {/* Compact Header - Fixed at top */}
             <div className="flex-shrink-0 px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-[#FFE8D6] to-white">
               <div className="flex justify-between items-center">
@@ -574,7 +582,7 @@ const VerificationList = () => {
             </div>
 
             {/* Scrollable Content Area with better spacing */}
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto overscroll-contain">
               <div className="p-6 space-y-4">
                 {/* Description - Compact */}
                 <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-4 rounded-lg border border-amber-200">

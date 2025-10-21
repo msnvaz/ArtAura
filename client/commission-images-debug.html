@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Commission Images Debug Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        .test-section {
+            background: #f5f5f5;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+
+        .image-test {
+            display: inline-block;
+            margin: 10px;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .image-test img {
+            display: block;
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            margin-bottom: 10px;
+        }
+
+        .success {
+            border-color: green;
+            background: #e8f5e9;
+        }
+
+        .error {
+            border-color: red;
+            background: #ffebee;
+        }
+
+        .info {
+            color: #666;
+            font-size: 12px;
+            word-break: break-all;
+        }
+
+        h2 {
+            color: #333;
+            border-bottom: 2px solid #7f5539;
+            padding-bottom: 10px;
+        }
+
+        button {
+            background: #7f5539;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        button:hover {
+            background: #5f3f29;
+        }
+
+        #console {
+            background: #000;
+            color: #0f0;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .console-line {
+            margin: 3px 0;
+        }
+
+        .console-error {
+            color: #f44;
+        }
+
+        .console-success {
+            color: #4f4;
+        }
+
+        .console-info {
+            color: #4af;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🎨 Commission Request Images - Debug Test Page</h1>
+
+    <div class="test-section">
+        <h2>Test 1: Direct Image Paths from Database</h2>
+        <p>These are the exact image paths from your database:</p>
+        <div id="direct-images"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: API Response Test</h2>
+        <button onclick="testAPI()">Fetch Commission Requests from API</button>
+        <button onclick="clearConsole()">Clear Console</button>
+        <div id="api-results" style="margin-top: 15px;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Image URL Resolver Test</h2>
+        <p>Testing the getImageUrl function with different formats:</p>
+        <div id="resolver-test"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Console Output</h2>
+        <div id="console"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8080';
+
+        // Get auth token from localStorage (adjust key if different)
+        function getToken() {
+            return localStorage.getItem('token') || localStorage.getItem('authToken');
+        }
+
+        function log(message, type = 'info') {
+            const consoleDiv = document.getElementById('console');
+            const timestamp = new Date().toLocaleTimeString();
+            const line = document.createElement('div');
+            line.className = `console-line console-${type}`;
+            line.textContent = `[${timestamp}] ${message}`;
+            consoleDiv.appendChild(line);
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+            console.log(message);
+        }
+
+        function clearConsole() {
+            document.getElementById('console').innerHTML = '';
+        }
+
+        // Simple version of getImageUrl from your frontend
+        function getImageUrl(imagePath) {
+            if (!imagePath) return '';
+
+            if (imagePath.startsWith('http')) {
+                const url = new URL(imagePath);
+                imagePath = url.pathname;
+            }
+
+            let cleanPath = imagePath;
+            if (!cleanPath.startsWith('/')) {
+                cleanPath = '/' + cleanPath;
+            }
+
+            return cleanPath;
+        }
+
+        // Test 1: Direct image paths from your database
+        const databaseImages = [
+            '/uploads/1755491789006_cloudeArchitectureAWS.png',
+            '/uploads/1755491789020_Screenshot 2025-07-14 23372.png',
+            '/uploads/1760615699222_bg1.jpg',
+            '/uploads/1760679467667_bg1.jpg',
+            '/uploads/1760681087872_bg4.jpg'
+        ];
+
+        function loadDirectImages() {
+            const container = document.getElementById('direct-images');
+
+            databaseImages.forEach((path, index) => {
+                const div = document.createElement('div');
+                div.className = 'image-test';
+                div.innerHTML = `
+                    <img id="img-${index}" src="${path}" 
+                         onload="imageLoaded(${index})" 
+                         onerror="imageError(${index}, '${path}')">
+                    <div class="info">Path: ${path}</div>
+                    <div class="info" id="status-${index}">Loading...</div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function imageLoaded(index) {
+            const div = document.getElementById(`status-${index}`).parentElement.parentElement;
+            div.classList.add('success');
+            document.getElementById(`status-${index}`).textContent = '✅ Loaded';
+            log(`Image ${index} loaded successfully: ${databaseImages[index]}`, 'success');
+        }
+
+        function imageError(index, path) {
+            const div = document.getElementById(`status-${index}`).parentElement.parentElement;
+            div.classList.add('error');
+            document.getElementById(`status-${index}`).innerHTML = `
+                ❌ Failed<br>
+                <small>File may not exist at this path</small>
+            `;
+            log(`Image ${index} failed to load: ${path}`, 'error');
+        }
+
+        // Test 2: API Test
+        async function testAPI() {
+            const resultsDiv = document.getElementById('api-results');
+            resultsDiv.innerHTML = '<p>🔄 Fetching commission requests...</p>';
+            log('Starting API request to /api/commission-requests/artist', 'info');
+
+            const token = getToken();
+            if (!token) {
+                resultsDiv.innerHTML = '<p style="color: red;">❌ No auth token found. Please login first.</p>';
+                log('ERROR: No authentication token found in localStorage', 'error');
+                return;
+            }
+
+            try {
+                log(`Using token: ${token.substring(0, 20)}...`, 'info');
+                const response = await fetch(`${API_URL}/api/commission-requests/artist`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                log(`API Response Status: ${response.status} ${response.statusText}`, 'info');
+
+                const data = await response.json();
+                log('API Response Data:', 'info');
+                log(JSON.stringify(data, null, 2), 'info');
+
+                if (data.success && data.data) {
+                    const requests = data.data;
+                    log(`Found ${requests.length} commission requests`, 'success');
+
+                    let html = `<h3>Found ${requests.length} Commission Requests</h3>`;
+
+                    requests.forEach((request, index) => {
+                        const imageCount = request.referenceImages ? request.referenceImages.length : 0;
+                        log(`Request #${request.id}: "${request.title}" - ${imageCount} images`, 'info');
+
+                        html += `
+                            <div style="border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 4px;">
+                                <h4>Request #${request.id}: ${request.title}</h4>
+                                <p><strong>Status:</strong> ${request.status}</p>
+                                <p><strong>Images:</strong> ${imageCount} reference images</p>
+                                ${imageCount > 0 ? `
+                                    <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                                        ${request.referenceImages.map((img, imgIndex) => {
+                            const fullPath = getImageUrl(img);
+                            log(`  Image ${imgIndex + 1}: ${img} → ${fullPath}`, 'info');
+                            return `
+                                                <div class="image-test">
+                                                    <img src="${fullPath}" 
+                                                         style="width: 100px; height: 100px;"
+                                                         onload="log('✅ Loaded: ${img}', 'success')"
+                                                         onerror="log('❌ Failed: ${img}', 'error')">
+                                                    <div class="info">${img}</div>
+                                                </div>
+                                            `;
+                        }).join('')}
+                                    </div>
+                                ` : '<p style="color: #999;">No reference images</p>'}
+                            </div>
+                        `;
+                    });
+
+                    resultsDiv.innerHTML = html;
+                } else {
+                    log('API returned unsuccessful response or no data', 'error');
+                    resultsDiv.innerHTML = `<p style="color: red;">❌ ${data.message || 'Failed to fetch data'}</p>`;
+                }
+            } catch (error) {
+                log(`API Error: ${error.message}`, 'error');
+                log(error.stack, 'error');
+                resultsDiv.innerHTML = `<p style="color: red;">❌ Error: ${error.message}</p>`;
+            }
+        }
+
+        // Test 3: URL Resolver Test
+        function testURLResolver() {
+            const container = document.getElementById('resolver-test');
+            const testCases = [
+                '/uploads/test.jpg',
+                'uploads/test.jpg',
+                'http://localhost:8080/uploads/test.jpg',
+                '/uploads/1755491789006_cloudeArchitectureAWS.png'
+            ];
+
+            let html = '<table style="width: 100%; border-collapse: collapse;">';
+            html += '<tr><th style="border: 1px solid #ddd; padding: 8px;">Input</th><th style="border: 1px solid #ddd; padding: 8px;">Output</th></tr>';
+
+            testCases.forEach(test => {
+                const result = getImageUrl(test);
+                html += `<tr><td style="border: 1px solid #ddd; padding: 8px;"><code>${test}</code></td><td style="border: 1px solid #ddd; padding: 8px;"><code>${result}</code></td></tr>`;
+                log(`URL Resolver: "${test}" → "${result}"`, 'info');
+            });
+
+            html += '</table>';
+            container.innerHTML = html;
+        }
+
+        // Initialize tests on page load
+        window.onload = function () {
+            log('Debug test page loaded', 'success');
+            log('Your database has images at these paths:', 'info');
+            databaseImages.forEach(path => log(`  - ${path}`, 'info'));
+
+            loadDirectImages();
+            testURLResolver();
+        };
+    </script>
+</body>
+
+</html>
